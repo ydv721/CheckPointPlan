@@ -87,7 +87,7 @@ function AuthScreen({ onUser }: { onUser: (u: User) => void }) {
       <div className="auth-switch">{mode==="login"?"아직 계정이 없으신가요?":"이미 계정이 있으신가요?"}
         <button type="button" onClick={()=>{setMode(v=>v==="login"?"signup":"login");setMessage("");}}>{mode==="login"?"회원가입":"로그인"}</button>
       </div>
-      <div className="auth-footnote"><Sparkles size={14}/> 매일 완벽하지 않아도 괜찮아요. 멈췄던 자리에서 언제든 다시 시작할 수 있어요.</div>
+      <div className="auth-footnote"><Sparkles size={14}/> 매일 완벽하지 않아도 괜찮아요. 멈췄던 곳에서 언제든 다시 시작할 수 있어요.</div>
     </div></div>
   </div>;
 }
