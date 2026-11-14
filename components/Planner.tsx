@@ -5,7 +5,7 @@ import type { User } from "@supabase/supabase-js";
 import {
   BookOpen, CalendarDays, Check, ChevronLeft, ChevronRight, Eraser,
   Heart, ImagePlus, LogOut, Menu, Plus, Save,
-  Sparkles, Trash2, X, CircleHelp, CheckCircle2, Palette, ArrowRight
+  Sparkles, Trash2, X, CircleHelp, CheckCircle2, Palette
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { defaultCover, emptyEntry, STICKERS, themes, type Cover, type CoverItem, type Entry, type ThemeName } from "@/lib/types";
@@ -82,7 +82,7 @@ function AuthScreen({ onUser }: { onUser: (u: User) => void }) {
         <label>이메일<input type="email" autoComplete="email" placeholder="name@example.com" value={email} onChange={e=>setEmail(e.target.value)} required/></label>
         <label>비밀번호<input type="password" placeholder="6자 이상 입력해 주세요." autoComplete={mode==="login"?"current-password":"new-password"} minLength={6} value={password} onChange={e=>setPassword(e.target.value)} required/></label>
         {message&&<div className="alert" role="status">{message}</div>}
-        <button disabled={busy||!client} className="primary-btn auth-submit" type="submit">{busy?"처리 중입니다...":mode==="login"?"로그인":"회원가입"}<ArrowRight size={18}/></button>
+        <button disabled={busy||!client} className="primary-btn auth-submit" type="submit">{busy?"처리 중입니다...":mode==="login"?"로그인":"회원가입"}</button>
       </form>
       <div className="auth-switch">{mode==="login"?"아직 계정이 없으신가요?":"이미 계정이 있으신가요?"}
         <button type="button" onClick={()=>{setMode(v=>v==="login"?"signup":"login");setMessage("");}}>{mode==="login"?"회원가입":"로그인"}</button>
