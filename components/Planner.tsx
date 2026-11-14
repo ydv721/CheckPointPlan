@@ -321,18 +321,23 @@ export default function Planner() {
   return <div className="app-shell" style={vars}>
     <header className="site-header"><div className="header-inner">
       <button className="brand" onClick={()=>setView("planner")}><AppIcon/><span>CHECKPOINT</span><small>YOUR DAILY SPACE</small></button>
+      <div className="header-page-info">
+        <div className="eyebrow">YOUR PACE, YOUR CHECKPOINT</div>
+        <h1>{view==="planner"?"나의 데일리 플래너":"오늘의 표지 꾸미기"}<span className="title-sparkle">✳</span></h1>
+        <p>{view==="planner"?"계획이 달라져도 괜찮습니다. 오늘 할 수 있는 만큼만 기록해 보세요.":"마음에 드는 색과 작은 장식으로 나만의 플래너를 만들어 보세요."}</p>
+      </div>
       <nav className={mobileMenu?"nav-links open":"nav-links"} aria-label="페이지 이동">
         <button className={view==="planner"?"nav-active":""} onClick={()=>{setView("planner");setMobileMenu(false);}}><BookOpen size={17}/> 플래너</button>
         <button className={view==="cover"?"nav-active":""} onClick={()=>{setView("cover");setMobileMenu(false);}}><Sparkles size={17}/> 표지 꾸미기</button>
       </nav>
-      <div className="header-actions"><button className="icon-btn" aria-label="테마 설정" title="테마 설정" onClick={()=>setShowSettings(true)}><Palette size={19}/></button>
+      <div className="header-actions">
+        <div className="user-badge"><span className="user-dot"/>{user.email}</div>
+        <button className="icon-btn" aria-label="테마 설정" title="테마 설정" onClick={()=>setShowSettings(true)}><Palette size={19}/></button>
         <button className="signout-btn" onClick={()=>void signOut()} title="로그아웃"><LogOut size={17}/><span>로그아웃</span></button>
         <button className="icon-btn mobile-menu" aria-label="메뉴" onClick={()=>setMobileMenu(!mobileMenu)}><Menu size={21}/></button>
       </div></div></header>
 
-    <main className="main-area"><div className="page-heading"><div><div className="eyebrow">YOUR PACE, YOUR CHECKPOINT</div><h1>{view==="planner"?"나의 데일리 플래너":"오늘의 표지 꾸미기"}<span className="title-sparkle">✳</span></h1>
-      <p>{view==="planner"?"계획이 달라져도 괜찮습니다. 오늘 할 수 있는 만큼만 기록해 보세요.":"마음에 드는 색과 작은 장식으로 나만의 플래너를 만들어 보세요."}</p></div>
-      <div className="user-badge"><span className="user-dot"/>{user.email}</div></div>
+    <main className="main-area">
 
       {alert&&<div className="message-banner" role="alert"><CircleHelp size={17}/><span>{alert}</span><button aria-label="알림 닫기" onClick={()=>setAlert("")}><X size={15}/></button></div>}
       {view==="cover"? <CoverPage cover={cover} setCover={setCover} theme={theme} handleUpload={handleUpload} photoUrls={photoUrls}/> : <>
