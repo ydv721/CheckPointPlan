@@ -22,3 +22,57 @@
 .email-confirmed-link{min-height:49px;padding:0 24px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;background:#7799c6;color:#fff;text-decoration:none;font-size:14px;font-weight:800;transition:background .2s}
 .email-confirmed-link:hover{background:#6689b7}
 .email-confirmed-note{margin:30px 0 0;padding-top:20px;border-top:1px solid #e8ebf0;color:#98a1ad;font-size:11px;line-height:1.7;word-break:keep-all}
+
+
+/* Compact planner header: page identity and account details share the top white bar. */
+html,body{width:100%;overflow-x:clip}
+.app-shell{width:100%;overflow-x:clip}
+.site-header{height:auto;min-height:108px;background:var(--paper)}
+.header-inner{width:100%;min-height:108px;height:auto;display:grid;grid-template-columns:auto minmax(260px,1fr) auto auto;align-items:center;gap:22px;padding:13px 42px}
+.header-page-info{min-width:0}
+.header-page-info .eyebrow{font-size:9px;letter-spacing:.17em}
+.header-page-info h1{font-size:21px;font-weight:900;letter-spacing:-.055em;margin:4px 0 3px;display:flex;align-items:center;gap:8px;line-height:1.2}
+.header-page-info .title-sparkle{font-size:19px}
+.header-page-info p{margin:0;color:var(--ink);opacity:.62;font-size:11px;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.header-inner .nav-links{align-self:stretch;justify-content:center;gap:2px}
+.header-inner .nav-links button{padding:0 11px;font-size:12px;white-space:nowrap}
+.header-inner .header-actions{margin-left:0;gap:7px}
+.header-inner .user-badge{max-width:190px;padding:9px 12px;font-size:10px}
+.main-area{padding-top:22px;padding-bottom:32px}
+.book-spine{width:30px}
+.book-spine span{width:18px;height:2px;border:0;border-radius:2px;background:#b8b2a8;transform:none;box-shadow:none}
+.book-spine:before{display:none}
+
+@media(max-width:1180px){
+  .header-inner{grid-template-columns:auto minmax(210px,1fr) auto auto;gap:13px;padding:12px 25px}
+  .header-inner .user-badge{display:none}
+  .header-page-info h1{font-size:19px}
+  .header-page-info p{font-size:10px}
+  .header-inner .nav-links button{padding:0 9px}
+  .header-inner .header-actions{gap:4px}
+}
+@media(max-width:780px){
+  .site-header{min-height:66px}
+  .header-inner{min-height:66px;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;padding:0 14px}
+  .brand{width:34px;min-width:34px;justify-content:center;gap:0;overflow:hidden}
+  .brand>span:not(.brand-icon),.brand small{display:none}
+  .header-page-info .eyebrow,.header-page-info p{display:none}
+  .header-page-info h1{font-size:16px;margin:0;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .header-page-info .title-sparkle{font-size:15px}
+  .header-inner .nav-links{display:none;position:absolute;top:61px;left:10px;right:10px;z-index:8;background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:8px;box-shadow:0 5px 15px #0001}
+  .header-inner .nav-links.open{display:block}
+  .header-inner .nav-links button{height:44px;width:100%;text-align:left;justify-content:flex-start;padding:0 12px}
+  .header-inner .nav-links button.nav-active:after{display:none}
+  .header-inner .header-actions{gap:4px}
+  .header-inner .user-badge{display:none}
+  .header-inner .signout-btn span{display:none}
+  .header-inner .signout-btn{padding:9px}
+  .header-inner .mobile-menu{display:inline-flex}
+  .main-area{padding:18px 14px 30px}
+}
+@media(max-width:430px){
+  .header-inner{gap:7px;padding:0 11px}
+  .header-page-info h1{font-size:14px}
+  .header-page-info .title-sparkle{font-size:14px}
+  .header-inner .brand-icon{width:31px;height:31px}
+}
