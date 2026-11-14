@@ -231,3 +231,30 @@ html,body{width:100%;overflow-x:clip}
 }
 .small-info-block input:focus{outline:0}
 .small-info-block input::placeholder{color:var(--ink);opacity:.38}
+
+
+/* Give the to-do list only the height it needs and let MEMO use the remaining page. */
+@media(min-width:901px){
+  .right-page{display:flex;flex-direction:column;min-height:0}
+  .right-top{flex:0 0 auto;min-height:0}
+  .todo-header{margin-bottom:4px;padding-bottom:9px}
+  .todo-row{min-height:42px}
+  .todo-text{height:36px}
+  .add-todo{margin-top:9px;padding:8px 12px}
+  .memo-section{
+    display:flex;
+    flex:1 1 auto;
+    flex-direction:column;
+    min-height:0;
+    height:auto;
+    margin-top:20px;
+  }
+  .memo-section textarea{
+    flex:1 1 auto;
+    width:100%;
+    height:auto;
+    min-height:0;
+    resize:none;
+  }
+  .page-footer{flex:0 0 auto;margin-top:10px}
+}
