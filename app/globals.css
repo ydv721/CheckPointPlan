@@ -76,3 +76,24 @@ html,body{width:100%;overflow-x:clip}
   .header-page-info .title-sparkle{font-size:14px}
   .header-inner .brand-icon{width:31px;height:31px}
 }
+
+
+/* Keep date navigation inside the paper's DATE row. */
+.planner-toolbar{justify-content:flex-end}
+.page-date .date-navigation{gap:3px;background:transparent;border:0;border-radius:0;padding:0;min-width:0}
+.page-date .date-navigation input{width:132px;background:transparent;border:0;color:var(--ink);font-size:12px;font-weight:850;padding:3px 0}
+.page-date .date-navigation .icon-btn{width:25px;height:25px}
+.page-date .date-navigation .text-btn{font-size:11px;padding:4px 7px}
+@media(max-width:780px){
+  .page-date{gap:5px}
+  .page-date .date-navigation{gap:1px}
+  .page-date .date-navigation input{width:122px;font-size:11px}
+  .page-date .date-navigation .icon-btn{width:22px;height:24px}
+  .page-date .date-navigation .text-btn{font-size:10px;padding:4px 5px}
+}
+@media(max-width:430px){
+  .page-date .date-navigation input{width:112px;font-size:10px}
+  .page-date .date-navigation .icon-btn{width:20px}
+  .page-date .date-navigation .text-btn{font-size:9px;padding:4px 4px}
+  .page-date .date-navigation svg{width:13px;height:13px}
+}
