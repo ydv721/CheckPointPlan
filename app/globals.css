@@ -270,3 +270,19 @@ html,body{width:100%;overflow-x:clip}
 @media(min-width:901px){
   .left-page > .small-info-block{margin-top:0}
 }
+
+
+/* Widen the free-entry strip toward the center binding without changing the grid below. */
+@media(min-width:901px){
+  .left-page > .small-info-block{
+    margin-right:clamp(-32px,-2.4vw,-18px);
+  }
+  .left-page > .small-info-block input.header-label-input{
+    flex-basis:27%;
+    width:27%;
+  }
+  .left-page > .small-info-block input.header-value-input{
+    flex-basis:73%;
+    width:73%;
+  }
+}
