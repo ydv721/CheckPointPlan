@@ -264,3 +264,9 @@ html,body{width:100%;overflow-x:clip}
 @media(min-width:901px){
   .right-page{padding-left:clamp(68px,6.45vw,87px)}
 }
+
+
+/* Align the custom header field with the start of the right-page to-do area. */
+@media(min-width:901px){
+  .left-page > .small-info-block{margin-top:0}
+}
