@@ -380,3 +380,59 @@ html,body{width:100%;overflow-x:clip}
   .small-info-block input.header-label-input{font-size:13px}
   .small-info-block input.header-value-input{font-size:15px}
 }
+
+
+/* Notebook-style date header: large date, separate D-day column, and a category chip. */
+.page-date{display:grid;grid-template-columns:minmax(0,1fr) 112px;align-items:stretch;gap:14px;min-height:60px;padding:0 0 8px;border-bottom:1px solid var(--line)}
+.date-main{display:flex;flex-direction:column;justify-content:space-between;min-width:0;gap:1px}
+.date-caption,.dday-caption{font-size:10px!important;font-weight:850!important;letter-spacing:.09em!important;text-transform:capitalize;opacity:.72}
+.date-main-row{display:flex;align-items:center;gap:4px;min-width:0}
+.date-step{flex:0 0 20px;width:20px;height:23px;padding:0;display:grid;place-items:center;color:var(--accent);border:0;border-radius:5px;background:transparent;opacity:.72}
+.date-step:hover,.date-today:hover{background:var(--soft);opacity:1}
+.date-display{position:relative;flex:1 1 auto;min-width:0;height:28px;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--accent);cursor:pointer}
+.date-display>span{font-size:clamp(16px,1.55vw,21px)!important;font-weight:900!important;letter-spacing:.18em!important;line-height:1.2;white-space:nowrap;color:var(--ink)}
+.date-display>svg{width:13px;height:13px;opacity:.48}
+.date-display input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.date-today{flex:0 0 auto;border:0;border-radius:5px;padding:4px 6px;color:var(--accent);background:transparent;font-size:10px;font-weight:850;opacity:.75}
+.dday-field{min-width:0;display:flex;flex-direction:column;justify-content:space-between;gap:2px;padding-left:13px;border-left:1px solid var(--line)}
+.dday-field input{width:100%;min-width:0;padding:2px 0 5px;border:0;border-bottom:1px solid var(--line);border-radius:0;outline:0;background:transparent;color:var(--accent);text-align:center;font-size:18px;font-weight:900;letter-spacing:.1em}
+.dday-field input::placeholder{color:var(--ink);opacity:.32;font-size:14px;font-weight:650}
+.dday-field input:focus-visible{box-shadow:0 1px 0 var(--accent);outline:0}
+.small-info-block{align-items:center;gap:13px;margin:8px 0 15px;padding:5px 0 8px;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent}
+.small-info-block input.header-label-input{flex:0 0 auto;width:78px;min-width:65px;max-width:110px;padding:6px 10px;border:0;border-radius:50px;background:var(--soft);color:var(--accent);text-align:center;font-size:10px;font-weight:900;letter-spacing:.1em}
+.small-info-block input.header-value-input{flex:1 1 auto;width:auto;min-width:0;padding:4px 0 5px;background:transparent;border:0;border-radius:0;color:var(--ink);font-size:15px;font-weight:650;line-height:1.5}
+.small-info-block input.header-label-input::placeholder{color:var(--accent);opacity:.62;font-size:10px;font-weight:800}
+.small-info-block input.header-value-input::placeholder{color:var(--ink);opacity:.34;font-size:11px;font-weight:400}
+@media(min-width:901px){
+  .page-date,.todo-header{min-height:60px}
+  .page-date{padding-bottom:8px}
+  .todo-header{align-items:center;padding-bottom:8px}
+  .left-page > .small-info-block{margin-top:8px}
+}
+@media(max-height:760px) and (min-width:901px){
+  .page-date,.todo-header{min-height:54px}
+  .date-display>span{font-size:17px!important}
+  .dday-field input{font-size:16px}
+  .small-info-block{margin-bottom:11px;padding-top:3px;padding-bottom:6px}
+}
+@media(max-width:900px){
+  .page-date{grid-template-columns:minmax(0,1fr) 94px;min-height:58px;gap:10px}
+  .date-display>span{font-size:17px!important;letter-spacing:.13em!important}
+  .date-step{flex-basis:18px;width:18px}
+  .dday-field{padding-left:10px}
+  .dday-field input{font-size:16px}
+  .small-info-block{margin:8px 0 17px}
+}
+@media(max-width:430px){
+  .page-date{grid-template-columns:minmax(0,1fr) 78px;gap:7px}
+  .date-display>span{font-size:15px!important;letter-spacing:.09em!important}
+  .date-display{gap:4px}
+  .date-step{flex-basis:16px;width:16px}
+  .date-step svg{width:13px;height:13px}
+  .date-today{font-size:9px;padding:3px}
+  .dday-field{padding-left:8px}
+  .dday-field input{font-size:14px}
+  .small-info-block{gap:8px}
+  .small-info-block input.header-label-input{width:68px;min-width:58px;padding:5px 7px}
+  .small-info-block input.header-value-input{font-size:13px}
+}
