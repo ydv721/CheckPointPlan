@@ -180,3 +180,36 @@ html,body{width:100%;overflow-x:clip}
   .memo-section textarea{padding:9px}
   .page-footer{margin-top:7px}
 }
+
+
+/* Autosave status lives in the to-do heading; balance both page bottoms on desktop. */
+.todo-header .todo-save-status{
+  display:inline-flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:6px;
+  white-space:nowrap;
+  font-size:10px;
+  opacity:.62;
+}
+.todo-header .todo-save-status .indicator-dot{
+  width:6px;
+  height:6px;
+  flex:0 0 6px;
+}
+@media(min-width:901px){
+  .planner-toolbar{display:none}
+  .book-frame{height:calc(100dvh - 136px)}
+  .left-page{display:flex;flex-direction:column;min-height:0}
+  .workspace-grid{flex:1;min-height:0;align-items:stretch}
+  .time-section{display:flex;flex-direction:column;min-height:0}
+  .time-grid-wrap{flex:1;min-height:0}
+  .time-table{height:100%;grid-template-rows:20px repeat(24,minmax(0,1fr))}
+  .time-hour,.time-cell{height:auto;min-height:0}
+  .notes-stack{min-height:0}
+  .focus-section,.key-section{flex:1;min-height:0;margin:0}
+  .focus-section textarea,.key-section textarea{min-height:0}
+}
+@media(max-width:430px){
+  .todo-header .todo-save-status{font-size:9px;gap:4px}
+}
