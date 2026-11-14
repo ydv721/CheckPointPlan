@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent, type PointerEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import {
-  BookOpen, CalendarDays, Check, Eraser,
+  BookOpen, CalendarDays, Check,
   ImagePlus, LogOut, Menu, Plus,
   Sparkles, Trash2, X, CircleHelp, CheckCircle2, Palette
 } from "lucide-react";
@@ -370,7 +370,6 @@ export default function Planner() {
                   <span>TIME TABLE</span>
                   <div className="time-heading-tools">
                     <div className="marker-colors">{PENS.map((c,i)=><button key={c} type="button" className={tool==="paint"&&pen===c?"marker selected":"marker"} style={{background:c}} aria-label={`형광펜 색상 ${i+1} 선택`} title={["분홍","노랑","연두","하늘","보라"][i]} onClick={()=>{setPen(c);setTool("paint");}}/>)}</div>
-                    <button className={tool==="erase"?"erase-btn selected":"erase-btn"} onClick={()=>setTool(v=>v==="erase"?"paint":"erase")} title="지우개" aria-label="지우개"><Eraser size={14}/></button>
                   </div>
                 </div>
                 <Timetable value={entry.timetable} onChange={timetable=>setEntry(v=>({...v,timetable}))} highlighter={pen} tool={tool}/>
