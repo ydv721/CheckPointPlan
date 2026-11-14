@@ -258,3 +258,9 @@ html,body{width:100%;overflow-x:clip}
   }
   .page-footer{flex:0 0 auto;margin-top:10px}
 }
+
+
+/* Match the inner margins around the planner's center binding. */
+@media(min-width:901px){
+  .right-page{padding-left:clamp(68px,6.45vw,87px)}
+}
