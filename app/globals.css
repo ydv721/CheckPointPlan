@@ -788,3 +788,10 @@ html,body{width:100%;overflow-x:clip}
 @media(max-width:430px){
   .date-picker-trigger{transform:translateY(-1px)}
 }
+
+
+/* Tiny final horizontal adjustment for the calendar icon. */
+.date-picker-trigger{transform:translate(2px,-2px)}
+@media(max-width:430px){
+  .date-picker-trigger{transform:translate(1px,-1px)}
+}
