@@ -436,3 +436,39 @@ html,body{width:100%;overflow-x:clip}
   .small-info-block input.header-label-input{width:68px;min-width:58px;padding:5px 7px}
   .small-info-block input.header-value-input{font-size:13px}
 }
+
+
+/* Replace the category pill with a simple notebook column divider. */
+.small-info-block input.header-label-input{
+  flex:0 0 88px;
+  width:88px;
+  min-width:68px;
+  max-width:110px;
+  padding:4px 12px 5px 0;
+  border:0;
+  border-right:1px solid var(--line);
+  border-radius:0;
+  background:transparent;
+  color:var(--accent);
+  text-align:left;
+  font-size:11px;
+  font-weight:850;
+  letter-spacing:.08em;
+}
+.small-info-block input.header-label-input::placeholder{
+  color:var(--ink);
+  opacity:.38;
+  font-size:11px;
+  font-weight:500;
+}
+.small-info-block input.header-value-input{
+  padding-left:2px;
+}
+@media(max-width:430px){
+  .small-info-block input.header-label-input{
+    flex-basis:72px;
+    width:72px;
+    min-width:60px;
+    padding-right:8px;
+  }
+}
