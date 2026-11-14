@@ -27,5 +27,6 @@
   },
   "engines": {
     "node": ">=22.0.0 <23"
-  }
+  },
+  "description": "A flexible two-page daily planner with Supabase sync and customizable covers."
 }
