@@ -6,7 +6,8 @@
 - 기본 브랜치: `main`
 - 저장소 공개 상태: Public
 - Next.js 앱 소스 및 Supabase 스키마 파일 업로드 확인
-- `.env.example` 및 `.gitignore` 추가
+- `.env.example`, `.gitignore`, `package-lock.json` 추가
+- package-lock lockfileVersion: 3
 - 실제 환경변수 파일 `.env.local`은 저장소에 포함하지 않음
 
 ## 구현 범위
@@ -23,6 +24,17 @@
 - 모바일 반응형 레이아웃
 - Progress/달성률 영역 제외
 
+## 의존성 버전
+
+- Node.js: 22.x
+- Next.js: 15.5.29
+- React / React DOM: 19.1.10
+- TypeScript: 5.9.3
+- ESLint: 9.39.5
+- eslint-config-next: 15.5.29
+
+Next.js 15.5.29는 2026년 11월 3일 공개된 15.5 계열 보안 수정 버전이야.
+
 ## Supabase 구성
 
 - 프로젝트 이름: `checkpoint`
@@ -33,20 +45,35 @@
 - 두 테이블의 RLS 및 사용자별 접근 정책 구성
 - Storage의 사용자별 폴더 접근 정책 구성
 
-## 현재 확인된 검증 상태
+## 자동 빌드 검증
 
-- GitHub 저장소의 소스 파일 및 디렉터리 확인
-- TypeScript/TSX 문법 파서 검사 통과
-- CSS/PostCSS 파서 검사 통과
-- 실제 `npm install`, `npm run typecheck`, `npm run lint`, `npm run build`는 아직 이 환경에서 완료되지 않음
-- 따라서 실제 브라우저에서 로그인, 저장/복원, 표지 이미지 업로드까지 동작한다고 확정할 수 없음
+- GitHub Actions 실행: https://github.com/ydv721/CheckPointPlan/actions/runs/43574228707
+- npm lockfile 생성 및 커밋: 통과
+- `npm ci`: 통과
+- `npm run typecheck`: 통과
+- `npm run lint`: 통과 (경고 3건, 오류 0건)
+- `npm run build`: 통과
+- Next.js 프로덕션 빌드에서 정적 페이지 생성 완료
+
+### 남은 코드 경고
+
+- 사용하지 않는 `ChangeEvent` import
+- 표지 이미지 렌더링의 `<img>` 사용 경고
+- ESLint 설정 파일의 익명 default export 경고
+- CSS Autoprefixer의 `start` 정렬값 호환성 경고
+
+위 항목들은 현재 빌드 실패 원인이 아니며, 기능 안정화 후 정리할 수 있어.
 
 ## Vercel 배포 상태
 
-- Vercel 프로젝트: 아직 생성 및 배포 확인 전
-- 이전 프로젝트 생성 시도에서 연결 팀 권한 오류(403)가 발생했음
-- GitHub 저장소를 Vercel에서 Import하거나, 팀 권한 문제를 해결한 후 프로젝트를 생성해야 함
-- Vercel 환경변수로 `NEXT_PUBLIC_SUPABASE_URL`과 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`를 설정해야 함
+- Vercel 팀: Dabin (Hobby)
+- `checkpoint-planner` 프로젝트: 아직 생성 확인되지 않음
+- Vercel API의 프로젝트 생성 요청은 403 Forbidden으로 거부됨
+- Vercel 프로젝트/배포 목록에서 CHECKPOINT 프로젝트를 찾지 못함
+- 브라우저의 기존 New Project 가져오기 화면은 36분 이상 Loading 상태로 남아 있음
+- 따라서 현재 공개 배포 URL은 없음
+- 사용자가 Vercel 웹 UI에서 기존 가져오기 시도를 취소하고 저장소를 다시 Import해야 함
+- Import 시 Framework Preset Next.js, Root Directory `./`, Node.js 22.x, Supabase 환경변수 2개를 설정해야 함
 
 ## 배포 후 필수 검증
 
