@@ -582,3 +582,70 @@ html,body{width:100%;overflow-x:clip}
   .dday-field{padding-left:8px}
   .dday-value-row input{width:38px}
 }
+
+
+/* Minimal site header: keep only the brand and its tagline. */
+.site-header{height:76px}
+.header-inner{
+  display:flex;
+  align-items:center;
+  height:76px;
+  min-height:76px;
+  padding:0 42px;
+  gap:30px;
+}
+.brand{
+  display:flex;
+  flex:0 0 auto;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:center;
+  gap:1px;
+  overflow:visible;
+  width:auto;
+  min-width:0;
+  padding:0;
+}
+.brand-lockup{display:flex;align-items:center;gap:10px;white-space:nowrap}
+.brand-lockup>span:last-child{font-size:19px;font-weight:900;letter-spacing:.03em}
+.brand small{
+  display:block;
+  margin:0 0 0 44px;
+  padding:0;
+  color:var(--accent);
+  font-size:8px;
+  line-height:1.3;
+  font-weight:850;
+  letter-spacing:.12em;
+  white-space:nowrap;
+}
+.header-inner .nav-links{display:flex;align-self:stretch;align-items:center;justify-content:center;margin-left:auto}
+.header-inner .header-actions{margin-left:0}
+@media(max-width:1180px){
+  .header-inner{display:flex;min-height:76px;height:76px;padding:0 25px;gap:20px}
+}
+@media(max-width:780px){
+  .site-header{height:68px}
+  .header-inner{display:flex;min-height:68px;height:68px;padding:0 14px;gap:12px}
+  .brand{width:auto;min-width:0;flex:0 1 auto;overflow:visible;gap:1px}
+  .brand-lockup{gap:8px}
+  .brand-lockup>span:last-child{font-size:15px}
+  .brand small{display:block;margin-left:39px;font-size:7px;letter-spacing:.09em}
+  .header-inner .nav-links{display:none;position:absolute;top:61px;left:10px;right:10px;z-index:8;background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:8px;box-shadow:0 5px 15px #0001}
+  .header-inner .nav-links.open{display:block}
+  .header-inner .nav-links button{height:44px;width:100%;text-align:left;justify-content:flex-start;padding:0 12px}
+  .header-inner .nav-links button.nav-active:after{display:none}
+  .header-inner .header-actions{margin-left:auto;gap:3px}
+  .header-inner .user-badge{display:none}
+  .header-inner .signout-btn span{display:none}
+  .header-inner .signout-btn{padding:9px}
+  .header-inner .mobile-menu{display:inline-flex}
+  .header-inner .brand-icon{width:30px;height:30px}
+}
+@media(max-width:380px){
+  .header-inner{padding:0 10px;gap:7px}
+  .brand-lockup{gap:6px}
+  .brand-lockup>span:last-child{font-size:13px}
+  .brand small{margin-left:36px;font-size:6px;letter-spacing:.07em}
+  .header-inner .header-actions{gap:1px}
+}
