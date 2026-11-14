@@ -52,7 +52,7 @@ function AuthScreen({ onUser }: { onUser: (u: User) => void }) {
     setBusy(true); setMessage("");
     try {
       if(mode==="signup") {
-        const {data,error}=await client.auth.signUp({email:email.trim(),password});
+        const {data,error}=await client.auth.signUp({email:email.trim(),password,options:{emailRedirectTo:"https://checkpoint-plan.vercel.app/email-confirmed"}});
         if(error) throw error;
         if(data.session?.user) onUser(data.session.user);
         else setMessage("인증 메일을 보냈습니다. 받은편지함에서 이메일 인증을 완료한 후 로그인해 주세요.");
