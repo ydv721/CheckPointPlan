@@ -327,12 +327,7 @@ export default function Planner() {
   if(!user)return <AuthScreen onUser={setUser}/>;
   return <div className="app-shell" style={vars}>
     <header className="site-header"><div className="header-inner">
-      <button className="brand" onClick={()=>setView("planner")}><AppIcon/><span>CHECKPOINT</span><small>YOUR DAILY SPACE</small></button>
-      <div className="header-page-info">
-        <div className="eyebrow">YOUR PACE, YOUR CHECKPOINT</div>
-        <h1>{view==="planner"?"나의 데일리 플래너":"오늘의 표지 꾸미기"}<span className="title-sparkle">✳</span></h1>
-        <p>{view==="planner"?"계획이 달라져도 괜찮습니다. 오늘 할 수 있는 만큼만 기록해 보세요.":"마음에 드는 색과 작은 장식으로 나만의 플래너를 만들어 보세요."}</p>
-      </div>
+      <button className="brand" onClick={()=>setView("planner")}><span className="brand-lockup"><AppIcon/><span>CHECKPOINT</span></span><small>YOUR PACE, YOUR CHECKPOINT</small></button>
       <nav className={mobileMenu?"nav-links open":"nav-links"} aria-label="페이지 이동">
         <button className={view==="planner"?"nav-active":""} onClick={()=>{setView("planner");setMobileMenu(false);}}><BookOpen size={17}/> 플래너</button>
         <button className={view==="cover"?"nav-active":""} onClick={()=>{setView("cover");setMobileMenu(false);}}><Sparkles size={17}/> 표지 꾸미기</button>
