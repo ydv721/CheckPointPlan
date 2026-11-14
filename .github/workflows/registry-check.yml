@@ -1,0 +1,32 @@
+name: CHECKPOINT npm registry diagnostic
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/registry-check.yml"
+  workflow_dispatch:
+
+jobs:
+  registry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check registry endpoint
+        run: |
+          npm config get registry
+          curl --fail --silent --show-error --max-time 15 https://registry.npmjs.org/-/ping
+
+      - name: Check npm ping
+        run: timeout 30s npm ping --fetch-timeout=15000 --fetch-retries=0
+
+      - name: Check required package metadata
+        run: |
+          timeout 30s npm view next@15.5.0 version --fetch-timeout=15000 --fetch-retries=0
+          timeout 30s npm view @supabase/supabase-js@2.76.1 version --fetch-timeout=15000 --fetch-retries=0
+          timeout 30s npm view typescript@5.9.0 version --fetch-timeout=15000 --fetch-retries=0
