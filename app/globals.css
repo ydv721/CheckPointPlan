@@ -719,3 +719,14 @@ html,body{width:100%;overflow-x:clip}
   .dday-field{padding-left:6px}
   .dday-value-row input{width:34px;max-width:34px}
 }
+
+
+/* Keep the calendar picker slightly inset from the right edge of the date column. */
+.date-main-row{padding-right:10px}
+.date-picker-trigger{margin-left:0}
+@media(max-width:900px){
+  .date-main-row{padding-right:7px}
+}
+@media(max-width:430px){
+  .date-main-row{padding-right:5px}
+}
