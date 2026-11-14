@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 import type { User } from "@supabase/supabase-js";
 import {
   BookOpen, CalendarDays, Check, ChevronLeft, ChevronRight, Eraser,
-  Heart, ImagePlus, LogOut, Menu, Plus,
+  ImagePlus, LogOut, Menu, Plus,
   Sparkles, Trash2, X, CircleHelp, CheckCircle2, Palette
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -364,16 +364,20 @@ export default function Planner() {
             <div className="small-info-block"><label><select aria-label="상단 자유 항목 종류" value={entry.headerLabel} onChange={e=>setEntry(v=>({...v,headerLabel:e.target.value}))}>
                 <option>D-DAY</option><option>WEATHER</option><option>SONG</option><option>MOOD</option><option>STICKER</option><option>NOTE</option><option>FREE</option>
               </select></label><input aria-label="상단 자유 항목 내용" placeholder="D-30, 맑음, 오늘의 노래 등 자유롭게" value={entry.headerValue} onChange={e=>setEntry(v=>({...v,headerValue:e.target.value}))} /></div>
-            <div className="paper-section time-section"><div className="section-heading"><span>TIME TABLE</span><small>칸을 클릭하거나 드래그하여 색칠해 보세요.</small></div>
-              <div className="marker-toolbar"><div className="marker-colors">{PENS.map(c=><button key={c} type="button" className={tool==="paint"&&pen===c?"marker selected":"marker"} style={{background:c}} aria-label={`${c} 색 형광펜`} onClick={()=>{setPen(c);setTool("paint");}}/>)}</div>
-              <button className={tool==="erase"?"erase-btn selected":"erase-btn"} onClick={()=>setTool(v=>v==="erase"?"paint":"erase")} title="형광펜 지우기"><Eraser size={16}/><span>지우개</span></button></div>
-              <Timetable value={entry.timetable} onChange={timetable=>setEntry(v=>({...v,timetable}))} highlighter={pen} tool={tool}/>
-            </div>
-            <div className="paper-section focus-section"><div className="section-heading"><span>TODAY&apos;S FOCUS</span></div>
-              <textarea rows={2} placeholder="오늘 꼭 해보고 싶은 일은 무엇인가요?" value={entry.focus} onChange={e=>setEntry(v=>({...v,focus:e.target.value}))} />
-            </div>
-            <div className="paper-section key-section"><div className="section-heading"><span>KEY POINT</span><small>기억하고 싶은 것만 간단히</small></div>
-              <textarea rows={3} placeholder="오늘 배운 것, 중요한 개념, 한 줄 생각..." value={entry.keypoint} onChange={e=>setEntry(v=>({...v,keypoint:e.target.value}))} />
+            <div className="workspace-grid">
+              <div className="paper-section time-section"><div className="section-heading"><span>TIME TABLE</span><small>칸을 클릭하거나 드래그하여 색칠해 보세요.</small></div>
+                <div className="marker-toolbar"><div className="marker-colors">{PENS.map(c=><button key={c} type="button" className={tool==="paint"&&pen===c?"marker selected":"marker"} style={{background:c}} aria-label={`${c} 색 형광펜`} onClick={()=>{setPen(c);setTool("paint");}}/>)}</div>
+                <button className={tool==="erase"?"erase-btn selected":"erase-btn"} onClick={()=>setTool(v=>v==="erase"?"paint":"erase")} title="형광펜 지우기"><Eraser size={16}/><span>지우개</span></button></div>
+                <Timetable value={entry.timetable} onChange={timetable=>setEntry(v=>({...v,timetable}))} highlighter={pen} tool={tool}/>
+              </div>
+              <div className="notes-stack">
+                <div className="paper-section focus-section"><div className="section-heading"><span>TODAY&apos;S FOCUS</span></div>
+                  <textarea rows={2} placeholder="오늘 꼭 해보고 싶은 일은 무엇인가요?" value={entry.focus} onChange={e=>setEntry(v=>({...v,focus:e.target.value}))} />
+                </div>
+                <div className="paper-section key-section"><div className="section-heading"><span>KEY POINT</span><small>기억하고 싶은 것만 간단히</small></div>
+                  <textarea rows={3} placeholder="오늘 배운 것, 중요한 개념, 한 줄 생각..." value={entry.keypoint} onChange={e=>setEntry(v=>({...v,keypoint:e.target.value}))} />
+                </div>
+              </div>
             </div>
           </section>
           <section className="paper-page right-page"><div className="right-top"><div className="section-heading todo-header"><span>TO DO LIST</span><small>작은 할 일부터 하나씩 체크해 보세요.</small></div>
@@ -391,7 +395,6 @@ export default function Planner() {
             <div className="page-footer"><span>YOUR PACE, YOUR WAY.</span><span>✦</span></div>
           </section>
         </div>}
-        <div className="under-book"><span><Heart size={15}/> 건너뛴 날이 있어도 언제든 이어서 작성할 수 있습니다.</span><span>CHECKPOINT · MY DAILY RECORD</span></div>
       </>}
     </main>
 
