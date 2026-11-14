@@ -27,7 +27,7 @@ jobs:
           node-version: 22
 
       - name: Generate npm lockfile
-        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+        run: timeout 180s npm install --package-lock-only --ignore-scripts --no-audit --no-fund --fetch-timeout=30000 --fetch-retries=1
 
       - name: Commit lockfile when missing or changed
         run: |
