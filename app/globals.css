@@ -771,3 +771,13 @@ html,body{width:100%;overflow-x:clip}
   }
   .date-picker-trigger svg{width:23px;height:23px}
 }
+
+
+/* Add a little more breathing room between the date and calendar icon. */
+.date-main-row{gap:16px}
+@media(max-width:900px){
+  .date-main-row{gap:12px}
+}
+@media(max-width:430px){
+  .date-main-row{gap:10px}
+}
