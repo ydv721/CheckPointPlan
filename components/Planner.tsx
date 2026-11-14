@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 import type { User } from "@supabase/supabase-js";
 import {
   BookOpen, CalendarDays, Check, ChevronLeft, ChevronRight, Eraser,
-  Heart, ImagePlus, LogOut, Menu, Plus, Save,
+  Heart, ImagePlus, LogOut, Menu, Plus,
   Sparkles, Trash2, X, CircleHelp, CheckCircle2, Palette
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -194,9 +194,10 @@ export default function Planner() {
   const [loading,setLoading]=useState(false);
   const [hydrated,setHydrated]=useState(false);
   const [settingsHydrated,setSettingsHydrated]=useState(false);
-  const [status,setStatus]=useState("저장 준비가 완료되었습니다.");
+  const [status,setStatus]=useState("5분마다 자동 저장돼요.");
   const [alert,setAlert]=useState("");
   const lastSaved=useRef("");
+  const entryRef=useRef(entry);
   const lastSettings=useRef("");
   const saveVersion=useRef(0);
   const client=useMemo(()=>supabase(),[]);
@@ -241,7 +242,7 @@ export default function Planner() {
           todos:Array.isArray(data.todos)?data.todos:emptyEntry(date).todos,
           memo:data.memo||"",timetable:data.timetable&&typeof data.timetable==="object"?data.timetable:{}
         }:emptyEntry(date);
-        lastSaved.current=JSON.stringify(next);setEntry(next);setHydrated(true);setLoading(false);setStatus("저장되었습니다");
+        lastSaved.current=JSON.stringify(next);setEntry(next);setHydrated(true);setLoading(false);setStatus("5분마다 자동 저장돼요.");
       });
     return()=>{active=false;};
   },[client,user,date]);
@@ -251,23 +252,34 @@ export default function Planner() {
     const currentJson=JSON.stringify(current);
     if(currentJson===lastSaved.current)return;
     const version=++saveVersion.current;
-    setStatus("저장 중입니다...");
+    setStatus("자동 저장 중이에요.");
     const {error}=await client.from("planner_entries").upsert({
       user_id:user.id,entry_date:current.date,date_label:dateView(current.date),header_label:current.headerLabel,
       header_value:current.headerValue,focus:current.focus,keypoint:current.keypoint,
       todos:current.todos,memo:current.memo,timetable:current.timetable,updated_at:new Date().toISOString()
     },{onConflict:"user_id,entry_date"});
     if(version!==saveVersion.current)return;
-    if(error){setStatus("저장에 실패했습니다");setAlert(`기록 저장에 실패했습니다: ${error.message}`);}
-    else{lastSaved.current=currentJson;setStatus("저장되었습니다");}
+    if(error){setStatus("저장하지 못했어요. 다시 시도해 주세요.");setAlert(`기록 저장에 실패했습니다: ${error.message}`);}
+    else{lastSaved.current=currentJson;setStatus("자동 저장되었어요.");}
   },[client,user,hydrated]);
 
   useEffect(()=>{
+    entryRef.current=entry;
+  },[entry]);
+
+  useEffect(()=>{
+    if(!hydrated)return;
+    const timer=window.setInterval(()=>{
+      const current=entryRef.current;
+      if(JSON.stringify(current)!==lastSaved.current)void saveNow(current);
+    },5*60*1000);
+    return()=>window.clearInterval(timer);
+  },[hydrated,saveNow]);
+
+  useEffect(()=>{
     if(!hydrated||JSON.stringify(entry)===lastSaved.current)return;
-    setStatus("변경 사항이 있습니다");
-    const timer=setTimeout(()=>void saveNow(entry),950);
-    return()=>clearTimeout(timer);
-  },[entry,hydrated,saveNow]);
+    setStatus("변경 내용은 5분마다 자동 저장돼요.");
+  },[entry,hydrated]);
 
   useEffect(()=>{
     if(!client||!user||!settingsHydrated)return;
@@ -341,7 +353,7 @@ export default function Planner() {
 
       {alert&&<div className="message-banner" role="alert"><CircleHelp size={17}/><span>{alert}</span><button aria-label="알림 닫기" onClick={()=>setAlert("")}><X size={15}/></button></div>}
       {view==="cover"? <CoverPage cover={cover} setCover={setCover} theme={theme} handleUpload={handleUpload} photoUrls={photoUrls}/> : <>
-        <div className="planner-toolbar"><div className="toolbar-right"><span className="save-indicator"><span className={status==="저장되었습니다"?"indicator-dot saved":"indicator-dot"}/>{status}</span><button className="outline-btn toolbar-save" onClick={()=>void saveNow(entry)}><Save size={16}/> 저장</button></div></div>
+        <div className="planner-toolbar"><div className="toolbar-right"><span className="save-indicator" role="status" aria-live="polite"><span className={status==="자동 저장되었어요."?"indicator-dot saved":"indicator-dot"}/>{status}</span></div></div>
         {loading?<div className="page-loading">페이지를 불러오는 중입니다...</div>:<div className="book-frame">
           <div className="book-spine" aria-hidden="true">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
           <section className="paper-page left-page">
