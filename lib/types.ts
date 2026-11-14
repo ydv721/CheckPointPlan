@@ -14,7 +14,7 @@ export type Entry = {
 export type CoverItem = { id: string; kind: "sticker" | "photo"; value: string; x: number; y: number; size: number };
 export type Cover = { title: string; subtitle: string; items: CoverItem[] };
 export const emptyEntry = (date: string): Entry => ({
-  date, headerLabel: "D-DAY", headerValue: "", focus: "", keypoint: "",
+  date, headerLabel: "", headerValue: "", focus: "", keypoint: "",
   todos: [{ id: "starter-1", title: "", checked: false }, { id: "starter-2", title: "", checked: false }, { id: "starter-3", title: "", checked: false }],
   memo: "", timetable: {}
 });
