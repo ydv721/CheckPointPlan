@@ -834,3 +834,71 @@ html,body{width:100%;overflow-x:clip}
   .marker-colors{gap:5px}
   .marker{width:17px;height:17px;flex-basis:17px}
 }
+
+
+/* Put five pastel highlighter swatches on the TIME TABLE title row. */
+.time-section .time-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:12px;
+}
+.time-heading-tools{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:6px;
+  margin-left:auto;
+  min-width:0;
+}
+.time-heading-tools .marker-colors{
+  display:flex;
+  flex-wrap:nowrap;
+  align-items:center;
+  gap:5px;
+}
+.time-heading-tools .marker{
+  width:17px;
+  height:17px;
+  flex:0 0 17px;
+  border:1px solid #fff;
+  border-radius:3px;
+  padding:0;
+  box-shadow:0 0 0 1px var(--line);
+}
+.time-heading-tools .marker.selected{box-shadow:0 0 0 2px var(--accent)}
+.time-heading-tools .erase-btn{
+  display:grid;
+  place-items:center;
+  flex:0 0 19px;
+  width:19px;
+  height:19px;
+  padding:0;
+  margin:0;
+  border:0;
+  border-radius:4px;
+  background:transparent;
+  color:var(--ink);
+  opacity:.55;
+}
+.time-heading-tools .erase-btn.selected{
+  background:var(--soft);
+  color:var(--accent);
+  opacity:1;
+}
+@media(max-width:900px){
+  .time-section .time-heading{gap:5px;margin-bottom:9px}
+  .time-heading-tools{gap:5px}
+  .time-heading-tools .marker-colors{gap:4px}
+  .time-heading-tools .marker{width:16px;height:16px;flex-basis:16px}
+  .time-heading-tools .erase-btn{width:17px;height:17px;flex-basis:17px}
+}
+@media(max-width:430px){
+  .time-section .time-heading{gap:4px}
+  .time-heading-tools{gap:4px}
+  .time-heading-tools .marker-colors{gap:3px}
+  .time-heading-tools .marker{width:15px;height:15px;flex-basis:15px}
+  .time-heading-tools .erase-btn{width:16px;height:16px;flex-basis:16px}
+  .time-heading-tools .erase-btn svg{width:13px;height:13px}
+}
