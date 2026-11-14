@@ -781,3 +781,10 @@ html,body{width:100%;overflow-x:clip}
 @media(max-width:430px){
   .date-main-row{gap:10px}
 }
+
+
+/* Nudge the calendar icon slightly upward for optical alignment. */
+.date-picker-trigger{transform:translateY(-2px)}
+@media(max-width:430px){
+  .date-picker-trigger{transform:translateY(-1px)}
+}
