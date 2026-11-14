@@ -365,8 +365,8 @@ export default function Planner() {
             </div>
             <div className="small-info-block"><input className="header-label-input" aria-label="상단 항목 이름" maxLength={16} value={entry.headerLabel} onChange={e=>setEntry(v=>({...v,headerLabel:e.target.value}))} /><input className="header-value-input" aria-label="상단 항목 내용" maxLength={100} value={entry.headerValue} onChange={e=>setEntry(v=>({...v,headerValue:e.target.value}))} /></div>
             <div className="workspace-grid">
-              <div className="paper-section time-section"><div className="section-heading"><span>TIME TABLE</span><small>칸을 클릭하거나 드래그하여 색칠해 보세요.</small></div>
-                <div className="marker-toolbar"><div className="marker-colors">{PENS.map(c=><button key={c} type="button" className={tool==="paint"&&pen===c?"marker selected":"marker"} style={{background:c}} aria-label={`${c} 색 형광펜`} onClick={()=>{setPen(c);setTool("paint");}}/>)}</div>
+              <div className="paper-section time-section"><div className="section-heading"><span>TIME TABLE</span></div>
+                <div className="marker-toolbar"><div className="marker-tools-left"><span className="marker-label">형광펜</span><div className="marker-colors">{PENS.map(c=><button key={c} type="button" className={tool==="paint"&&pen===c?"marker selected":"marker"} style={{background:c}} aria-label={`${c} 색 형광펜`} onClick={()=>{setPen(c);setTool("paint");}}/>)}</div></div>
                 <button className={tool==="erase"?"erase-btn selected":"erase-btn"} onClick={()=>setTool(v=>v==="erase"?"paint":"erase")} title="형광펜 지우기"><Eraser size={16}/><span>지우개</span></button></div>
                 <Timetable value={entry.timetable} onChange={timetable=>setEntry(v=>({...v,timetable}))} highlighter={pen} tool={tool}/>
               </div>
