@@ -72,7 +72,6 @@ function AuthScreen({ onUser }: { onUser: (u: User) => void }) {
         <div className="auth-cover-center"><span>YOUR LITTLE STUDY JOURNAL</span><h1>CHECK<br/>POINT<span className="gold-dot">.</span></h1>
           <p>YOUR PACE, YOUR CHECKPOINT.</p></div><div className="auth-bottom">A PLACE TO BEGIN AGAIN — EVERY DAY.</div>
       </div>
-      <p className="auth-caption">계획대로 되지 않아도 괜찮습니다. 오늘의 페이지를 다시 펼치면 됩니다.</p>
     </div>
     <div className="auth-right"><div className="auth-card"><div className="mini-brand"><AppIcon/> CHECKPOINT</div>
       <div className="eyebrow">WELCOME TO YOUR SPACE</div>
@@ -88,7 +87,7 @@ function AuthScreen({ onUser }: { onUser: (u: User) => void }) {
       <div className="auth-switch">{mode==="login"?"아직 계정이 없으신가요?":"이미 계정이 있으신가요?"}
         <button type="button" onClick={()=>{setMode(v=>v==="login"?"signup":"login");setMessage("");}}>{mode==="login"?"회원가입":"로그인"}</button>
       </div>
-      <div className="auth-footnote"><Sparkles size={14}/> 매일 완벽할 필요는 없습니다. 기록은 언제든 이어갈 수 있습니다.</div>
+      <div className="auth-footnote"><Sparkles size={14}/> 매일 완벽할 필요는 없습니다. 잠시 멈췄더라도, 언제든 그 자리에서 다시 시작할 수 있습니다.</div>
     </div></div>
   </div>;
 }
