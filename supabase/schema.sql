@@ -3,6 +3,7 @@ create table if not exists public.planner_entries (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   entry_date date not null,
+  dday text not null default '',
   date_label text not null default '',
   header_label text not null default '',
   header_value text not null default '',
