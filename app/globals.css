@@ -97,3 +97,86 @@ html,body{width:100%;overflow-x:clip}
   .page-date .date-navigation .text-btn{font-size:9px;padding:4px 4px}
   .page-date .date-navigation svg{width:13px;height:13px}
 }
+
+
+/* Compact desktop planner: timetable on the left, writing areas on the right. */
+@media(min-width:781px){
+  .main-area{padding:12px 42px 16px}
+  .planner-toolbar{margin-bottom:10px}
+  .book-frame{height:calc(100dvh - 158px);min-height:0;align-items:stretch}
+  .paper-page{height:100%;min-height:0;padding:18px 28px;overflow:hidden}
+  .left-page{padding-right:36px}
+  .right-page{padding-left:39px}
+  .workspace-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(165px,.9fr);gap:16px;align-items:stretch}
+  .time-section{min-width:0;margin-bottom:0}
+  .time-section .section-heading{margin-bottom:9px}
+  .time-section .section-heading small{font-size:9px}
+  .marker-toolbar{margin-bottom:7px}
+  .marker-colors{gap:6px}
+  .marker{width:18px;height:18px}
+  .time-table{grid-template-columns:40px repeat(6,minmax(0,1fr))}
+  .time-head{height:20px}
+  .time-hour,.time-cell{height:clamp(12px,1.85vh,16px)}
+  .notes-stack{display:flex;flex-direction:column;gap:12px;min-width:0}
+  .focus-section,.key-section{display:flex;flex:1;min-height:0;flex-direction:column;margin:0}
+  .focus-section .section-heading,.key-section .section-heading{margin-bottom:7px}
+  .focus-section textarea,.key-section textarea{flex:1;min-height:0;height:100%;resize:none;padding:10px}
+  .right-top{min-height:0;flex:1}
+  .todo-header{padding-bottom:8px}
+  .todo-row{min-height:42px}
+  .todo-text{height:36px}
+  .add-todo{padding:8px 12px;margin-top:10px}
+  .memo-section{min-height:0;height:140px;flex:0 0 140px;margin-top:14px}
+  .memo-section textarea{min-height:0;padding:12px;resize:none}
+  .page-footer{margin-top:9px}
+  .under-book{display:none}
+}
+@media(max-width:1180px) and (min-width:901px){
+  .main-area{padding-left:25px;padding-right:25px}
+  .paper-page{padding-left:24px;padding-right:24px}
+  .workspace-grid{grid-template-columns:minmax(0,1.35fr) minmax(150px,.9fr);gap:12px}
+  .left-page{padding-right:30px}
+  .right-page{padding-left:34px}
+  .marker{width:17px;height:17px}
+  .time-table{grid-template-columns:34px repeat(6,minmax(0,1fr))}
+  .section-heading small{font-size:9px}
+  .memo-section{height:125px;flex-basis:125px}
+}
+@media(max-width:900px) and (min-width:781px){
+  .book-frame{height:auto;min-height:0}
+  .paper-page{height:auto;min-height:0;overflow:visible;padding:22px}
+  .workspace-grid{grid-template-columns:minmax(0,1fr);gap:0}
+  .notes-stack{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+  .focus-section,.key-section{min-height:0}
+  .focus-section textarea,.key-section textarea{height:100px;min-height:100px;resize:vertical}
+  .time-hour,.time-cell{height:16px}
+  .right-top{min-height:0}
+  .memo-section{height:140px;flex-basis:140px}
+}
+@media(max-width:780px){
+  .book-frame{height:auto;min-height:0}
+  .paper-page{height:auto;min-height:unset;overflow:visible}
+  .workspace-grid{grid-template-columns:minmax(0,1fr);gap:0}
+  .notes-stack{display:flex;flex-direction:column;gap:0;margin-top:16px}
+  .focus-section,.key-section{margin-bottom:18px}
+  .focus-section textarea,.key-section textarea{height:auto;min-height:90px;resize:vertical}
+  .time-hour,.time-cell{height:22px}
+  .right-top{min-height:385px}
+  .memo-section{height:180px;flex-basis:auto}
+  .under-book{display:none}
+}
+@media(max-height:760px) and (min-width:901px){
+  .paper-page{padding-top:14px;padding-bottom:14px}
+  .page-date{padding-bottom:8px}
+  .small-info-block{margin:9px 0 12px;padding:7px 10px}
+  .time-head{height:18px}
+  .time-hour,.time-cell{height:clamp(11px,1.65vh,13px)}
+  .marker{width:16px;height:16px}
+  .marker-toolbar{margin-bottom:5px}
+  .right-top{min-height:0}
+  .todo-row{min-height:36px}
+  .todo-text{height:32px}
+  .memo-section{height:115px;flex-basis:115px;margin-top:10px}
+  .memo-section textarea{padding:9px}
+  .page-footer{margin-top:7px}
+}
