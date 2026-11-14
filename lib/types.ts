@@ -3,6 +3,7 @@ export type Todo = { id: string; title: string; checked: boolean };
 export type Timetable = Record<string, string>;
 export type Entry = {
   date: string;
+  dday: string;
   headerLabel: string;
   headerValue: string;
   focus: string;
@@ -14,7 +15,7 @@ export type Entry = {
 export type CoverItem = { id: string; kind: "sticker" | "photo"; value: string; x: number; y: number; size: number };
 export type Cover = { title: string; subtitle: string; items: CoverItem[] };
 export const emptyEntry = (date: string): Entry => ({
-  date, headerLabel: "", headerValue: "", focus: "", keypoint: "",
+  date, dday: "", headerLabel: "", headerValue: "", focus: "", keypoint: "",
   todos: [{ id: "starter-1", title: "", checked: false }, { id: "starter-2", title: "", checked: false }, { id: "starter-3", title: "", checked: false }],
   memo: "", timetable: {}
 });
