@@ -286,3 +286,25 @@ html,body{width:100%;overflow-x:clip}
     width:73%;
   }
 }
+
+
+/* Allocate more vertical space to the to-do area above MEMO. */
+@media(min-width:901px){
+  .right-top{
+    flex:1.15 1 0;
+    min-height:200px;
+  }
+  .memo-section{
+    flex:.85 1 0;
+    min-height:130px;
+    height:auto;
+    margin-top:14px;
+  }
+  .memo-section textarea{
+    min-height:0;
+  }
+}
+@media(max-height:760px) and (min-width:901px){
+  .right-top{min-height:175px}
+  .memo-section{min-height:105px;margin-top:10px}
+}
