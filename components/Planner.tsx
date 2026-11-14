@@ -260,7 +260,7 @@ export default function Planner() {
     },{onConflict:"user_id,entry_date"});
     if(version!==saveVersion.current)return;
     if(error){setStatus("저장하지 못했어요. 다시 시도해 주세요.");setAlert(`기록 저장에 실패했습니다: ${error.message}`);}
-    else{lastSaved.current=currentJson;setStatus("자동 저장되었어요.");}
+    else{lastSaved.current=currentJson;setStatus(JSON.stringify(entryRef.current)===currentJson?"자동 저장되었어요.":"변경 내용은 5분마다 자동 저장돼요.");}
   },[client,user,hydrated]);
 
   useEffect(()=>{
