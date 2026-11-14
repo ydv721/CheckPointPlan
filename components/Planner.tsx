@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent, type PointerEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import {
-  BookOpen, CalendarDays, Check, ChevronLeft, ChevronRight, Eraser,
+  BookOpen, CalendarDays, Check, Eraser,
   ImagePlus, LogOut, Menu, Plus,
   Sparkles, Trash2, X, CircleHelp, CheckCircle2, Palette
 } from "lucide-react";
@@ -19,11 +19,6 @@ const today = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 const uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-const changeDay = (date: string, amount: number) => {
-  const [y,m,d] = date.split("-").map(Number);
-  const next = new Date(y,m-1,d + amount);
-  return `${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,"0")}-${String(next.getDate()).padStart(2,"0")}`;
-};
 const dateView = (date: string) => {
   const [y,m,d] = date.split("-").map(Number);
   return `${y}년 ${m}월 ${d}일 ${DAYS[new Date(y,m-1,d).getDay()]}요일`;
@@ -357,13 +352,21 @@ export default function Planner() {
           <div className="book-spine" aria-hidden="true">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
           <section className="paper-page left-page">
             <div className="page-date">
-              <div className="date-main"><span className="date-caption">Date</span><div className="date-main-row">
-                <button className="date-step" aria-label="이전 날짜" onClick={()=>{void saveNow(entry);setDate(changeDay(date,-1));}}><ChevronLeft size={15}/></button>
-                <label className="date-display" title="날짜 선택"><span>{date.replace(/-/g," ")}</span><CalendarDays size={14}/><input aria-label="날짜 선택" type="date" value={date} onChange={e=>{void saveNow(entry);setDate(e.target.value);}}/></label>
-                <button className="date-step" aria-label="다음 날짜" onClick={()=>{void saveNow(entry);setDate(changeDay(date,1));}}><ChevronRight size={15}/></button>
-                <button className="date-today" onClick={()=>{void saveNow(entry);setDate(today());}}>오늘</button>
-              </div></div>
-              <div className="dday-field"><span className="dday-caption">D-day</span><input aria-label="D-day" maxLength={16} placeholder="D-21" value={entry.dday} onChange={e=>setEntry(v=>({...v,dday:e.target.value}))}/></div>
+              <div className="date-main">
+                <div className="date-main-row">
+                  <span className="date-value">{date.replace(/-/g," ")}</span>
+                  <label className="date-picker-trigger" title="달력에서 날짜 선택">
+                    <CalendarDays size={16}/>
+                    <input aria-label="날짜 선택" type="date" value={date} onChange={e=>{void saveNow(entry);setDate(e.target.value);}}/>
+                  </label>
+                </div>
+              </div>
+              <div className="dday-field">
+                <div className="dday-value-row">
+                  <span className="dday-prefix">D-</span>
+                  <input aria-label="D-day 숫자" type="text" inputMode="numeric" maxLength={4} value={entry.dday.replace(/^D-/i,"").replace(/^D\+/i,"")} onChange={e=>{const value=e.target.value.replace(/\D/g,"").slice(0,4);setEntry(v=>({...v,dday:value?`D-${value}`:""}));}}/>
+                </div>
+              </div>
             </div>
             <div className="small-info-block"><input className="header-label-input" aria-label="상단 항목 이름" maxLength={16} value={entry.headerLabel} onChange={e=>setEntry(v=>({...v,headerLabel:e.target.value}))} /><input className="header-value-input" aria-label="상단 항목 내용" maxLength={100} value={entry.headerValue} onChange={e=>setEntry(v=>({...v,headerValue:e.target.value}))} /></div>
             <div className="workspace-grid">
