@@ -649,3 +649,73 @@ html,body{width:100%;overflow-x:clip}
   .brand small{margin-left:36px;font-size:6px;letter-spacing:.07em}
   .header-inner .header-actions{gap:1px}
 }
+
+
+/* Make the date and D-day typography fill their header columns boldly. */
+.page-date{
+  grid-template-columns:minmax(0,1fr) minmax(104px,112px);
+  gap:9px;
+  min-height:76px;
+}
+.date-main,.date-main-row{width:100%;min-width:0}
+.date-main-row{justify-content:space-between;gap:4px}
+.date-value{
+  flex:1 1 auto;
+  min-width:0;
+  text-align:center;
+  font-size:clamp(34px,3vw,40px)!important;
+  font-weight:950!important;
+  letter-spacing:.12em!important;
+  line-height:1.05!important;
+}
+.date-picker-trigger{
+  flex:0 0 22px;
+  width:22px;
+  height:26px;
+  margin-left:2px;
+}
+.date-picker-trigger svg{width:16px;height:16px}
+.dday-field{padding-left:9px;justify-content:center}
+.dday-value-row{width:100%;justify-content:center;gap:0}
+.dday-prefix,.dday-value-row input{
+  font-size:clamp(34px,3vw,40px)!important;
+  font-weight:950!important;
+  line-height:1.05!important;
+  letter-spacing:.02em!important;
+}
+.dday-prefix{flex:0 0 auto}
+.dday-value-row input{
+  flex:1 1 auto;
+  width:48px;
+  max-width:58px;
+  min-width:0;
+  text-align:left;
+}
+@media(max-width:900px){
+  .page-date{
+    grid-template-columns:minmax(0,1fr) minmax(86px,94px);
+    min-height:70px;
+    gap:7px;
+  }
+  .date-value,.dday-prefix,.dday-value-row input{
+    font-size:clamp(27px,8.5vw,36px)!important;
+  }
+  .date-value{letter-spacing:.1em!important}
+  .dday-field{padding-left:7px}
+  .dday-value-row input{max-width:42px;width:42px}
+}
+@media(max-width:430px){
+  .page-date{
+    grid-template-columns:minmax(0,1fr) 80px;
+    min-height:66px;
+    gap:6px;
+  }
+  .date-value,.dday-prefix,.dday-value-row input{
+    font-size:clamp(27px,9vw,34px)!important;
+  }
+  .date-value{letter-spacing:.09em!important}
+  .date-picker-trigger{flex-basis:19px;width:19px;margin-left:1px}
+  .date-picker-trigger svg{width:14px;height:14px}
+  .dday-field{padding-left:6px}
+  .dday-value-row input{width:34px;max-width:34px}
+}
