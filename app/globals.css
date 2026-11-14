@@ -288,23 +288,38 @@ html,body{width:100%;overflow-x:clip}
 }
 
 
-/* Allocate more vertical space to the to-do area above MEMO. */
+/* Match the DATE and TO DO title rows without stretching the full to-do list. */
 @media(min-width:901px){
+  .page-date,
+  .todo-header{
+    box-sizing:border-box;
+    min-height:39px;
+  }
+  .page-date{
+    align-items:center;
+    padding-bottom:13px;
+  }
+  .todo-header{
+    align-items:center;
+    padding-bottom:13px;
+    margin-bottom:4px;
+  }
   .right-top{
-    flex:1.15 1 0;
-    min-height:200px;
-  }
-  .memo-section{
-    flex:.85 1 0;
-    min-height:130px;
-    height:auto;
-    margin-top:14px;
-  }
-  .memo-section textarea{
+    flex:0 0 auto;
     min-height:0;
   }
+  .memo-section{
+    flex:1 1 auto;
+    min-height:0;
+    height:auto;
+    margin-top:20px;
+  }
+  .memo-section textarea{min-height:0}
 }
 @media(max-height:760px) and (min-width:901px){
-  .right-top{min-height:175px}
-  .memo-section{min-height:105px;margin-top:10px}
+  .page-date{padding-bottom:8px}
+  .todo-header{
+    min-height:34px;
+    padding-bottom:8px;
+  }
 }
