@@ -472,3 +472,113 @@ html,body{width:100%;overflow-x:clip}
     padding-right:8px;
   }
 }
+
+
+/* Minimal date header: date + calendar picker, and a consistent D- value. */
+.page-date{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 112px;
+  align-items:center;
+  gap:14px;
+  min-height:60px;
+  padding:0 0 8px;
+  border-bottom:1px solid var(--line);
+}
+.date-main{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-width:0;
+  height:100%;
+}
+.date-main-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  min-width:0;
+}
+.date-value{
+  color:var(--ink);
+  font-size:clamp(20px,2vw,25px)!important;
+  font-weight:900!important;
+  letter-spacing:.15em!important;
+  line-height:1.2;
+  white-space:nowrap;
+}
+.date-picker-trigger{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 24px;
+  width:24px;
+  height:24px;
+  color:var(--accent);
+  opacity:.68;
+  cursor:pointer;
+}
+.date-picker-trigger:hover{opacity:1}
+.date-picker-trigger input{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  opacity:0;
+  cursor:pointer;
+}
+.dday-field{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-width:0;
+  height:100%;
+  padding-left:13px;
+  border-left:1px solid var(--line);
+}
+.dday-value-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:1px;
+  width:100%;
+  min-width:0;
+}
+.dday-prefix,
+.dday-value-row input{
+  color:var(--accent);
+  font-size:clamp(20px,2vw,25px)!important;
+  font-weight:900!important;
+  line-height:1.2;
+  letter-spacing:.04em;
+}
+.dday-prefix{white-space:pre}
+.dday-value-row input{
+  width:54px;
+  min-width:0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  outline:0;
+  background:transparent;
+  text-align:left;
+}
+.dday-value-row input:focus-visible{box-shadow:0 1px 0 var(--accent)}
+@media(max-height:760px) and (min-width:901px){
+  .page-date{min-height:54px}
+  .date-value,.dday-prefix,.dday-value-row input{font-size:20px!important}
+}
+@media(max-width:900px){
+  .page-date{grid-template-columns:minmax(0,1fr) 94px;min-height:58px;gap:10px}
+  .date-value,.dday-prefix,.dday-value-row input{font-size:20px!important}
+  .dday-field{padding-left:10px}
+}
+@media(max-width:430px){
+  .page-date{grid-template-columns:minmax(0,1fr) 78px;gap:7px}
+  .date-main-row{gap:6px}
+  .date-value,.dday-prefix,.dday-value-row input{font-size:17px!important;letter-spacing:.08em!important}
+  .date-picker-trigger{flex-basis:21px;width:21px}
+  .date-picker-trigger svg{width:14px;height:14px}
+  .dday-field{padding-left:8px}
+  .dday-value-row input{width:38px}
+}
