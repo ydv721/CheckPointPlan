@@ -323,3 +323,60 @@ html,body{width:100%;overflow-x:clip}
     padding-bottom:8px;
   }
 }
+
+
+/* Paper-like custom header fields: transparent inputs with a single writing line. */
+.small-info-block{
+  display:flex;
+  align-items:baseline;
+  gap:14px;
+  margin:0 0 18px;
+  padding:5px 2px 8px;
+  background:transparent;
+  border:0;
+  border-bottom:1px solid var(--line);
+  border-radius:0;
+}
+.small-info-block input,
+.small-info-block input.header-label-input,
+.small-info-block input.header-value-input{
+  background:transparent;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+  outline:0;
+  padding:3px 0 5px;
+  color:var(--ink);
+}
+.small-info-block input.header-label-input{
+  flex:0 1 27%;
+  width:27%;
+  min-width:72px;
+  max-width:145px;
+  font-size:14px;
+  line-height:1.5;
+  font-weight:800;
+  letter-spacing:.01em;
+}
+.small-info-block input.header-value-input{
+  flex:1 1 73%;
+  width:73%;
+  min-width:0;
+  font-size:16px;
+  line-height:1.5;
+  font-weight:600;
+}
+.small-info-block input::placeholder{
+  color:var(--ink);
+  opacity:.34;
+  font-size:12px;
+  font-weight:400;
+}
+.small-info-block input:focus-visible{
+  box-shadow:0 1px 0 var(--accent);
+}
+@media(max-width:900px){
+  .small-info-block{margin:10px 0 18px}
+  .small-info-block input.header-label-input{font-size:13px}
+  .small-info-block input.header-value-input{font-size:15px}
+}
