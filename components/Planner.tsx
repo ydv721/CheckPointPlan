@@ -360,9 +360,7 @@ export default function Planner() {
               <CalendarDays size={15}/><input aria-label="날짜 선택" type="date" value={date} onChange={e=>{void saveNow(entry);setDate(e.target.value);}}/>
               <button className="icon-btn" aria-label="다음 날짜" onClick={()=>{void saveNow(entry);setDate(changeDay(date,1));}}><ChevronRight size={17}/></button>
               <button className="text-btn" onClick={()=>{void saveNow(entry);setDate(today());}}>오늘</button></div></div>
-            <div className="small-info-block"><label><select aria-label="상단 자유 항목 종류" value={entry.headerLabel} onChange={e=>setEntry(v=>({...v,headerLabel:e.target.value}))}>
-                <option>D-DAY</option><option>WEATHER</option><option>SONG</option><option>MOOD</option><option>STICKER</option><option>NOTE</option><option>FREE</option>
-              </select></label><input aria-label="상단 자유 항목 내용" placeholder="D-30, 맑음, 오늘의 노래 등 자유롭게" value={entry.headerValue} onChange={e=>setEntry(v=>({...v,headerValue:e.target.value}))} /></div>
+            <div className="small-info-block"><input className="header-label-input" aria-label="상단 항목 이름" placeholder="항목 이름" value={entry.headerLabel} onChange={e=>setEntry(v=>({...v,headerLabel:e.target.value}))} /><input className="header-value-input" aria-label="상단 항목 내용" placeholder="원하는 내용을 자유롭게 입력해 주세요." value={entry.headerValue} onChange={e=>setEntry(v=>({...v,headerValue:e.target.value}))} /></div>
             <div className="workspace-grid">
               <div className="paper-section time-section"><div className="section-heading"><span>TIME TABLE</span><small>칸을 클릭하거나 드래그하여 색칠해 보세요.</small></div>
                 <div className="marker-toolbar"><div className="marker-colors">{PENS.map(c=><button key={c} type="button" className={tool==="paint"&&pen===c?"marker selected":"marker"} style={{background:c}} aria-label={`${c} 색 형광펜`} onClick={()=>{setPen(c);setTool("paint");}}/>)}</div>
