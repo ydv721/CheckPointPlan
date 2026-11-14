@@ -902,3 +902,16 @@ html,body{width:100%;overflow-x:clip}
   .time-heading-tools .erase-btn{width:16px;height:16px;flex-basis:16px}
   .time-heading-tools .erase-btn svg{width:13px;height:13px}
 }
+
+
+/* Shorten TODAY'S FOCUS and give the saved space to KEY POINT. */
+@media(min-width:901px){
+  .notes-stack .focus-section{flex:0.8}
+  .notes-stack .key-section{flex:1.2}
+}
+@media(max-width:900px) and (min-width:781px){
+  .notes-stack .focus-section textarea{height:82px;min-height:82px}
+}
+@media(max-width:780px){
+  .notes-stack .focus-section textarea{min-height:80px}
+}
