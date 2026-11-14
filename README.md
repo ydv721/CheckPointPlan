@@ -1,102 +1,63 @@
 # CHECKPOINT
 
-내 속도로 기록하는 데일리 플래너. PC에서는 펼친 책 형태의 좌우 2페이지 레이아웃으로 표시돼.
+계획을 못 지킨 날에도 다시 시작하기 쉬운 데일리 스터디 플래너.
 
-## 주요 기능
+**Next.js 15 · React 19 · TypeScript · Supabase Auth/PostgreSQL/Storage · Vercel**
 
-- 날짜별 데일리 플래너
-- 왼쪽 페이지: 날짜, 오늘의 목표, Key Point, 시간표
-- 오른쪽 페이지: To-do List, 메모
-- 할 일 추가·완료 체크
-- 시간표 칸별 색상 표시
-- 화이트·핑크·블루·블랙·사용자 지정 테마
-- 표지 제목·부제 편집, 스티커 및 이미지 배치
-- Supabase 이메일 회원가입·로그인
-- Supabase를 이용한 사용자별 플래너 데이터 저장
-- 모바일 반응형 레이아웃
+## 구현 기능
 
-## 기술 스택
+- 종이 플래너의 **양쪽 페이지 레이아웃**. 모바일에서는 세로 배치
+- 날짜 이동과 날짜별 자동 저장
+- 날짜 옆의 자유 항목(D-DAY·날씨·노래·기분·스티커·메모·자유 입력)
+- 클릭·드래그 10분 단위 형광펜 시간표, 색상과 지우개
+- 넓은 To-do List: 추가·삭제·완료 체크
+- Today's Focus, Key Point, Memo
+- **화이트·핑크·블루·블랙·커스텀 HEX** 테마 및 표지 색 연동
+- 스티커·이미지 업로드·드래그 위치 조절·크기 조절이 가능한 표지
+- Supabase 이메일 로그인 및 회원가입
+- 사용자별 데이터 저장, RLS, 비공개 사용자별 이미지 저장소
+- **Progress/달성률 영역 없음**
 
-- Next.js 15 / React 19
-- TypeScript
-- CSS
-- Supabase Auth / PostgreSQL / Storage
-- lucide-react
-
-## 로컬 실행
-
-Node.js 20 이상을 권장해.
+## 로컬에서 실행
 
 ```bash
 npm install
 cp .env.example .env.local
+# .env.local에 Supabase 프로젝트 URL, publishable key 입력
 npm run dev
 ```
 
-Windows PowerShell에서는 아래처럼 환경 파일을 복사할 수 있어.
+Windows PowerShell에서는 `Copy-Item .env.example .env.local` 사용.
 
-```powershell
-Copy-Item .env.example .env.local
-npm install
-npm run dev
+```text
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 ```
 
-브라우저에서 `http://localhost:3000`을 열어.
+`service_role` 또는 DB 비밀번호를 클라이언트 환경변수로 설정하지 마세요. Supabase 프로젝트에는 `supabase/schema.sql`의 테이블과 정책이 준비되어 있어야 합니다. 기존 CHECKPOINT Supabase 프로젝트의 `planner_entries` 및 `planner_settings`는 별도 적용됩니다.
 
-## 환경 변수
-
-`.env.local`에 Supabase 프로젝트 값을 입력해.
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_YOUR_KEY
-```
-
-브라우저에 노출되는 publishable key만 사용해. `service_role` 또는 secret key를 `NEXT_PUBLIC_*` 변수에 넣거나 Git에 커밋하면 안 돼.
-
-## Supabase 설정
-
-새 Supabase 프로젝트를 사용하는 경우 SQL Editor에서 `supabase/schema.sql`을 한 번 실행해.
-
-이 스키마는 다음 리소스를 생성해.
-
-- `public.planner_entries`: 날짜별 플래너 데이터
-- `public.planner_settings`: 테마 및 표지 설정
-- `checkpoint-covers`: 비공개 표지 이미지 버킷
-- 사용자별 데이터 접근을 제한하는 RLS 정책과 Storage 정책
-
-이미 CHECKPOINT용 Supabase 프로젝트에 해당 테이블과 정책을 적용했다면 스키마를 다시 실행하지 마. 기존 데이터베이스에 중복 정책을 만들 수 있어.
-
-Supabase Authentication의 URL Configuration에서 로컬 주소와 배포 주소를 Site URL / Redirect URLs에 등록해.
-
-## 검사 및 빌드
-
-```bash
-npm run typecheck
-npm run lint
-npm run build
-```
+Supabase Authentication에서 이메일 인증을 사용 중이라면 가입 후 메일 인증이 필요합니다. 배포 후 `Authentication > URL Configuration`에서 Site URL을 실제 Vercel 주소로 설정하고 Redirect URLs에 배포 주소를 허용하세요.
 
 ## Vercel 배포
 
-1. Vercel에서 이 GitHub 저장소를 Import해.
-2. Root Directory는 저장소 최상위(`./`)로 설정해.
-3. Framework Preset은 Next.js로 선택해.
-4. `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 환경 변수를 등록해.
-5. Deploy를 실행해.
-6. 배포 도메인을 Supabase Authentication의 Redirect URLs에도 추가해.
+1. GitHub의 `ydv721/checkpoint-planner` 저장소에 이 프로젝트의 파일을 업로드합니다.
+2. Vercel에서 GitHub 저장소를 연결하여 새 프로젝트를 만듭니다. Framework Preset은 Next.js입니다.
+3. `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`를 Vercel 환경변수로 설정합니다.
+4. Deploy 후 정상 접속과 로그인, 날짜별 자동 저장을 확인합니다.
+5. Supabase Auth의 Site URL 및 Redirect URLs를 배포된 URL로 업데이트합니다.
 
-## 프로젝트 구조
+## 보안과 한계
 
-```text
-app/                  Next.js 페이지 및 전역 스타일
-components/Planner.tsx 플래너 UI와 상호작용
-lib/                  Supabase 클라이언트 및 타입
-supabase/schema.sql   신규 Supabase 프로젝트용 DB/RLS/Storage 스키마
-```
+- 인증 사용자는 본인 `user_id` 데이터만 읽거나 수정할 수 있어야 하며, RLS 정책으로 제한합니다.
+- 표지 이미지는 **private** Storage bucket에 저장하고 사용자 ID 폴더에 접근 제한합니다. 화면에는 만료되는 Signed URL을 사용합니다.
+- 비밀번호는 앱 코드나 DB의 일반 테이블에 저장하지 않고 Supabase Auth가 관리합니다.
+- 이미지 업로드는 JPEG/PNG/WEBP/GIF 및 5MB 이하로 제한합니다.
+- 인프라 키 설정, 최종 배포, 이메일 인증과 복구 흐름은 서비스 환경에서 검증해야 합니다.
 
-## 데이터 및 보안
+## 작업 파일
 
-플래너 데이터는 로그인한 사용자 계정에 연결돼. 데이터베이스와 Storage 접근은 Supabase RLS 정책으로 사용자별 제한을 적용해. 표지 이미지는 비공개 Storage 버킷에 저장하고 서명 URL로 표시해.
-
-현재 저장소에는 실제 배포 환경의 비밀 키나 `.env.local` 파일을 포함하지 않아.
+- `components/Planner.tsx` – 인증·플래너·표지·테마 UI
+- `app/globals.css` – 화면 스타일과 모바일 반응형
+- `lib/supabase.ts` – Supabase 클라이언트
+- `lib/types.ts` – 데이터 타입 및 기본 테마
+- `supabase/schema.sql` – 초기 테이블/정책 스키마 참고 파일

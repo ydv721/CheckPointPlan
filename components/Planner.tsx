@@ -1,0 +1,393 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent, type PointerEvent } from "react";
+import type { User } from "@supabase/supabase-js";
+import {
+  BookOpen, CalendarDays, Check, ChevronLeft, ChevronRight, Eraser,
+  Heart, ImagePlus, LogOut, Menu, Plus, Save,
+  Sparkles, Trash2, X, CircleHelp, CheckCircle2, Palette, ArrowRight
+} from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { defaultCover, emptyEntry, STICKERS, themes, type Cover, type CoverItem, type Entry, type ThemeName } from "@/lib/types";
+
+const HOURS = [...Array.from({ length: 18 }, (_, i) => i + 6), 0, 1, 2, 3, 4, 5];
+const TIMES = ["00", "10", "20", "30", "40", "50"];
+const PENS = ["#B2D4F4", "#F9B4CC", "#F5E3A0", "#BBDDCB", "#C6B5E7", "#FFBEA5"];
+const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
+const today = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+const uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+const changeDay = (date: string, amount: number) => {
+  const [y,m,d] = date.split("-").map(Number);
+  const next = new Date(y,m-1,d + amount);
+  return `${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,"0")}-${String(next.getDate()).padStart(2,"0")}`;
+};
+const dateView = (date: string) => {
+  const [y,m,d] = date.split("-").map(Number);
+  return `${y}년 ${m}월 ${d}일 ${DAYS[new Date(y,m-1,d).getDay()]}요일`;
+};
+const sanitizeHex = (s: string) => /^#[0-9a-fA-F]{6}$/.test(s) ? s : "#8b9ec4";
+const setOpacity = (hex: string, opacity: number) => {
+  const a = sanitizeHex(hex);
+  const r=parseInt(a.slice(1,3),16),g=parseInt(a.slice(3,5),16),b=parseInt(a.slice(5,7),16);
+  return `rgba(${r},${g},${b},${opacity})`;
+};
+
+function AppIcon() {
+  return <span className="brand-icon"><Check size={18} strokeWidth={3}/></span>;
+}
+
+function AuthScreen({ onUser }: { onUser: (u: User) => void }) {
+  const [mode,setMode]=useState<"login"|"signup">("login");
+  const [email,setEmail]=useState("");
+  const [password,setPassword]=useState("");
+  const [busy,setBusy]=useState(false);
+  const [message,setMessage]=useState("");
+  const client=supabase();
+  async function submit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if(!client) return;
+    setBusy(true); setMessage("");
+    try {
+      if(mode==="signup") {
+        const {data,error}=await client.auth.signUp({email:email.trim(),password});
+        if(error) throw error;
+        if(data.session?.user) onUser(data.session.user);
+        else setMessage("인증 메일을 보냈어. 받은편지함에서 이메일 인증을 완료한 뒤 로그인해 줘.");
+      } else {
+        const {data,error}=await client.auth.signInWithPassword({email:email.trim(),password});
+        if(error) throw error;
+        if(data.user) onUser(data.user);
+      }
+    } catch(err) {
+      setMessage(err instanceof Error ? err.message : "로그인 중 문제가 발생했어.");
+    } finally {setBusy(false);}
+  }
+  return <div className="auth-wrap">
+    <div className="auth-left"><div className="auth-brand"><AppIcon/> CHECKPOINT</div>
+      <div className="auth-cover">
+        <span className="auth-sticker auth-star">✳</span><span className="auth-sticker auth-heart">♡</span>
+        <div className="auth-cover-center"><span>YOUR LITTLE STUDY JOURNAL</span><h1>CHECK<br/>POINT<span className="gold-dot">.</span></h1>
+          <p>YOUR PACE, YOUR CHECKPOINT.</p></div><div className="auth-bottom">A PLACE TO BEGIN AGAIN — EVERY DAY.</div>
+      </div>
+      <p className="auth-caption">계획대로 되지 않아도 괜찮아. 오늘의 페이지를 다시 펼치면 돼.</p>
+    </div>
+    <div className="auth-right"><div className="auth-card"><div className="mini-brand"><AppIcon/> CHECKPOINT</div>
+      <div className="eyebrow">WELCOME TO YOUR SPACE</div>
+      <h2>{mode==="login"?"다시 시작하는 오늘":"나만의 플래너 시작하기"}</h2>
+      <p className="sub">하루를 기록하는 가장 가벼운 방법.</p>
+      {!client ? <div className="alert error">Supabase 연결 정보가 없어. <code>.env.local</code>의 환경변수를 설정해 줘.</div> : null}
+      <form onSubmit={submit} className="auth-form">
+        <label>이메일<input type="email" autoComplete="email" placeholder="name@example.com" value={email} onChange={e=>setEmail(e.target.value)} required/></label>
+        <label>비밀번호<input type="password" placeholder="6자 이상 입력" autoComplete={mode==="login"?"current-password":"new-password"} minLength={6} value={password} onChange={e=>setPassword(e.target.value)} required/></label>
+        {message&&<div className="alert" role="status">{message}</div>}
+        <button disabled={busy||!client} className="primary-btn auth-submit" type="submit">{busy?"처리 중...":mode==="login"?"로그인":"회원가입"}<ArrowRight size={18}/></button>
+      </form>
+      <div className="auth-switch">{mode==="login"?"아직 계정이 없어?":"이미 계정이 있어?"}
+        <button type="button" onClick={()=>{setMode(v=>v==="login"?"signup":"login");setMessage("");}}>{mode==="login"?"회원가입":"로그인"}</button>
+      </div>
+      <div className="auth-footnote"><Sparkles size={14}/> 매일 완벽할 필요는 없어. 기록은 언제든 이어갈 수 있어.</div>
+    </div></div>
+  </div>;
+}
+
+function Timetable({ value, onChange, highlighter, tool }: {
+  value: Record<string,string>; onChange:(v:Record<string,string>)=>void;
+  highlighter:string; tool:"paint"|"erase";
+}) {
+  const drawing=useRef(false);
+  const eraseCurrent=useRef(false);
+  const valueRef=useRef(value);
+  useEffect(()=>{valueRef.current=value;},[value]);
+  const apply=useCallback((key:string,erase:boolean)=>{
+    const next=Object.fromEntries(Object.entries({...valueRef.current,[key]:erase?"":highlighter}).filter(([,c])=>!!c));
+    valueRef.current=next;
+    onChange(next);
+  },[highlighter,onChange]);
+  const start=(key:string,e:PointerEvent<HTMLButtonElement>)=>{
+    e.preventDefault(); drawing.current=true;
+    eraseCurrent.current=tool==="erase"||valueRef.current[key]===highlighter;
+    apply(key,eraseCurrent.current);
+  };
+  const over=(key:string)=>{if(drawing.current)apply(key,eraseCurrent.current);};
+  useEffect(()=>{
+    const stop=()=>{drawing.current=false;};
+    window.addEventListener("pointerup",stop);window.addEventListener("pointercancel",stop);
+    return()=>{window.removeEventListener("pointerup",stop);window.removeEventListener("pointercancel",stop);};
+  },[]);
+  return <div className="time-grid-wrap"><div className="time-table" aria-label="시간표: 누르거나 드래그해서 색칠할 수 있어">
+    <div className="time-head">시</div>{TIMES.map(m=><div className="time-head" key={m}>{m}</div>)}
+    {HOURS.map((h,row)=><div className="time-row" key={`r-${row}`}>
+      <div className="time-hour">{String(h).padStart(2,"0")}</div>
+      {TIMES.map((m,col)=>{
+        const key=`${row}-${col}`;const color=value[key];
+        return <button key={key} type="button" className="time-cell" aria-label={`${String(h).padStart(2,"0")}:${m} ${color?"색칠됨":"비어 있음"}`}
+          aria-pressed={Boolean(color)} style={{background:color||undefined}} onPointerDown={e=>start(key,e)} onPointerEnter={()=>over(key)} />;
+      })}
+    </div>)}
+  </div></div>;
+}
+
+function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
+  cover:Cover;setCover:React.Dispatch<React.SetStateAction<Cover>>;
+  theme:ThemeName;handleUpload:(file:File)=>Promise<void>;photoUrls:Record<string,string>;
+}) {
+  const fileInput=useRef<HTMLInputElement>(null);
+  const moveRef=useRef<{id:string;startX:number;startY:number;originX:number;originY:number;w:number;h:number}|null>(null);
+  function addSticker(s:string) {
+    setCover(c=>({...c,items:[...c.items,{id:uid(),kind:"sticker",value:s,x:50,y:50,size:42}]}));
+  }
+  function pointerDown(e:PointerEvent<HTMLButtonElement>,item:CoverItem) {
+    if((e.target as HTMLElement).closest(".sticker-delete"))return;
+    const p=e.currentTarget.parentElement?.getBoundingClientRect();if(!p)return;
+    moveRef.current={id:item.id,startX:e.clientX,startY:e.clientY,originX:item.x,originY:item.y,w:p.width,h:p.height};
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+  function pointerMove(e:PointerEvent<HTMLButtonElement>) {
+    const m=moveRef.current;if(!m)return;
+    setCover(c=>({...c,items:c.items.map(i=>i.id===m.id?{...i,
+      x:Math.max(8,Math.min(92,m.originX+(e.clientX-m.startX)/m.w*100)),
+      y:Math.max(8,Math.min(92,m.originY+(e.clientY-m.startY)/m.h*100))}:i)}));
+  }
+  return <section className="cover-layout">
+    <div className="cover-stage"><div className="spiral-cover">
+      <div className="spiral-binding">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
+      <div className={`cover-art cover-${theme}`}>
+        <div className="cover-small-heading">A LITTLE SPACE FOR YOUR DAYS</div>
+        <div className="cover-main-word"><span>{cover.title||"CHECKPOINT"}</span></div>
+        <div className="cover-slogan">{cover.subtitle||"YOUR PACE, YOUR CHECKPOINT."}</div>
+        <div className="cover-bottomline">NOT PERFECT. JUST YOURS. ✦</div>
+        {cover.items.map(item=><button type="button" key={item.id} className="placed-sticker" aria-label="드래그해서 이동" style={{left:`${item.x}%`,top:`${item.y}%`,fontSize:item.size}} onPointerDown={e=>pointerDown(e,item)} onPointerMove={pointerMove} onPointerUp={()=>{moveRef.current=null;}} onPointerCancel={()=>{moveRef.current=null;}}>
+          {item.kind==="photo"?<img src={photoUrls[item.value]||""} alt="사용자가 올린 표지 사진" draggable={false}/>:item.value}
+        </button>)}
+      </div>
+    </div></div>
+    <div className="cover-editor"><div className="eyebrow">MAKE IT YOURS</div><h2>나만의 표지</h2><p>꾸미지 않아도 충분해. 마음에 드는 것만 조금씩 더해 봐.</p>
+      <label className="input-label">표지 제목<input maxLength={24} value={cover.title} onChange={e=>setCover(c=>({...c,title:e.target.value}))}/></label>
+      <label className="input-label">한 줄 문구<input maxLength={75} value={cover.subtitle} onChange={e=>setCover(c=>({...c,subtitle:e.target.value}))}/></label>
+      <div className="editor-label">작은 스티커</div><div className="sticker-palette">{STICKERS.map(s=><button key={s} type="button" onClick={()=>addSticker(s)} aria-label={`${s} 스티커 추가`}>{s}</button>)}</div>
+      <button className="outline-btn upload-btn" onClick={()=>fileInput.current?.click()}><ImagePlus size={17}/> 내 이미지 올리기</button>
+      <input ref={fileInput} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={e=>{const f=e.target.files?.[0];if(f)void handleUpload(f);e.target.value="";}}/>
+      {cover.items.length>0&&<><div className="editor-label">추가된 장식 · {cover.items.length}개</div>
+        <div className="placed-list">{cover.items.map(item=><div key={item.id} className="placed-item"><span>{item.kind==="sticker"?item.value:"사진"}</span><label className="size-control">크기 <input type="range" min={24} max={110} value={item.size} onChange={e=>setCover(c=>({...c,items:c.items.map(x=>x.id===item.id?{...x,size:Number(e.target.value)}:x)}))}/></label><button className="icon-btn small" aria-label="장식 삭제" onClick={()=>setCover(c=>({...c,items:c.items.filter(i=>i.id!==item.id)}))}><Trash2 size={15}/></button></div>)}</div>
+      </>}
+      <p className="gentle-tip"><Sparkles size={16}/> 스티커와 사진은 표지에서 끌어서 위치를 바꿀 수 있어.</p>
+    </div>
+  </section>;
+}
+
+export default function Planner() {
+  const [user,setUser]=useState<User|null>(null);
+  const [checking,setChecking]=useState(true);
+  const [view,setView]=useState<"planner"|"cover">("planner");
+  const [date,setDate]=useState(today());
+  const [entry,setEntry]=useState<Entry>(()=>emptyEntry(today()));
+  const [theme,setTheme]=useState<ThemeName>("blue");
+  const [customColor,setCustomColor]=useState("#8b9ec4");
+  const [cover,setCover]=useState<Cover>(defaultCover);
+  const [photoUrls,setPhotoUrls]=useState<Record<string,string>>({});
+  const [pen,setPen]=useState(PENS[0]);
+  const [tool,setTool]=useState<"paint"|"erase">("paint");
+  const [showSettings,setShowSettings]=useState(false);
+  const [mobileMenu,setMobileMenu]=useState(false);
+  const [loading,setLoading]=useState(false);
+  const [hydrated,setHydrated]=useState(false);
+  const [settingsHydrated,setSettingsHydrated]=useState(false);
+  const [status,setStatus]=useState("저장 준비됨");
+  const [alert,setAlert]=useState("");
+  const lastSaved=useRef("");
+  const lastSettings=useRef("");
+  const saveVersion=useRef(0);
+  const client=useMemo(()=>supabase(),[]);
+  const palette=theme==="custom"?{...themes.custom,accent:sanitizeHex(customColor),cover:sanitizeHex(customColor),soft:setOpacity(customColor,.13),line:setOpacity(customColor,.19)}:themes[theme];
+  const vars={"--bg":palette.bg,"--paper":palette.paper,"--ink":palette.ink,"--accent":palette.accent,"--soft":palette.soft,"--line":palette.line,"--cover":palette.cover,"--cover-ink":palette.coverInk} as CSSProperties;
+
+  useEffect(()=>{
+    if(!client){setChecking(false);return;}
+    let mounted=true;
+    void client.auth.getUser().then(({data})=>{if(mounted){setUser(data.user??null);setChecking(false);}});
+    const {data:{subscription}}=client.auth.onAuthStateChange((_event,session)=>{if(mounted){setUser(session?.user??null);setChecking(false);}});
+    return()=>{mounted=false;subscription.unsubscribe();};
+  },[client]);
+
+  useEffect(()=>{
+    if(!client||!user){setSettingsHydrated(false);return;}
+    let active=true;setSettingsHydrated(false);
+    void client.from("planner_settings").select("theme,custom_color,cover").eq("user_id",user.id).maybeSingle()
+      .then(({data,error})=>{
+        if(!active)return;
+        if(error)setAlert(`설정 불러오기 실패: ${error.message}`);
+        const t = data?.theme;
+        const nextTheme:ThemeName=t && Object.keys(themes).includes(t)?t as ThemeName:"blue";
+        const nextCustom=data?.custom_color||"#8b9ec4";
+        const nextCover:Cover=data?.cover && typeof data.cover==="object"?data.cover as Cover:defaultCover;
+        setTheme(nextTheme);setCustomColor(nextCustom);setCover(nextCover);
+        lastSettings.current=JSON.stringify({theme:nextTheme,customColor:nextCustom,cover:nextCover});
+        setSettingsHydrated(true);
+      });
+    return()=>{active=false;};
+  },[user,client]);
+
+  useEffect(()=>{
+    if(!client||!user){setHydrated(false);return;}
+    let active=true;setLoading(true);setHydrated(false);setAlert("");saveVersion.current++;
+    void client.from("planner_entries").select("entry_date,header_label,header_value,focus,keypoint,todos,memo,timetable")
+      .eq("user_id",user.id).eq("entry_date",date).maybeSingle().then(({data,error})=>{
+        if(!active)return;
+        if(error)setAlert(`기록 불러오기 실패: ${error.message}`);
+        const next:Entry=data?{
+          date,headerLabel:data.header_label||"D-DAY",headerValue:data.header_value||"",focus:data.focus||"",keypoint:data.keypoint||"",
+          todos:Array.isArray(data.todos)?data.todos:emptyEntry(date).todos,
+          memo:data.memo||"",timetable:data.timetable&&typeof data.timetable==="object"?data.timetable:{}
+        }:emptyEntry(date);
+        lastSaved.current=JSON.stringify(next);setEntry(next);setHydrated(true);setLoading(false);setStatus("저장됨");
+      });
+    return()=>{active=false;};
+  },[client,user,date]);
+
+  const saveNow=useCallback(async (current:Entry)=>{
+    if(!client||!user||!hydrated)return;
+    const currentJson=JSON.stringify(current);
+    if(currentJson===lastSaved.current)return;
+    const version=++saveVersion.current;
+    setStatus("저장 중...");
+    const {error}=await client.from("planner_entries").upsert({
+      user_id:user.id,entry_date:current.date,date_label:dateView(current.date),header_label:current.headerLabel,
+      header_value:current.headerValue,focus:current.focus,keypoint:current.keypoint,
+      todos:current.todos,memo:current.memo,timetable:current.timetable,updated_at:new Date().toISOString()
+    },{onConflict:"user_id,entry_date"});
+    if(version!==saveVersion.current)return;
+    if(error){setStatus("저장 실패");setAlert(`기록 저장 실패: ${error.message}`);}
+    else{lastSaved.current=currentJson;setStatus("저장됨");}
+  },[client,user,hydrated]);
+
+  useEffect(()=>{
+    if(!hydrated||JSON.stringify(entry)===lastSaved.current)return;
+    setStatus("변경 사항 있음");
+    const timer=setTimeout(()=>void saveNow(entry),950);
+    return()=>clearTimeout(timer);
+  },[entry,hydrated,saveNow]);
+
+  useEffect(()=>{
+    if(!client||!user||!settingsHydrated)return;
+    const snapshot=JSON.stringify({theme,customColor,cover});if(snapshot===lastSettings.current)return;
+    const t=setTimeout(async()=>{
+      const {error}=await client.from("planner_settings").upsert({user_id:user.id,theme,custom_color:customColor,cover,updated_at:new Date().toISOString()},{onConflict:"user_id"});
+      if(error)setAlert(`테마/표지 저장 실패: ${error.message}`);else lastSettings.current=snapshot;
+    },850);
+    return()=>clearTimeout(t);
+  },[client,user,settingsHydrated,theme,customColor,cover]);
+
+  useEffect(()=>{
+    if(!client||!user)return;
+    let active=true;
+    const paths=cover.items.filter(item=>item.kind==="photo" && !photoUrls[item.value]).map(i=>i.value);
+    const unique=[...new Set(paths)];
+    if(!unique.length)return;
+    void Promise.all(unique.map(async path=>{
+      const {data,error}=await client.storage.from("checkpoint-covers").createSignedUrl(path,60*60);
+      return {path,url:error?null:data.signedUrl};
+    })).then(res=>{if(active)setPhotoUrls(old=>({...old,...Object.fromEntries(res.filter(r=>r.url).map(r=>[r.path,r.url!]))}));});
+    return()=>{active=false;};
+  },[client,user,cover.items,photoUrls]);
+
+  async function handleUpload(file:File) {
+    if(!client||!user)return;
+    if(!["image/jpeg","image/png","image/webp","image/gif"].includes(file.type)){setAlert("PNG, JPG, WEBP, GIF 이미지만 올릴 수 있어.");return;}
+    if(file.size>5*1024*1024){setAlert("이미지는 5MB 이하만 가능해.");return;}
+    const ext=({"image/jpeg":"jpg","image/png":"png","image/webp":"webp","image/gif":"gif"} as Record<string,string>)[file.type];
+    const path=`${user.id}/${uid()}.${ext}`;
+    const {error}=await client.storage.from("checkpoint-covers").upload(path,file,{contentType:file.type,upsert:false});
+    if(error){setAlert(`이미지 업로드 실패: ${error.message}`);return;}
+    const signed=await client.storage.from("checkpoint-covers").createSignedUrl(path,60*60);
+    if(signed.data)setPhotoUrls(old=>({...old,[path]:signed.data.signedUrl}));
+    setCover(c=>({...c,items:[...c.items,{id:uid(),kind:"photo",value:path,x:50,y:52,size:96}]}));
+  }
+
+  async function signOut() {
+    if(!client)return;
+    if(hydrated)await saveNow(entry);
+    await client.auth.signOut();setUser(null);setView("planner");
+  }
+
+  function updateTodo(id:string,patch:Partial<Entry["todos"][number]>) {
+    setEntry(v=>({...v,todos:v.todos.map(item=>item.id===id?{...item,...patch}:item)}));
+  }
+  const themeNames:Record<ThemeName,string>={white:"White",pink:"Pink",blue:"Blue",black:"Black",custom:"Custom"};
+
+  if(checking)return <div className="boot-screen"><AppIcon/><h1>CHECKPOINT</h1><p>플래너를 불러오는 중...</p></div>;
+  if(!user)return <AuthScreen onUser={setUser}/>;
+  return <div className="app-shell" style={vars}>
+    <header className="site-header"><div className="header-inner">
+      <button className="brand" onClick={()=>setView("planner")}><AppIcon/><span>CHECKPOINT</span><small>YOUR DAILY SPACE</small></button>
+      <nav className={mobileMenu?"nav-links open":"nav-links"} aria-label="페이지 이동">
+        <button className={view==="planner"?"nav-active":""} onClick={()=>{setView("planner");setMobileMenu(false);}}><BookOpen size={17}/> 플래너</button>
+        <button className={view==="cover"?"nav-active":""} onClick={()=>{setView("cover");setMobileMenu(false);}}><Sparkles size={17}/> 표지 꾸미기</button>
+      </nav>
+      <div className="header-actions"><button className="icon-btn" aria-label="테마 설정" title="테마 설정" onClick={()=>setShowSettings(true)}><Palette size={19}/></button>
+        <button className="signout-btn" onClick={()=>void signOut()} title="로그아웃"><LogOut size={17}/><span>로그아웃</span></button>
+        <button className="icon-btn mobile-menu" aria-label="메뉴" onClick={()=>setMobileMenu(!mobileMenu)}><Menu size={21}/></button>
+      </div></div></header>
+
+    <main className="main-area"><div className="page-heading"><div><div className="eyebrow">YOUR PACE, YOUR CHECKPOINT</div><h1>{view==="planner"?"나의 데일리 플래너":"오늘의 표지 꾸미기"}<span className="title-sparkle">✳</span></h1>
+      <p>{view==="planner"?"계획이 달라져도 괜찮아. 오늘 할 수 있는 만큼만 기록해 봐.":"마음에 드는 색과 작은 장식으로 나만의 플래너를 만들어 봐."}</p></div>
+      <div className="user-badge"><span className="user-dot"/>{user.email}</div></div>
+
+      {alert&&<div className="message-banner" role="alert"><CircleHelp size={17}/><span>{alert}</span><button aria-label="알림 닫기" onClick={()=>setAlert("")}><X size={15}/></button></div>}
+      {view==="cover"? <CoverPage cover={cover} setCover={setCover} theme={theme} handleUpload={handleUpload} photoUrls={photoUrls}/> : <>
+        <div className="planner-toolbar"><div className="date-navigation"><button className="icon-btn" aria-label="이전 날짜" onClick={()=>{void saveNow(entry);setDate(changeDay(date,-1));}}><ChevronLeft size={19}/></button>
+          <CalendarDays size={16}/><input aria-label="날짜 선택" type="date" value={date} onChange={e=>{void saveNow(entry);setDate(e.target.value);}}/>
+          <button className="icon-btn" aria-label="다음 날짜" onClick={()=>{void saveNow(entry);setDate(changeDay(date,1));}}><ChevronRight size={19}/></button>
+          <button className="text-btn" onClick={()=>{void saveNow(entry);setDate(today());}}>오늘</button></div>
+          <div className="toolbar-right"><span className="save-indicator"><span className={status==="저장됨"?"indicator-dot saved":"indicator-dot"}/>{status}</span><button className="outline-btn toolbar-save" onClick={()=>void saveNow(entry)}><Save size={16}/> 저장</button></div></div>
+        {loading?<div className="page-loading">페이지를 불러오는 중...</div>:<div className="book-frame">
+          <div className="book-spine" aria-hidden="true">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
+          <section className="paper-page left-page">
+            <div className="page-date"><span>DATE</span><strong>{dateView(date)}</strong></div>
+            <div className="small-info-block"><label><select aria-label="상단 자유 항목 종류" value={entry.headerLabel} onChange={e=>setEntry(v=>({...v,headerLabel:e.target.value}))}>
+                <option>D-DAY</option><option>WEATHER</option><option>SONG</option><option>MOOD</option><option>STICKER</option><option>NOTE</option><option>FREE</option>
+              </select></label><input aria-label="상단 자유 항목 내용" placeholder="D-30, 맑음, 오늘의 노래 등 자유롭게" value={entry.headerValue} onChange={e=>setEntry(v=>({...v,headerValue:e.target.value}))} /></div>
+            <div className="paper-section time-section"><div className="section-heading"><span>TIME TABLE</span><small>칸을 클릭하거나 드래그해 색칠해 봐.</small></div>
+              <div className="marker-toolbar"><div className="marker-colors">{PENS.map(c=><button key={c} type="button" className={tool==="paint"&&pen===c?"marker selected":"marker"} style={{background:c}} aria-label={`${c} 색 형광펜`} onClick={()=>{setPen(c);setTool("paint");}}/>)}</div>
+              <button className={tool==="erase"?"erase-btn selected":"erase-btn"} onClick={()=>setTool(v=>v==="erase"?"paint":"erase")} title="형광펜 지우기"><Eraser size={16}/><span>지우개</span></button></div>
+              <Timetable value={entry.timetable} onChange={timetable=>setEntry(v=>({...v,timetable}))} highlighter={pen} tool={tool}/>
+            </div>
+            <div className="paper-section focus-section"><div className="section-heading"><span>TODAY&apos;S FOCUS</span></div>
+              <textarea rows={2} placeholder="오늘 딱 하나만 해도 좋은 일은?" value={entry.focus} onChange={e=>setEntry(v=>({...v,focus:e.target.value}))} />
+            </div>
+            <div className="paper-section key-section"><div className="section-heading"><span>KEY POINT</span><small>기억하고 싶은 것만 간단히</small></div>
+              <textarea rows={3} placeholder="오늘 배운 것, 중요한 개념, 한 줄 생각..." value={entry.keypoint} onChange={e=>setEntry(v=>({...v,keypoint:e.target.value}))} />
+            </div>
+          </section>
+          <section className="paper-page right-page"><div className="right-top"><div className="section-heading todo-header"><span>TO DO LIST</span><small>큰 계획보다 작은 체크 하나.</small></div>
+            <div className="todo-list">{entry.todos.map((todo,idx)=><div className="todo-row" key={todo.id}>
+              <span className="todo-number">{String(idx+1).padStart(2,"0")}</span>
+              <input className={todo.checked?"todo-text checked":"todo-text"} value={todo.title} placeholder={idx===0?"할 일을 적어 봐 (예: SQL 기출 2문제)":"새로운 할 일"}
+                onChange={e=>updateTodo(todo.id,{title:e.target.value})} aria-label={`${idx+1}번째 할 일`}/>
+              <button type="button" className={todo.checked?"check-circle complete":"check-circle"} aria-label={`${idx+1}번째 할 일 ${todo.checked?"완료 취소":"완료"}`} aria-pressed={todo.checked} onClick={()=>updateTodo(todo.id,{checked:!todo.checked})}>{todo.checked&&<Check size={17} strokeWidth={3}/>}</button>
+              <button type="button" className="todo-remove" title="할 일 삭제" aria-label="할 일 삭제" onClick={()=>setEntry(v=>({...v,todos:v.todos.filter(t=>t.id!==todo.id)}))}><X size={15}/></button>
+              </div>)}</div>
+            <button className="add-todo" onClick={()=>setEntry(v=>({...v,todos:[...v.todos,{id:uid(),title:"",checked:false}]}))}><Plus size={17}/> 할 일 추가</button></div>
+            <div className="memo-section"><div className="section-heading"><span>MEMO</span><small>메모는 한 줄만 적어도 괜찮아.</small></div>
+              <textarea aria-label="자유 메모" placeholder="공부한 내용, 떠오른 생각, 내일의 나에게 남길 말...\n\n비워 두어도 괜찮아." value={entry.memo} onChange={e=>setEntry(v=>({...v,memo:e.target.value}))} />
+            </div>
+            <div className="page-footer"><span>YOUR PACE, YOUR WAY.</span><span>✦</span></div>
+          </section>
+        </div>}
+        <div className="under-book"><span><Heart size={15}/> 건너뛴 날이 있어도 언제든 이어서 쓰면 돼.</span><span>CHECKPOINT · MY DAILY RECORD</span></div>
+      </>}
+    </main>
+
+    {showSettings&&<div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setShowSettings(false)}} role="presentation">
+      <section className="settings-modal" role="dialog" aria-modal="true" aria-label="테마 설정"><div className="settings-header"><div><div className="eyebrow">MAKE IT FEEL LIKE YOU</div><h2>테마 설정</h2></div><button className="icon-btn" aria-label="닫기" onClick={()=>setShowSettings(false)}><X size={21}/></button></div>
+      <p>속지와 표지 색상이 함께 바뀌어. 원하는 색 하나만 고르면 돼.</p>
+      <div className="theme-choices">{(["white","pink","blue","black","custom"] as ThemeName[]).map(t=><button type="button" className={theme===t?"theme-choice active":"theme-choice"} key={t} onClick={()=>setTheme(t)}>
+        <span className="theme-thumb" style={{background:t==="custom"?sanitizeHex(customColor):themes[t].cover}}>{theme===t?<Check size={19}/>:null}</span><span>{themeNames[t]}</span>
+      </button>)}</div>
+      {theme==="custom"&&<div className="custom-color"><label>컬러 피커<input aria-label="사용자 지정 컬러 피커" type="color" value={sanitizeHex(customColor)} onChange={e=>setCustomColor(e.target.value)}/></label><label>HEX 코드<input aria-label="HEX 컬러 코드" type="text" maxLength={7} placeholder="#8B9EC4" value={customColor} onChange={e=>setCustomColor(e.target.value)}/></label></div>}
+      <div className="settings-bottom"><span><CheckCircle2 size={16}/> 자동 저장 적용</span><button className="primary-btn" onClick={()=>setShowSettings(false)}>적용하기</button></div>
+      </section></div>}
+  </div>;
+}
