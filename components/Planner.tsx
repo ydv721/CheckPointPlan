@@ -353,7 +353,6 @@ export default function Planner() {
 
       {alert&&<div className="message-banner" role="alert"><CircleHelp size={17}/><span>{alert}</span><button aria-label="알림 닫기" onClick={()=>setAlert("")}><X size={15}/></button></div>}
       {view==="cover"? <CoverPage cover={cover} setCover={setCover} theme={theme} handleUpload={handleUpload} photoUrls={photoUrls}/> : <>
-        <div className="planner-toolbar"><div className="toolbar-right"><span className="save-indicator" role="status" aria-live="polite"><span className={status==="자동 저장되었어요."?"indicator-dot saved":"indicator-dot"}/>{status}</span></div></div>
         {loading?<div className="page-loading">페이지를 불러오는 중입니다...</div>:<div className="book-frame">
           <div className="book-spine" aria-hidden="true">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
           <section className="paper-page left-page">
@@ -380,7 +379,7 @@ export default function Planner() {
               </div>
             </div>
           </section>
-          <section className="paper-page right-page"><div className="right-top"><div className="section-heading todo-header"><span>TO DO LIST</span><small>작은 할 일부터 하나씩 체크해 보세요.</small></div>
+          <section className="paper-page right-page"><div className="right-top"><div className="section-heading todo-header"><span>TO DO LIST</span><small className="todo-save-status" role="status" aria-live="polite"><span className={status==="자동 저장되었어요."?"indicator-dot saved":"indicator-dot"}/>{status}</small></div>
             <div className="todo-list">{entry.todos.map((todo,idx)=><div className="todo-row" key={todo.id}>
               <span className="todo-number">{String(idx+1).padStart(2,"0")}</span>
               <input className={todo.checked?"todo-text checked":"todo-text"} value={todo.title} placeholder={idx===0?"할 일을 입력해 주세요 (예: SQL 기출 2문제)":"새로운 할 일"}
