@@ -374,7 +374,7 @@ export default function Planner() {
                 <div className="paper-section focus-section"><div className="section-heading"><span>TODAY&apos;S FOCUS</span></div>
                   <textarea rows={2} placeholder="오늘 꼭 해보고 싶은 일은 무엇인가요?" value={entry.focus} onChange={e=>setEntry(v=>({...v,focus:e.target.value}))} />
                 </div>
-                <div className="paper-section key-section"><div className="section-heading"><span>KEY POINT</span><small>기억하고 싶은 것만 간단히</small></div>
+                <div className="paper-section key-section"><div className="section-heading"><span>KEY POINT</span></div>
                   <textarea rows={3} placeholder="오늘 배운 것, 중요한 개념, 한 줄 생각..." value={entry.keypoint} onChange={e=>setEntry(v=>({...v,keypoint:e.target.value}))} />
                 </div>
               </div>
