@@ -29,15 +29,17 @@
 
 ## 로컬 실행
 
-Node.js 20 이상을 권장해.
+Node.js 22.x를 사용해. `package.json`의 `engines`에서 Node.js 22.x 범위로 고정했어.
 
 ### 1. 저장소 복제 및 패키지 설치
 
 ```bash
 git clone https://github.com/ydv721/CheckPointPlan.git
 cd CheckPointPlan
-npm install
+npm ci
 ```
+
+`package-lock.json`이 저장소에 포함되어 있어. 처음 설치하거나 잠금 파일을 갱신할 때는 `npm install`을 사용하고, 재현 가능한 설치에는 `npm ci`를 사용해.
 
 ### 2. 환경변수 파일 생성
 
@@ -101,6 +103,8 @@ Supabase Authentication의 URL Configuration에 로컬 주소와 실제 배포 �
 6. 회원가입, 이메일 인증, 로그인, 날짜별 저장·복원, 표지 이미지 업로드를 확인해.
 
 ## 검사 명령
+
+GitHub Actions에서 `npm ci`, TypeScript 검사, ESLint, Next.js 프로덕션 빌드까지 통과했어. [최근 빌드 검증 결과](https://github.com/ydv721/CheckPointPlan/actions/runs/43574228707)를 확인할 수 있어.
 
 ```bash
 npm run typecheck
