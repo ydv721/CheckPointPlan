@@ -12,7 +12,7 @@ import { defaultCover, emptyEntry, STICKERS, themes, type Cover, type CoverItem,
 
 const HOURS = [...Array.from({ length: 18 }, (_, i) => i + 6), 0, 1, 2, 3, 4, 5];
 const TIMES = ["00", "10", "20", "30", "40", "50"];
-const PENS = ["#B2D4F4", "#F9B4CC", "#F5E3A0", "#BBDDCB", "#C6B5E7", "#FFBEA5"];
+const PENS = ["#F4B8CA", "#F6E39A", "#CDE7B8", "#B9D8F4", "#CDBDEB"];
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 const today = () => {
   const d = new Date();
@@ -365,9 +365,14 @@ export default function Planner() {
             </div>
             <div className="small-info-block"><input className="header-label-input" aria-label="상단 항목 이름" maxLength={16} value={entry.headerLabel} onChange={e=>setEntry(v=>({...v,headerLabel:e.target.value}))} /><input className="header-value-input" aria-label="상단 항목 내용" maxLength={100} value={entry.headerValue} onChange={e=>setEntry(v=>({...v,headerValue:e.target.value}))} /></div>
             <div className="workspace-grid">
-              <div className="paper-section time-section"><div className="section-heading"><span>TIME TABLE</span></div>
-                <div className="marker-toolbar"><div className="marker-tools-left"><span className="marker-label">형광펜</span><div className="marker-colors">{PENS.map(c=><button key={c} type="button" className={tool==="paint"&&pen===c?"marker selected":"marker"} style={{background:c}} aria-label={`${c} 색 형광펜`} onClick={()=>{setPen(c);setTool("paint");}}/>)}</div></div>
-                <button className={tool==="erase"?"erase-btn selected":"erase-btn"} onClick={()=>setTool(v=>v==="erase"?"paint":"erase")} title="형광펜 지우기"><Eraser size={16}/><span>지우개</span></button></div>
+              <div className="paper-section time-section">
+                <div className="section-heading time-heading">
+                  <span>TIME TABLE</span>
+                  <div className="time-heading-tools">
+                    <div className="marker-colors">{PENS.map((c,i)=><button key={c} type="button" className={tool==="paint"&&pen===c?"marker selected":"marker"} style={{background:c}} aria-label={`형광펜 색상 ${i+1} 선택`} title={["분홍","노랑","연두","하늘","보라"][i]} onClick={()=>{setPen(c);setTool("paint");}}/>)}</div>
+                    <button className={tool==="erase"?"erase-btn selected":"erase-btn"} onClick={()=>setTool(v=>v==="erase"?"paint":"erase")} title="지우개" aria-label="지우개"><Eraser size={14}/></button>
+                  </div>
+                </div>
                 <Timetable value={entry.timetable} onChange={timetable=>setEntry(v=>({...v,timetable}))} highlighter={pen} tool={tool}/>
               </div>
               <div className="notes-stack">
