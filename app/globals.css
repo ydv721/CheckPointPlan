@@ -795,3 +795,42 @@ html,body{width:100%;overflow-x:clip}
 @media(max-width:430px){
   .date-picker-trigger{transform:translate(1px,-1px)}
 }
+
+
+/* Highlighter palette: square color swatches with a compact label. */
+.marker-tools-left{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+.marker-label{
+  color:var(--ink);
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.04em;
+  white-space:nowrap;
+}
+.marker-colors{display:flex;align-items:center;flex-wrap:wrap;gap:7px}
+.marker{
+  width:20px;
+  height:20px;
+  flex:0 0 20px;
+  border:1px solid #ffffff;
+  border-radius:3px;
+  padding:0;
+  box-shadow:0 0 0 1px var(--line);
+  cursor:pointer;
+}
+.marker.selected{box-shadow:0 0 0 2px var(--accent)}
+@media(max-width:900px){
+  .marker-tools-left{gap:8px}
+  .marker-colors{gap:6px}
+  .marker{width:19px;height:19px;flex-basis:19px}
+}
+@media(max-width:430px){
+  .marker-label{font-size:9px}
+  .marker-tools-left{gap:7px}
+  .marker-colors{gap:5px}
+  .marker{width:17px;height:17px;flex-basis:17px}
+}
