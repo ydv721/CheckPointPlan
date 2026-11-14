@@ -238,7 +238,7 @@ export default function Planner() {
         if(!active)return;
         if(error)setAlert(`기록을 불러오지 못했습니다: ${error.message}`);
         const next:Entry=data?{
-          date,headerLabel:data.header_label||"D-DAY",headerValue:data.header_value||"",focus:data.focus||"",keypoint:data.keypoint||"",
+          date,headerLabel:data.header_label||"",headerValue:data.header_value||"",focus:data.focus||"",keypoint:data.keypoint||"",
           todos:Array.isArray(data.todos)?data.todos:emptyEntry(date).todos,
           memo:data.memo||"",timetable:data.timetable&&typeof data.timetable==="object"?data.timetable:{}
         }:emptyEntry(date);
