@@ -341,15 +341,14 @@ export default function Planner() {
 
       {alert&&<div className="message-banner" role="alert"><CircleHelp size={17}/><span>{alert}</span><button aria-label="알림 닫기" onClick={()=>setAlert("")}><X size={15}/></button></div>}
       {view==="cover"? <CoverPage cover={cover} setCover={setCover} theme={theme} handleUpload={handleUpload} photoUrls={photoUrls}/> : <>
-        <div className="planner-toolbar"><div className="date-navigation"><button className="icon-btn" aria-label="이전 날짜" onClick={()=>{void saveNow(entry);setDate(changeDay(date,-1));}}><ChevronLeft size={19}/></button>
-          <CalendarDays size={16}/><input aria-label="날짜 선택" type="date" value={date} onChange={e=>{void saveNow(entry);setDate(e.target.value);}}/>
-          <button className="icon-btn" aria-label="다음 날짜" onClick={()=>{void saveNow(entry);setDate(changeDay(date,1));}}><ChevronRight size={19}/></button>
-          <button className="text-btn" onClick={()=>{void saveNow(entry);setDate(today());}}>오늘</button></div>
-          <div className="toolbar-right"><span className="save-indicator"><span className={status==="저장되었습니다"?"indicator-dot saved":"indicator-dot"}/>{status}</span><button className="outline-btn toolbar-save" onClick={()=>void saveNow(entry)}><Save size={16}/> 저장</button></div></div>
+        <div className="planner-toolbar"><div className="toolbar-right"><span className="save-indicator"><span className={status==="저장되었습니다"?"indicator-dot saved":"indicator-dot"}/>{status}</span><button className="outline-btn toolbar-save" onClick={()=>void saveNow(entry)}><Save size={16}/> 저장</button></div></div>
         {loading?<div className="page-loading">페이지를 불러오는 중입니다...</div>:<div className="book-frame">
           <div className="book-spine" aria-hidden="true">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
           <section className="paper-page left-page">
-            <div className="page-date"><span>DATE</span><strong>{dateView(date)}</strong></div>
+            <div className="page-date"><span>DATE</span><div className="date-navigation"><button className="icon-btn" aria-label="이전 날짜" onClick={()=>{void saveNow(entry);setDate(changeDay(date,-1));}}><ChevronLeft size={17}/></button>
+              <CalendarDays size={15}/><input aria-label="날짜 선택" type="date" value={date} onChange={e=>{void saveNow(entry);setDate(e.target.value);}}/>
+              <button className="icon-btn" aria-label="다음 날짜" onClick={()=>{void saveNow(entry);setDate(changeDay(date,1));}}><ChevronRight size={17}/></button>
+              <button className="text-btn" onClick={()=>{void saveNow(entry);setDate(today());}}>오늘</button></div></div>
             <div className="small-info-block"><label><select aria-label="상단 자유 항목 종류" value={entry.headerLabel} onChange={e=>setEntry(v=>({...v,headerLabel:e.target.value}))}>
                 <option>D-DAY</option><option>WEATHER</option><option>SONG</option><option>MOOD</option><option>STICKER</option><option>NOTE</option><option>FREE</option>
               </select></label><input aria-label="상단 자유 항목 내용" placeholder="D-30, 맑음, 오늘의 노래 등 자유롭게" value={entry.headerValue} onChange={e=>setEntry(v=>({...v,headerValue:e.target.value}))} /></div>
