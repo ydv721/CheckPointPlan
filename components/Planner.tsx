@@ -79,12 +79,14 @@ function AuthScreen({ onUser }: { onUser: (u: User) => void }) {
     } finally {setBusy(false);}
   }
   return <div className="auth-wrap">
-    <div className="auth-left"><div className="auth-brand"><AppIcon/> CHECKPOINT</div>
+    <div className="auth-left">
       <div className="auth-book">
         <AuthBookCover/>
       </div>
     </div>
-    <div className="auth-right"><div className="auth-card"><div className="mini-brand"><AppIcon/> CHECKPOINT</div>
+    <div className="auth-right">
+      <div className="auth-brand"><AppIcon/> CHECKPOINT</div>
+      <div className="auth-card">
       <div className="eyebrow">WELCOME TO YOUR SPACE</div>
       <h2>{mode==="login"?"다시 시작하는 오늘":"나만의 플래너 시작하기"}</h2>
       <p className="sub">하루를 가볍게 기록해 보세요.</p>
