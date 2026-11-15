@@ -949,7 +949,7 @@ html,body{width:100%;overflow-x:clip}
 }
 
 
-/* Login panel on the left; cover matches one planner page (345 × 442 ratio). */
+/* Login panel on the left; cover matches one planner page at the browser's rendered scale. */
 .auth-wrap{
   grid-template-columns:minmax(0,1fr) minmax(0,1fr);
 }
@@ -979,7 +979,7 @@ html,body{width:100%;overflow-x:clip}
 }
 .auth-book{
   position:relative;
-  width:min(100%,345px,calc((100dvh - 44px)*.78054299));
+  width:min(100%,460px,calc((100dvh - 44px)*.78054299));
   aspect-ratio:345 / 442;
   height:auto;
   margin:0 auto;
@@ -1019,7 +1019,7 @@ html,body{width:100%;overflow-x:clip}
 }
 .auth-transition-book{
   position:relative;
-  width:min(100%,345px,calc((100dvh - 44px)*.78054299));
+  width:min(100%,460px,calc((100dvh - 44px)*.78054299));
   aspect-ratio:345 / 442;
   height:auto;
   transform-style:preserve-3d;
