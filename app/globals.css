@@ -1182,3 +1182,47 @@ html,body{width:100%;overflow-x:clip}
     margin:0!important;
   }
 }
+
+
+/* Final spacing refinement for the date header and custom motto fields. */
+.page-date{
+  min-height:70px!important;
+}
+.date-value{
+  font-size:clamp(32px,2.8vw,38px)!important;
+  line-height:.92!important;
+  letter-spacing:.10em!important;
+}
+.small-info-block input.header-label-input,
+.small-info-block input.header-value-input{
+  font-size:19px!important;
+  line-height:1.25!important;
+}
+.small-info-block input.header-label-input::placeholder,
+.small-info-block input.header-value-input::placeholder{
+  font-size:17px!important;
+}
+@media(max-width:900px){
+  .page-date{min-height:64px!important}
+  .date-value{
+    font-size:clamp(24px,6.8vw,29px)!important;
+    line-height:.92!important;
+    letter-spacing:.07em!important;
+  }
+  .small-info-block input.header-label-input,
+  .small-info-block input.header-value-input{
+    font-size:18px!important;
+  }
+}
+@media(max-width:430px){
+  .page-date{min-height:60px!important}
+  .date-value{
+    font-size:clamp(23px,6.7vw,27px)!important;
+    line-height:.9!important;
+    letter-spacing:.055em!important;
+  }
+  .small-info-block input.header-label-input,
+  .small-info-block input.header-value-input{
+    font-size:18px!important;
+  }
+}
