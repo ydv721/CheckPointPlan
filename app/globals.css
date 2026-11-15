@@ -949,7 +949,12 @@ html,body{width:100%;overflow-x:clip}
 }
 
 
-/* Login stays on the left; the CHECKPOINT book sits on the right. */
+/* Login on the left, with the brand anchored inside the login panel. */
+.auth-wrap,
+.auth-transition-overlay{
+  --auth-page-width:calc((min(100vw,1480px) - 84px) * .48076923);
+  --auth-page-height:calc(100dvh - 158px);
+}
 .auth-wrap{
   grid-template-columns:minmax(0,1fr) minmax(0,1fr);
 }
@@ -962,12 +967,24 @@ html,body{width:100%;overflow-x:clip}
 .auth-right{
   grid-column:1;
   grid-row:1;
+  position:relative;
   background:#f8f8f6;
+}
+.auth-brand{
+  position:absolute;
+  top:34px;
+  left:min(6vw,75px);
+  z-index:2;
+  font-weight:1000;
+  letter-spacing:.05em;
+  display:flex;
+  align-items:center;
+  gap:10px;
 }
 .auth-book{
   position:relative;
-  width:min(100%,350px);
-  aspect-ratio:.8;
+  width:var(--auth-page-width);
+  height:var(--auth-page-height);
   margin:0 auto;
   transform-style:preserve-3d;
 }
@@ -975,6 +992,7 @@ html,body{width:100%;overflow-x:clip}
   width:100%;
   height:100%;
   max-width:none;
+  aspect-ratio:auto;
   margin:0;
 }
 
@@ -1004,8 +1022,8 @@ html,body{width:100%;overflow-x:clip}
 }
 .auth-transition-book{
   position:relative;
-  width:min(34vw,350px);
-  aspect-ratio:.8;
+  width:var(--auth-page-width);
+  height:var(--auth-page-height);
   transform-style:preserve-3d;
 }
 .auth-transition-book>.auth-cover{
@@ -1014,6 +1032,7 @@ html,body{width:100%;overflow-x:clip}
   width:100%;
   height:100%;
   max-width:none;
+  aspect-ratio:auto;
   margin:0;
   transform-origin:left center;
   transform:rotateY(0deg);
@@ -1033,7 +1052,29 @@ html,body{width:100%;overflow-x:clip}
   box-shadow:18px 12px 28px #26364b35;
 }
 
+@media(max-width:1180px) and (min-width:781px){
+  .auth-wrap,
+  .auth-transition-overlay{
+    --auth-page-width:calc((100vw - 50px) * .48076923);
+  }
+}
+@media(max-width:900px) and (min-width:781px){
+  .auth-wrap,
+  .auth-transition-overlay{
+    --auth-page-height:auto;
+  }
+  .auth-book,
+  .auth-transition-book{
+    height:auto;
+    aspect-ratio:.8;
+  }
+}
 @media(max-width:780px){
+  .auth-wrap,
+  .auth-transition-overlay{
+    --auth-page-width:calc(100vw - 36px);
+    --auth-page-height:auto;
+  }
   .auth-wrap{
     grid-template-columns:minmax(0,1fr);
     grid-template-rows:auto auto;
@@ -1044,6 +1085,10 @@ html,body{width:100%;overflow-x:clip}
     min-height:100dvh;
     padding:30px 24px;
   }
+  .auth-brand{
+    top:26px;
+    left:26px;
+  }
   .auth-left{
     display:flex;
     grid-column:1;
@@ -1051,21 +1096,22 @@ html,body{width:100%;overflow-x:clip}
     min-height:auto;
     padding:28px 18px 42px;
   }
-  .auth-brand{display:none}
-  .auth-book{width:min(62vw,270px)}
+  .auth-book,
+  .auth-transition-book{
+    height:auto;
+    aspect-ratio:.8;
+  }
   .auth-transition-overlay{
     grid-template-columns:minmax(0,1fr);
   }
   .auth-transition-left{display:none}
   .auth-transition-right{background:#eef2f8}
-  .auth-transition-book{width:min(62vw,280px)}
   .auth-transition-overlay.turning .auth-transition-right{background:transparent}
 }
 @media(max-width:430px){
   .auth-left{display:flex}
   .auth-right{min-height:100dvh}
-  .auth-book{width:min(58vw,230px)}
-  .auth-transition-book{width:min(58vw,230px)}
+  .auth-brand{top:24px;left:24px}
 }
 @media(prefers-reduced-motion:reduce){
   .auth-transition-book>.auth-cover{transition-duration:.01ms}
