@@ -1163,3 +1163,22 @@ html,body{width:100%;overflow-x:clip}
     align-items:center!important;
   }
 }
+
+
+/* Match the annotated planner geometry: narrower timetable and evenly split notes. */
+@media(min-width:901px){
+  .workspace-grid{
+    grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)!important;
+    gap:18px!important;
+  }
+  .notes-stack{
+    padding-top:18px!important;
+    gap:4px!important;
+  }
+  .notes-stack .focus-section,
+  .notes-stack .key-section{
+    flex:1 1 0!important;
+    min-height:0!important;
+    margin:0!important;
+  }
+}
