@@ -1151,3 +1151,15 @@ html,body{width:100%;overflow-x:clip}
     transform:translate(0,-1px)!important;
   }
 }
+
+
+/* Align TIME TABLE and TODAY'S FOCUS on the same heading row. */
+@media(min-width:781px){
+  .time-section .time-heading,
+  .notes-stack .focus-section>.section-heading{
+    height:18px!important;
+    min-height:18px!important;
+    margin-bottom:9px!important;
+    align-items:center!important;
+  }
+}
