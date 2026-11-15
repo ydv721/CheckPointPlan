@@ -76,7 +76,10 @@ function AuthScreen({ onUser }: { onUser: (u: User) => void }) {
       </div>
     </div>
     <div className="auth-right">
-      <div className="auth-brand"><AppIcon/> CHECKPOINT</div>
+      <div className="auth-brand">
+        <span className="brand-lockup"><AppIcon/><span>CHECKPOINT</span></span>
+        <small>YOUR PACE, YOUR CHECKPOINT</small>
+      </div>
       <div className="auth-card">
       <div className="eyebrow">WELCOME TO YOUR SPACE</div>
       <h2>{mode==="login"?"다시 시작하는 오늘":"나만의 플래너 시작하기"}</h2>
