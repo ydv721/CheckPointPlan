@@ -1350,3 +1350,10 @@ html,body{width:100%;overflow-x:clip}
     padding-right: 8px;
   }
 }
+
+@media (min-width: 901px) {
+  .main-area {
+    max-width: none;
+    margin: 0;
+  }
+}
