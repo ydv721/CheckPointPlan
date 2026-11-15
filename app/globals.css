@@ -1110,3 +1110,83 @@ html,body{width:100%;overflow-x:clip}
   font-weight:500!important;
   text-align:center!important;
 }
+
+
+/* Refine the date header proportions and custom text fields. */
+.small-info-block{
+  align-items:center!important;
+}
+.small-info-block input.header-label-input,
+.small-info-block input.header-value-input{
+  height:38px!important;
+  padding:4px 8px!important;
+  font-size:18px!important;
+  font-weight:750!important;
+  line-height:1.35!important;
+  letter-spacing:0!important;
+  text-align:center!important;
+  align-self:center!important;
+}
+.small-info-block input.header-label-input::placeholder,
+.small-info-block input.header-value-input::placeholder{
+  font-size:16px!important;
+  font-weight:500!important;
+  text-align:center!important;
+}
+
+.page-date{
+  grid-template-columns:minmax(0,1fr) 128px!important;
+  gap:8px!important;
+}
+.date-main-row{
+  justify-content:center!important;
+  gap:8px!important;
+}
+.date-picker-trigger{
+  transform:translate(-5px,-2px)!important;
+}
+.dday-value-row input{
+  width:64px!important;
+  max-width:64px!important;
+}
+
+@media(max-width:900px){
+  .page-date{
+    grid-template-columns:minmax(0,1fr) 110px!important;
+    gap:7px!important;
+  }
+  .date-value{
+    font-size:clamp(25px,7vw,31px)!important;
+    letter-spacing:.08em!important;
+  }
+  .date-main-row{gap:8px!important}
+  .date-picker-trigger{
+    transform:translate(-4px,-1px)!important;
+  }
+  .dday-value-row input{
+    width:52px!important;
+    max-width:52px!important;
+  }
+}
+@media(max-width:430px){
+  .page-date{
+    grid-template-columns:minmax(0,1fr) 96px!important;
+    gap:6px!important;
+  }
+  .date-value{
+    font-size:clamp(24px,7vw,29px)!important;
+    letter-spacing:.06em!important;
+  }
+  .date-main-row{gap:6px!important}
+  .date-picker-trigger{
+    transform:translate(-3px,-1px)!important;
+  }
+  .dday-value-row input{
+    width:44px!important;
+    max-width:44px!important;
+  }
+  .small-info-block input.header-label-input,
+  .small-info-block input.header-value-input{
+    font-size:17px!important;
+  }
+}
