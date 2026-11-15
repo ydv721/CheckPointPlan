@@ -392,6 +392,12 @@ export default function Planner() {
           <div className="book-spine" aria-hidden="true">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
           <section className="paper-page left-page">
             <div className="page-date">
+              <div className="dday-field">
+                <div className="dday-value-row">
+                  <span className="dday-prefix">D-</span>
+                  <input aria-label="D-day 숫자" type="text" inputMode="numeric" maxLength={4} value={entry.dday.replace(/^D-/i,"").replace(/^D\+/i,"")} onChange={e=>{const value=e.target.value.replace(/\D/g,"").slice(0,4);setEntry(v=>({...v,dday:value?"D-"+value:""}));}}/>
+                </div>
+              </div>
               <div className="date-main">
                 <div className="date-main-row">
                   <span className="date-value">{date.replace(/-/g," ")}</span>
@@ -399,12 +405,6 @@ export default function Planner() {
                     <CalendarDays size={16}/>
                     <input aria-label="날짜 선택" type="date" value={date} onChange={e=>{void saveNow(entry);setDate(e.target.value);}}/>
                   </label>
-                </div>
-              </div>
-              <div className="dday-field">
-                <div className="dday-value-row">
-                  <span className="dday-prefix">D-</span>
-                  <input aria-label="D-day 숫자" type="text" inputMode="numeric" maxLength={4} value={entry.dday.replace(/^D-/i,"").replace(/^D\+/i,"")} onChange={e=>{const value=e.target.value.replace(/\D/g,"").slice(0,4);setEntry(v=>({...v,dday:value?`D-${value}`:""}));}}/>
                 </div>
               </div>
             </div>
