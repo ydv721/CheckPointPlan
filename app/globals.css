@@ -993,63 +993,6 @@ html,body{width:100%;overflow-x:clip}
   margin:0;
 }
 
-/* The authenticated planner is mounted underneath this cover. */
-.auth-transition-overlay{
-  position:fixed;
-  inset:0;
-  z-index:1000;
-  display:grid;
-  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-  pointer-events:none;
-  background:transparent;
-}
-.auth-transition-left{
-  background:#f8f8f6;
-  opacity:1;
-  transition:opacity .72s ease,background .72s ease;
-}
-.auth-transition-right{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  min-width:0;
-  background:#eef2f8;
-  perspective:1800px;
-  transition:background .72s ease;
-}
-.auth-transition-book{
-  position:relative;
-  width:min(100%,460px,calc((100dvh - 44px)*.78054299));
-  aspect-ratio:345 / 442;
-  height:auto;
-  transform-style:preserve-3d;
-}
-.auth-transition-book>.auth-cover{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  max-width:none;
-  aspect-ratio:auto;
-  margin:0;
-  transform-origin:left center;
-  transform:rotateY(0deg);
-  backface-visibility:hidden;
-  transform-style:preserve-3d;
-  transition:transform 1.12s cubic-bezier(.72,.02,.24,1),box-shadow 1.12s ease;
-  will-change:transform;
-}
-.auth-transition-overlay.turning .auth-transition-left{
-  opacity:0;
-}
-.auth-transition-overlay.turning .auth-transition-right{
-  background:transparent;
-}
-.auth-transition-overlay.turning .auth-transition-book>.auth-cover{
-  transform:rotateY(165deg);
-  box-shadow:18px 12px 28px #26364b35;
-}
-
 @media(max-width:780px){
   .auth-wrap{
     grid-template-columns:minmax(0,1fr);
@@ -1072,21 +1015,11 @@ html,body{width:100%;overflow-x:clip}
     min-height:auto;
     padding:28px 18px 42px;
   }
-  .auth-transition-overlay{
-    grid-template-columns:minmax(0,1fr);
-  }
-  .auth-transition-left{display:none}
-  .auth-transition-right{background:#eef2f8}
-  .auth-transition-overlay.turning .auth-transition-right{background:transparent}
 }
 @media(max-width:430px){
   .auth-left{display:flex}
   .auth-right{min-height:100dvh}
   .auth-brand{top:24px;left:24px}
-}
-@media(prefers-reduced-motion:reduce){
-  .auth-transition-book>.auth-cover{transition-duration:.01ms}
-  .auth-transition-overlay.turning .auth-transition-book>.auth-cover{transform:rotateY(95deg)}
 }
 
 
