@@ -956,6 +956,7 @@ html,body{width:100%;overflow-x:clip}
 .auth-left{
   grid-column:2;
   grid-row:1;
+  padding:22px 4px;
   perspective:1800px;
   overflow:hidden;
 }
@@ -978,7 +979,7 @@ html,body{width:100%;overflow-x:clip}
 }
 .auth-book{
   position:relative;
-  width:min(100%,345px,calc((100dvh - 68px)*.78054299));
+  width:min(100%,345px,calc((100dvh - 44px)*.78054299));
   aspect-ratio:345 / 442;
   height:auto;
   margin:0 auto;
@@ -1018,7 +1019,7 @@ html,body{width:100%;overflow-x:clip}
 }
 .auth-transition-book{
   position:relative;
-  width:min(100%,345px,calc((100dvh - 68px)*.78054299));
+  width:min(100%,345px,calc((100dvh - 44px)*.78054299));
   aspect-ratio:345 / 442;
   height:auto;
   transform-style:preserve-3d;
