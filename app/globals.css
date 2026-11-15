@@ -947,3 +947,133 @@ html,body{width:100%;overflow-x:clip}
     max-width:40px;
   }
 }
+
+
+/* Book-cover page turn from sign-in to the planner's inner pages. */
+.auth-left{perspective:1800px;overflow:hidden}
+.auth-book{
+  position:relative;
+  width:min(100%,460px);
+  aspect-ratio:.8;
+  margin:0 auto;
+  transform-style:preserve-3d;
+}
+.auth-inner-page{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  padding:24px 20px 18px 26px;
+  border-radius:4px 11px 11px 4px;
+  background:#fffefa;
+  color:#465a76;
+  box-shadow:inset 5px 0 0 #e9edf2, 5px 10px 20px #34445b18;
+  background-image:linear-gradient(to right,#e8edf4 1px,transparent 1px),linear-gradient(to bottom,#e8edf4 1px,transparent 1px);
+  background-size:100% 34px;
+}
+.auth-inner-date{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding-bottom:12px;
+  border-bottom:1px solid #dce4ef;
+}
+.auth-inner-date strong{font-size:clamp(14px,1.5vw,19px);letter-spacing:.13em;color:#405878}
+.auth-inner-date span{font-size:clamp(12px,1.2vw,16px);font-weight:900;color:#87a6d0}
+.auth-inner-columns{
+  display:grid;
+  grid-template-columns:1.05fr .95fr;
+  gap:12px;
+  flex:1;
+  min-height:0;
+  margin-top:17px;
+}
+.auth-inner-timetable{display:flex;flex-direction:column;min-width:0}
+.auth-inner-timetable>b,.auth-inner-note>b,.auth-inner-todo>b{
+  color:#526987;
+  font-size:8px;
+  letter-spacing:.1em;
+  font-weight:900;
+}
+.auth-inner-table-head,.auth-inner-time-row{
+  display:grid;
+  grid-template-columns:22px repeat(3,minmax(0,1fr));
+  min-height:18px;
+}
+.auth-inner-table-head{margin-top:7px;background:#e8eff9}
+.auth-inner-table-head span,.auth-inner-time-row span{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-right:1px solid #dce5f1;
+  border-bottom:1px solid #dce5f1;
+  color:#91a2b8;
+  font-size:7px;
+}
+.auth-inner-time-row i{border-right:1px solid #dce5f1;border-bottom:1px solid #dce5f1}
+.auth-inner-time-row:nth-of-type(3) i:nth-of-type(2),
+.auth-inner-time-row:nth-of-type(5) i:first-of-type{background:#c6dbf4}
+.auth-inner-notes{display:flex;flex-direction:column;gap:15px;min-width:0}
+.auth-inner-note{display:flex;flex:1;min-height:0;flex-direction:column;gap:7px}
+.auth-inner-note span{
+  flex:1;
+  border:1px solid #dce5f1;
+  border-radius:5px;
+  background:repeating-linear-gradient(to bottom,transparent 0,transparent 22px,#e8edf4 23px);
+}
+.auth-inner-todo{display:flex;flex-direction:column;gap:9px;margin-top:15px}
+.auth-inner-todo i{height:13px;border-bottom:1px solid #dce5f1}
+.auth-inner-footer{margin-top:12px;color:#91a9ca;font-size:7px;letter-spacing:.13em;font-weight:900}
+.auth-book>.auth-cover{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  width:100%;
+  height:100%;
+  max-width:none;
+  margin:0;
+  transform:rotateY(0deg);
+  transform-origin:right center;
+  transform-style:preserve-3d;
+  backface-visibility:hidden;
+  transition:transform 1.05s cubic-bezier(.72,.02,.24,1),box-shadow 1.05s ease;
+  will-change:transform;
+}
+.auth-opening .auth-book>.auth-cover{
+  transform:rotateY(-165deg);
+  box-shadow:-18px 12px 28px #26364b35;
+}
+.auth-opening .auth-inner-page{animation:auth-inner-reveal .78s .18s both}
+.auth-opening .auth-right{
+  opacity:0;
+  transform:translateX(24px);
+  pointer-events:none;
+  transition:opacity .42s ease,transform .58s ease;
+}
+.auth-opening .auth-left{background:#f8f9fb;transition:background .6s ease}
+@keyframes auth-inner-reveal{
+  from{opacity:.55;transform:translateX(8px) scale(.985)}
+  to{opacity:1;transform:translateX(0) scale(1)}
+}
+@media(max-width:780px){
+  .auth-opening .auth-left{
+    display:flex;
+    position:fixed;
+    inset:0;
+    z-index:30;
+    min-height:100dvh;
+    padding:24px;
+    background:#eef2f8;
+  }
+  .auth-opening .auth-brand{display:none}
+  .auth-opening .auth-book{width:min(68vw,340px)}
+  .auth-opening .auth-right{opacity:0;transform:translateX(16px)}
+}
+@media(prefers-reduced-motion:reduce){
+  .auth-book>.auth-cover{transition-duration:.01ms}
+  .auth-opening .auth-book>.auth-cover{transform:rotateY(-95deg)}
+  .auth-opening .auth-inner-page{animation:none}
+}
