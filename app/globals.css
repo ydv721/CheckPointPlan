@@ -1190,3 +1190,31 @@ html,body{width:100%;overflow-x:clip}
     font-size:17px!important;
   }
 }
+
+
+/* Slightly enlarge the D-day value and move the calendar icon right. */
+.dday-prefix,
+.dday-value-row input{
+  font-size:25px!important;
+}
+.date-picker-trigger{
+  transform:translate(-2px,-2px)!important;
+}
+@media(max-width:900px){
+  .dday-prefix,
+  .dday-value-row input{
+    font-size:22px!important;
+  }
+  .date-picker-trigger{
+    transform:translate(-1px,-1px)!important;
+  }
+}
+@media(max-width:430px){
+  .dday-prefix,
+  .dday-value-row input{
+    font-size:19px!important;
+  }
+  .date-picker-trigger{
+    transform:translate(0,-1px)!important;
+  }
+}
