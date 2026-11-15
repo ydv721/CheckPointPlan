@@ -43,15 +43,6 @@ function AuthBookCover() {
   </div>;
 }
 
-function BookTransitionOverlay({ turning }: { turning:boolean }) {
-  return <div className={turning?"auth-transition-overlay turning":"auth-transition-overlay"} aria-hidden="true">
-    <div className="auth-transition-left"/>
-    <div className="auth-transition-right">
-      <div className="auth-transition-book"><AuthBookCover/></div>
-    </div>
-  </div>;
-}
-
 function AuthScreen({ onUser }: { onUser: (u: User) => void }) {
   const [mode,setMode]=useState<"login"|"signup">("login");
   const [email,setEmail]=useState("");
@@ -193,8 +184,6 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
 export default function Planner() {
   const [user,setUser]=useState<User|null>(null);
   const [checking,setChecking]=useState(true);
-  const [authOpening,setAuthOpening]=useState(false);
-  const [authTurning,setAuthTurning]=useState(false);
   const pendingAuthUser=useRef<User|null>(null);
   const authenticatedUser=useRef<User|null>(null);
   const [view,setView]=useState<"planner"|"cover">("planner");
@@ -222,10 +211,9 @@ export default function Planner() {
   const vars={"--bg":palette.bg,"--paper":palette.paper,"--ink":palette.ink,"--accent":palette.accent,"--soft":palette.soft,"--line":palette.line,"--cover":palette.cover,"--cover-ink":palette.coverInk} as CSSProperties;
 
   const beginAuthTransition=useCallback((nextUser:User)=>{
-    if(authenticatedUser.current?.id===nextUser.id||pendingAuthUser.current)return;
+    if(authenticatedUser.current?.id===nextUser.id||pendingAuthUser.current?.id===nextUser.id)return;
     pendingAuthUser.current=nextUser;
-    setAuthOpening(true);
-    setAuthTurning(false);
+    authenticatedUser.current=nextUser;
     setUser(nextUser);
   },[]);
 
@@ -234,10 +222,10 @@ export default function Planner() {
     let mounted=true;
     void client.auth.getUser().then(({data})=>{
       if(mounted){
-        if(!pendingAuthUser.current){
-          authenticatedUser.current=data.user??null;
-          setUser(data.user??null);
-        }
+        const resolvedUser=pendingAuthUser.current??data.user??null;
+        authenticatedUser.current=resolvedUser;
+        pendingAuthUser.current=null;
+        setUser(resolvedUser);
         setChecking(false);
       }
     });
@@ -248,8 +236,6 @@ export default function Planner() {
       }else if(event==="SIGNED_OUT"){
         pendingAuthUser.current=null;
         authenticatedUser.current=null;
-        setAuthOpening(false);
-        setAuthTurning(false);
         setUser(null);
       }else if(event==="INITIAL_SESSION"&&!pendingAuthUser.current){
         authenticatedUser.current=session?.user??null;
@@ -262,18 +248,6 @@ export default function Planner() {
       subscription.unsubscribe();
     };
   },[client,beginAuthTransition]);
-
-  useEffect(()=>{
-    if(!authOpening||!user||!hydrated||!settingsHydrated)return;
-    setAuthTurning(true);
-    const timer=setTimeout(()=>{
-      authenticatedUser.current=user;
-      pendingAuthUser.current=null;
-      setAuthOpening(false);
-      setAuthTurning(false);
-    },1150);
-    return()=>clearTimeout(timer);
-  },[authOpening,user,hydrated,settingsHydrated]);
 
   useEffect(()=>{
     if(!client||!user){setSettingsHydrated(false);return;}
@@ -393,8 +367,7 @@ export default function Planner() {
 
   if(checking)return <div className="boot-screen"><AppIcon/><h1>CHECKPOINT</h1><p>플래너를 불러오는 중입니다...</p></div>;
   if(!user)return <AuthScreen onUser={beginAuthTransition}/>;
-  return <>
-    <div className="app-shell" style={vars}>
+  return <div className="app-shell" style={vars}>
     <header className="site-header"><div className="header-inner">
       <button className="brand" onClick={()=>setView("planner")}><span className="brand-lockup"><AppIcon/><span>CHECKPOINT</span></span><small>YOUR PACE, YOUR CHECKPOINT</small></button>
       <nav className={mobileMenu?"nav-links open":"nav-links"} aria-label="페이지 이동">
@@ -480,7 +453,5 @@ export default function Planner() {
       {theme==="custom"&&<div className="custom-color"><label>컬러 피커<input aria-label="사용자 지정 컬러 피커" type="color" value={sanitizeHex(customColor)} onChange={e=>setCustomColor(e.target.value)}/></label><label>HEX 코드<input aria-label="HEX 컬러 코드" type="text" maxLength={7} placeholder="#8B9EC4" value={customColor} onChange={e=>setCustomColor(e.target.value)}/></label></div>}
       <div className="settings-bottom"><span><CheckCircle2 size={16}/> 자동 저장이 적용됩니다.</span><button className="primary-btn" onClick={()=>setShowSettings(false)}>적용하기</button></div>
       </section></div>}
-    </div>
-    {authOpening&&<BookTransitionOverlay turning={authTurning}/>}
-  </>;
+  </div>;
 }
