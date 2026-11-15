@@ -34,7 +34,7 @@ function AppIcon() {
   return <span className="brand-icon"><Check size={18} strokeWidth={3}/></span>;
 }
 
-function AuthScreen({ onUser }: { onUser: (u: User) => void }) {
+function AuthScreen({ onUser, isOpening }: { onUser: (u: User) => void; isOpening: boolean }) {
   const [mode,setMode]=useState<"login"|"signup">("login");
   const [email,setEmail]=useState("");
   const [password,setPassword]=useState("");
@@ -60,12 +60,30 @@ function AuthScreen({ onUser }: { onUser: (u: User) => void }) {
       setMessage(err instanceof Error ? err.message : "로그인 중 문제가 발생했습니다.");
     } finally {setBusy(false);}
   }
-  return <div className="auth-wrap">
+  return <div className={isOpening?"auth-wrap auth-opening":"auth-wrap"}>
     <div className="auth-left"><div className="auth-brand"><AppIcon/> CHECKPOINT</div>
-      <div className="auth-cover">
-        <span className="auth-sticker auth-star">✳</span><span className="auth-sticker auth-heart">♡</span>
-        <div className="auth-cover-center"><span>YOUR LITTLE STUDY JOURNAL</span><h1>CHECK<br/>POINT<span className="gold-dot">.</span></h1>
-          <p>YOUR PACE, YOUR CHECKPOINT.</p></div><div className="auth-bottom">A PLACE TO BEGIN AGAIN — EVERY DAY.</div>
+      <div className="auth-book">
+        <div className="auth-inner-page" aria-hidden="true">
+          <div className="auth-inner-date"><strong>2026 11 15</strong><span>D-32</span></div>
+          <div className="auth-inner-columns">
+            <div className="auth-inner-timetable">
+              <b>TIME TABLE</b>
+              <div className="auth-inner-table-head"><span>시</span><span>00</span><span>20</span><span>40</span></div>
+              {Array.from({length:9},(_,i)=><div className="auth-inner-time-row" key={i}><span>{String(i+7).padStart(2,"0")}</span><i/><i/><i/></div>)}
+            </div>
+            <div className="auth-inner-notes">
+              <div className="auth-inner-note"><b>TODAY&apos;S FOCUS</b><span/></div>
+              <div className="auth-inner-note"><b>KEY POINT</b><span/></div>
+            </div>
+          </div>
+          <div className="auth-inner-todo"><b>TO DO LIST</b><i/><i/><i/></div>
+          <div className="auth-inner-footer">YOUR PACE, YOUR WAY.</div>
+        </div>
+        <div className="auth-cover">
+          <span className="auth-sticker auth-star">✳</span><span className="auth-sticker auth-heart">♡</span>
+          <div className="auth-cover-center"><span>YOUR LITTLE STUDY JOURNAL</span><h1>CHECK<br/>POINT<span className="gold-dot">.</span></h1>
+            <p>YOUR PACE, YOUR CHECKPOINT.</p></div><div className="auth-bottom">A PLACE TO BEGIN AGAIN — EVERY DAY.</div>
+        </div>
       </div>
     </div>
     <div className="auth-right"><div className="auth-card"><div className="mini-brand"><AppIcon/> CHECKPOINT</div>
@@ -175,6 +193,10 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
 export default function Planner() {
   const [user,setUser]=useState<User|null>(null);
   const [checking,setChecking]=useState(true);
+  const [authOpening,setAuthOpening]=useState(false);
+  const pendingAuthUser=useRef<User|null>(null);
+  const authenticatedUser=useRef<User|null>(null);
+  const authOpeningTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
   const [view,setView]=useState<"planner"|"cover">("planner");
   const [date,setDate]=useState(today());
   const [entry,setEntry]=useState<Entry>(()=>emptyEntry(today()));
@@ -199,13 +221,54 @@ export default function Planner() {
   const palette=theme==="custom"?{...themes.custom,accent:sanitizeHex(customColor),cover:sanitizeHex(customColor),soft:setOpacity(customColor,.13),line:setOpacity(customColor,.19)}:themes[theme];
   const vars={"--bg":palette.bg,"--paper":palette.paper,"--ink":palette.ink,"--accent":palette.accent,"--soft":palette.soft,"--line":palette.line,"--cover":palette.cover,"--cover-ink":palette.coverInk} as CSSProperties;
 
+  const beginAuthTransition=useCallback((nextUser:User)=>{
+    if(authenticatedUser.current||pendingAuthUser.current)return;
+    pendingAuthUser.current=nextUser;
+    setAuthOpening(true);
+    authOpeningTimer.current=setTimeout(()=>{
+      authenticatedUser.current=nextUser;
+      pendingAuthUser.current=null;
+      authOpeningTimer.current=null;
+      setUser(nextUser);
+      setAuthOpening(false);
+    },1100);
+  },[]);
+
   useEffect(()=>{
     if(!client){setChecking(false);return;}
     let mounted=true;
-    void client.auth.getUser().then(({data})=>{if(mounted){setUser(data.user??null);setChecking(false);}});
-    const {data:{subscription}}=client.auth.onAuthStateChange((_event,session)=>{if(mounted){setUser(session?.user??null);setChecking(false);}});
-    return()=>{mounted=false;subscription.unsubscribe();};
-  },[client]);
+    void client.auth.getUser().then(({data})=>{
+      if(mounted){
+        if(!pendingAuthUser.current){
+          authenticatedUser.current=data.user??null;
+          setUser(data.user??null);
+        }
+        setChecking(false);
+      }
+    });
+    const {data:{subscription}}=client.auth.onAuthStateChange((event,session)=>{
+      if(!mounted)return;
+      if(event==="SIGNED_IN"&&session?.user){
+        beginAuthTransition(session.user);
+      }else if(event==="SIGNED_OUT"){
+        if(authOpeningTimer.current)clearTimeout(authOpeningTimer.current);
+        authOpeningTimer.current=null;
+        pendingAuthUser.current=null;
+        authenticatedUser.current=null;
+        setAuthOpening(false);
+        setUser(null);
+      }else if(event==="INITIAL_SESSION"&&!pendingAuthUser.current){
+        authenticatedUser.current=session?.user??null;
+        setUser(session?.user??null);
+      }
+      setChecking(false);
+    });
+    return()=>{
+      mounted=false;
+      subscription.unsubscribe();
+      if(authOpeningTimer.current)clearTimeout(authOpeningTimer.current);
+    };
+  },[client,beginAuthTransition]);
 
   useEffect(()=>{
     if(!client||!user){setSettingsHydrated(false);return;}
@@ -324,7 +387,7 @@ export default function Planner() {
   const themeNames:Record<ThemeName,string>={white:"White",pink:"Pink",blue:"Blue",black:"Black",custom:"Custom"};
 
   if(checking)return <div className="boot-screen"><AppIcon/><h1>CHECKPOINT</h1><p>플래너를 불러오는 중입니다...</p></div>;
-  if(!user)return <AuthScreen onUser={setUser}/>;
+  if(!user)return <AuthScreen onUser={beginAuthTransition} isOpening={authOpening}/>;
   return <div className="app-shell" style={vars}>
     <header className="site-header"><div className="header-inner">
       <button className="brand" onClick={()=>setView("planner")}><span className="brand-lockup"><AppIcon/><span>CHECKPOINT</span></span><small>YOUR PACE, YOUR CHECKPOINT</small></button>
