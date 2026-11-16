@@ -279,10 +279,13 @@ export default function Planner() {
         if(error)setAlert(`기록을 불러오지 못했습니다: ${error.message}`);
         const next:Entry=data?{
           date,dday:data.dday||"",headerLabel:data.header_label||"",headerValue:data.header_value||"",focus:data.focus||"",keypoint:data.keypoint||"",
-          todos:Array.isArray(data.todos)?data.todos.map((todo:Partial<Todo>)=>{
-            const todoStatus:TodoStatus=todo.status==="todo"||todo.status==="doing"||todo.status==="done"?todo.status:todo.checked?"done":"todo";
-            return {id:todo.id||uid(),title:todo.title||"",checked:todoStatus==="done",status:todoStatus};
-          }):emptyEntry(date).todos,
+          todos:(()=>{
+            const savedTodos:Todo[]=Array.isArray(data.todos)?data.todos.slice(0,10).map((todo:Partial<Todo>,idx:number)=>{
+              const todoStatus:TodoStatus=todo.status==="todo"||todo.status==="doing"||todo.status==="done"?todo.status:todo.checked?"done":"todo";
+              return {id:todo.id||`todo-${idx+1}`,title:todo.title||"",checked:todoStatus==="done",status:todoStatus};
+            }):[];
+            return Array.from({length:10},(_,idx)=>savedTodos[idx]??{id:`todo-slot-${idx+1}`,title:"",checked:false,status:"todo" as const});
+          })(),
           memo:data.memo||"",timetable:data.timetable&&typeof data.timetable==="object"?data.timetable:{}
         }:emptyEntry(date);
         lastSaved.current=JSON.stringify(next);setEntry(next);setHydrated(true);setLoading(false);setStatus("5분마다 자동 저장돼요.");
@@ -441,7 +444,7 @@ export default function Planner() {
             </div>
           </section>
           <section className="paper-page right-page"><div className="right-top"><div className="section-heading todo-header">
-              <div className="todo-heading-group"><span>TO DO LIST</span><button type="button" className="add-todo-icon" aria-label={entry.todos.length>=10?"할 일은 최대 10개까지 추가할 수 있습니다.":"할 일 추가"} title={entry.todos.length>=10?"최대 10개까지 추가할 수 있습니다.":"할 일 추가"} disabled={entry.todos.length>=10} onClick={()=>setEntry(v=>v.todos.length>=10?v:{...v,todos:[...v.todos,{id:uid(),title:"",checked:false,status:"todo"}]})}><Plus size={16} strokeWidth={2}/></button></div>
+              <div className="todo-heading-group"><span>TO DO LIST</span></div>
               <small className="todo-save-status" role="status" aria-live="polite"><span className={status==="자동 저장되었어요."?"indicator-dot saved":"indicator-dot"}/>{status}</small>
             </div>
             <div className="todo-list">{entry.todos.map((todo,idx)=>{
@@ -451,7 +454,7 @@ export default function Planner() {
                 <span className="todo-number">{String(idx+1).padStart(2,"0")}</span>
                 <input className={todoStatus==="done"?"todo-text checked":"todo-text"} value={todo.title}
                   onChange={e=>updateTodo(todo.id,{title:e.target.value})} aria-label={`${idx+1}번째 할 일`}/>
-                <button type="button" className="todo-remove" title="할 일 삭제" aria-label="할 일 삭제" onClick={()=>setEntry(v=>({...v,todos:v.todos.filter(t=>t.id!==todo.id)}))}><X size={15}/></button>
+                
                 <button type="button" className={`todo-status todo-status-${todoStatus}`} aria-label={`${idx+1}번째 할 일 상태: ${statusLabel}. 클릭하여 변경`} title={statusLabel} aria-pressed={todoStatus==="done"} onClick={()=>cycleTodoStatus(todo.id)}>
                   {todoStatus==="todo"?"○":todoStatus==="doing"?"△":"X"}
                 </button>
@@ -460,7 +463,7 @@ export default function Planner() {
             <div className="memo-section"><div className="section-heading"><span>MEMO</span></div>
               <textarea aria-label="자유 메모" value={entry.memo} onChange={e=>setEntry(v=>({...v,memo:e.target.value}))} />
             </div>
-            <div className="page-footer"><span aria-hidden="true">✦</span></div>
+            
           </section>
         </div>}
       </>}
