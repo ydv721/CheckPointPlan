@@ -2017,3 +2017,15 @@ html,body{width:100%;overflow-x:clip}
     aspect-ratio: 105 / 148 !important;
   }
 }
+
+/* Align the mobile date underline and header-field divider. */
+@media (max-width: 430px) {
+  .page-date {
+    min-height: 55px !important;
+  }
+
+  .small-info-block input.header-label-input {
+    flex-basis: 64px !important;
+    width: 64px !important;
+  }
+}
