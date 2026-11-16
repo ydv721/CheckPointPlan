@@ -28,7 +28,7 @@ const sanitizeHex = (s: string) => /^#[0-9a-fA-F]{6}$/.test(s) ? s : "#8b9ec4";
 function parseFocusItems(raw: unknown): FocusItem[] {
   const makeBlankRows = (items: FocusItem[]) => {
     const rows = items.slice(0, 30);
-    while (rows.length < 4) rows.push({ id: uid(), text: "", checked: false });
+    while (rows.length < 5) rows.push({ id: uid(), text: "", checked: false });
     return rows;
   };
   if (typeof raw !== "string" || !raw.trim()) return makeBlankRows([]);
@@ -54,7 +54,7 @@ function parseFocusItems(raw: unknown): FocusItem[] {
 function parseKeyPoints(raw: unknown): string[] {
   const makeBlankRows = (items: string[]) => {
     const rows = items.slice(0, 30);
-    while (rows.length < 4) rows.push("");
+    while (rows.length < 5) rows.push("");
     return rows;
   };
   if (typeof raw !== "string" || !raw.trim()) return makeBlankRows([]);
@@ -427,7 +427,7 @@ export default function Planner() {
       let focusItems=current.focusItems.map(item=>item.id===id
         ? {...item,...patch,...(patch.text!==undefined&&!patch.text.trim()?{checked:false}:{})}
         : item);
-      while(focusItems.length>4&&!focusItems[focusItems.length-1].text.trim()&&!focusItems[focusItems.length-1].checked) focusItems=focusItems.slice(0,-1);
+      while(focusItems.length>5&&!focusItems[focusItems.length-1].text.trim()&&!focusItems[focusItems.length-1].checked) focusItems=focusItems.slice(0,-1);
       const last=focusItems[focusItems.length-1];
       if(last?.text.trim()&&focusItems.length<30) focusItems=[...focusItems,{id:uid(),text:"",checked:false}];
       return {...current,focusItems};
@@ -437,7 +437,7 @@ export default function Planner() {
     setEntry(current=>{
       const keyPoints=[...current.keyPoints];
       keyPoints[index]=value;
-      while(keyPoints.length>4&&!keyPoints[keyPoints.length-1].trim()) keyPoints.pop();
+      while(keyPoints.length>5&&!keyPoints[keyPoints.length-1].trim()) keyPoints.pop();
       if(keyPoints[keyPoints.length-1]?.trim()&&keyPoints.length<30) keyPoints.push("");
       return {...current,keyPoints};
     });

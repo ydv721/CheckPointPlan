@@ -18,8 +18,8 @@ export type CoverItem = { id: string; kind: "sticker" | "photo"; value: string; 
 export type Cover = { title: string; subtitle: string; items: CoverItem[] };
 export const emptyEntry = (date: string): Entry => ({
   date, dday: "", headerLabel: "", headerValue: "",
-  focusItems: Array.from({ length: 4 }, (_, index) => ({ id: `focus-${index + 1}`, text: "", checked: false })),
-  keyPoints: Array.from({ length: 4 }, () => ""),
+  focusItems: Array.from({ length: 5 }, (_, index) => ({ id: `focus-${index + 1}`, text: "", checked: false })),
+  keyPoints: Array.from({ length: 5 }, () => ""),
   todos: Array.from({ length: 10 }, (_, index) => ({ id: `starter-${index + 1}`, title: "", checked: false, status: "todo" as const })),
   memo: "", timetable: {}
 });

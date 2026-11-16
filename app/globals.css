@@ -2221,3 +2221,62 @@ html,body{width:100%;overflow-x:clip}
     min-height: 110px;
   }
 }
+
+
+/* Five centered rows; compact KEY POINT treatment. */
+.focus-checklist,
+.keypoint-list {
+  justify-content: safe center;
+  gap: 2px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+.focus-check-row,
+.keypoint-row {
+  flex: 0 0 22px;
+  min-height: 22px;
+}
+
+.focus-check-text,
+.keypoint-input {
+  text-align: left !important;
+}
+
+.keypoint-list {
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+.keypoint-row {
+  flex-basis: 21px;
+  min-height: 21px;
+}
+
+.keypoint-input {
+  height: 20px;
+  font-size: 11px;
+  line-height: 1.4;
+  padding-top: 2px;
+  padding-bottom: 3px;
+}
+
+@media (min-width: 901px) {
+  .notes-stack .key-section {
+    flex: 0.94 1 0 !important;
+  }
+}
+
+@media (max-width: 900px) and (min-width: 781px) {
+  .focus-checklist,
+  .keypoint-list {
+    min-height: 130px;
+  }
+}
+
+@media (max-width: 780px) {
+  .focus-checklist,
+  .keypoint-list {
+    min-height: 130px;
+  }
+}
