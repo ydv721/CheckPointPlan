@@ -1773,3 +1773,14 @@ html,body{width:100%;overflow-x:clip}
     height: 64px;
   }
 }
+
+/* Remove the remaining viewport-relative type sizes from the fixed cover canvases. */
+@media (min-width: 561px) {
+  .cover-main-word {
+    font-size: 48px !important;
+  }
+
+  .auth-cover-center h1 {
+    font-size: 64px !important;
+  }
+}
