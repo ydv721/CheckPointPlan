@@ -2018,14 +2018,29 @@ html,body{width:100%;overflow-x:clip}
   }
 }
 
-/* Align the mobile date underline and header-field divider. */
+/* Align the D-day divider, date underline, and note-field divider. */
+.page-date {
+  grid-template-columns: 97px minmax(0, 1fr) !important;
+  height: 60px !important;
+  min-height: 60px !important;
+}
+
+.small-info-block input.header-label-input {
+  flex: 0 0 67px !important;
+  width: 67px !important;
+}
+
+@media (max-width: 900px) {
+  .page-date {
+    grid-template-columns: 91px minmax(0, 1fr) !important;
+    height: 54px !important;
+    min-height: 54px !important;
+  }
+}
+
 @media (max-width: 430px) {
   .page-date {
-    min-height: 55px !important;
-  }
-
-  .small-info-block input.header-label-input {
-    flex-basis: 64px !important;
-    width: 64px !important;
+    height: 50px !important;
+    min-height: 50px !important;
   }
 }
