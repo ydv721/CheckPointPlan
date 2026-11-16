@@ -457,7 +457,7 @@ export default function Planner() {
                 </button>
               </div>;
             })}</div></div>
-            <div className="memo-section"><div className="section-heading"><span>MEMO</span><small>메모는 한 줄만 적어도 괜찮습니다.</small></div>
+            <div className="memo-section"><div className="section-heading"><span>MEMO</span></div>
               <textarea aria-label="자유 메모" value={entry.memo} onChange={e=>setEntry(v=>({...v,memo:e.target.value}))} />
             </div>
             <div className="page-footer"><span>YOUR PACE, YOUR WAY.</span><span>✦</span></div>
