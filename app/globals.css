@@ -2280,3 +2280,11 @@ html,body{width:100%;overflow-x:clip}
     min-height: 130px;
   }
 }
+
+
+/* Slightly shorten the TODAY'S FOCUS card on the fixed planner spread. */
+@media (min-width: 561px) {
+  .notes-stack .focus-section {
+    flex: 0.84 1 0 !important;
+  }
+}
