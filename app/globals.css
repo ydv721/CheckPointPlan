@@ -1879,3 +1879,15 @@ html,body{width:100%;overflow-x:clip}
     flex-basis: 25px;
   }
 }
+
+/* Keep the to-do status controls inside the page and remove horizontal overflow. */
+@media (min-width: 901px) {
+  .right-top {
+    overflow-x: hidden;
+  }
+
+  .todo-row {
+    box-sizing: border-box;
+    padding-right: 10px;
+  }
+}
