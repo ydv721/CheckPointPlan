@@ -1522,3 +1522,254 @@ html,body{width:100%;overflow-x:clip}
     aspect-ratio: 105 / 148 !important;
   }
 }
+
+/* Keep the planner and cover as fixed canvases.
+   Browser zoom (+/-) scales every element together instead of reflowing cards. */
+@media (min-width: 561px) {
+  .app-shell {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100%;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .site-header {
+    flex: 0 0 76px;
+    height: 76px;
+  }
+
+  .main-area {
+    display: block !important;
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 12px 20px !important;
+    overflow: auto !important;
+  }
+
+  .book-frame {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    width: 900px !important;
+    height: 634.286px !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    aspect-ratio: 210 / 148 !important;
+    flex: 0 0 900px !important;
+    margin: 0 auto !important;
+  }
+
+  .paper-page {
+    width: auto !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    padding: 18px 28px !important;
+    overflow: hidden !important;
+  }
+
+  .left-page {
+    display: flex !important;
+    flex-direction: column !important;
+    padding-right: 14px !important;
+  }
+
+  .right-page {
+    display: flex !important;
+    flex-direction: column !important;
+    padding-left: 48px !important;
+  }
+
+  .page-date {
+    min-height: 70px !important;
+  }
+
+  .page-date .date-value {
+    font-size: 34px !important;
+    line-height: .92 !important;
+    letter-spacing: .1em !important;
+  }
+
+  .page-date .dday-prefix,
+  .page-date .dday-value-row input {
+    font-size: 25px !important;
+  }
+
+  .small-info-block {
+    flex: 0 0 56px !important;
+    min-height: 56px !important;
+    margin: 0 0 24px !important;
+    padding: 9px 13px !important;
+  }
+
+  .small-info-block input.header-label-input,
+  .small-info-block input.header-value-input {
+    height: 38px !important;
+    font-size: 19px !important;
+    line-height: 1.25 !important;
+  }
+
+  .workspace-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    gap: 18px !important;
+    align-items: stretch !important;
+  }
+
+  .time-section {
+    display: flex !important;
+    flex-direction: column !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .time-grid-wrap {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+  }
+
+  .time-table {
+    height: 100% !important;
+    grid-template-rows: 20px repeat(24, minmax(0, 1fr)) !important;
+  }
+
+  .time-head,
+  .time-hour,
+  .time-cell {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  .notes-stack {
+    display: flex !important;
+    flex-direction: column !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    padding-top: 18px !important;
+    gap: 4px !important;
+    margin-top: 0 !important;
+  }
+
+  .notes-stack .focus-section,
+  .notes-stack .key-section {
+    display: flex !important;
+    flex: 1 1 0 !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+  }
+
+  .focus-section textarea,
+  .key-section textarea {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 10px !important;
+    resize: none !important;
+  }
+
+  .right-top {
+    flex: 0 0 auto !important;
+    min-height: 0 !important;
+  }
+
+  .todo-row {
+    min-height: 42px !important;
+  }
+
+  .todo-text {
+    height: 36px !important;
+  }
+
+  .add-todo {
+    margin-top: 9px !important;
+    padding: 8px 12px !important;
+  }
+
+  .memo-section {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin-top: 20px !important;
+  }
+
+  .memo-section textarea {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    resize: none !important;
+  }
+
+  .page-footer {
+    flex: 0 0 auto !important;
+    margin-top: 10px !important;
+  }
+
+  /* The cover editor uses the same fixed canvas as the open A6 spread. */
+  .cover-layout {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.08fr) minmax(300px, .9fr) !important;
+    width: 900px !important;
+    height: 634.286px !important;
+    min-height: 0 !important;
+    margin: 0 auto !important;
+    padding: 36px 48px !important;
+    gap: 48px !important;
+    overflow: hidden !important;
+  }
+
+  .cover-stage {
+    display: flex !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .spiral-cover {
+    width: min(100%, 320px) !important;
+    max-width: none !important;
+    height: auto !important;
+    aspect-ratio: 105 / 148 !important;
+  }
+
+  .cover-editor {
+    min-height: 0 !important;
+    max-height: 100% !important;
+    overflow-y: auto !important;
+    padding: 0 8px 0 0 !important;
+  }
+
+  /* Keep the single A6 cover on the login screen fixed as well. */
+  .auth-book {
+    width: 320px !important;
+    height: 451.048px !important;
+    aspect-ratio: 105 / 148 !important;
+  }
+
+  .auth-book > .auth-cover {
+    width: 100% !important;
+    height: 100% !important;
+    aspect-ratio: auto !important;
+  }
+}
+
+@media (min-width: 561px) and (max-width: 780px) {
+  .site-header {
+    flex-basis: 64px;
+    height: 64px;
+  }
+}
