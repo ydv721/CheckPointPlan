@@ -441,7 +441,7 @@ export default function Planner() {
             </div>
           </section>
           <section className="paper-page right-page"><div className="right-top"><div className="section-heading todo-header">
-              <div className="todo-heading-group"><span>TO DO LIST</span><button type="button" className="add-todo-icon" aria-label="할 일 추가" title="할 일 추가" onClick={()=>setEntry(v=>({...v,todos:[...v.todos,{id:uid(),title:"",checked:false,status:"todo"}]}))}><Plus size={16} strokeWidth={2}/></button></div>
+              <div className="todo-heading-group"><span>TO DO LIST</span><button type="button" className="add-todo-icon" aria-label={entry.todos.length>=10?"할 일은 최대 10개까지 추가할 수 있습니다.":"할 일 추가"} title={entry.todos.length>=10?"최대 10개까지 추가할 수 있습니다.":"할 일 추가"} disabled={entry.todos.length>=10} onClick={()=>setEntry(v=>v.todos.length>=10?v:{...v,todos:[...v.todos,{id:uid(),title:"",checked:false,status:"todo"}]})}><Plus size={16} strokeWidth={2}/></button></div>
               <small className="todo-save-status" role="status" aria-live="polite"><span className={status==="자동 저장되었어요."?"indicator-dot saved":"indicator-dot"}/>{status}</small>
             </div>
             <div className="todo-list">{entry.todos.map((todo,idx)=>{
@@ -460,7 +460,7 @@ export default function Planner() {
             <div className="memo-section"><div className="section-heading"><span>MEMO</span></div>
               <textarea aria-label="자유 메모" value={entry.memo} onChange={e=>setEntry(v=>({...v,memo:e.target.value}))} />
             </div>
-            <div className="page-footer"><span>YOUR PACE, YOUR WAY.</span><span>✦</span></div>
+            <div className="page-footer"><span aria-hidden="true">✦</span></div>
           </section>
         </div>}
       </>}
