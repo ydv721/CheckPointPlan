@@ -2594,3 +2594,10 @@ html,body{width:100%;overflow-x:clip}
   padding-top: 14px !important;
   background-position: 0 14px !important;
 }
+
+
+/* Hide the first and last horizontal edges of the FREE NOTE writing area. */
+.right-page > .key-section textarea.free-note-input {
+  border-top-color: transparent !important;
+  border-bottom-color: transparent !important;
+}
