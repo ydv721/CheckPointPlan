@@ -2288,3 +2288,11 @@ html,body{width:100%;overflow-x:clip}
     flex: 0.84 1 0 !important;
   }
 }
+
+
+/* Align TODAY'S FOCUS with the top of the TIME TABLE section. */
+@media (min-width: 561px) {
+  .notes-stack {
+    padding-top: 0 !important;
+  }
+}
