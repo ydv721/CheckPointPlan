@@ -9,21 +9,21 @@ export type Entry = {
   headerLabel: string;
   headerValue: string;
   focusItems: FocusItem[];
-  keyPoints: string[];
+  freeNote: string;
   todos: Todo[];
   memo: string;
   timetable: Timetable;
 };
 export type CoverItem = { id: string; kind: "sticker" | "photo"; value: string; x: number; y: number; size: number };
-export type Cover = { title: string; subtitle: string; items: CoverItem[] };
+export type Cover = { title: string; subtitle: string; items: CoverItem[]; colorLabels: string[] };
 export const emptyEntry = (date: string): Entry => ({
   date, dday: "", headerLabel: "", headerValue: "",
   focusItems: Array.from({ length: 5 }, (_, index) => ({ id: `focus-${index + 1}`, text: "", checked: false })),
-  keyPoints: Array.from({ length: 5 }, () => ""),
-  todos: Array.from({ length: 10 }, (_, index) => ({ id: `starter-${index + 1}`, title: "", checked: false, status: "todo" as const })),
+  freeNote: "",
+  todos: Array.from({ length: 7 }, (_, index) => ({ id: `starter-${index + 1}`, title: "", checked: false, status: "todo" as const })),
   memo: "", timetable: {}
 });
-export const defaultCover: Cover = {title: "CHECKPOINT", subtitle: "YOUR PACE, YOUR CHECKPOINT.", items: []};
+export const defaultCover: Cover = {title: "CHECKPOINT", subtitle: "YOUR PACE, YOUR CHECKPOINT.", items: [], colorLabels: ["", "", "", "", ""]};
 
 export const themes: Record<ThemeName, { bg: string; paper: string; ink: string; accent: string; soft: string; line: string; cover: string; coverInk: string }> = {
   white: {bg:"#f4f3f0",paper:"#ffffff",ink:"#303946",accent:"#7186a8",soft:"#e9edf3",line:"#e5e6e8",cover:"#edece9",coverInk:"#374151"},

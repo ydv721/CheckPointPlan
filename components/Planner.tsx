@@ -51,13 +51,8 @@ function parseFocusItems(raw: unknown): FocusItem[] {
   return makeBlankRows(legacyRows);
 }
 
-function parseKeyPoints(raw: unknown): string[] {
-  const makeBlankRows = (items: string[]) => {
-    const rows = items.slice(0, 30);
-    while (rows.length < 5) rows.push("");
-    return rows;
-  };
-  if (typeof raw !== "string" || !raw.trim()) return makeBlankRows([]);
+function parseFreeNote(raw: unknown): string {
+  if (typeof raw !== "string" || !raw.trim()) return "";
   try {
     const parsed: unknown = JSON.parse(raw);
     if (Array.isArray(parsed)) {
@@ -66,13 +61,13 @@ function parseKeyPoints(raw: unknown): string[] {
         if (item && typeof item === "object" && typeof (item as { text?: unknown }).text === "string") return [(item as { text: string }).text];
         return [];
       });
-      return makeBlankRows(rows);
+      while (rows.length && !rows[rows.length - 1].trim()) rows.pop();
+      return rows.join("\n");
     }
   } catch {
-    // Older planner entries contain plain text rather than a JSON list.
+    // Existing plain-text notes are kept as written.
   }
-  const legacyRows = raw.split(/\r?\n/).map(line => line.replace(/^\s*[-•]\s?/, "")).filter(line => line.trim());
-  return makeBlankRows(legacyRows);
+  return raw.replace(/^\\s*[-•]\\s?/gm, "");
 }
 const setOpacity = (hex: string, opacity: number) => {
   const a = sanitizeHex(hex);
@@ -312,7 +307,13 @@ export default function Planner() {
         const t = data?.theme;
         const nextTheme:ThemeName=t && Object.keys(themes).includes(t)?t as ThemeName:"blue";
         const nextCustom=data?.custom_color||"#8b9ec4";
-        const nextCover:Cover=data?.cover && typeof data.cover==="object"?data.cover as Cover:defaultCover;
+        const savedCover:Partial<Cover>=data?.cover && typeof data.cover==="object"?data.cover as Partial<Cover>:{};
+        const nextCover:Cover={
+          ...defaultCover,
+          ...savedCover,
+          items:Array.isArray(savedCover.items)?savedCover.items:defaultCover.items,
+          colorLabels:Array.from({length:PENS.length},(_,index)=>typeof savedCover.colorLabels?.[index]==="string"?savedCover.colorLabels[index]:"")
+        };
         setTheme(nextTheme);setCustomColor(nextCustom);setCover(nextCover);
         lastSettings.current=JSON.stringify({theme:nextTheme,customColor:nextCustom,cover:nextCover});
         setSettingsHydrated(true);
@@ -328,7 +329,7 @@ export default function Planner() {
         if(!active)return;
         if(error)setAlert(`기록을 불러오지 못했습니다: ${error.message}`);
         const next:Entry=data?{
-          date,dday:data.dday||"",headerLabel:data.header_label||"",headerValue:data.header_value||"",focusItems:parseFocusItems(data.focus),keyPoints:parseKeyPoints(data.keypoint),
+          date,dday:data.dday||"",headerLabel:data.header_label||"",headerValue:data.header_value||"",focusItems:parseFocusItems(data.focus),freeNote:parseFreeNote(data.keypoint),
           todos:(()=>{
             const savedTodos:Todo[]=Array.isArray(data.todos)?data.todos.slice(0,10).map((todo:Partial<Todo>,idx:number)=>{
               const todoStatus:TodoStatus=todo.status==="todo"||todo.status==="doing"||todo.status==="done"?todo.status:todo.checked?"done":"todo";
@@ -351,7 +352,7 @@ export default function Planner() {
     setStatus("자동 저장 중이에요.");
     const {error}=await client.from("planner_entries").upsert({
       user_id:user.id,entry_date:current.date,date_label:dateView(current.date),dday:current.dday,header_label:current.headerLabel,
-      header_value:current.headerValue,focus:JSON.stringify(current.focusItems),keypoint:JSON.stringify(current.keyPoints),
+      header_value:current.headerValue,focus:JSON.stringify(current.focusItems),keypoint:current.freeNote,
       todos:current.todos,memo:current.memo,timetable:current.timetable,updated_at:new Date().toISOString()
     },{onConflict:"user_id,entry_date"});
     if(version!==saveVersion.current)return;
@@ -433,15 +434,6 @@ export default function Planner() {
       return {...current,focusItems};
     });
   }
-  function updateKeyPoint(index:number,value:string) {
-    setEntry(current=>{
-      const keyPoints=[...current.keyPoints];
-      keyPoints[index]=value;
-      while(keyPoints.length>5&&!keyPoints[keyPoints.length-1].trim()) keyPoints.pop();
-      if(keyPoints[keyPoints.length-1]?.trim()&&keyPoints.length<30) keyPoints.push("");
-      return {...current,keyPoints};
-    });
-  }
   function cycleTodoStatus(id:string) {
     setEntry(v=>({...v,todos:v.todos.map(item=>{
       if(item.id!==id)return item;
@@ -504,21 +496,16 @@ export default function Planner() {
                 <Timetable value={entry.timetable} onChange={timetable=>setEntry(v=>({...v,timetable}))} highlighter={pen} tool={tool}/>
               </div>
               <div className="notes-stack">
-                <div className="paper-section focus-section"><div className="section-heading"><span>TODAY&apos;S FOCUS</span></div>
-                  <div className="focus-checklist" aria-label="오늘의 집중 목표 목록">
-                    {entry.focusItems.map((item,idx)=><div className={item.checked?"focus-check-row is-checked":"focus-check-row"} key={item.id}>
-                      <input className="focus-check-box" type="checkbox" checked={item.checked} disabled={!item.text.trim()} aria-label={`${idx+1}번째 집중 목표 완료`} onChange={e=>updateFocusItem(item.id,{checked:e.target.checked})}/>
-                      <input className="focus-check-text" type="text" value={item.text} aria-label={`${idx+1}번째 집중 목표`} onChange={e=>updateFocusItem(item.id,{text:e.target.value})}/>
+                <div className="paper-section focus-section"><div className="section-heading"><span>COLOR GUIDE</span></div>
+                  <div className="color-guide-list" aria-label="시간표 형광펜 색상별 의미">
+                    {PENS.map((color,index)=><div className="color-guide-row" key={color}>
+                      <span className="color-guide-swatch" style={{backgroundColor:color}} aria-hidden="true"/>
+                      <input className="color-guide-input" type="text" value={cover.colorLabels[index]??""} aria-label={`${index+1}번째 색상 의미`} onChange={e=>setCover(current=>({...current,colorLabels:PENS.map((_,i)=>i===index?e.target.value:(current.colorLabels[i]??""))}))}/>
                     </div>)}
                   </div>
                 </div>
-                <div className="paper-section key-section"><div className="section-heading"><span>KEY POINT</span></div>
-                  <div className="keypoint-list" aria-label="핵심 내용 목록">
-                    {entry.keyPoints.map((point,idx)=><div className="keypoint-row" key={`keypoint-${idx}`}>
-                      <span className="keypoint-bullet" aria-hidden="true">-</span>
-                      <input className="keypoint-input" type="text" value={point} aria-label={`${idx+1}번째 핵심 내용`} onChange={e=>updateKeyPoint(idx,e.target.value)}/>
-                    </div>)}
-                  </div>
+                <div className="paper-section key-section"><div className="section-heading"><span>FREE NOTE</span></div>
+                  <textarea className="free-note-input" rows={10} aria-label="자유롭게 작성하는 노트" value={entry.freeNote} onChange={e=>setEntry(current=>({...current,freeNote:e.target.value}))}/>
                 </div>
               </div>
             </div>
@@ -527,7 +514,7 @@ export default function Planner() {
               <div className="todo-heading-group"><span>TO DO LIST</span></div>
               <small className="todo-save-status" role="status" aria-live="polite"><span className={status==="자동 저장되었어요."?"indicator-dot saved":"indicator-dot"}/>{status}</small>
             </div>
-            <div className="todo-list">{entry.todos.map((todo,idx)=>{
+            <div className="todo-list">{entry.todos.slice(0,7).map((todo,idx)=>{
               const todoStatus:TodoStatus=todo.status??(todo.checked?"done":"todo");
               const statusLabel=todoStatus==="todo"?"시작 전":todoStatus==="doing"?"진행 중":"완료";
               return <div className="todo-row" key={todo.id}>
