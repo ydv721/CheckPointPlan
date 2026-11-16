@@ -2029,3 +2029,38 @@ html,body{width:100%;overflow-x:clip}
     width: 64px !important;
   }
 }
+
+/* Make only the header-label field a fixed rounded chip; keep the value field plain. */
+.small-info-block {
+  border: 0 !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  padding: 9px 13px !important;
+  gap: 12px !important;
+  align-items: center !important;
+}
+
+.small-info-block input.header-label-input {
+  box-sizing: border-box !important;
+  flex: 0 0 110px !important;
+  width: 110px !important;
+  min-width: 110px !important;
+  max-width: 110px !important;
+  height: 38px !important;
+  padding: 4px 9px !important;
+  border: 1px solid var(--line) !important;
+  border-right: 1px solid var(--line) !important;
+  border-radius: 9px !important;
+  background: var(--soft) !important;
+  color: var(--accent) !important;
+  text-align: center !important;
+}
+
+.small-info-block input.header-value-input {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding-left: 0 !important;
+}
