@@ -1968,3 +1968,52 @@ html,body{width:100%;overflow-x:clip}
   }
 }
 
+/* Compact centered A6 planner spread with a shorter site header. */
+@media (min-width: 561px) {
+  .site-header {
+    flex: 0 0 64px !important;
+    height: 64px !important;
+    min-height: 64px !important;
+  }
+
+  .header-inner {
+    height: 64px !important;
+    min-height: 64px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .main-area {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 12px 20px !important;
+    overflow: hidden !important;
+  }
+
+  .book-frame {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    width: min(1050px, calc(100vw - 40px), calc(141.9dvh - 136px)) !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-width: 100% !important;
+    aspect-ratio: 210 / 148 !important;
+    flex: 0 1 auto !important;
+    margin: auto !important;
+  }
+
+  .paper-page {
+    width: auto !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    aspect-ratio: 105 / 148 !important;
+  }
+}
