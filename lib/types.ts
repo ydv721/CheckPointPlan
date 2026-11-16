@@ -1,5 +1,6 @@
 export type ThemeName = "white" | "pink" | "blue" | "black" | "custom";
-export type Todo = { id: string; title: string; checked: boolean };
+export type TodoStatus = "todo" | "doing" | "done";
+export type Todo = { id: string; title: string; checked: boolean; status?: TodoStatus };
 export type Timetable = Record<string, string>;
 export type Entry = {
   date: string;
@@ -16,7 +17,7 @@ export type CoverItem = { id: string; kind: "sticker" | "photo"; value: string; 
 export type Cover = { title: string; subtitle: string; items: CoverItem[] };
 export const emptyEntry = (date: string): Entry => ({
   date, dday: "", headerLabel: "", headerValue: "", focus: "", keypoint: "",
-  todos: [{ id: "starter-1", title: "", checked: false }, { id: "starter-2", title: "", checked: false }, { id: "starter-3", title: "", checked: false }],
+  todos: [{ id: "starter-1", title: "", checked: false, status: "todo" }, { id: "starter-2", title: "", checked: false, status: "todo" }, { id: "starter-3", title: "", checked: false, status: "todo" }],
   memo: "", timetable: {}
 });
 export const defaultCover: Cover = {title: "CHECKPOINT", subtitle: "YOUR PACE, YOUR CHECKPOINT.", items: []};
