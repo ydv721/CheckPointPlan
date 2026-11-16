@@ -2500,3 +2500,28 @@ html,body{width:100%;overflow-x:clip}
     min-height: 170px !important;
   }
 }
+
+
+/* Color guide: show all five swatches without an inner scrollbar and separate the note section. */
+.color-guide-list {
+  flex: 0 0 auto !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  scrollbar-width: none !important;
+}
+.notes-stack {
+  gap: 14px !important;
+}
+.notes-stack .focus-section {
+  flex: 0 0 auto !important;
+}
+@media (max-width: 780px) {
+  .notes-stack {
+    gap: 14px !important;
+  }
+  .notes-stack .focus-section,
+  .notes-stack .key-section {
+    margin-bottom: 0 !important;
+  }
+}
