@@ -2078,3 +2078,10 @@ html,body{width:100%;overflow-x:clip}
   padding: 4px 8px 5px !important;
   align-self: stretch !important;
 }
+
+/* Match the TO DO LIST title typography to the MEMO heading. */
+.todo-heading-group > span {
+  font-size: 12px !important;
+  letter-spacing: .08em !important;
+  font-weight: 900 !important;
+}
