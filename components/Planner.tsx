@@ -67,7 +67,7 @@ function parseFreeNote(raw: unknown): string {
   } catch {
     // Existing plain-text notes are kept as written.
   }
-  return raw.replace(/^\\s*[-•]\\s?/gm, "");
+  return raw.replace(/^\s*[-•]\s?/gm, "");
 }
 const setOpacity = (hex: string, opacity: number) => {
   const a = sanitizeHex(hex);
@@ -422,17 +422,6 @@ export default function Planner() {
 
   function updateTodo(id:string,patch:Partial<Entry["todos"][number]>) {
     setEntry(v=>({...v,todos:v.todos.map(item=>item.id===id?{...item,...patch}:item)}));
-  }
-  function updateFocusItem(id:string,patch:Partial<FocusItem>) {
-    setEntry(current=>{
-      let focusItems=current.focusItems.map(item=>item.id===id
-        ? {...item,...patch,...(patch.text!==undefined&&!patch.text.trim()?{checked:false}:{})}
-        : item);
-      while(focusItems.length>5&&!focusItems[focusItems.length-1].text.trim()&&!focusItems[focusItems.length-1].checked) focusItems=focusItems.slice(0,-1);
-      const last=focusItems[focusItems.length-1];
-      if(last?.text.trim()&&focusItems.length<30) focusItems=[...focusItems,{id:uid(),text:"",checked:false}];
-      return {...current,focusItems};
-    });
   }
   function cycleTodoStatus(id:string) {
     setEntry(v=>({...v,todos:v.todos.map(item=>{

@@ -2463,3 +2463,40 @@ html,body{width:100%;overflow-x:clip}
     min-height: 170px;
   }
 }
+
+
+/* Ensure the free-writing textarea overrides older key-section textarea rules. */
+.key-section textarea.free-note-input {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  resize: none !important;
+  overflow-y: auto !important;
+  padding: 8px 11px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 10px !important;
+  background-color: transparent !important;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 23px,
+    var(--line) 23px,
+    var(--line) 24px
+  ) !important;
+  background-position: 0 8px !important;
+  background-size: 100% 24px !important;
+  line-height: 24px !important;
+}
+@media (min-width: 561px) and (max-width: 900px) {
+  .key-section textarea.free-note-input {
+    height: 140px !important;
+    min-height: 140px !important;
+  }
+}
+@media (max-width: 560px) {
+  .key-section textarea.free-note-input {
+    height: 170px !important;
+    min-height: 170px !important;
+  }
+}
