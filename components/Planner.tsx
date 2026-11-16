@@ -432,10 +432,10 @@ export default function Planner() {
               </div>
               <div className="notes-stack">
                 <div className="paper-section focus-section"><div className="section-heading"><span>TODAY&apos;S FOCUS</span></div>
-                  <textarea rows={2} placeholder="오늘 꼭 해보고 싶은 일은 무엇인가요?" value={entry.focus} onChange={e=>setEntry(v=>({...v,focus:e.target.value}))} />
+                  <textarea rows={2} value={entry.focus} onChange={e=>setEntry(v=>({...v,focus:e.target.value}))} />
                 </div>
                 <div className="paper-section key-section"><div className="section-heading"><span>KEY POINT</span></div>
-                  <textarea rows={3} placeholder="오늘 배운 것, 중요한 개념, 한 줄 생각..." value={entry.keypoint} onChange={e=>setEntry(v=>({...v,keypoint:e.target.value}))} />
+                  <textarea rows={3} value={entry.keypoint} onChange={e=>setEntry(v=>({...v,keypoint:e.target.value}))} />
                 </div>
               </div>
             </div>
@@ -449,16 +449,16 @@ export default function Planner() {
               const statusLabel=todoStatus==="todo"?"시작 전":todoStatus==="doing"?"진행 중":"완료";
               return <div className="todo-row" key={todo.id}>
                 <span className="todo-number">{String(idx+1).padStart(2,"0")}</span>
-                <input className={todoStatus==="done"?"todo-text checked":"todo-text"} value={todo.title} placeholder={idx===0?"할 일을 입력해 주세요 (예: SQL 기출 2문제)":"새로운 할 일"}
+                <input className={todoStatus==="done"?"todo-text checked":"todo-text"} value={todo.title}
                   onChange={e=>updateTodo(todo.id,{title:e.target.value})} aria-label={`${idx+1}번째 할 일`}/>
+                <button type="button" className="todo-remove" title="할 일 삭제" aria-label="할 일 삭제" onClick={()=>setEntry(v=>({...v,todos:v.todos.filter(t=>t.id!==todo.id)}))}><X size={15}/></button>
                 <button type="button" className={`todo-status todo-status-${todoStatus}`} aria-label={`${idx+1}번째 할 일 상태: ${statusLabel}. 클릭하여 변경`} title={statusLabel} aria-pressed={todoStatus==="done"} onClick={()=>cycleTodoStatus(todo.id)}>
                   {todoStatus==="todo"?"○":todoStatus==="doing"?"△":"X"}
                 </button>
-                <button type="button" className="todo-remove" title="할 일 삭제" aria-label="할 일 삭제" onClick={()=>setEntry(v=>({...v,todos:v.todos.filter(t=>t.id!==todo.id)}))}><X size={15}/></button>
               </div>;
             })}</div></div>
             <div className="memo-section"><div className="section-heading"><span>MEMO</span><small>메모는 한 줄만 적어도 괜찮습니다.</small></div>
-              <textarea aria-label="자유 메모" placeholder="공부한 내용, 떠오른 생각, 내일의 나에게 남길 말을 적어 주세요.\n\n비워 두셔도 괜찮습니다." value={entry.memo} onChange={e=>setEntry(v=>({...v,memo:e.target.value}))} />
+              <textarea aria-label="자유 메모" value={entry.memo} onChange={e=>setEntry(v=>({...v,memo:e.target.value}))} />
             </div>
             <div className="page-footer"><span>YOUR PACE, YOUR WAY.</span><span>✦</span></div>
           </section>
