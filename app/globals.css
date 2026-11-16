@@ -2064,3 +2064,17 @@ html,body{width:100%;overflow-x:clip}
   background: transparent !important;
   padding-left: 0 !important;
 }
+
+/* Align the label chip to the left and give the value field a ruled-notebook baseline. */
+.small-info-block input.header-label-input {
+  text-align: left !important;
+  justify-content: flex-start !important;
+  padding-left: 12px !important;
+}
+
+.small-info-block input.header-value-input {
+  border-bottom: 1px solid var(--line) !important;
+  border-radius: 0 !important;
+  padding: 4px 8px 5px !important;
+  align-self: stretch !important;
+}
