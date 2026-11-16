@@ -2114,3 +2114,110 @@ html,body{width:100%;overflow-x:clip}
   padding-left: 9px !important;
   padding-right: 9px !important;
 }
+
+
+/* Structured checklist and ruled key-point rows. */
+.focus-section,
+.key-section {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+}
+
+.focus-checklist,
+.keypoint-list {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  min-height: 0;
+  padding: 8px 10px;
+  overflow-y: auto;
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  scrollbar-width: thin;
+}
+
+.focus-checklist {
+  background: var(--soft);
+}
+
+.keypoint-list {
+  background: transparent;
+}
+
+.focus-check-row,
+.keypoint-row {
+  display: flex;
+  flex: 0 0 26px;
+  align-items: center;
+  gap: 8px;
+  min-height: 26px;
+}
+
+.focus-check-box {
+  flex: 0 0 14px;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.focus-check-box:disabled {
+  cursor: default;
+  opacity: .45;
+}
+
+.focus-check-text,
+.keypoint-input {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  height: 25px;
+  padding: 3px 2px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.focus-check-text:focus,
+.keypoint-input:focus {
+  border-bottom-color: var(--accent);
+}
+
+.focus-check-row.is-checked .focus-check-text {
+  opacity: .48;
+  text-decoration: line-through;
+}
+
+.keypoint-bullet {
+  flex: 0 0 12px;
+  width: 12px;
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+}
+
+@media (max-width: 900px) and (min-width: 781px) {
+  .focus-checklist,
+  .keypoint-list {
+    min-height: 100px;
+  }
+}
+
+@media (max-width: 780px) {
+  .focus-checklist,
+  .keypoint-list {
+    min-height: 110px;
+  }
+}

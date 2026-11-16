@@ -8,7 +8,7 @@ import {
   Sparkles, Trash2, X, CircleHelp, CheckCircle2, Palette
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { defaultCover, emptyEntry, STICKERS, themes, type Cover, type CoverItem, type Entry, type ThemeName, type Todo, type TodoStatus } from "@/lib/types";
+import { defaultCover, emptyEntry, STICKERS, themes, type Cover, type CoverItem, type Entry, type FocusItem, type ThemeName, type Todo, type TodoStatus } from "@/lib/types";
 
 const HOURS = [...Array.from({ length: 18 }, (_, i) => i + 6), 0, 1, 2, 3, 4, 5];
 const TIMES = ["00", "10", "20", "30", "40", "50"];
@@ -24,6 +24,56 @@ const dateView = (date: string) => {
   return `${y}년 ${m}월 ${d}일 ${DAYS[new Date(y,m-1,d).getDay()]}요일`;
 };
 const sanitizeHex = (s: string) => /^#[0-9a-fA-F]{6}$/.test(s) ? s : "#8b9ec4";
+
+function parseFocusItems(raw: unknown): FocusItem[] {
+  const makeBlankRows = (items: FocusItem[]) => {
+    const rows = items.slice(0, 30);
+    while (rows.length < 4) rows.push({ id: uid(), text: "", checked: false });
+    return rows;
+  };
+  if (typeof raw !== "string" || !raw.trim()) return makeBlankRows([]);
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      const rows = parsed.flatMap((item, index): FocusItem[] => {
+        if (typeof item === "string") return [{ id: uid(), text: item, checked: false }];
+        if (!item || typeof item !== "object") return [];
+        const value = item as Partial<FocusItem>;
+        if (typeof value.text !== "string") return [];
+        return [{ id: typeof value.id === "string" && value.id ? value.id : `focus-${index + 1}-${uid()}`, text: value.text, checked: value.checked === true }];
+      });
+      return makeBlankRows(rows);
+    }
+  } catch {
+    // Older planner entries contain plain text rather than a JSON list.
+  }
+  const legacyRows = raw.split(/\\r?\\n/).filter(line => line.trim()).map(text => ({ id: uid(), text, checked: false }));
+  return makeBlankRows(legacyRows);
+}
+
+function parseKeyPoints(raw: unknown): string[] {
+  const makeBlankRows = (items: string[]) => {
+    const rows = items.slice(0, 30);
+    while (rows.length < 4) rows.push("");
+    return rows;
+  };
+  if (typeof raw !== "string" || !raw.trim()) return makeBlankRows([]);
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      const rows = parsed.flatMap((item): string[] => {
+        if (typeof item === "string") return [item];
+        if (item && typeof item === "object" && typeof (item as { text?: unknown }).text === "string") return [(item as { text: string }).text];
+        return [];
+      });
+      return makeBlankRows(rows);
+    }
+  } catch {
+    // Older planner entries contain plain text rather than a JSON list.
+  }
+  const legacyRows = raw.split(/\\r?\\n/).map(line => line.replace(/^\\s*[-•]\\s?/, "")).filter(line => line.trim());
+  return makeBlankRows(legacyRows);
+}
 const setOpacity = (hex: string, opacity: number) => {
   const a = sanitizeHex(hex);
   const r=parseInt(a.slice(1,3),16),g=parseInt(a.slice(3,5),16),b=parseInt(a.slice(5,7),16);
@@ -278,7 +328,7 @@ export default function Planner() {
         if(!active)return;
         if(error)setAlert(`기록을 불러오지 못했습니다: ${error.message}`);
         const next:Entry=data?{
-          date,dday:data.dday||"",headerLabel:data.header_label||"",headerValue:data.header_value||"",focus:data.focus||"",keypoint:data.keypoint||"",
+          date,dday:data.dday||"",headerLabel:data.header_label||"",headerValue:data.header_value||"",focusItems:parseFocusItems(data.focus),keyPoints:parseKeyPoints(data.keypoint),
           todos:(()=>{
             const savedTodos:Todo[]=Array.isArray(data.todos)?data.todos.slice(0,10).map((todo:Partial<Todo>,idx:number)=>{
               const todoStatus:TodoStatus=todo.status==="todo"||todo.status==="doing"||todo.status==="done"?todo.status:todo.checked?"done":"todo";
@@ -301,7 +351,7 @@ export default function Planner() {
     setStatus("자동 저장 중이에요.");
     const {error}=await client.from("planner_entries").upsert({
       user_id:user.id,entry_date:current.date,date_label:dateView(current.date),dday:current.dday,header_label:current.headerLabel,
-      header_value:current.headerValue,focus:current.focus,keypoint:current.keypoint,
+      header_value:current.headerValue,focus:JSON.stringify(current.focusItems),keypoint:JSON.stringify(current.keyPoints),
       todos:current.todos,memo:current.memo,timetable:current.timetable,updated_at:new Date().toISOString()
     },{onConflict:"user_id,entry_date"});
     if(version!==saveVersion.current)return;
@@ -372,6 +422,26 @@ export default function Planner() {
   function updateTodo(id:string,patch:Partial<Entry["todos"][number]>) {
     setEntry(v=>({...v,todos:v.todos.map(item=>item.id===id?{...item,...patch}:item)}));
   }
+  function updateFocusItem(id:string,patch:Partial<FocusItem>) {
+    setEntry(current=>{
+      let focusItems=current.focusItems.map(item=>item.id===id
+        ? {...item,...patch,...(patch.text!==undefined&&!patch.text.trim()?{checked:false}:{})}
+        : item);
+      while(focusItems.length>4&&!focusItems[focusItems.length-1].text.trim()&&!focusItems[focusItems.length-1].checked) focusItems=focusItems.slice(0,-1);
+      const last=focusItems[focusItems.length-1];
+      if(last?.text.trim()&&focusItems.length<30) focusItems=[...focusItems,{id:uid(),text:"",checked:false}];
+      return {...current,focusItems};
+    });
+  }
+  function updateKeyPoint(index:number,value:string) {
+    setEntry(current=>{
+      const keyPoints=[...current.keyPoints];
+      keyPoints[index]=value;
+      while(keyPoints.length>4&&!keyPoints[keyPoints.length-1].trim()) keyPoints.pop();
+      if(keyPoints[keyPoints.length-1]?.trim()&&keyPoints.length<30) keyPoints.push("");
+      return {...current,keyPoints};
+    });
+  }
   function cycleTodoStatus(id:string) {
     setEntry(v=>({...v,todos:v.todos.map(item=>{
       if(item.id!==id)return item;
@@ -435,10 +505,20 @@ export default function Planner() {
               </div>
               <div className="notes-stack">
                 <div className="paper-section focus-section"><div className="section-heading"><span>TODAY&apos;S FOCUS</span></div>
-                  <textarea rows={2} value={entry.focus} onChange={e=>setEntry(v=>({...v,focus:e.target.value}))} />
+                  <div className="focus-checklist" aria-label="오늘의 집중 목표 목록">
+                    {entry.focusItems.map((item,idx)=><div className={item.checked?"focus-check-row is-checked":"focus-check-row"} key={item.id}>
+                      <input className="focus-check-box" type="checkbox" checked={item.checked} disabled={!item.text.trim()} aria-label={`${idx+1}번째 집중 목표 완료`} onChange={e=>updateFocusItem(item.id,{checked:e.target.checked})}/>
+                      <input className="focus-check-text" type="text" value={item.text} aria-label={`${idx+1}번째 집중 목표`} onChange={e=>updateFocusItem(item.id,{text:e.target.value})}/>
+                    </div>)}
+                  </div>
                 </div>
                 <div className="paper-section key-section"><div className="section-heading"><span>KEY POINT</span></div>
-                  <textarea rows={3} value={entry.keypoint} onChange={e=>setEntry(v=>({...v,keypoint:e.target.value}))} />
+                  <div className="keypoint-list" aria-label="핵심 내용 목록">
+                    {entry.keyPoints.map((point,idx)=><div className="keypoint-row" key={`keypoint-${idx}`}>
+                      <span className="keypoint-bullet" aria-hidden="true">-</span>
+                      <input className="keypoint-input" type="text" value={point} aria-label={`${idx+1}번째 핵심 내용`} onChange={e=>updateKeyPoint(idx,e.target.value)}/>
+                    </div>)}
+                  </div>
                 </div>
               </div>
             </div>

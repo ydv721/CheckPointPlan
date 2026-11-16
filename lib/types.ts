@@ -2,13 +2,14 @@ export type ThemeName = "white" | "pink" | "blue" | "black" | "custom";
 export type TodoStatus = "todo" | "doing" | "done";
 export type Todo = { id: string; title: string; checked: boolean; status?: TodoStatus };
 export type Timetable = Record<string, string>;
+export type FocusItem = { id: string; text: string; checked: boolean };
 export type Entry = {
   date: string;
   dday: string;
   headerLabel: string;
   headerValue: string;
-  focus: string;
-  keypoint: string;
+  focusItems: FocusItem[];
+  keyPoints: string[];
   todos: Todo[];
   memo: string;
   timetable: Timetable;
@@ -16,7 +17,9 @@ export type Entry = {
 export type CoverItem = { id: string; kind: "sticker" | "photo"; value: string; x: number; y: number; size: number };
 export type Cover = { title: string; subtitle: string; items: CoverItem[] };
 export const emptyEntry = (date: string): Entry => ({
-  date, dday: "", headerLabel: "", headerValue: "", focus: "", keypoint: "",
+  date, dday: "", headerLabel: "", headerValue: "",
+  focusItems: Array.from({ length: 4 }, (_, index) => ({ id: `focus-${index + 1}`, text: "", checked: false })),
+  keyPoints: Array.from({ length: 4 }, () => ""),
   todos: Array.from({ length: 10 }, (_, index) => ({ id: `starter-${index + 1}`, title: "", checked: false, status: "todo" as const })),
   memo: "", timetable: {}
 });
