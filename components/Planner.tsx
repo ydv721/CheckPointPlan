@@ -47,7 +47,7 @@ function parseFocusItems(raw: unknown): FocusItem[] {
   } catch {
     // Older planner entries contain plain text rather than a JSON list.
   }
-  const legacyRows = raw.split(/\\r?\\n/).filter(line => line.trim()).map(text => ({ id: uid(), text, checked: false }));
+  const legacyRows = raw.split(/\r?\n/).filter(line => line.trim()).map(text => ({ id: uid(), text, checked: false }));
   return makeBlankRows(legacyRows);
 }
 
@@ -71,7 +71,7 @@ function parseKeyPoints(raw: unknown): string[] {
   } catch {
     // Older planner entries contain plain text rather than a JSON list.
   }
-  const legacyRows = raw.split(/\\r?\\n/).map(line => line.replace(/^\\s*[-•]\\s?/, "")).filter(line => line.trim());
+  const legacyRows = raw.split(/\r?\n/).map(line => line.replace(/^\s*[-•]\s?/, "")).filter(line => line.trim());
   return makeBlankRows(legacyRows);
 }
 const setOpacity = (hex: string, opacity: number) => {
