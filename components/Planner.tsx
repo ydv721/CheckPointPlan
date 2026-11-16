@@ -8,7 +8,7 @@ import {
   Sparkles, Trash2, X, CircleHelp, CheckCircle2, Palette
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { defaultCover, emptyEntry, STICKERS, themes, type Cover, type CoverItem, type Entry, type ThemeName } from "@/lib/types";
+import { defaultCover, emptyEntry, STICKERS, themes, type Cover, type CoverItem, type Entry, type ThemeName, type Todo, type TodoStatus } from "@/lib/types";
 
 const HOURS = [...Array.from({ length: 18 }, (_, i) => i + 6), 0, 1, 2, 3, 4, 5];
 const TIMES = ["00", "10", "20", "30", "40", "50"];
@@ -279,7 +279,10 @@ export default function Planner() {
         if(error)setAlert(`기록을 불러오지 못했습니다: ${error.message}`);
         const next:Entry=data?{
           date,dday:data.dday||"",headerLabel:data.header_label||"",headerValue:data.header_value||"",focus:data.focus||"",keypoint:data.keypoint||"",
-          todos:Array.isArray(data.todos)?data.todos:emptyEntry(date).todos,
+          todos:Array.isArray(data.todos)?data.todos.map((todo:Partial<Todo>)=>{
+            const todoStatus:TodoStatus=todo.status==="todo"||todo.status==="doing"||todo.status==="done"?todo.status:todo.checked?"done":"todo";
+            return {id:todo.id||uid(),title:todo.title||"",checked:todoStatus==="done",status:todoStatus};
+          }):emptyEntry(date).todos,
           memo:data.memo||"",timetable:data.timetable&&typeof data.timetable==="object"?data.timetable:{}
         }:emptyEntry(date);
         lastSaved.current=JSON.stringify(next);setEntry(next);setHydrated(true);setLoading(false);setStatus("5분마다 자동 저장돼요.");
@@ -366,6 +369,14 @@ export default function Planner() {
   function updateTodo(id:string,patch:Partial<Entry["todos"][number]>) {
     setEntry(v=>({...v,todos:v.todos.map(item=>item.id===id?{...item,...patch}:item)}));
   }
+  function cycleTodoStatus(id:string) {
+    setEntry(v=>({...v,todos:v.todos.map(item=>{
+      if(item.id!==id)return item;
+      const current:TodoStatus=item.status??(item.checked?"done":"todo");
+      const next:TodoStatus=current==="todo"?"doing":current==="doing"?"done":"todo";
+      return {...item,status:next,checked:next==="done"};
+    })}));
+  }
   const themeNames:Record<ThemeName,string>={white:"White",pink:"Pink",blue:"Blue",black:"Black",custom:"Custom"};
 
   if(checking)return <div className="boot-screen"><AppIcon/><h1>CHECKPOINT</h1><p>플래너를 불러오는 중입니다...</p></div>;
@@ -429,15 +440,23 @@ export default function Planner() {
               </div>
             </div>
           </section>
-          <section className="paper-page right-page"><div className="right-top"><div className="section-heading todo-header"><span>TO DO LIST</span><small className="todo-save-status" role="status" aria-live="polite"><span className={status==="자동 저장되었어요."?"indicator-dot saved":"indicator-dot"}/>{status}</small></div>
-            <div className="todo-list">{entry.todos.map((todo,idx)=><div className="todo-row" key={todo.id}>
-              <span className="todo-number">{String(idx+1).padStart(2,"0")}</span>
-              <input className={todo.checked?"todo-text checked":"todo-text"} value={todo.title} placeholder={idx===0?"할 일을 입력해 주세요 (예: SQL 기출 2문제)":"새로운 할 일"}
-                onChange={e=>updateTodo(todo.id,{title:e.target.value})} aria-label={`${idx+1}번째 할 일`}/>
-              <button type="button" className={todo.checked?"check-circle complete":"check-circle"} aria-label={`${idx+1}번째 할 일 ${todo.checked?"완료 취소":"완료"}`} aria-pressed={todo.checked} onClick={()=>updateTodo(todo.id,{checked:!todo.checked})}>{todo.checked&&<Check size={17} strokeWidth={3}/>}</button>
-              <button type="button" className="todo-remove" title="할 일 삭제" aria-label="할 일 삭제" onClick={()=>setEntry(v=>({...v,todos:v.todos.filter(t=>t.id!==todo.id)}))}><X size={15}/></button>
-              </div>)}</div>
-            <button className="add-todo" onClick={()=>setEntry(v=>({...v,todos:[...v.todos,{id:uid(),title:"",checked:false}]}))}><Plus size={17}/> 할 일 추가</button></div>
+          <section className="paper-page right-page"><div className="right-top"><div className="section-heading todo-header">
+              <div className="todo-heading-group"><span>TO DO LIST</span><button type="button" className="add-todo-icon" aria-label="할 일 추가" title="할 일 추가" onClick={()=>setEntry(v=>({...v,todos:[...v.todos,{id:uid(),title:"",checked:false,status:"todo"}]}))}><Plus size={16} strokeWidth={2}/></button></div>
+              <small className="todo-save-status" role="status" aria-live="polite"><span className={status==="자동 저장되었어요."?"indicator-dot saved":"indicator-dot"}/>{status}</small>
+            </div>
+            <div className="todo-list">{entry.todos.map((todo,idx)=>{
+              const todoStatus:TodoStatus=todo.status??(todo.checked?"done":"todo");
+              const statusLabel=todoStatus==="todo"?"시작 전":todoStatus==="doing"?"진행 중":"완료";
+              return <div className="todo-row" key={todo.id}>
+                <span className="todo-number">{String(idx+1).padStart(2,"0")}</span>
+                <input className={todoStatus==="done"?"todo-text checked":"todo-text"} value={todo.title} placeholder={idx===0?"할 일을 입력해 주세요 (예: SQL 기출 2문제)":"새로운 할 일"}
+                  onChange={e=>updateTodo(todo.id,{title:e.target.value})} aria-label={`${idx+1}번째 할 일`}/>
+                <button type="button" className={`todo-status todo-status-${todoStatus}`} aria-label={`${idx+1}번째 할 일 상태: ${statusLabel}. 클릭하여 변경`} title={statusLabel} aria-pressed={todoStatus==="done"} onClick={()=>cycleTodoStatus(todo.id)}>
+                  {todoStatus==="todo"?"○":todoStatus==="doing"?"△":"X"}
+                </button>
+                <button type="button" className="todo-remove" title="할 일 삭제" aria-label="할 일 삭제" onClick={()=>setEntry(v=>({...v,todos:v.todos.filter(t=>t.id!==todo.id)}))}><X size={15}/></button>
+              </div>;
+            })}</div></div>
             <div className="memo-section"><div className="section-heading"><span>MEMO</span><small>메모는 한 줄만 적어도 괜찮습니다.</small></div>
               <textarea aria-label="자유 메모" placeholder="공부한 내용, 떠오른 생각, 내일의 나에게 남길 말을 적어 주세요.\n\n비워 두셔도 괜찮습니다." value={entry.memo} onChange={e=>setEntry(v=>({...v,memo:e.target.value}))} />
             </div>
