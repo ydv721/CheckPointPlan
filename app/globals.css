@@ -1954,9 +1954,9 @@ html,body{width:100%;overflow-x:clip}
 
   .memo-section {
     box-sizing: border-box !important;
-    flex: 0 0 180px !important;
-    height: 180px !important;
-    min-height: 180px !important;
+    flex: 0 0 240px !important;
+    height: 240px !important;
+    min-height: 240px !important;
     margin-top: 20px !important;
   }
 
@@ -1968,17 +1968,3 @@ html,body{width:100%;overflow-x:clip}
   }
 }
 
-.page-footer {
-  justify-content: flex-end !important;
-}
-
-.add-todo-icon:disabled {
-  opacity: .32;
-  cursor: not-allowed;
-}
-
-.add-todo-icon:disabled:hover {
-  background: transparent;
-  border-color: var(--line);
-  transform: none;
-}
