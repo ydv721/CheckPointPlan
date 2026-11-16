@@ -2584,3 +2584,13 @@ html,body{width:100%;overflow-x:clip}
     resize: none;
   }
 }
+
+
+/* Give FREE NOTE a clear gap below its heading and align the first writing line. */
+.right-page > .key-section > .section-heading {
+  margin-bottom: 18px !important;
+}
+.right-page > .key-section textarea.free-note-input {
+  padding-top: 14px !important;
+  background-position: 0 14px !important;
+}
