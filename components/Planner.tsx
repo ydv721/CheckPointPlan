@@ -493,8 +493,8 @@ export default function Planner() {
                     </div>)}
                   </div>
                 </div>
-                <div className="paper-section key-section"><div className="section-heading"><span>FREE NOTE</span></div>
-                  <textarea className="free-note-input" rows={10} aria-label="자유롭게 작성하는 노트" value={entry.freeNote} onChange={e=>setEntry(current=>({...current,freeNote:e.target.value}))}/>
+                <div className="memo-section"><div className="section-heading"><span>MEMO</span></div>
+                  <textarea aria-label="자유 메모" value={entry.memo} onChange={e=>setEntry(v=>({...v,memo:e.target.value}))} />
                 </div>
               </div>
             </div>
@@ -516,8 +516,8 @@ export default function Planner() {
                 </button>
               </div>;
             })}</div></div>
-            <div className="memo-section"><div className="section-heading"><span>MEMO</span></div>
-              <textarea aria-label="자유 메모" value={entry.memo} onChange={e=>setEntry(v=>({...v,memo:e.target.value}))} />
+            <div className="paper-section key-section"><div className="section-heading"><span>FREE NOTE</span></div>
+              <textarea className="free-note-input" rows={10} aria-label="자유롭게 작성하는 노트" value={entry.freeNote} onChange={e=>setEntry(current=>({...current,freeNote:e.target.value}))}/>
             </div>
             
           </section>
