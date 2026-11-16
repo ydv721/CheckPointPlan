@@ -17,7 +17,7 @@ export type CoverItem = { id: string; kind: "sticker" | "photo"; value: string; 
 export type Cover = { title: string; subtitle: string; items: CoverItem[] };
 export const emptyEntry = (date: string): Entry => ({
   date, dday: "", headerLabel: "", headerValue: "", focus: "", keypoint: "",
-  todos: [{ id: "starter-1", title: "", checked: false, status: "todo" }, { id: "starter-2", title: "", checked: false, status: "todo" }, { id: "starter-3", title: "", checked: false, status: "todo" }],
+  todos: Array.from({ length: 10 }, (_, index) => ({ id: `starter-${index + 1}`, title: "", checked: false, status: "todo" as const })),
   memo: "", timetable: {}
 });
 export const defaultCover: Cover = {title: "CHECKPOINT", subtitle: "YOUR PACE, YOUR CHECKPOINT.", items: []};
