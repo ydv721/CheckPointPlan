@@ -2085,3 +2085,18 @@ html,body{width:100%;overflow-x:clip}
   letter-spacing: .08em !important;
   font-weight: 900 !important;
 }
+
+/* Slightly widen the D-day companion input row without changing its height. */
+.small-info-block {
+  width: calc(100% + 20px) !important;
+  margin-left: -10px !important;
+  margin-right: -10px !important;
+}
+
+@media (max-width: 430px) {
+  .small-info-block {
+    width: calc(100% + 8px) !important;
+    margin-left: -4px !important;
+    margin-right: -4px !important;
+  }
+}
