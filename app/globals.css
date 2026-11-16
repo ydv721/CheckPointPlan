@@ -2100,3 +2100,10 @@ html,body{width:100%;overflow-x:clip}
     margin-right: -4px !important;
   }
 }
+
+/* Shift the category chip left and widen the adjacent writing line. */
+.small-info-block {
+  padding-left: 10px !important;
+  padding-right: 9px !important;
+  gap: 8px !important;
+}
