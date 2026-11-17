@@ -2861,3 +2861,215 @@ html,body{width:100%;overflow-x:clip}
     display: none !important;
   }
 }
+
+
+/* Planner spread uses the same A6 page width as the cover. The action rail
+   sits outside the paper canvas and never changes the page proportions. */
+@media (min-width: 781px) {
+  .app-shell.planner-view .site-header,
+  .app-shell.cover-view .site-header {
+    display: none !important;
+  }
+
+  .app-shell.planner-view .main-area,
+  .app-shell.cover-view .main-area {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 12px 16px !important;
+    overflow: hidden !important;
+  }
+
+  .workspace-shell {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 72px !important;
+    align-items: center !important;
+    gap: 14px !important;
+    width: min(1136px, calc(100vw - 32px), calc(141.9dvh - 50px)) !important;
+    min-height: 0 !important;
+    margin: auto !important;
+  }
+
+  .workspace-canvas {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .workspace-canvas > .book-frame {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    width: 100% !important;
+    max-width: 1050px !important;
+    height: auto !important;
+    min-height: 0 !important;
+    aspect-ratio: 210 / 148 !important;
+    flex: 0 1 auto !important;
+    margin: 0 !important;
+  }
+
+  .workspace-canvas > .book-frame > .paper-page {
+    width: auto !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    aspect-ratio: 105 / 148 !important;
+  }
+
+  .workspace-canvas > .cover-layout {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    width: 100% !important;
+    max-width: 1050px !important;
+    height: auto !important;
+    min-height: 0 !important;
+    aspect-ratio: 210 / 148 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    border: 0 !important;
+    border-radius: 14px !important;
+    align-items: stretch !important;
+    overflow: hidden !important;
+    background: var(--paper) !important;
+  }
+
+  .workspace-canvas > .cover-layout > .cover-stage {
+    display: flex !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+  }
+
+  .workspace-canvas .spiral-cover {
+    width: 100% !important;
+    max-width: none !important;
+    height: 100% !important;
+    aspect-ratio: auto !important;
+  }
+
+  .workspace-canvas > .cover-layout > .cover-editor {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    overflow-y: auto !important;
+    padding: clamp(18px, 3vw, 42px) !important;
+  }
+
+  .cover-editor-toolbar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    margin-bottom: 20px !important;
+  }
+
+  .cover-back-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    padding: 7px 10px !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 8px !important;
+    background: var(--paper) !important;
+    color: var(--ink) !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+  }
+
+  .cover-back-btn:hover {
+    background: var(--soft) !important;
+  }
+
+  .workspace-sidebar {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: center !important;
+    gap: 7px !important;
+    width: 72px !important;
+    padding: 9px 6px !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 15px !important;
+    background: var(--paper) !important;
+    box-shadow: 0 8px 26px #172b4412 !important;
+  }
+
+  .workspace-action {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    width: 100% !important;
+    min-height: 62px !important;
+    padding: 8px 3px !important;
+    border: 0 !important;
+    border-radius: 10px !important;
+    background: transparent !important;
+    color: var(--ink) !important;
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    white-space: nowrap !important;
+    cursor: pointer !important;
+  }
+
+  .workspace-action:hover,
+  .workspace-action.active {
+    background: var(--soft) !important;
+    color: var(--accent) !important;
+  }
+
+  .workspace-action svg {
+    flex: 0 0 auto;
+  }
+}
+
+@media (min-width: 781px) and (max-width: 1050px) {
+  .workspace-shell {
+    grid-template-columns: minmax(0, 1fr) 54px !important;
+    gap: 10px !important;
+    width: min(1114px, calc(100vw - 24px), calc(141.9dvh - 72px)) !important;
+  }
+
+  .workspace-sidebar {
+    width: 54px !important;
+    padding: 7px 4px !important;
+  }
+
+  .workspace-action {
+    min-height: 54px !important;
+  }
+
+  .workspace-action span {
+    display: none !important;
+  }
+}
+
+@media (max-width: 780px) {
+  .workspace-shell {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .workspace-canvas {
+    width: 100% !important;
+  }
+
+  .workspace-sidebar {
+    display: none !important;
+  }
+}
