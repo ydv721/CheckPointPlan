@@ -2647,3 +2647,24 @@ html,body{width:100%;overflow-x:clip}
     padding: clamp(18px, 3vw, 42px) !important;
   }
 }
+
+
+/* Match the login cover to the same rendered width as one planner page. */
+@media (min-width: 781px) {
+  .auth-book {
+    width: min(
+      525px,
+      calc((100vw - 40px) / 2),
+      calc((141.9dvh - 136px) / 2),
+      100%
+    ) !important;
+    height: auto !important;
+    aspect-ratio: 105 / 148 !important;
+  }
+
+  .auth-book > .auth-cover {
+    width: 100% !important;
+    height: 100% !important;
+    aspect-ratio: auto !important;
+  }
+}
