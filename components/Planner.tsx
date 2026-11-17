@@ -187,25 +187,67 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
 }) {
   const fileInput=useRef<HTMLInputElement>(null);
   const backgroundInput=useRef<HTMLInputElement>(null);
-  const moveRef=useRef<{id:string;startX:number;startY:number;originX:number;originY:number;w:number;h:number}|null>(null);
+  type CoverInteraction =
+    | {kind:"move";id:string;startX:number;startY:number;originX:number;originY:number;w:number;h:number}
+    | {kind:"resize";id:string;edge:"north"|"east"|"south"|"west";startX:number;startY:number;originX:number;originY:number;originWidth:number;originHeight:number;w:number;h:number};
+  const interactionRef=useRef<CoverInteraction|null>(null);
+  const clamp=(value:number,min:number,max:number)=>Math.min(max,Math.max(min,value));
 
   function addSticker(s:string) {
     setCover(c=>({...c,items:[...c.items,{id:uid(),kind:"sticker",value:s,x:50,y:50,size:42,rotation:0}]}));
   }
   function addText() {
-    setCover(c=>({...c,items:[...c.items,{id:uid(),kind:"text",value:"새 텍스트",x:50,y:58,size:16,rotation:0}]}));
+    setCover(c=>({...c,items:[...c.items,{id:uid(),kind:"text",value:"새 텍스트",x:50,y:58,size:16,rotation:0,width:76,height:20}]}));
   }
-  function pointerDown(e:PointerEvent<HTMLButtonElement>,item:CoverItem) {
-    if((e.target as HTMLElement).closest(".sticker-delete"))return;
+  function pointerDown(e:PointerEvent<HTMLElement>,item:CoverItem) {
+    if((e.target as HTMLElement).closest(".cover-resize-handle"))return;
     const p=e.currentTarget.parentElement?.getBoundingClientRect();if(!p)return;
-    moveRef.current={id:item.id,startX:e.clientX,startY:e.clientY,originX:item.x,originY:item.y,w:p.width,h:p.height};
+    interactionRef.current={kind:"move",id:item.id,startX:e.clientX,startY:e.clientY,originX:item.x,originY:item.y,w:p.width,h:p.height};
     e.currentTarget.setPointerCapture(e.pointerId);
   }
-  function pointerMove(e:PointerEvent<HTMLButtonElement>) {
-    const m=moveRef.current;if(!m)return;
-    setCover(c=>({...c,items:c.items.map(i=>i.id===m.id?{...i,
-      x:Math.max(3,Math.min(97,m.originX+(e.clientX-m.startX)/m.w*100)),
-      y:Math.max(3,Math.min(97,m.originY+(e.clientY-m.startY)/m.h*100))}:i)}));
+  function startResize(e:PointerEvent<HTMLButtonElement>,item:CoverItem,edge:"north"|"east"|"south"|"west") {
+    e.preventDefault();
+    e.stopPropagation();
+    const stage=e.currentTarget.closest(".cover-art") as HTMLElement|null;
+    const p=stage?.getBoundingClientRect();if(!p)return;
+    interactionRef.current={
+      kind:"resize",id:item.id,edge,startX:e.clientX,startY:e.clientY,
+      originX:item.x,originY:item.y,originWidth:item.width??76,originHeight:item.height??20,
+      w:p.width,h:p.height
+    };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+  function pointerMove(e:PointerEvent<HTMLElement>) {
+    const active=interactionRef.current;if(!active)return;
+    if(active.kind==="move") {
+      setCover(c=>({...c,items:c.items.map(i=>i.id===active.id?{...i,
+        x:clamp(active.originX+(e.clientX-active.startX)/active.w*100,3,97),
+        y:clamp(active.originY+(e.clientY-active.startY)/active.h*100,3,97)}:i)}));
+      return;
+    }
+    const dx=(e.clientX-active.startX)/active.w*100;
+    const dy=(e.clientY-active.startY)/active.h*100;
+    setCover(c=>({...c,items:c.items.map(i=>{
+      if(i.id!==active.id)return i;
+      let width=active.originWidth;
+      let height=active.originHeight;
+      let x=active.originX;
+      let y=active.originY;
+      if(active.edge==="east") {
+        width=clamp(active.originWidth+dx,12,94);
+        x=active.originX+(width-active.originWidth)/2;
+      } else if(active.edge==="west") {
+        width=clamp(active.originWidth-dx,12,94);
+        x=active.originX-(width-active.originWidth)/2;
+      } else if(active.edge==="south") {
+        height=clamp(active.originHeight+dy,8,94);
+        y=active.originY+(height-active.originHeight)/2;
+      } else {
+        height=clamp(active.originHeight-dy,8,94);
+        y=active.originY-(height-active.originHeight)/2;
+      }
+      return {...i,width,height,x:clamp(x,width/2,100-width/2),y:clamp(y,height/2,100-height/2)};
+    })}));
   }
   const updateItem=(id:string,patch:Partial<CoverItem>)=>setCover(c=>({...c,items:c.items.map(item=>item.id===id?{...item,...patch}:item)}));
   const removeItem=(id:string)=>setCover(c=>({...c,items:c.items.filter(item=>item.id!==id)}));
@@ -217,9 +259,25 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
         {cover.backgroundImage&&photoUrls[cover.backgroundImage]&&<img className="cover-background-image" src={photoUrls[cover.backgroundImage]} alt="" draggable={false}/>}
         <div className="cover-small-heading">A LITTLE SPACE FOR YOUR DAYS</div>
         <div className="cover-bottomline">NOT PERFECT. JUST YOURS. ✦</div>
-        {cover.items.map(item=><button type="button" key={item.id} className={item.kind==="text"?"placed-sticker placed-text":"placed-sticker"} aria-label={item.kind==="text"?"문구를 드래그하여 이동":"장식을 드래그하여 이동"} style={{left:`${item.x}%`,top:`${item.y}%`,fontSize:item.size,transform:`translate(-50%,-50%) rotate(${item.rotation??0}deg)`}} onPointerDown={e=>pointerDown(e,item)} onPointerMove={pointerMove} onPointerUp={()=>{moveRef.current=null;}} onPointerCancel={()=>{moveRef.current=null;}}>
-          {item.kind==="photo"?<img src={photoUrls[item.value]||""} alt="표지 장식 사진" draggable={false}/>:item.value}
-        </button>)}
+        {cover.items.map(item=>{
+          const rotation=Number(item.rotation??0);
+          const safeRotation=Number.isFinite(rotation)?rotation:0;
+          const itemStyle:CSSProperties={
+            left:`${item.x}%`,top:`${item.y}%`,fontSize:item.size,
+            transform:"translate(-50%,-50%)",
+            rotate:safeRotation===0?"none":`${safeRotation}deg`
+          };
+          if(item.kind==="text")return <div key={item.id} className="placed-sticker placed-text" role="group" tabIndex={0} aria-label="텍스트 상자. 드래그하여 이동하고 네 방향 조절점으로 크기를 변경할 수 있어." style={{...itemStyle,width:`${item.width??76}%`,height:`${item.height??20}%`}} onPointerDown={e=>pointerDown(e,item)} onPointerMove={pointerMove} onPointerUp={()=>{interactionRef.current=null;}} onPointerCancel={()=>{interactionRef.current=null;}}>
+            <span className="placed-text-content">{item.value}</span>
+            <button type="button" className="cover-resize-handle cover-resize-north" aria-label="텍스트 상자 위쪽 크기 조절" onPointerDown={e=>startResize(e,item,"north")}/>
+            <button type="button" className="cover-resize-handle cover-resize-handle cover-resize-east" aria-label="텍스트 상자 오른쪽 크기 조절" onPointerDown={e=>startResize(e,item,"east")}/>
+            <button type="button" className="cover-resize-handle cover-resize-south" aria-label="텍스트 상자 아래쪽 크기 조절" onPointerDown={e=>startResize(e,item,"south")}/>
+            <button type="button" className="cover-resize-handle cover-resize-west" aria-label="텍스트 상자 왼쪽 크기 조절" onPointerDown={e=>startResize(e,item,"west")}/>
+          </div>;
+          return <button type="button" key={item.id} className="placed-sticker" aria-label="장식을 드래그하여 이동" style={itemStyle} onPointerDown={e=>pointerDown(e,item)} onPointerMove={pointerMove} onPointerUp={()=>{interactionRef.current=null;}} onPointerCancel={()=>{interactionRef.current=null;}}>
+            {item.kind==="photo"?<img src={photoUrls[item.value]||""} alt="표지 장식 사진" draggable={false}/>:item.value}
+          </button>;
+        })}
       </div>
     </div></div>
     <div className="cover-editor">
