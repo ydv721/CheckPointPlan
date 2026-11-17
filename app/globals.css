@@ -3612,3 +3612,19 @@ html,body{width:100%;overflow-x:clip}
     color: #a43e4d !important;
   }
 }
+
+
+/* Keep the longer return label readable in the right-side action rail. */
+@media (min-width: 1051px) {
+  .workspace-sidebar .workspace-action.back-to-planner {
+    min-height: 78px !important;
+  }
+
+  .workspace-sidebar .workspace-action.back-to-planner span {
+    display: block !important;
+    max-width: 64px !important;
+    white-space: normal !important;
+    text-align: center !important;
+    line-height: 1.25 !important;
+  }
+}
