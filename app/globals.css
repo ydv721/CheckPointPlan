@@ -4310,27 +4310,32 @@ html,body{width:100%;overflow-x:clip}
 }
 
 .cover-image-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: stretch;
   gap: 9px;
 }
 
 .cover-image-actions .upload-btn,
 .cover-image-actions .cover-remove-background {
-  flex: 1 1 0;
   width: auto;
   min-width: 0;
   min-height: 40px;
   margin-top: 18px;
-  padding: 9px 8px;
+  padding: 9px 12px;
   justify-content: center;
   white-space: nowrap;
+}
+
+.cover-image-actions .upload-btn {
+  min-width: 0;
 }
 
 .cover-image-actions .cover-remove-background {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  flex: 0 0 auto;
 }
 
 
@@ -4379,4 +4384,34 @@ html,body{width:100%;overflow-x:clip}
 .cover-pattern-preview-polaroid {
   border: var(--pattern-thickness, 2px) solid var(--pattern-color);
   border-bottom-width: calc(var(--pattern-thickness, 2px) * 2);
+}
+
+
+/* Make the pattern thickness slider affect all pattern styles and previews. */
+.cover-pattern-polaroid {
+  border-width: var(--pattern-frame-border, 10px);
+  border-bottom-width: var(--pattern-frame-bottom, 44px);
+}
+
+.cover-pattern-preview-grid {
+  background-image:
+    linear-gradient(to right, var(--pattern-color) 0 var(--pattern-preview-thickness, 1px), transparent var(--pattern-preview-thickness, 1px)),
+    linear-gradient(to bottom, var(--pattern-color) 0 var(--pattern-preview-thickness, 1px), transparent var(--pattern-preview-thickness, 1px));
+}
+
+.cover-pattern-preview-dots {
+  background-image: radial-gradient(var(--pattern-color) var(--pattern-preview-thickness, 1px), transparent calc(var(--pattern-preview-thickness, 1px) + .2px));
+}
+
+.cover-pattern-preview-stripes {
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--pattern-color) 0 var(--pattern-preview-thickness, 1px),
+    transparent var(--pattern-preview-thickness, 1px) calc(var(--pattern-preview-thickness, 1px) + 6px)
+  );
+}
+
+.cover-pattern-preview-polaroid {
+  border-width: var(--pattern-preview-frame-border, 5px);
+  border-bottom-width: var(--pattern-preview-frame-bottom, 10px);
 }
