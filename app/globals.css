@@ -4287,7 +4287,7 @@ html,body{width:100%;overflow-x:clip}
 }
 
 .cover-pattern-thickness-row label {
-  font-weight: 800;
+  font: inherit;
   white-space: nowrap;
 }
 
