@@ -3820,9 +3820,7 @@ html,body{width:100%;overflow-x:clip}
 }
 
 
-/* Remove the separator above the first cover editor section. */
+/* Remove only the separator above the first cover editor section. */
 .cover-editor > .cover-editor-section:first-child {
-  margin-top: 0;
-  padding-top: 0;
   border-top: 0;
 }
