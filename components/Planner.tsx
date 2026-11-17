@@ -181,10 +181,10 @@ function Timetable({ value, onChange, highlighter, tool }: {
   </div></div>;
 }
 
-function CoverPage({cover,setCover,theme,handleUpload,photoUrls,onBack,onSettings,onSignOut}: {
+function CoverPage({cover,setCover,theme,handleUpload,photoUrls,onBack}: {
   cover:Cover;setCover:React.Dispatch<React.SetStateAction<Cover>>;
   theme:ThemeName;handleUpload:(file:File)=>Promise<void>;photoUrls:Record<string,string>;
-  onBack:()=>void;onSettings:()=>void;onSignOut:()=>void;
+  onBack:()=>void;
 }) {
   const fileInput=useRef<HTMLInputElement>(null);
   const moveRef=useRef<{id:string;startX:number;startY:number;originX:number;originY:number;w:number;h:number}|null>(null);
@@ -219,10 +219,6 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls,onBack,onSetting
     <div className="cover-editor">
       <div className="cover-editor-toolbar">
         <button type="button" className="cover-back-btn" onClick={onBack}><BookOpen size={15}/> 플래너로 돌아가기</button>
-        <div className="cover-toolbar-actions">
-          <button type="button" className="icon-btn small" aria-label="테마 설정" title="테마 설정" onClick={onSettings}><Palette size={16}/></button>
-          <button type="button" className="icon-btn small" aria-label="로그아웃" title="로그아웃" onClick={onSignOut}><LogOut size={16}/></button>
-        </div>
       </div>
       <div className="eyebrow">MAKE IT YOURS</div><h2>나만의 표지</h2><p>꾸미지 않아도 충분합니다. 마음에 드는 요소만 조금씩 더해 보세요.</p>
       <label className="input-label">표지 제목<input maxLength={24} value={cover.title} onChange={e=>setCover(c=>({...c,title:e.target.value}))}/></label>
@@ -461,7 +457,9 @@ export default function Planner() {
     <main className="main-area">
 
       {alert&&<div className="message-banner" role="alert"><CircleHelp size={17}/><span>{alert}</span><button aria-label="알림 닫기" onClick={()=>setAlert("")}><X size={15}/></button></div>}
-      {view==="cover"? <CoverPage cover={cover} setCover={setCover} theme={theme} handleUpload={handleUpload} photoUrls={photoUrls} onBack={()=>setView("planner")} onSettings={()=>setShowSettings(true)} onSignOut={()=>{void signOut();}}/> : <>
+      <div className="workspace-shell">
+        <div className="workspace-canvas">
+      {view==="cover"? <CoverPage cover={cover} setCover={setCover} theme={theme} handleUpload={handleUpload} photoUrls={photoUrls} onBack={()=>setView("planner")}/> : <>
         {loading?<div className="page-loading">페이지를 불러오는 중입니다...</div>:<div className="book-frame">
           <div className="book-spine" aria-hidden="true">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
           <section className="paper-page left-page">
@@ -512,14 +510,7 @@ export default function Planner() {
               <div className="todo-heading-group"><span>TO DO LIST</span></div>
               <div className="todo-tools">
                 <small className="todo-save-status" role="status" aria-live="polite"><span className={status==="자동 저장되었어요."?"indicator-dot saved":"indicator-dot"}/>{status}</small>
-                <div className="planner-menu-wrap">
-                  <button type="button" className="icon-btn small planner-menu-trigger" aria-label="플래너 메뉴" aria-expanded={mobileMenu} onClick={()=>setMobileMenu(value=>!value)}><Menu size={17}/></button>
-                  {mobileMenu&&<div className="planner-menu-panel" role="menu">
-                    <button type="button" role="menuitem" onClick={()=>{setView("cover");setMobileMenu(false);}}><Sparkles size={15}/> 표지 꾸미기</button>
-                    <button type="button" role="menuitem" onClick={()=>{setShowSettings(true);setMobileMenu(false);}}><Palette size={15}/> 테마 설정</button>
-                    <button type="button" role="menuitem" onClick={()=>{setMobileMenu(false);void signOut();}}><LogOut size={15}/> 로그아웃</button>
-                  </div>}
-                </div>
+
               </div>
             </div>
             <div className="todo-list">{entry.todos.slice(0,7).map((todo,idx)=>{
@@ -542,6 +533,19 @@ export default function Planner() {
           </section>
         </div>}
       </>}
+        </div>
+        <aside className="workspace-sidebar" aria-label="플래너 메뉴">
+          <button type="button" className={view==="cover"?"workspace-action active":"workspace-action"} onClick={()=>setView("cover")} aria-current={view==="cover"?"page":undefined}>
+            <Sparkles size={20}/><span>표지 꾸미기</span>
+          </button>
+          <button type="button" className="workspace-action" onClick={()=>setShowSettings(true)}>
+            <Palette size={20}/><span>테마 설정</span>
+          </button>
+          <button type="button" className="workspace-action" onClick={()=>void signOut()}>
+            <LogOut size={20}/><span>로그아웃</span>
+          </button>
+        </aside>
+      </div>
     </main>
 
     {showSettings&&<div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setShowSettings(false)}} role="presentation">
