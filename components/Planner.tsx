@@ -216,7 +216,6 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
       </div>
     </div></div>
     <div className="cover-editor">
-      <div className="eyebrow">MAKE IT YOURS</div><h2>나만의 표지</h2><p>꾸미지 않아도 충분합니다. 마음에 드는 요소만 조금씩 더해 보세요.</p>
       <label className="input-label">표지 제목<input maxLength={24} value={cover.title} onChange={e=>setCover(c=>({...c,title:e.target.value}))}/></label>
       <label className="input-label">한 줄 문구<input maxLength={75} value={cover.subtitle} onChange={e=>setCover(c=>({...c,subtitle:e.target.value}))}/></label>
       <div className="editor-label">작은 스티커</div><div className="sticker-palette">{STICKERS.map(s=><button key={s} type="button" onClick={()=>addSticker(s)} aria-label={`${s} 스티커 추가`}>{s}</button>)}</div>
