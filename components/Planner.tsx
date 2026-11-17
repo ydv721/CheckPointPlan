@@ -193,7 +193,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
     setCover(c=>({...c,items:[...c.items,{id:uid(),kind:"sticker",value:s,x:50,y:50,size:42,rotation:0}]}));
   }
   function addText() {
-    setCover(c=>({...c,items:[...c.items,{id:uid(),kind:"text",value:"새로운 문구",x:50,y:58,size:16,rotation:0}]}));
+    setCover(c=>({...c,items:[...c.items,{id:uid(),kind:"text",value:"새 텍스트",x:50,y:58,size:16,rotation:0}]}));
   }
   function pointerDown(e:PointerEvent<HTMLButtonElement>,item:CoverItem) {
     if((e.target as HTMLElement).closest(".sticker-delete"))return;
@@ -216,7 +216,6 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
       <div className={`cover-art cover-${theme}`} style={{backgroundColor:cover.backgroundColor||undefined}}>
         {cover.backgroundImage&&photoUrls[cover.backgroundImage]&&<img className="cover-background-image" src={photoUrls[cover.backgroundImage]} alt="" draggable={false}/>}
         <div className="cover-small-heading">A LITTLE SPACE FOR YOUR DAYS</div>
-        <div className="cover-main-word"><span>{cover.title||"CHECKPOINT"}</span></div>
         <div className="cover-bottomline">NOT PERFECT. JUST YOURS. ✦</div>
         {cover.items.map(item=><button type="button" key={item.id} className={item.kind==="text"?"placed-sticker placed-text":"placed-sticker"} aria-label={item.kind==="text"?"문구를 드래그하여 이동":"장식을 드래그하여 이동"} style={{left:`${item.x}%`,top:`${item.y}%`,fontSize:item.size,transform:`translate(-50%,-50%) rotate(${item.rotation??0}deg)`}} onPointerDown={e=>pointerDown(e,item)} onPointerMove={pointerMove} onPointerUp={()=>{moveRef.current=null;}} onPointerCancel={()=>{moveRef.current=null;}}>
           {item.kind==="photo"?<img src={photoUrls[item.value]||""} alt="표지 장식 사진" draggable={false}/>:item.value}
@@ -224,8 +223,6 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
       </div>
     </div></div>
     <div className="cover-editor">
-      <label className="input-label">표지 제목<input maxLength={24} value={cover.title} onChange={e=>setCover(c=>({...c,title:e.target.value}))}/></label>
-
       <div className="cover-editor-section">
         <div className="cover-editor-section-heading"><span>표지 배경</span></div>
         <label className="cover-color-control">단색 배경 <input type="color" aria-label="표지 배경 색상" value={cover.backgroundColor||themes[theme].cover} onChange={e=>setCover(c=>({...c,backgroundColor:e.target.value,backgroundImage:""}))}/></label>
@@ -236,14 +233,14 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
       </div>
 
       <div className="cover-editor-section">
-        <div className="cover-editor-section-heading"><span>한 줄 문구</span><button type="button" className="cover-add-text" onClick={addText}><Plus size={14}/> 문구 추가</button></div>
-        <p className="cover-editor-help">문구를 추가한 뒤 표지에서 드래그해 위치를 옮길 수 있어.</p>
-        {cover.items.filter(item=>item.kind==="text").length===0&&<p className="cover-empty-note">추가된 문구가 없어.</p>}
+        <div className="cover-editor-section-heading"><span>텍스트</span><button type="button" className="cover-add-text" onClick={addText}><Plus size={14}/> 텍스트 추가</button></div>
+        <p className="cover-editor-help">텍스트를 추가한 뒤 표지에서 드래그해 위치를 옮길 수 있어.</p>
+        {cover.items.filter(item=>item.kind==="text").length===0&&<p className="cover-empty-note">추가된 텍스트가 없어.</p>}
         {cover.items.filter(item=>item.kind==="text").map(item=><div className="cover-object-editor" key={item.id}>
-          <input aria-label="표지 문구" maxLength={75} value={item.value} onChange={e=>updateItem(item.id,{value:e.target.value})}/>
+          <input aria-label="텍스트 내용" maxLength={75} value={item.value} onChange={e=>updateItem(item.id,{value:e.target.value})}/>
           <label>크기 <input type="range" min={8} max={40} value={item.size} onChange={e=>updateItem(item.id,{size:Number(e.target.value)})}/></label>
           <label>회전 <input type="range" min={-180} max={180} value={item.rotation??0} onChange={e=>updateItem(item.id,{rotation:Number(e.target.value)})}/></label>
-          <button type="button" className="icon-btn small" aria-label="문구 삭제" onClick={()=>removeItem(item.id)}><Trash2 size={15}/></button>
+          <button type="button" className="icon-btn small" aria-label="텍스트 삭제" onClick={()=>removeItem(item.id)}><Trash2 size={15}/></button>
         </div>)}
       </div>
 
@@ -267,7 +264,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
           <button type="button" className="icon-btn small" aria-label="장식 삭제" onClick={()=>removeItem(item.id)}><Trash2 size={15}/></button>
         </div>)}</div>
       </div>}
-      <p className="gentle-tip"><Sparkles size={16}/> 표지 위의 문구와 장식은 드래그하여 이동하고, 회전 슬라이더로 각도를 조절할 수 있어.</p>
+      <p className="gentle-tip"><Sparkles size={16}/> 표지 위의 텍스트와 장식은 드래그하여 이동하고, 회전 슬라이더로 각도를 조절할 수 있어.</p>
     </div>
   </section>;
 }
@@ -361,12 +358,12 @@ export default function Planner() {
           coverItems=[...coverItems,{id:"migrated-cover-subtitle",kind:"text",value:savedCover.subtitle,x:50,y:69,size:11,rotation:0}];
         }
         const nextCover:Cover={
-          ...defaultCover,
-          ...savedCover,
           subtitle:"",
           subtitleConverted:true,
           items:coverItems,
-          colorLabels:Array.from({length:PENS.length},(_,index)=>typeof savedCover.colorLabels?.[index]==="string"?savedCover.colorLabels[index]:"")
+          colorLabels:Array.from({length:PENS.length},(_,index)=>typeof savedCover.colorLabels?.[index]==="string"?savedCover.colorLabels[index]:""),
+          ...(typeof savedCover.backgroundColor==="string"?{backgroundColor:savedCover.backgroundColor}:{}),
+          ...(typeof savedCover.backgroundImage==="string"?{backgroundImage:savedCover.backgroundImage}:{})
         };
         setTheme(nextTheme);setCustomColor(nextCustom);setCover(nextCover);
         lastSettings.current=JSON.stringify({theme:nextTheme,customColor:nextCustom,cover:nextCover});
