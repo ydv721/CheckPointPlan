@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent, type PointerEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import {
-  BookOpen, CalendarDays, Check, CircleUserRound,
+  BookOpen, CalendarDays, Check, ChevronDown,
   ImagePlus, LogOut, Menu, Plus,
   Sparkles, Trash2, X, CircleHelp, CheckCircle2, Palette
 } from "lucide-react";
@@ -19,7 +19,6 @@ const today = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 const uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-function CircleUserIcon() { return <CircleUserRound size={17}/>; }
 const dateView = (date: string) => {
   const [y,m,d] = date.split("-").map(Number);
   return `${y}년 ${m}월 ${d}일 ${DAYS[new Date(y,m-1,d).getDay()]}요일`;
@@ -253,6 +252,7 @@ export default function Planner() {
   const [showDeleteAccount,setShowDeleteAccount]=useState(false);
   const [deleteEmail,setDeleteEmail]=useState("");
   const [deletingAccount,setDeletingAccount]=useState(false);
+  const [showAccountMenu,setShowAccountMenu]=useState(false);
   const [mobileMenu,setMobileMenu]=useState(false);
   const [loading,setLoading]=useState(false);
   const [hydrated,setHydrated]=useState(false);
@@ -587,12 +587,23 @@ export default function Planner() {
             </button>
           </div>
           <div className="sidebar-account">
-            <div className="sidebar-account-heading"><CircleUserIcon/><span>계정 정보</span></div>
-            <span className="sidebar-email-label">로그인한 이메일</span>
-            <div className="sidebar-email" title={user?.email??""}>{user?.email??""}</div>
-            <button type="button" className="sidebar-delete-account" onClick={()=>{setDeleteEmail("");setShowDeleteAccount(true);}}>
-              <Trash2 size={14}/><span>회원 탈퇴</span>
+            <button
+              type="button"
+              className="sidebar-email-trigger"
+              title={user?.email??""}
+              aria-label="계정 메뉴"
+              aria-expanded={showAccountMenu}
+              aria-controls="sidebar-account-menu"
+              onClick={()=>setShowAccountMenu(current=>!current)}
+            >
+              <span>{user?.email??""}</span>
+              <ChevronDown size={15} aria-hidden="true"/>
             </button>
+            {showAccountMenu&&<div className="sidebar-account-menu" id="sidebar-account-menu">
+              <button type="button" className="sidebar-delete-account" onClick={()=>{setShowAccountMenu(false);setDeleteEmail("");setShowDeleteAccount(true);}}>
+                <Trash2 size={14}/><span>회원 탈퇴</span>
+              </button>
+            </div>}
           </div>
         </aside>
       </div>
