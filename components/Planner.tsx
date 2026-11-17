@@ -429,7 +429,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
       </div>
 
       <div className="cover-editor-section">
-        <div className="editor-label">스티커</div>
+        <div className="cover-editor-section-heading"><span>스티커</span></div>
         <div className="sticker-palette">{STICKERS.map(s=><button key={s} type="button" onClick={()=>addSticker(s)} aria-label={`${s} 스티커 추가`}>{s}</button>)}</div>
       </div>
 
