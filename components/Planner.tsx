@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent, type PointerEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import {
-  BookOpen, CalendarDays, Check, ChevronDown,
+  ArrowLeft, BookOpen, CalendarDays, Check, ChevronDown,
   ImagePlus, LogOut, Menu, Plus,
   Sparkles, Trash2, X, CircleHelp, CheckCircle2, Palette
 } from "lucide-react";
@@ -181,10 +181,9 @@ function Timetable({ value, onChange, highlighter, tool }: {
   </div></div>;
 }
 
-function CoverPage({cover,setCover,theme,handleUpload,photoUrls,onBack}: {
+function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
   cover:Cover;setCover:React.Dispatch<React.SetStateAction<Cover>>;
   theme:ThemeName;handleUpload:(file:File)=>Promise<void>;photoUrls:Record<string,string>;
-  onBack:()=>void;
 }) {
   const fileInput=useRef<HTMLInputElement>(null);
   const moveRef=useRef<{id:string;startX:number;startY:number;originX:number;originY:number;w:number;h:number}|null>(null);
@@ -217,9 +216,6 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls,onBack}: {
       </div>
     </div></div>
     <div className="cover-editor">
-      <div className="cover-editor-toolbar">
-        <button type="button" className="cover-back-btn" onClick={onBack}><BookOpen size={15}/> 플래너로 돌아가기</button>
-      </div>
       <div className="eyebrow">MAKE IT YOURS</div><h2>나만의 표지</h2><p>꾸미지 않아도 충분합니다. 마음에 드는 요소만 조금씩 더해 보세요.</p>
       <label className="input-label">표지 제목<input maxLength={24} value={cover.title} onChange={e=>setCover(c=>({...c,title:e.target.value}))}/></label>
       <label className="input-label">한 줄 문구<input maxLength={75} value={cover.subtitle} onChange={e=>setCover(c=>({...c,subtitle:e.target.value}))}/></label>
@@ -497,7 +493,7 @@ export default function Planner() {
       {alert&&<div className="message-banner" role="alert"><CircleHelp size={17}/><span>{alert}</span><button aria-label="알림 닫기" onClick={()=>setAlert("")}><X size={15}/></button></div>}
       <div className="workspace-shell">
         <div className="workspace-canvas">
-      {view==="cover"? <CoverPage cover={cover} setCover={setCover} theme={theme} handleUpload={handleUpload} photoUrls={photoUrls} onBack={()=>setView("planner")}/> : <>
+      {view==="cover"? <CoverPage cover={cover} setCover={setCover} theme={theme} handleUpload={handleUpload} photoUrls={photoUrls}/> : <>
         {loading?<div className="page-loading">페이지를 불러오는 중입니다...</div>:<div className="book-frame">
           <div className="book-spine" aria-hidden="true">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
           <section className="paper-page left-page">
@@ -577,9 +573,15 @@ export default function Planner() {
             <AppIcon/><span>CHECKPOINT</span><small>YOUR PACE, YOUR CHECKPOINT</small>
           </button>
           <div className="sidebar-nav">
-            <button type="button" className={view==="cover"?"workspace-action active":"workspace-action"} onClick={()=>setView("cover")} aria-current={view==="cover"?"page":undefined}>
-              <Sparkles size={19}/><span>표지 꾸미기</span>
-            </button>
+            {view==="cover" ? (
+              <button type="button" className="workspace-action back-to-planner active" onClick={()=>setView("planner")} aria-current="page">
+                <ArrowLeft size={19}/><span>플래너로 돌아가기</span>
+              </button>
+            ) : (
+              <button type="button" className="workspace-action" onClick={()=>setView("cover")}>
+                <Sparkles size={19}/><span>표지 꾸미기</span>
+              </button>
+            )}
             <button type="button" className="workspace-action" onClick={()=>setShowSettings(true)}>
               <Palette size={19}/><span>테마 설정</span>
             </button>
