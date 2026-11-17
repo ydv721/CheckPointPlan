@@ -257,8 +257,14 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
       <div className="spiral-binding">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
       <div className={`cover-art cover-${theme}`} style={{backgroundColor:cover.backgroundColor||undefined}}>
         {cover.backgroundImage&&photoUrls[cover.backgroundImage]&&<img className="cover-background-image" src={photoUrls[cover.backgroundImage]} alt="" draggable={false}/>}
-        <div className="cover-small-heading">A LITTLE SPACE FOR YOUR DAYS</div>
-        <div className="cover-bottomline">NOT PERFECT. JUST YOURS. ✦</div>
+        <div className="cover-signature" aria-label="CHECKPOINT — YOUR PACE, YOUR CHECKPOINT">
+          <svg className="cover-signature-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <rect x="3.5" y="5" width="21" height="21" rx="6.5" stroke="currentColor" strokeWidth="1.8"/>
+            <path d="m9 15.5 4.1 4 7.4-8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M26 2.5c.45 1.65 1.1 2.3 2.7 2.75-1.6.45-2.25 1.1-2.7 2.75-.45-1.65-1.1-2.3-2.7-2.75 1.6-.45 2.25-1.1 2.7-2.75Z" fill="currentColor"/>
+          </svg>
+          <span className="cover-signature-text">YOUR PACE, YOUR CHECKPOINT</span>
+        </div>
         {cover.items.map(item=>{
           const rotation=Number(item.rotation??0);
           const safeRotation=Number.isFinite(rotation)?rotation:0;
