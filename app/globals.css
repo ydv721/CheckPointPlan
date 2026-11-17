@@ -3614,17 +3614,17 @@ html,body{width:100%;overflow-x:clip}
 }
 
 
-/* Keep the longer return label readable in the right-side action rail. */
+/* Keep the return-to-planner label on one line in the right-side panel. */
 @media (min-width: 1051px) {
   .workspace-sidebar .workspace-action.back-to-planner {
-    min-height: 78px !important;
+    min-height: 62px !important;
   }
 
   .workspace-sidebar .workspace-action.back-to-planner span {
     display: block !important;
-    max-width: 64px !important;
-    white-space: normal !important;
-    text-align: center !important;
-    line-height: 1.25 !important;
+    max-width: none !important;
+    white-space: nowrap !important;
+    text-align: left !important;
+    line-height: 1.2 !important;
   }
 }
