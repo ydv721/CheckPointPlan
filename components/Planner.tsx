@@ -431,11 +431,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
       <div className="cover-editor-section">
         <div className="cover-editor-section-heading"><span>스티커</span></div>
         <div className="sticker-palette">{STICKERS.map(s=><button key={s} type="button" onClick={()=>addSticker(s)} aria-label={`${s} 스티커 추가`}>{s}</button>)}</div>
-      </div>
-
-      <div className="cover-editor-section">
-        <div className="cover-editor-section-heading"><span>이미지 스티커</span></div>
-        <button type="button" className="outline-btn upload-btn" onClick={()=>fileInput.current?.click()}><ImagePlus size={17}/> 내 이미지 추가</button>
+        <button type="button" className="outline-btn upload-btn cover-sticker-upload" onClick={()=>fileInput.current?.click()}><ImagePlus size={17}/> 스티커 이미지 업로드</button>
         <input ref={fileInput} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={e=>{const f=e.target.files?.[0];if(f)void handleUpload(f);e.target.value="";}}/>
       </div>
 
