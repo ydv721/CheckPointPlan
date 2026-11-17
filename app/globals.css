@@ -3836,6 +3836,11 @@ html,body{width:100%;overflow-x:clip}
   border-bottom: 1px solid var(--line);
 }
 
+/* Keep only the section divider between text and stickers. */
+.cover-editor-section:nth-child(2) .cover-object-editor:last-child {
+  border-bottom: 0;
+}
+
 .cover-object-editor > input {
   grid-column: 1 / -1;
   width: 100%;
