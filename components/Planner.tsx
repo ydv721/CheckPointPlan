@@ -21,6 +21,28 @@ const COVER_PATTERNS: {value:CoverPattern;label:string}[] = [
   {value:"polaroid",label:"폴라로이드"}
 ];
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
+const makeEmojiItems = (value: string) => value.split(" ");
+const EMOJI_CATEGORIES: { id: string; label: string; icon: string; items: string[] }[] = [
+  { id: "recommended", label: "추천 스티커", icon: "✨", items: STICKERS },
+  { id: "smileys", label: "웃는 얼굴 및 감정", icon: "😀", items: makeEmojiItems("😀 😃 😄 😁 😆 😅 😂 🤣 🥲 ☺️ 😊 😇 🙂 🙃 😉 😌 😍 🥰 😘 😗 😙 😚 😋 😛 😜 🤪 😝 🤑 🤗 🤭 🫢 🫣 🤫 🤔 🫡 🤐 🤨 😐 😑 😶 🫥 😏 😒 🙄 😬 🤥 😴 🥱 😪 🥴 🤤 😷 🤒 🤕 🤢 🤮 🥵 🥶 🥳 🥸 😎 🤓 🧐 😕 🫤 😟 🙁 ☹️ 😮 😯 😲 😳 🥺 😦 😧 😨 😰 😥 😢 😭 😱 😖 😣 😞 😓 😩 😫 😤 😡 😠 🤬 🥹 🫠 🫨") },
+  { id: "people", label: "사람 및 신체", icon: "👋", items: makeEmojiItems("👋 🤚 🖐️ ✋ 🖖 🫱 🫲 🫳 🫴 👌 🤌 🤏 ✌️ 🤞 🫰 🤟 🤘 🤙 👈 👉 👆 👇 ☝️ 👍 👎 ✊ 👊 🤛 🤜 👏 🙌 🫶 🤝 🙏 ✍️ 💅 🤳 💪 🦾 🦿 🦵 🦶 👂 👃 🧠 👀 👁️ 👄 🫦 👶 🧒 👦 👧 🧑 👨 👩 🧓 👴 👵 🙋 🙆 🙅 💁 🙇 🧏 💃 🕺 🧍 🧎 🧘 🛌") },
+  { id: "animals", label: "동물 및 자연", icon: "🐻", items: makeEmojiItems("🐶 🐱 🐭 🐹 🐰 🦊 🐻 🐼 🐻‍❄️ 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🙈 🙉 🙊 🐔 🐧 🐦 🐤 🐣 🦆 🦉 🦄 🐝 🦋 🐌 🐞 🐢 🐍 🦎 🐙 🦑 🦀 🐠 🐟 🐬 🐳 🦈 🐊 🦖 🦕 🐘 🦒 🦓 🦍 🦧 🐪 🐫 🦙 🐐 🐑 🐎 🐖 🐄 🐕 🐈 🐓 🦃 🦚 🦜 🦢 🪿 🦩 🦔 🐿️ 🦦 🦥 🦨 🦡 🦫 🦝 🦛 🦏 🐇 🐁 🐀 🦇 🐺 🦌 🦬 🦣 🌵 🎄 🌲 🌳 🌴 🪴 🌱 🌿 ☘️ 🍀 🍁 🍂 🍃 🌷 🌸 🌹 🌺 🌻 🌼 🌾 💐 🪷 🪻 🌞 🌝 🌛 🌜 🌙 ⭐ 🌟 ☀️ 🌤️ ⛅ 🌈 ☁️ ⛈️ 🌧️ ❄️ ☃️ 🌊 🔥") },
+  { id: "food", label: "음식 및 음료", icon: "🍕", items: makeEmojiItems("🍏 🍎 🍐 🍊 🍋 🍌 🍉 🍇 🍓 🫐 🍈 🍒 🍑 🥭 🍍 🥥 🥝 🍅 🫒 🥑 🍆 🥔 🥕 🌽 🌶️ 🫑 🥒 🥬 🥦 🧄 🧅 🍄 🥜 🌰 🍞 🥐 🥖 🫓 🥨 🥯 🥞 🧇 🧀 🍖 🍗 🥩 🥓 🍔 🍟 🍕 🌭 🥪 🌮 🌯 🫔 🥙 🧆 🍝 🍜 🍲 🍛 🍣 🍱 🥟 🍤 🍙 🍚 🍘 🍥 🥠 🥮 🍢 🍡 🍧 🍨 🍦 🥧 🧁 🍰 🎂 🍮 🍭 🍬 🍫 🍿 🍩 🍪 🥛 🧋 ☕ 🍵 🧃 🥤 🧊 🍶 🍺 🥂 🍷") },
+  { id: "travel", label: "여행 및 장소", icon: "🚗", items: makeEmojiItems("🚗 🚕 🚙 🚌 🚎 🏎️ 🚓 🚑 🚒 🚐 🛻 🚚 🚛 🚜 🛵 🏍️ 🚲 🛴 🛹 🛼 🚂 🚆 🚄 🚅 🚇 🚊 🚉 ✈️ 🛫 🛬 🛩️ 🚁 🚀 🛸 ⛵ 🚤 🛥️ 🛳️ 🚢 🗺️ 🗽 🗼 🏰 🏯 🏝️ 🏖️ 🏜️ 🏕️ ⛺ 🏠 🏡 🏘️ 🏢 🏙️ 🌃 🌉 🌌 🌠 🌋 ⛰️ 🏔️ 🗻 🏞️ 🌅 🌄 ⛲ ⛪ 🕌 🛕 🕍 🏛️ 🏟️ 🏗️ 🧭 🧳 🛎️") },
+  { id: "activities", label: "활동 및 취미", icon: "⚽", items: makeEmojiItems("⚽ 🏀 🏈 ⚾ 🥎 🎾 🏐 🏉 🥏 🎱 🪀 🏓 🏸 🏒 🏑 🥍 🏏 🪃 🥅 ⛳ 🪁 🏹 🎣 🤿 🥊 🥋 🎽 🛹 🛼 ⛸️ 🥌 🎿 ⛷️ 🏂 🪂 🏋️ 🤼 🤸 ⛹️ 🤺 🏇 🧘 🏄 🏊 🚣 🧗 🚴 🚵 🏆 🥇 🥈 🥉 🏅 🎖️ 🎗️ 🎫 🎟️ 🎪 🎭 🎨 🎬 🎤 🎧 🎼 🎹 🥁 🎷 🎺 🎸 🪕 🎻 🎲 ♟️ 🎯 🎳 🎮 🕹️ 🎰 🧩 🪅 🎉 🎊 🎈 🎁 🪄 🪩") },
+  { id: "objects", label: "사물 및 문구", icon: "💡", items: makeEmojiItems("💡 🔦 🕯️ 🪔 🧯 🛢️ 💸 💵 💴 💶 💷 💰 💳 💎 ⚖️ 🔧 🔨 ⚒️ 🛠️ ⛏️ 🪚 🔩 ⚙️ 🧰 🧲 🔬 🔭 🧪 🧫 🧬 💊 💉 🩹 🩺 🧻 🚽 🚿 🛁 🧼 🪥 🧴 🛒 🎁 🎈 🎀 🪄 🪅 🎊 🎉 🪩 🧸 🪆 🪡 🧵 🧶 📌 📍 📎 🖇️ 📏 📐 ✂️ 🖊️ 🖋️ ✒️ 📝 📚 📖 📓 📔 📒 📕 📗 📘 📙 📦 📫 📮 📧 ✉️ 💌 🗓️ 📅 📆 🗂️ 📂 📁 💻 🖥️ ⌨️ 🖱️ 🖨️ 📱 📷 📸 🎥 📺 📻 🔋 🔌 ⏰ ⌚ 🕰️ 🪞 🛏️ 🪑 🛋️ 🚪 🪟") },
+  { id: "symbols", label: "기호", icon: "♡", items: makeEmojiItems("❤️ 🩷 🧡 💛 💚 💙 🩵 💜 🖤 🤍 🤎 💔 ❤️‍🔥 ❤️‍🩹 💕 💞 💓 💗 💖 💘 💝 💟 ❣️ 💢 💥 💫 💦 💨 💤 💬 🗯️ 💭 ♨️ 💯 🔥 ✨ ⭐ 🌟 ⚡ ☀️ 🌙 ☁️ 🌈 ☔ ❄️ ☃️ ⚠️ 🚫 ⛔ ✅ ❌ ❎ ➕ ➖ ➗ ✖️ ♾️ 💠 🔰 🔱 ♻️ 🔆 🔅 🔔 🔕 🔒 🔓 🔑 🗝️ ♠️ ♥️ ♦️ ♣️ 🃏 🎴 🀄 🔴 🟠 🟡 🟢 🔵 🟣 ⚫ ⚪ 🟤 🟥 🟧 🟨 🟩 🟦 🟪 ⬛ ⬜ ◼️ ◻️ 🔶 🔷 🔸 🔹") },
+  { id: "flags", label: "깃발", icon: "🏳️", items: makeEmojiItems("🏁 🚩 🎌 🏴 🏳️ 🏳️‍🌈 🏳️‍⚧️ 🏴‍☠️ 🇰🇷 🇯🇵 🇺🇸 🇬🇧 🇫🇷 🇩🇪 🇮🇹 🇪🇸 🇨🇦 🇦🇺 🇳🇿 🇨🇳 🇹🇼 🇭🇰 🇸🇬 🇹🇭 🇻🇳 🇵🇭 🇮🇩 🇲🇾 🇮🇳 🇧🇷 🇲🇽 🇦🇷 🇨🇭 🇳🇱 🇸🇪 🇳🇴 🇩🇰 🇫🇮 🇺🇦 🇺🇳") }
+];
+const EMOJI_SEARCH_TERMS: Record<string, string> = {
+  "😀":"웃음 웃는 얼굴 smile happy", "😂":"폭소 웃음 눈물 joy laugh", "🤣":"웃음 배꼽 laugh", "🥹":"감동 눈물 감정 touched", "🥰":"사랑 하트 love", "😍":"하트 눈 사랑 love", "😘":"키스 kiss", "🥺":"부탁 귀여움 눈물 please", "😎":"선글라스 멋짐 cool", "🤔":"생각 고민 think", "😭":"울음 눈물 cry", "😴":"잠 졸림 sleep", "🥳":"파티 축하 party", "🫠":"녹는 얼굴 melting",
+  "👋":"손 인사 안녕 hello wave", "👍":"엄지 좋아요 good", "👎":"싫어요 엄지 bad", "👏":"박수 clap", "🙏":"기도 감사 부탁 thanks", "🫶":"하트 손 사랑 heart", "💪":"근육 힘 강함 strong", "💅":"네일 손톱 nail",
+  "🐶":"강아지 개 dog puppy", "🐱":"고양이 cat 야옹", "🐰":"토끼 rabbit bunny", "🐻":"곰 bear", "🐼":"판다 panda", "🦊":"여우 fox", "🐸":"개구리 frog", "🐣":"병아리 chick", "🦋":"나비 butterfly", "🐝":"벌 bee", "🐾":"발자국 paw",
+  "🌸":"벚꽃 꽃 cherry blossom", "🌷":"튤립 꽃 tulip", "🌹":"장미 꽃 rose", "🌻":"해바라기 꽃 sunflower", "🌼":"데이지 꽃 daisy", "🍀":"네잎클로버 행운 clover lucky", "🌈":"무지개 rainbow", "⭐":"별 star", "✨":"반짝 반짝임 sparkle", "☁️":"구름 cloud", "🌙":"달 moon", "☀️":"해 태양 sun",
+  "🍓":"딸기 strawberry", "🍒":"체리 cherry", "🍑":"복숭아 peach", "🍉":"수박 watermelon", "🍰":"케이크 cake", "🧁":"컵케이크 cupcake", "🍡":"경단 당고 dango", "🍩":"도넛 donut", "🍪":"쿠키 cookie", "🍕":"피자 pizza", "🍔":"햄버거 burger", "☕":"커피 coffee", "🧋":"버블티 bubble tea",
+  "🎀":"리본 ribbon", "💌":"편지 love letter", "📖":"책 book", "📚":"책 책장 books", "🎧":"헤드폰 음악 music", "🎮":"게임 game", "📷":"카메라 camera", "🚗":"자동차 차 car", "✈️":"비행기 여행 airplane", "⚽":"축구 football soccer", "🏀":"농구 basketball", "🎨":"그림 미술 art", "🎵":"음표 음악 music", "🪄":"마법 magic"
+};
+
 const today = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -198,6 +220,26 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
   const fileInput=useRef<HTMLInputElement>(null);
   const backgroundInput=useRef<HTMLInputElement>(null);
   const [patternMenuOpen,setPatternMenuOpen]=useState(false);
+  const [emojiPickerOpen,setEmojiPickerOpen]=useState(false);
+  const [emojiCategory,setEmojiCategory]=useState("smileys");
+  const [emojiSearch,setEmojiSearch]=useState("");
+  const [recentEmojis,setRecentEmojis]=useState<string[]>([]);
+  const emojiPickerRef=useRef<HTMLDivElement>(null);
+  const emojiPickerButtonRef=useRef<HTMLButtonElement>(null);
+  useEffect(()=>{
+    if(!emojiPickerOpen)return;
+    const handleOutsidePointerDown=(event:globalThis.PointerEvent)=>{
+      const target=event.target as Node|null;
+      if(target&&!emojiPickerRef.current?.contains(target)&&!emojiPickerButtonRef.current?.contains(target))setEmojiPickerOpen(false);
+    };
+    const handleKeyDown=(event:globalThis.KeyboardEvent)=>{if(event.key==="Escape")setEmojiPickerOpen(false);};
+    document.addEventListener("pointerdown",handleOutsidePointerDown);
+    document.addEventListener("keydown",handleKeyDown);
+    return()=>{
+      document.removeEventListener("pointerdown",handleOutsidePointerDown);
+      document.removeEventListener("keydown",handleKeyDown);
+    };
+  },[emojiPickerOpen]);
   const backgroundPanRef=useRef<{pointerId:number;startX:number;startY:number;originX:number;originY:number;overflowX:number;overflowY:number}|null>(null);
   const activePattern:CoverPattern=cover.backgroundPattern??"grid";
   const patternColor=cover.patternColor||(theme==="white"?"#788393":theme==="black"?"#A9B4D5":"#FFFFFF");
@@ -246,6 +288,21 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
     setCover(c=>({...c,items:[...c.items,item]}));
     setSelectedItemId(item.id);
   }
+  function selectEmoji(emoji:string) {
+    addSticker(emoji);
+    setRecentEmojis(current=>[emoji,...current.filter(value=>value!==emoji)].slice(0,32));
+  }
+  const normalizedEmojiSearch=emojiSearch.trim().toLocaleLowerCase();
+  const activeEmojiCategory=EMOJI_CATEGORIES.find(category=>category.id===emojiCategory);
+  const visibleEmojiItems=normalizedEmojiSearch
+    ?Array.from(new Set(EMOJI_CATEGORIES.flatMap(category=>category.items.filter(emoji=>
+      category.label.toLocaleLowerCase().includes(normalizedEmojiSearch)||
+      (EMOJI_SEARCH_TERMS[emoji]??"").toLocaleLowerCase().includes(normalizedEmojiSearch)||
+      emoji.includes(emojiSearch.trim())
+    ))))
+    :emojiCategory==="recent"
+      ?recentEmojis
+      :activeEmojiCategory?.items??[];
   function addText() {
     const item:CoverItem={id:uid(),kind:"text",value:"새 텍스트",x:50,y:58,size:16,rotation:0,width:76,height:20};
     setCover(c=>({...c,items:[...c.items,item]}));
@@ -429,8 +486,26 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
       </div>
 
       <div className="cover-editor-section">
-        <div className="cover-editor-section-heading"><span>스티커</span></div>
-        <div className="sticker-palette">{STICKERS.map(s=><button key={s} type="button" onClick={()=>addSticker(s)} aria-label={`${s} 스티커 추가`}>{s}</button>)}</div>
+        <div className="cover-sticker-picker-anchor">
+          <div className="cover-editor-section-heading">
+            <span>스티커</span>
+            <button ref={emojiPickerButtonRef} type="button" className="cover-add-text cover-emoji-trigger" onClick={()=>{setEmojiPickerOpen(open=>!open);setEmojiSearch("");setEmojiCategory("smileys");}} aria-expanded={emojiPickerOpen} aria-haspopup="dialog" aria-label="이모지 추가"><Plus size={14}/> 이모지 추가</button>
+          </div>
+          {emojiPickerOpen&&<div ref={emojiPickerRef} className="cover-emoji-picker" role="dialog" aria-label="이모지 선택기">
+            <div className="cover-emoji-picker-header"><span>이모지 및 기호</span><button type="button" onClick={()=>setEmojiPickerOpen(false)} aria-label="이모지 창 닫기"><X size={17}/></button></div>
+            <label className="cover-emoji-search"><Search size={17}/><input autoFocus type="search" value={emojiSearch} onChange={e=>setEmojiSearch(e.target.value)} placeholder="이모지 검색"/></label>
+            <div className="cover-emoji-tabs" role="tablist" aria-label="이모지 카테고리">
+              <button type="button" role="tab" aria-selected={emojiCategory==="recent"} className={emojiCategory==="recent"?"active":""} title="최근 사용" aria-label="최근 사용" onClick={()=>{setEmojiCategory("recent");setEmojiSearch("");}}>🕘</button>
+              {EMOJI_CATEGORIES.map(category=><button key={category.id} type="button" role="tab" aria-selected={emojiCategory===category.id} className={emojiCategory===category.id?"active":""} title={category.label} aria-label={category.label} onClick={()=>{setEmojiCategory(category.id);setEmojiSearch("");}}>{category.icon}</button>)}
+            </div>
+            <div className="cover-emoji-results">
+              <div className="cover-emoji-category-title">{normalizedEmojiSearch?"검색 결과":emojiCategory==="recent"?"최근 사용":activeEmojiCategory?.label??"이모지"}</div>
+              {visibleEmojiItems.length>0?<div className="cover-emoji-grid">
+                {visibleEmojiItems.map((emoji,index)=><button key={`${emoji}-${index}`} type="button" title={EMOJI_SEARCH_TERMS[emoji]??emoji} aria-label={`${emoji} 스티커 추가`} onClick={()=>selectEmoji(emoji)}>{emoji}</button>)}
+              </div>:<div className="cover-emoji-empty">{normalizedEmojiSearch?"검색 결과가 없어.":"아직 사용한 이모지가 없어."}</div>}
+            </div>
+          </div>}
+        </div>
         <button type="button" className="outline-btn upload-btn cover-sticker-upload" onClick={()=>fileInput.current?.click()}><ImagePlus size={17}/> 스티커 이미지 업로드</button>
         <input ref={fileInput} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={e=>{const f=e.target.files?.[0];if(f)void handleUpload(f);e.target.value="";}}/>
       </div>
