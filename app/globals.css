@@ -3722,7 +3722,7 @@ html,body{width:100%;overflow-x:clip}
   opacity: 0;
   pointer-events: none;
   touch-action: none;
-  transition: opacity .12s, background .12s, transform .12s;
+  transition: opacity .12s, background .12s;
 }
 
 .placed-object.is-selected .cover-object-handle {
@@ -3732,7 +3732,6 @@ html,body{width:100%;overflow-x:clip}
 
 .cover-object-handle:hover {
   background: var(--soft);
-  transform: scale(1.08);
 }
 
 .cover-object-delete {
@@ -3904,7 +3903,6 @@ html,body{width:100%;overflow-x:clip}
 
 .cover-object-editor > input {
   display: block;
-  width: 100%;
   width: 100%;
   min-width: 0;
   padding: 9px 11px;
