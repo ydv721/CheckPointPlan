@@ -283,11 +283,13 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
     <div className="cover-editor">
       <div className="cover-editor-section">
         <div className="cover-editor-section-heading"><span>표지 배경</span></div>
-        <label className="cover-color-control">단색 배경 <input type="color" aria-label="표지 배경 색상" value={cover.backgroundColor||themes[theme].cover} onChange={e=>setCover(c=>({...c,backgroundColor:e.target.value,backgroundImage:""}))}/></label>
+        <div className="cover-background-options">
+          <label className="cover-color-control cover-background-option"><span>단색 배경</span><input type="color" aria-label="표지 배경 색상" value={cover.backgroundColor||themes[theme].cover} onChange={e=>setCover(c=>({...c,backgroundColor:e.target.value,backgroundImage:""}))}/></label>
+          <button type="button" className="cover-reset-color cover-background-option" onClick={()=>setCover(c=>({...c,backgroundColor:"",backgroundImage:""}))}>테마 기본 배경으로</button>
+        </div>
         <button type="button" className="outline-btn upload-btn" onClick={()=>backgroundInput.current?.click()}><ImagePlus size={16}/> 배경 이미지 업로드</button>
         <input ref={backgroundInput} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>{const f=e.target.files?.[0];if(f)void handleUpload(f,true);e.target.value="";}}/>
         {cover.backgroundImage&&<button type="button" className="cover-remove-background" onClick={()=>setCover(c=>({...c,backgroundImage:""}))}><Trash2 size={14}/> 배경 이미지 제거</button>}
-        <button type="button" className="cover-reset-color" onClick={()=>setCover(c=>({...c,backgroundColor:"",backgroundImage:""}))}>테마 기본 배경으로</button>
       </div>
 
       <div className="cover-editor-section">
