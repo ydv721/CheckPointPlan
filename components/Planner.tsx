@@ -326,7 +326,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
       <div className="spiral-binding">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
       <div className={`cover-art cover-${theme}`} style={{backgroundColor:cover.backgroundColor||undefined}} onPointerDown={e=>{if(e.target===e.currentTarget)setSelectedItemId(null);}}>
         {cover.backgroundImage&&photoUrls[cover.backgroundImage]&&<img className="cover-background-image" src={photoUrls[cover.backgroundImage]} alt="" draggable={false} style={{objectPosition:(cover.backgroundPositionX??50)+"% "+(cover.backgroundPositionY??50)+"%"}} onPointerDown={startBackgroundPan} onPointerMove={moveBackgroundPan} onPointerUp={finishBackgroundPan} onPointerCancel={finishBackgroundPan}/>}
-        {activePattern!=="none"&&<div className={`cover-pattern-layer cover-pattern-${activePattern}`} style={{"--pattern-color":patternColor,"--pattern-thickness":(cover.patternThickness??2)+"px"} as CSSProperties} aria-hidden="true"/>}
+        {activePattern!=="none"&&<div className={`cover-pattern-layer cover-pattern-${activePattern}`} style={{"--pattern-color":patternColor,"--pattern-thickness":(cover.patternThickness??2)+"px","--pattern-preview-thickness":Math.max(1,(cover.patternThickness??2)*0.45)+"px","--pattern-frame-border":(6+(cover.patternThickness??2)*2)+"px","--pattern-frame-bottom":((6+(cover.patternThickness??2)*2)*4.4)+"px","--pattern-preview-frame-border":(3+(cover.patternThickness??2))+"px","--pattern-preview-frame-bottom":(6+(cover.patternThickness??2)*2)+"px"} as CSSProperties} aria-hidden="true"/>}
         <div className="cover-signature" aria-label="CHECKPOINT — YOUR PACE, YOUR CHECKPOINT">
           <svg className="cover-signature-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
             <rect x="3.5" y="5" width="21" height="21" rx="6.5" stroke="currentColor" strokeWidth="1.8"/>
@@ -381,7 +381,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
       <div className="cover-editor-section">
         <div className="cover-editor-section-heading"><span>표지 배경</span></div>
         <div className="cover-background-options">
-          <label className="cover-color-control cover-background-option"><span>단색 배경</span><input type="color" aria-label="표지 배경 색상" value={cover.backgroundColor||themes[theme].cover} onChange={e=>setCover(c=>({...c,backgroundColor:e.target.value,backgroundImage:""}))}/></label>
+          <label className="cover-color-control cover-background-option"><span>단색 배경</span><input type="color" aria-label="표지 배경 색상" value={cover.backgroundColor||themes[theme].cover} onChange={e=>setCover(c=>({...c,backgroundColor:e.target.value}))}/></label>
           <div className="cover-pattern-wrap" onBlur={e=>{const next=e.relatedTarget;if(!(next instanceof Node)||!e.currentTarget.contains(next))setPatternMenuOpen(false);}}>
             <div className="cover-pattern-option cover-background-option">
               <button type="button" className="cover-pattern-trigger" aria-label="배경 패턴 선택" aria-expanded={patternMenuOpen} onClick={()=>setPatternMenuOpen(open=>!open)}>
@@ -391,7 +391,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
             </div>
             {patternMenuOpen&&<div className="cover-pattern-menu" role="group" aria-label="패턴 종류">
               {COVER_PATTERNS.map(pattern=><button key={pattern.value} type="button" className="cover-pattern-choice" aria-pressed={activePattern===pattern.value} onClick={()=>{setCover(c=>({...c,backgroundPattern:pattern.value}));setPatternMenuOpen(false);}}>
-                <span className={`cover-pattern-preview cover-pattern-preview-${pattern.value}`} style={{"--pattern-color":patternColor,"--pattern-thickness":(cover.patternThickness??2)+"px"} as CSSProperties} aria-hidden="true"/>
+                <span className={`cover-pattern-preview cover-pattern-preview-${pattern.value}`} style={{"--pattern-color":patternColor,"--pattern-thickness":(cover.patternThickness??2)+"px","--pattern-preview-thickness":Math.max(1,(cover.patternThickness??2)*0.45)+"px","--pattern-frame-border":(6+(cover.patternThickness??2)*2)+"px","--pattern-frame-bottom":((6+(cover.patternThickness??2)*2)*4.4)+"px","--pattern-preview-frame-border":(3+(cover.patternThickness??2))+"px","--pattern-preview-frame-bottom":(6+(cover.patternThickness??2)*2)+"px"} as CSSProperties} aria-hidden="true"/>
                 <span>{pattern.label}</span>
                 {activePattern===pattern.value&&<Check size={14}/>}
               </button>)}
@@ -650,7 +650,7 @@ export default function Planner() {
     if(error){setAlert(`이미지 업로드에 실패했습니다: ${error.message}`);return;}
     const signed=await client.storage.from("checkpoint-covers").createSignedUrl(path,60*60);
     if(signed.data)setPhotoUrls(old=>({...old,[path]:signed.data.signedUrl}));
-    if(asBackground)setCover(c=>({...c,backgroundImage:path,backgroundColor:"",backgroundPositionX:50,backgroundPositionY:50}));
+    if(asBackground)setCover(c=>({...c,backgroundImage:path,backgroundPositionX:50,backgroundPositionY:50}));
     else setCover(c=>({...c,items:[...c.items,{id:uid(),kind:"photo",value:path,x:50,y:52,size:96,rotation:0}]}));
   }
 
