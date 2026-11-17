@@ -5,7 +5,7 @@ import type { User } from "@supabase/supabase-js";
 import {
   ArrowLeft, BookOpen, CalendarDays, Check, ChevronDown,
   Expand, ImagePlus, LogOut, Menu, Plus, RotateCw,
-  Sparkles, Trash2, X, CircleHelp, CheckCircle2, Palette
+  Sparkles, Trash2, X, Search, CircleHelp, CheckCircle2, Palette
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { defaultCover, emptyEntry, STICKERS, themes, type Cover, type CoverItem, type CoverPattern, type Entry, type FocusItem, type ThemeName, type Todo, type TodoStatus } from "@/lib/types";
