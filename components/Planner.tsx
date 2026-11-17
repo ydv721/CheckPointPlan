@@ -426,6 +426,7 @@ export default function Planner() {
   async function signOut() {
     if(!client)return;
     if(hydrated)await saveNow(entry);
+    setShowAccountMenu(false);
     await client.auth.signOut();setUser(null);setView("planner");
   }
 
@@ -582,9 +583,6 @@ export default function Planner() {
             <button type="button" className="workspace-action" onClick={()=>setShowSettings(true)}>
               <Palette size={19}/><span>테마 설정</span>
             </button>
-            <button type="button" className="workspace-action" onClick={()=>void signOut()}>
-              <LogOut size={19}/><span>로그아웃</span>
-            </button>
           </div>
           <div className="sidebar-account">
             <button
@@ -600,6 +598,10 @@ export default function Planner() {
               <ChevronDown size={15} aria-hidden="true"/>
             </button>
             {showAccountMenu&&<div className="sidebar-account-menu" id="sidebar-account-menu">
+              <button type="button" className="sidebar-signout" onClick={()=>void signOut()}>
+                <LogOut size={14}/><span>로그아웃</span>
+              </button>
+              <div className="sidebar-menu-divider" role="separator"/>
               <button type="button" className="sidebar-delete-account" onClick={()=>{setShowAccountMenu(false);setDeleteEmail("");setShowDeleteAccount(true);}}>
                 <Trash2 size={14}/><span>회원 탈퇴</span>
               </button>
