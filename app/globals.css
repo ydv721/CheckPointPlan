@@ -3123,3 +3123,358 @@ html,body{width:100%;overflow-x:clip}
     padding: 2px 12px !important;
   }
 }
+
+
+/* CHECKPOINT full-height workspace sidebar and account management. */
+@media (min-width: 781px) {
+  .app-shell.planner-view,
+  .app-shell.cover-view {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    min-height: 100dvh !important;
+    height: 100dvh !important;
+    overflow: hidden !important;
+  }
+
+  .app-shell.planner-view .site-header,
+  .app-shell.cover-view .site-header {
+    display: none !important;
+  }
+
+  .app-shell.planner-view .main-area,
+  .app-shell.cover-view .main-area {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .workspace-shell {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 260px !important;
+    align-items: stretch !important;
+    gap: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+  }
+
+  .workspace-canvas {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    padding: 20px 24px !important;
+    overflow: auto !important;
+  }
+
+  .workspace-canvas > .book-frame,
+  .workspace-canvas > .cover-layout {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    width: min(1050px, calc(100% - 16px), calc(141.9dvh - 34px)) !important;
+    max-width: 1050px !important;
+    height: auto !important;
+    min-height: 0 !important;
+    aspect-ratio: 210 / 148 !important;
+    flex: 0 1 auto !important;
+    margin: auto !important;
+  }
+
+  .workspace-canvas > .book-frame > .paper-page {
+    width: auto !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    aspect-ratio: 105 / 148 !important;
+  }
+
+  .workspace-canvas > .cover-layout {
+    padding: 0 !important;
+    gap: 0 !important;
+    border: 0 !important;
+    border-radius: 14px !important;
+    align-items: stretch !important;
+    overflow: hidden !important;
+    background: var(--paper) !important;
+  }
+
+  .workspace-canvas > .cover-layout > .cover-stage {
+    display: flex !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+  }
+
+  .workspace-canvas .spiral-cover {
+    width: 100% !important;
+    max-width: none !important;
+    height: 100% !important;
+    aspect-ratio: auto !important;
+  }
+
+  .workspace-canvas > .cover-layout > .cover-editor {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    overflow-y: auto !important;
+    padding: clamp(18px, 2.2vw, 34px) !important;
+  }
+
+  .workspace-sidebar {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 0 !important;
+    width: 260px !important;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    padding: 28px 20px 22px !important;
+    border: 0 !important;
+    border-left: 1px solid var(--line) !important;
+    border-radius: 0 !important;
+    background: var(--paper) !important;
+    box-shadow: -8px 0 28px #172b4408 !important;
+  }
+
+  .sidebar-brand {
+    display: grid !important;
+    grid-template-columns: 36px minmax(0, 1fr) !important;
+    grid-template-rows: auto auto !important;
+    align-items: center !important;
+    column-gap: 10px !important;
+    width: 100% !important;
+    padding: 0 0 25px !important;
+    margin: 0 0 24px !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--line) !important;
+    background: transparent !important;
+    color: var(--ink) !important;
+    text-align: left !important;
+    cursor: pointer !important;
+  }
+
+  .sidebar-brand .brand-icon {
+    grid-row: 1 / 3 !important;
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .sidebar-brand > span:not(.brand-lockup) {
+    font-size: 17px !important;
+    font-weight: 950 !important;
+    letter-spacing: .025em !important;
+    line-height: 1.15 !important;
+  }
+
+  .sidebar-brand small {
+    display: block !important;
+    color: var(--accent) !important;
+    font-size: 8px !important;
+    font-weight: 850 !important;
+    letter-spacing: .09em !important;
+    white-space: nowrap !important;
+  }
+
+  .sidebar-nav {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .workspace-sidebar .workspace-action {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 13px !important;
+    width: 100% !important;
+    min-height: 48px !important;
+    padding: 0 14px !important;
+    border: 0 !important;
+    border-radius: 10px !important;
+    background: transparent !important;
+    color: var(--ink) !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+  }
+
+  .workspace-sidebar .workspace-action:hover,
+  .workspace-sidebar .workspace-action.active {
+    background: var(--soft) !important;
+    color: var(--accent) !important;
+  }
+
+  .workspace-sidebar .workspace-action svg {
+    width: 19px !important;
+    height: 19px !important;
+  }
+
+  .sidebar-account {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 9px !important;
+    width: 100% !important;
+    margin-top: auto !important;
+    padding-top: 20px !important;
+    border-top: 1px solid var(--line) !important;
+  }
+
+  .sidebar-account-heading {
+    display: flex !important;
+    align-items: center !important;
+    gap: 9px !important;
+    margin-bottom: 5px !important;
+    color: var(--ink) !important;
+    font-size: 13px !important;
+    font-weight: 900 !important;
+  }
+
+  .sidebar-email-label {
+    color: var(--ink) !important;
+    font-size: 10px !important;
+    opacity: .55 !important;
+  }
+
+  .sidebar-email {
+    width: 100% !important;
+    overflow-wrap: anywhere !important;
+    padding: 10px 11px !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 9px !important;
+    background: var(--soft) !important;
+    color: var(--ink) !important;
+    font-size: 11px !important;
+    line-height: 1.5 !important;
+  }
+
+  .sidebar-delete-account {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    width: 100% !important;
+    margin-top: 7px !important;
+    padding: 10px 3px !important;
+    border: 0 !important;
+    background: transparent !important;
+    color: #bd6874 !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    text-align: left !important;
+  }
+
+  .sidebar-delete-account:hover {
+    color: #a43e4d !important;
+  }
+}
+
+.delete-account-modal {
+  width: min(100%, 440px);
+  padding: 30px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 22px 70px #00000030;
+}
+
+.delete-account-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 18px;
+  border-radius: 12px;
+  background: #fbecef;
+  color: #bd6874;
+}
+
+.delete-account-modal h2 {
+  margin: 7px 0 10px;
+  font-size: 24px;
+  font-weight: 950;
+}
+
+.delete-account-modal > p {
+  margin: 0 0 22px;
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1.85;
+  opacity: .72;
+}
+
+.delete-confirm-label {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.delete-confirm-label input {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--soft);
+  color: var(--ink);
+  outline: 0;
+  font-size: 12px;
+}
+
+.delete-account-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 24px;
+}
+
+.delete-confirm-btn {
+  padding: 11px 15px;
+  border: 0;
+  border-radius: 9px;
+  background: #bd6874;
+  color: white;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.delete-confirm-btn:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+@media (max-width: 780px) {
+  .workspace-sidebar {
+    display: none !important;
+  }
+
+  .delete-account-modal {
+    padding: 24px;
+  }
+}
