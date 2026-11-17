@@ -14,7 +14,7 @@ export type Entry = {
   memo: string;
   timetable: Timetable;
 };
-export type CoverItem = { id: string; kind: "sticker" | "photo" | "text"; value: string; x: number; y: number; size: number; rotation?: number };
+export type CoverItem = { id: string; kind: "sticker" | "photo" | "text"; value: string; x: number; y: number; size: number; rotation?: number; width?: number; height?: number };
 export type Cover = { subtitle: string; subtitleConverted?: boolean; items: CoverItem[]; colorLabels: string[]; backgroundColor?: string; backgroundImage?: string };
 export const emptyEntry = (date: string): Entry => ({
   date, dday: "", headerLabel: "", headerValue: "",
