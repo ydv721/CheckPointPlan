@@ -270,7 +270,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
           if(item.kind==="text")return <div key={item.id} className="placed-sticker placed-text" role="group" tabIndex={0} aria-label="텍스트 상자. 드래그하여 이동하고 네 방향 조절점으로 크기를 변경할 수 있어." style={{...itemStyle,width:`${item.width??76}%`,height:`${item.height??20}%`}} onPointerDown={e=>pointerDown(e,item)} onPointerMove={pointerMove} onPointerUp={()=>{interactionRef.current=null;}} onPointerCancel={()=>{interactionRef.current=null;}}>
             <span className="placed-text-content">{item.value}</span>
             <button type="button" className="cover-resize-handle cover-resize-north" aria-label="텍스트 상자 위쪽 크기 조절" onPointerDown={e=>startResize(e,item,"north")}/>
-            <button type="button" className="cover-resize-handle cover-resize-handle cover-resize-east" aria-label="텍스트 상자 오른쪽 크기 조절" onPointerDown={e=>startResize(e,item,"east")}/>
+            <button type="button" className="cover-resize-handle cover-resize-east" aria-label="텍스트 상자 오른쪽 크기 조절" onPointerDown={e=>startResize(e,item,"east")}/>
             <button type="button" className="cover-resize-handle cover-resize-south" aria-label="텍스트 상자 아래쪽 크기 조절" onPointerDown={e=>startResize(e,item,"south")}/>
             <button type="button" className="cover-resize-handle cover-resize-west" aria-label="텍스트 상자 왼쪽 크기 조절" onPointerDown={e=>startResize(e,item,"west")}/>
           </div>;
