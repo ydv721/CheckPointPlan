@@ -2671,7 +2671,7 @@ html,body{width:100%;overflow-x:clip}
 
 
 /* Use the planner's full viewport height; keep navigation inside the page. */
-@media (min-width: 901px) {
+@media (min-width: 561px) {
   .app-shell.planner-view .site-header {
     display: none !important;
   }
