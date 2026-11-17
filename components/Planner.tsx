@@ -326,7 +326,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
       <div className="spiral-binding">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
       <div className={`cover-art cover-${theme}`} style={{backgroundColor:cover.backgroundColor||undefined}} onPointerDown={e=>{if(e.target===e.currentTarget)setSelectedItemId(null);}}>
         {cover.backgroundImage&&photoUrls[cover.backgroundImage]&&<img className="cover-background-image" src={photoUrls[cover.backgroundImage]} alt="" draggable={false} style={{objectPosition:(cover.backgroundPositionX??50)+"% "+(cover.backgroundPositionY??50)+"%"}} onPointerDown={startBackgroundPan} onPointerMove={moveBackgroundPan} onPointerUp={finishBackgroundPan} onPointerCancel={finishBackgroundPan}/>}
-        {activePattern!=="none"&&<div className={`cover-pattern-layer cover-pattern-${activePattern}`} style={{"--pattern-color":patternColor} as CSSProperties} aria-hidden="true"/>}
+        {activePattern!=="none"&&<div className={`cover-pattern-layer cover-pattern-${activePattern}`} style={{"--pattern-color":patternColor,"--pattern-thickness":(cover.patternThickness??2)+"px"} as CSSProperties} aria-hidden="true"/>}
         <div className="cover-signature" aria-label="CHECKPOINT — YOUR PACE, YOUR CHECKPOINT">
           <svg className="cover-signature-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
             <rect x="3.5" y="5" width="21" height="21" rx="6.5" stroke="currentColor" strokeWidth="1.8"/>
@@ -391,14 +391,23 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
             </div>
             {patternMenuOpen&&<div className="cover-pattern-menu" role="group" aria-label="패턴 종류">
               {COVER_PATTERNS.map(pattern=><button key={pattern.value} type="button" className="cover-pattern-choice" aria-pressed={activePattern===pattern.value} onClick={()=>{setCover(c=>({...c,backgroundPattern:pattern.value}));setPatternMenuOpen(false);}}>
-                <span className={`cover-pattern-preview cover-pattern-preview-${pattern.value}`} style={{"--pattern-color":patternColor} as CSSProperties} aria-hidden="true"/>
+                <span className={`cover-pattern-preview cover-pattern-preview-${pattern.value}`} style={{"--pattern-color":patternColor,"--pattern-thickness":(cover.patternThickness??2)+"px"} as CSSProperties} aria-hidden="true"/>
                 <span>{pattern.label}</span>
                 {activePattern===pattern.value&&<Check size={14}/>}
               </button>)}
             </div>}
           </div>
         </div>
-        <button type="button" className="outline-btn upload-btn" onClick={()=>backgroundInput.current?.click()}><ImagePlus size={16}/> 배경 이미지 업로드</button>
+        <div className="cover-pattern-thickness-row">
+          <label htmlFor="cover-pattern-thickness">패턴 굵기</label>
+          <input id="cover-pattern-thickness" type="range" min={1} max={8} step={1} value={cover.patternThickness??2} disabled={activePattern==="none"} onChange={e=>setCover(c=>({...c,patternThickness:Number(e.target.value)}))}/>
+          <span>{cover.patternThickness??2}</span>
+        </div>
+        <div className="cover-image-actions">
+          <button type="button" className="outline-btn upload-btn" onClick={()=>backgroundInput.current?.click()}><ImagePlus size={16}/> 배경 이미지 업로드</button>
+          {cover.backgroundImage&&<button type="button" className="cover-remove-background" onClick={()=>setCover(c=>({...c,backgroundImage:"",backgroundPositionX:50,backgroundPositionY:50}))}><Trash2 size={14}/> 배경 이미지 제거</button>}
+        </div>
+        <input ref={backgroundInput} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>{const f=e.target.files?.[0];if(f)void handleUpload(f,true);e.target.value="";}}/> onClick={()=>backgroundInput.current?.click()}><ImagePlus size={16}/> 배경 이미지 업로드</button>
         <input ref={backgroundInput} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>{const f=e.target.files?.[0];if(f)void handleUpload(f,true);e.target.value="";}}/>
         {cover.backgroundImage&&<button type="button" className="cover-remove-background" onClick={()=>setCover(c=>({...c,backgroundImage:"",backgroundPositionX:50,backgroundPositionY:50}))}><Trash2 size={14}/> 배경 이미지 제거</button>}
       </div>
@@ -542,6 +551,7 @@ export default function Planner() {
           ...(typeof savedCover.backgroundColor==="string"?{backgroundColor:savedCover.backgroundColor}:{}),
           ...(typeof savedCover.backgroundImage==="string"?{backgroundImage:savedCover.backgroundImage}:{}),
           ...(typeof savedCover.patternColor==="string"?{patternColor:sanitizeHex(savedCover.patternColor)}:{}),
+          patternThickness:typeof savedCover.patternThickness==="number"&&Number.isFinite(savedCover.patternThickness)?Math.min(8,Math.max(1,Math.round(savedCover.patternThickness))):2,
           backgroundPositionX:typeof savedCover.backgroundPositionX==="number"&&Number.isFinite(savedCover.backgroundPositionX)?Math.min(100,Math.max(0,savedCover.backgroundPositionX)):50,
           backgroundPositionY:typeof savedCover.backgroundPositionY==="number"&&Number.isFinite(savedCover.backgroundPositionY)?Math.min(100,Math.max(0,savedCover.backgroundPositionY)):50
         };
