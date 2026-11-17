@@ -3073,3 +3073,53 @@ html,body{width:100%;overflow-x:clip}
     display: none !important;
   }
 }
+
+
+/* Restore the compact header and stacked pages on tablet/mobile widths. */
+@media (max-width: 780px) {
+  .app-shell.planner-view .site-header,
+  .app-shell.cover-view .site-header {
+    display: block !important;
+  }
+
+  .app-shell.planner-view .main-area,
+  .app-shell.cover-view .main-area {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: auto !important;
+    padding: 22px 14px 36px !important;
+  }
+
+  .workspace-canvas > .cover-layout {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    aspect-ratio: auto !important;
+    padding: 22px 17px !important;
+    gap: 20px !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 14px !important;
+  }
+
+  .workspace-canvas > .cover-layout > .cover-stage {
+    padding: 0 15px !important;
+    justify-content: center !important;
+  }
+
+  .workspace-canvas .spiral-cover {
+    width: min(100%, 290px) !important;
+    max-width: 290px !important;
+    height: auto !important;
+    aspect-ratio: 105 / 148 !important;
+  }
+
+  .workspace-canvas > .cover-layout > .cover-editor {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 2px 12px !important;
+  }
+}
