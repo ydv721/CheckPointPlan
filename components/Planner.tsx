@@ -407,9 +407,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
           <button type="button" className="outline-btn upload-btn" onClick={()=>backgroundInput.current?.click()}><ImagePlus size={16}/> 배경 이미지 업로드</button>
           {cover.backgroundImage&&<button type="button" className="cover-remove-background" onClick={()=>setCover(c=>({...c,backgroundImage:"",backgroundPositionX:50,backgroundPositionY:50}))}><Trash2 size={14}/> 배경 이미지 제거</button>}
         </div>
-        <input ref={backgroundInput} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>{const f=e.target.files?.[0];if(f)void handleUpload(f,true);e.target.value="";}}/> onClick={()=>backgroundInput.current?.click()}><ImagePlus size={16}/> 배경 이미지 업로드</button>
         <input ref={backgroundInput} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>{const f=e.target.files?.[0];if(f)void handleUpload(f,true);e.target.value="";}}/>
-        {cover.backgroundImage&&<button type="button" className="cover-remove-background" onClick={()=>setCover(c=>({...c,backgroundImage:"",backgroundPositionX:50,backgroundPositionY:50}))}><Trash2 size={14}/> 배경 이미지 제거</button>}
       </div>
 
       <div className="cover-editor-section">
