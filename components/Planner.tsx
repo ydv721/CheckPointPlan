@@ -228,11 +228,11 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
   const emojiPickerButtonRef=useRef<HTMLButtonElement>(null);
   useEffect(()=>{
     if(!emojiPickerOpen)return;
-    const handleOutsidePointerDown=(event:globalThis.PointerEvent)=>{
+    const handleOutsidePointerDown=(event:Event)=>{
       const target=event.target as Node|null;
       if(target&&!emojiPickerRef.current?.contains(target)&&!emojiPickerButtonRef.current?.contains(target))setEmojiPickerOpen(false);
     };
-    const handleKeyDown=(event:globalThis.KeyboardEvent)=>{if(event.key==="Escape")setEmojiPickerOpen(false);};
+    const handleKeyDown=(event:KeyboardEvent)=>{if(event.key==="Escape")setEmojiPickerOpen(false);};
     document.addEventListener("pointerdown",handleOutsidePointerDown);
     document.addEventListener("keydown",handleKeyDown);
     return()=>{
