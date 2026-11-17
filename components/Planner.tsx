@@ -183,12 +183,17 @@ function Timetable({ value, onChange, highlighter, tool }: {
 
 function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
   cover:Cover;setCover:React.Dispatch<React.SetStateAction<Cover>>;
-  theme:ThemeName;handleUpload:(file:File)=>Promise<void>;photoUrls:Record<string,string>;
+  theme:ThemeName;handleUpload:(file:File,asBackground?:boolean)=>Promise<void>;photoUrls:Record<string,string>;
 }) {
   const fileInput=useRef<HTMLInputElement>(null);
+  const backgroundInput=useRef<HTMLInputElement>(null);
   const moveRef=useRef<{id:string;startX:number;startY:number;originX:number;originY:number;w:number;h:number}|null>(null);
+
   function addSticker(s:string) {
-    setCover(c=>({...c,items:[...c.items,{id:uid(),kind:"sticker",value:s,x:50,y:50,size:42}]}));
+    setCover(c=>({...c,items:[...c.items,{id:uid(),kind:"sticker",value:s,x:50,y:50,size:42,rotation:0}]}));
+  }
+  function addText() {
+    setCover(c=>({...c,items:[...c.items,{id:uid(),kind:"text",value:"새로운 문구",x:50,y:58,size:16,rotation:0}]}));
   }
   function pointerDown(e:PointerEvent<HTMLButtonElement>,item:CoverItem) {
     if((e.target as HTMLElement).closest(".sticker-delete"))return;
@@ -199,32 +204,70 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
   function pointerMove(e:PointerEvent<HTMLButtonElement>) {
     const m=moveRef.current;if(!m)return;
     setCover(c=>({...c,items:c.items.map(i=>i.id===m.id?{...i,
-      x:Math.max(8,Math.min(92,m.originX+(e.clientX-m.startX)/m.w*100)),
-      y:Math.max(8,Math.min(92,m.originY+(e.clientY-m.startY)/m.h*100))}:i)}));
+      x:Math.max(3,Math.min(97,m.originX+(e.clientX-m.startX)/m.w*100)),
+      y:Math.max(3,Math.min(97,m.originY+(e.clientY-m.startY)/m.h*100))}:i)}));
   }
+  const updateItem=(id:string,patch:Partial<CoverItem>)=>setCover(c=>({...c,items:c.items.map(item=>item.id===id?{...item,...patch}:item)}));
+  const removeItem=(id:string)=>setCover(c=>({...c,items:c.items.filter(item=>item.id!==id)}));
+
   return <section className="cover-layout">
     <div className="cover-stage"><div className="spiral-cover">
       <div className="spiral-binding">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
-      <div className={`cover-art cover-${theme}`}>
+      <div className={`cover-art cover-${theme}`} style={{backgroundColor:cover.backgroundColor||undefined}}>
+        {cover.backgroundImage&&photoUrls[cover.backgroundImage]&&<img className="cover-background-image" src={photoUrls[cover.backgroundImage]} alt="" draggable={false}/>}
         <div className="cover-small-heading">A LITTLE SPACE FOR YOUR DAYS</div>
         <div className="cover-main-word"><span>{cover.title||"CHECKPOINT"}</span></div>
-        <div className="cover-slogan">{cover.subtitle||"YOUR PACE, YOUR CHECKPOINT."}</div>
         <div className="cover-bottomline">NOT PERFECT. JUST YOURS. ✦</div>
-        {cover.items.map(item=><button type="button" key={item.id} className="placed-sticker" aria-label="드래그하여 이동" style={{left:`${item.x}%`,top:`${item.y}%`,fontSize:item.size}} onPointerDown={e=>pointerDown(e,item)} onPointerMove={pointerMove} onPointerUp={()=>{moveRef.current=null;}} onPointerCancel={()=>{moveRef.current=null;}}>
-          {item.kind==="photo"?<img src={photoUrls[item.value]||""} alt="사용자가 올린 표지 사진" draggable={false}/>:item.value}
+        {cover.items.map(item=><button type="button" key={item.id} className={item.kind==="text"?"placed-sticker placed-text":"placed-sticker"} aria-label={item.kind==="text"?"문구를 드래그하여 이동":"장식을 드래그하여 이동"} style={{left:`${item.x}%`,top:`${item.y}%`,fontSize:item.size,transform:`translate(-50%,-50%) rotate(${item.rotation??0}deg)`}} onPointerDown={e=>pointerDown(e,item)} onPointerMove={pointerMove} onPointerUp={()=>{moveRef.current=null;}} onPointerCancel={()=>{moveRef.current=null;}}>
+          {item.kind==="photo"?<img src={photoUrls[item.value]||""} alt="표지 장식 사진" draggable={false}/>:item.value}
         </button>)}
       </div>
     </div></div>
     <div className="cover-editor">
       <label className="input-label">표지 제목<input maxLength={24} value={cover.title} onChange={e=>setCover(c=>({...c,title:e.target.value}))}/></label>
-      <label className="input-label">한 줄 문구<input maxLength={75} value={cover.subtitle} onChange={e=>setCover(c=>({...c,subtitle:e.target.value}))}/></label>
-      <div className="editor-label">작은 스티커</div><div className="sticker-palette">{STICKERS.map(s=><button key={s} type="button" onClick={()=>addSticker(s)} aria-label={`${s} 스티커 추가`}>{s}</button>)}</div>
-      <button className="outline-btn upload-btn" onClick={()=>fileInput.current?.click()}><ImagePlus size={17}/> 내 이미지 업로드</button>
-      <input ref={fileInput} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={e=>{const f=e.target.files?.[0];if(f)void handleUpload(f);e.target.value="";}}/>
-      {cover.items.length>0&&<><div className="editor-label">추가된 장식 · {cover.items.length}개</div>
-        <div className="placed-list">{cover.items.map(item=><div key={item.id} className="placed-item"><span>{item.kind==="sticker"?item.value:"사진"}</span><label className="size-control">크기 <input type="range" min={24} max={110} value={item.size} onChange={e=>setCover(c=>({...c,items:c.items.map(x=>x.id===item.id?{...x,size:Number(e.target.value)}:x)}))}/></label><button className="icon-btn small" aria-label="장식 삭제" onClick={()=>setCover(c=>({...c,items:c.items.filter(i=>i.id!==item.id)}))}><Trash2 size={15}/></button></div>)}</div>
-      </>}
-      <p className="gentle-tip"><Sparkles size={16}/> 스티커와 사진은 표지에서 드래그하여 위치를 변경할 수 있습니다.</p>
+
+      <div className="cover-editor-section">
+        <div className="cover-editor-section-heading"><span>표지 배경</span></div>
+        <label className="cover-color-control">단색 배경 <input type="color" aria-label="표지 배경 색상" value={cover.backgroundColor||"#789bc8"} onChange={e=>setCover(c=>({...c,backgroundColor:e.target.value,backgroundImage:""}))}/></label>
+        <button type="button" className="outline-btn upload-btn" onClick={()=>backgroundInput.current?.click()}><ImagePlus size={16}/> 배경 이미지 업로드</button>
+        <input ref={backgroundInput} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>{const f=e.target.files?.[0];if(f)void handleUpload(f,true);e.target.value="";}}/>
+        {cover.backgroundImage&&<button type="button" className="cover-remove-background" onClick={()=>setCover(c=>({...c,backgroundImage:""}))}><Trash2 size={14}/> 배경 이미지 제거</button>}
+        <button type="button" className="cover-reset-color" onClick={()=>setCover(c=>({...c,backgroundColor:"",backgroundImage:""}))}>테마 기본 배경으로</button>
+      </div>
+
+      <div className="cover-editor-section">
+        <div className="cover-editor-section-heading"><span>한 줄 문구</span><button type="button" className="cover-add-text" onClick={addText}><Plus size={14}/> 문구 추가</button></div>
+        <p className="cover-editor-help">문구를 추가한 뒤 표지에서 드래그해 위치를 옮길 수 있어.</p>
+        {cover.items.filter(item=>item.kind==="text").length===0&&<p className="cover-empty-note">추가된 문구가 없어.</p>}
+        {cover.items.filter(item=>item.kind==="text").map(item=><div className="cover-object-editor" key={item.id}>
+          <input aria-label="표지 문구" maxLength={75} value={item.value} onChange={e=>updateItem(item.id,{value:e.target.value})}/>
+          <label>크기 <input type="range" min={8} max={40} value={item.size} onChange={e=>updateItem(item.id,{size:Number(e.target.value)})}/></label>
+          <label>회전 <input type="range" min={-180} max={180} value={item.rotation??0} onChange={e=>updateItem(item.id,{rotation:Number(e.target.value)})}/></label>
+          <button type="button" className="icon-btn small" aria-label="문구 삭제" onClick={()=>removeItem(item.id)}><Trash2 size={15}/></button>
+        </div>)}
+      </div>
+
+      <div className="cover-editor-section">
+        <div className="editor-label">작은 스티커</div>
+        <div className="sticker-palette">{STICKERS.map(s=><button key={s} type="button" onClick={()=>addSticker(s)} aria-label={`${s} 스티커 추가`}>{s}</button>)}</div>
+      </div>
+
+      <div className="cover-editor-section">
+        <div className="cover-editor-section-heading"><span>장식 이미지</span></div>
+        <button type="button" className="outline-btn upload-btn" onClick={()=>fileInput.current?.click()}><ImagePlus size={17}/> 내 이미지 추가</button>
+        <input ref={fileInput} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={e=>{const f=e.target.files?.[0];if(f)void handleUpload(f);e.target.value="";}}/>
+      </div>
+
+      {cover.items.filter(item=>item.kind!=="text").length>0&&<div className="cover-editor-section">
+        <div className="editor-label">추가된 스티커 · 이미지</div>
+        <div className="placed-list">{cover.items.filter(item=>item.kind!=="text").map(item=><div key={item.id} className="placed-item cover-object-row">
+          <span>{item.kind==="sticker"?item.value:"사진"}</span>
+          <label className="size-control">크기 <input type="range" min={24} max={110} value={item.size} onChange={e=>updateItem(item.id,{size:Number(e.target.value)})}/></label>
+          <label className="size-control">회전 <input type="range" min={-180} max={180} value={item.rotation??0} onChange={e=>updateItem(item.id,{rotation:Number(e.target.value)})}/></label>
+          <button type="button" className="icon-btn small" aria-label="장식 삭제" onClick={()=>removeItem(item.id)}><Trash2 size={15}/></button>
+        </div>)}</div>
+      </div>}
+      <p className="gentle-tip"><Sparkles size={16}/> 표지 위의 문구와 장식은 드래그하여 이동하고, 회전 슬라이더로 각도를 조절할 수 있어.</p>
     </div>
   </section>;
 }
@@ -312,10 +355,17 @@ export default function Planner() {
         const nextTheme:ThemeName=t && Object.keys(themes).includes(t)?t as ThemeName:"blue";
         const nextCustom=data?.custom_color||"#8b9ec4";
         const savedCover:Partial<Cover>=data?.cover && typeof data.cover==="object"?data.cover as Partial<Cover>:{};
+        let coverItems:CoverItem[]=Array.isArray(savedCover.items)?savedCover.items:defaultCover.items;
+        const subtitleConverted=savedCover.subtitleConverted===true;
+        if(!subtitleConverted&&typeof savedCover.subtitle==="string"&&savedCover.subtitle.trim()&&!coverItems.some(item=>item.kind==="text")) {
+          coverItems=[...coverItems,{id:"migrated-cover-subtitle",kind:"text",value:savedCover.subtitle,x:50,y:69,size:11,rotation:0}];
+        }
         const nextCover:Cover={
           ...defaultCover,
           ...savedCover,
-          items:Array.isArray(savedCover.items)?savedCover.items:defaultCover.items,
+          subtitle:"",
+          subtitleConverted:true,
+          items:coverItems,
           colorLabels:Array.from({length:PENS.length},(_,index)=>typeof savedCover.colorLabels?.[index]==="string"?savedCover.colorLabels[index]:"")
         };
         setTheme(nextTheme);setCustomColor(nextCustom);setCover(nextCover);
@@ -395,7 +445,7 @@ export default function Planner() {
   useEffect(()=>{
     if(!client||!user)return;
     let active=true;
-    const paths=cover.items.filter(item=>item.kind==="photo" && !photoUrls[item.value]).map(i=>i.value);
+    const paths=[...cover.items.filter(item=>item.kind==="photo" && !photoUrls[item.value]).map(i=>i.value),...(cover.backgroundImage&&!photoUrls[cover.backgroundImage]?[cover.backgroundImage]:[])];
     const unique=[...new Set(paths)];
     if(!unique.length)return;
     void Promise.all(unique.map(async path=>{
@@ -403,9 +453,9 @@ export default function Planner() {
       return {path,url:error?null:data.signedUrl};
     })).then(res=>{if(active)setPhotoUrls(old=>({...old,...Object.fromEntries(res.filter(r=>r.url).map(r=>[r.path,r.url!]))}));});
     return()=>{active=false;};
-  },[client,user,cover.items,photoUrls]);
+  },[client,user,cover.items,cover.backgroundImage,photoUrls]);
 
-  async function handleUpload(file:File) {
+  async function handleUpload(file:File,asBackground=false) {
     if(!client||!user)return;
     if(!["image/jpeg","image/png","image/webp","image/gif"].includes(file.type)){setAlert("PNG, JPG, WEBP, GIF 형식의 이미지만 업로드할 수 있습니다.");return;}
     if(file.size>5*1024*1024){setAlert("이미지는 5MB 이하만 업로드할 수 있습니다.");return;}
@@ -415,7 +465,8 @@ export default function Planner() {
     if(error){setAlert(`이미지 업로드에 실패했습니다: ${error.message}`);return;}
     const signed=await client.storage.from("checkpoint-covers").createSignedUrl(path,60*60);
     if(signed.data)setPhotoUrls(old=>({...old,[path]:signed.data.signedUrl}));
-    setCover(c=>({...c,items:[...c.items,{id:uid(),kind:"photo",value:path,x:50,y:52,size:96}]}));
+    if(asBackground)setCover(c=>({...c,backgroundImage:path,backgroundColor:""}));
+    else setCover(c=>({...c,items:[...c.items,{id:uid(),kind:"photo",value:path,x:50,y:52,size:96,rotation:0}]}));
   }
 
   async function signOut() {
