@@ -4617,3 +4617,9 @@ html,body{width:100%;overflow-x:clip}
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
+
+
+/* Render placed emoji stickers with the operating system emoji font. */
+.placed-sticker {
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+}
