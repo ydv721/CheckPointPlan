@@ -14,8 +14,9 @@ export type Entry = {
   memo: string;
   timetable: Timetable;
 };
-export type CoverItem = { id: string; kind: "sticker" | "photo" | "text"; value: string; x: number; y: number; size: number; rotation?: number; width?: number; height?: number };
-export type Cover = { subtitle: string; subtitleConverted?: boolean; items: CoverItem[]; colorLabels: string[]; backgroundColor?: string; backgroundImage?: string };
+export type CoverItem = { id: string; kind: "sticker" | "photo" | "text"; value: string; x: number; y: number; size: number; rotation?: number; width?: number; height?: number; color?: string };
+export type CoverPattern = "none" | "grid" | "dots" | "stripes" | "polaroid";
+export type Cover = { subtitle: string; subtitleConverted?: boolean; items: CoverItem[]; colorLabels: string[]; backgroundColor?: string; backgroundImage?: string; backgroundPattern?: CoverPattern; patternColor?: string };
 export const emptyEntry = (date: string): Entry => ({
   date, dday: "", headerLabel: "", headerValue: "",
   focusItems: Array.from({ length: 5 }, (_, index) => ({ id: `focus-${index + 1}`, text: "", checked: false })),
@@ -23,7 +24,7 @@ export const emptyEntry = (date: string): Entry => ({
   todos: Array.from({ length: 7 }, (_, index) => ({ id: `starter-${index + 1}`, title: "", checked: false, status: "todo" as const })),
   memo: "", timetable: {}
 });
-export const defaultCover: Cover = {subtitle: "", subtitleConverted: true, items: [], colorLabels: ["", "", "", "", ""]};
+export const defaultCover: Cover = {subtitle: "", subtitleConverted: true, items: [], colorLabels: ["", "", "", "", ""], backgroundPattern: "grid"};
 
 export const themes: Record<ThemeName, { bg: string; paper: string; ink: string; accent: string; soft: string; line: string; cover: string; coverInk: string }> = {
   white: {bg:"#f4f3f0",paper:"#ffffff",ink:"#303946",accent:"#7186a8",soft:"#e9edf3",line:"#e5e6e8",cover:"#edece9",coverInk:"#374151"},
