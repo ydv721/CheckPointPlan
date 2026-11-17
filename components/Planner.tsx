@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 import type { User } from "@supabase/supabase-js";
 import {
   ArrowLeft, BookOpen, CalendarDays, Check, ChevronDown,
-  ImagePlus, LogOut, Menu, Plus,
+  Expand, ImagePlus, LogOut, Menu, Plus, RotateCw,
   Sparkles, Trash2, X, CircleHelp, CheckCircle2, Palette
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -192,73 +192,96 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
   const backgroundInput=useRef<HTMLInputElement>(null);
   type CoverInteraction =
     | {kind:"move";id:string;startX:number;startY:number;originX:number;originY:number;w:number;h:number}
-    | {kind:"resize";id:string;edge:"north"|"east"|"south"|"west";startX:number;startY:number;originX:number;originY:number;originWidth:number;originHeight:number;w:number;h:number};
+    | {kind:"rotate";id:string;centerX:number;centerY:number;startAngle:number;originRotation:number}
+    | {kind:"resize";id:string;centerX:number;centerY:number;startDistance:number;originSize:number;originWidth:number;originHeight:number};
+  const [selectedItemId,setSelectedItemId]=useState<string|null>(null);
   const interactionRef=useRef<CoverInteraction|null>(null);
   const clamp=(value:number,min:number,max:number)=>Math.min(max,Math.max(min,value));
 
   function addSticker(s:string) {
-    setCover(c=>({...c,items:[...c.items,{id:uid(),kind:"sticker",value:s,x:50,y:50,size:42,rotation:0}]}));
+    const item:CoverItem={id:uid(),kind:"sticker",value:s,x:50,y:50,size:42,rotation:0};
+    setCover(c=>({...c,items:[...c.items,item]}));
+    setSelectedItemId(item.id);
   }
   function addText() {
-    setCover(c=>({...c,items:[...c.items,{id:uid(),kind:"text",value:"새 텍스트",x:50,y:58,size:16,rotation:0,width:76,height:20}]}));
+    const item:CoverItem={id:uid(),kind:"text",value:"새 텍스트",x:50,y:58,size:16,rotation:0,width:76,height:20};
+    setCover(c=>({...c,items:[...c.items,item]}));
+    setSelectedItemId(item.id);
   }
   function pointerDown(e:PointerEvent<HTMLElement>,item:CoverItem) {
-    if((e.target as HTMLElement).closest(".cover-resize-handle"))return;
-    const p=e.currentTarget.parentElement?.getBoundingClientRect();if(!p)return;
+    if((e.target as HTMLElement).closest(".cover-object-handle"))return;
+    const stage=e.currentTarget.closest(".cover-art") as HTMLElement|null;
+    const p=stage?.getBoundingClientRect();if(!p)return;
+    setSelectedItemId(item.id);
     interactionRef.current={kind:"move",id:item.id,startX:e.clientX,startY:e.clientY,originX:item.x,originY:item.y,w:p.width,h:p.height};
     e.currentTarget.setPointerCapture(e.pointerId);
   }
-  function startResize(e:PointerEvent<HTMLButtonElement>,item:CoverItem,edge:"north"|"east"|"south"|"west") {
-    e.preventDefault();
-    e.stopPropagation();
-    const stage=e.currentTarget.closest(".cover-art") as HTMLElement|null;
-    const p=stage?.getBoundingClientRect();if(!p)return;
+  function startRotate(e:PointerEvent<HTMLButtonElement>,item:CoverItem) {
+    e.preventDefault();e.stopPropagation();
+    const object=e.currentTarget.parentElement;
+    const rect=object?.getBoundingClientRect();if(!rect)return;
+    const centerX=rect.left+rect.width/2;
+    const centerY=rect.top+rect.height/2;
     interactionRef.current={
-      kind:"resize",id:item.id,edge,startX:e.clientX,startY:e.clientY,
-      originX:item.x,originY:item.y,originWidth:item.width??76,originHeight:item.height??20,
-      w:p.width,h:p.height
+      kind:"rotate",id:item.id,centerX,centerY,
+      startAngle:Math.atan2(e.clientY-centerY,e.clientX-centerX),
+      originRotation:item.rotation??0
     };
+    setSelectedItemId(item.id);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+  function startResize(e:PointerEvent<HTMLButtonElement>,item:CoverItem) {
+    e.preventDefault();e.stopPropagation();
+    const object=e.currentTarget.parentElement;
+    const rect=object?.getBoundingClientRect();if(!rect)return;
+    const centerX=rect.left+rect.width/2;
+    const centerY=rect.top+rect.height/2;
+    const startDistance=Math.max(8,Math.hypot(e.clientX-centerX,e.clientY-centerY));
+    interactionRef.current={
+      kind:"resize",id:item.id,centerX,centerY,startDistance,
+      originSize:item.size,originWidth:item.width??76,originHeight:item.height??20
+    };
+    setSelectedItemId(item.id);
     e.currentTarget.setPointerCapture(e.pointerId);
   }
   function pointerMove(e:PointerEvent<HTMLElement>) {
     const active=interactionRef.current;if(!active)return;
     if(active.kind==="move") {
       setCover(c=>({...c,items:c.items.map(i=>i.id===active.id?{...i,
-        x:clamp(active.originX+(e.clientX-active.startX)/active.w*100,3,97),
-        y:clamp(active.originY+(e.clientY-active.startY)/active.h*100,3,97)}:i)}));
+        x:clamp(active.originX+(e.clientX-active.startX)/active.w*100,2,98),
+        y:clamp(active.originY+(e.clientY-active.startY)/active.h*100,2,98)}:i)}));
       return;
     }
-    const dx=(e.clientX-active.startX)/active.w*100;
-    const dy=(e.clientY-active.startY)/active.h*100;
+    if(active.kind==="rotate") {
+      const angle=Math.atan2(e.clientY-active.centerY,e.clientX-active.centerX);
+      const delta=(angle-active.startAngle)*180/Math.PI;
+      const rotation=((active.originRotation+delta+180)%360+360)%360-180;
+      setCover(c=>({...c,items:c.items.map(i=>i.id===active.id?{...i,rotation}:i)}));
+      return;
+    }
+    const distance=Math.hypot(e.clientX-active.centerX,e.clientY-active.centerY);
+    const ratio=clamp(distance/active.startDistance,.25,3.5);
     setCover(c=>({...c,items:c.items.map(i=>{
       if(i.id!==active.id)return i;
-      let width=active.originWidth;
-      let height=active.originHeight;
-      let x=active.originX;
-      let y=active.originY;
-      if(active.edge==="east") {
-        width=clamp(active.originWidth+dx,12,94);
-        x=active.originX+(width-active.originWidth)/2;
-      } else if(active.edge==="west") {
-        width=clamp(active.originWidth-dx,12,94);
-        x=active.originX-(width-active.originWidth)/2;
-      } else if(active.edge==="south") {
-        height=clamp(active.originHeight+dy,8,94);
-        y=active.originY+(height-active.originHeight)/2;
-      } else {
-        height=clamp(active.originHeight-dy,8,94);
-        y=active.originY-(height-active.originHeight)/2;
-      }
-      return {...i,width,height,x:clamp(x,width/2,100-width/2),y:clamp(y,height/2,100-height/2)};
+      const size=clamp(active.originSize*ratio,8,120);
+      if(i.kind!=="text")return {...i,size};
+      return {
+        ...i,size,
+        width:clamp(active.originWidth*ratio,12,98),
+        height:clamp(active.originHeight*ratio,8,94)
+      };
     })}));
   }
+  function finishInteraction() {
+    interactionRef.current=null;
+  }
   const updateItem=(id:string,patch:Partial<CoverItem>)=>setCover(c=>({...c,items:c.items.map(item=>item.id===id?{...item,...patch}:item)}));
-  const removeItem=(id:string)=>setCover(c=>({...c,items:c.items.filter(item=>item.id!==id)}));
+  const removeItem=(id:string)=>{setCover(c=>({...c,items:c.items.filter(item=>item.id!==id)}));setSelectedItemId(current=>current===id?null:current);};
 
   return <section className="cover-layout">
     <div className="cover-stage"><div className="spiral-cover">
       <div className="spiral-binding">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
-      <div className={`cover-art cover-${theme}`} style={{backgroundColor:cover.backgroundColor||undefined}}>
+      <div className={`cover-art cover-${theme}`} style={{backgroundColor:cover.backgroundColor||undefined}} onPointerDown={e=>{if(e.target===e.currentTarget)setSelectedItemId(null);}}>
         {cover.backgroundImage&&photoUrls[cover.backgroundImage]&&<img className="cover-background-image" src={photoUrls[cover.backgroundImage]} alt="" draggable={false}/>}
         <div className="cover-signature" aria-label="CHECKPOINT — YOUR PACE, YOUR CHECKPOINT">
           <svg className="cover-signature-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
@@ -271,21 +294,42 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
         {cover.items.map(item=>{
           const rotation=Number(item.rotation??0);
           const safeRotation=Number.isFinite(rotation)?rotation:0;
+          const selected=selectedItemId===item.id;
           const itemStyle:CSSProperties={
-            left:`${item.x}%`,top:`${item.y}%`,fontSize:item.size,
+            left:String(item.x)+"%",top:String(item.y)+"%",fontSize:item.size,
             transform:"translate(-50%,-50%)",
-            rotate:safeRotation===0?"none":`${safeRotation}deg`
+            rotate:safeRotation===0?"none":String(safeRotation)+"deg",
+            ...(item.kind==="text"?{width:String(item.width??76)+"%",height:String(item.height??20)+"%"}:{})
           };
-          if(item.kind==="text")return <div key={item.id} className="placed-sticker placed-text" role="group" tabIndex={0} aria-label="텍스트 상자. 드래그하여 이동하고 네 방향 조절점으로 크기를 변경할 수 있어." style={{...itemStyle,width:`${item.width??76}%`,height:`${item.height??20}%`}} onPointerDown={e=>pointerDown(e,item)} onPointerMove={pointerMove} onPointerUp={()=>{interactionRef.current=null;}} onPointerCancel={()=>{interactionRef.current=null;}}>
-            <span className="placed-text-content">{item.value}</span>
-            <button type="button" className="cover-resize-handle cover-resize-north" aria-label="텍스트 상자 위쪽 크기 조절" onPointerDown={e=>startResize(e,item,"north")}/>
-            <button type="button" className="cover-resize-handle cover-resize-east" aria-label="텍스트 상자 오른쪽 크기 조절" onPointerDown={e=>startResize(e,item,"east")}/>
-            <button type="button" className="cover-resize-handle cover-resize-south" aria-label="텍스트 상자 아래쪽 크기 조절" onPointerDown={e=>startResize(e,item,"south")}/>
-            <button type="button" className="cover-resize-handle cover-resize-west" aria-label="텍스트 상자 왼쪽 크기 조절" onPointerDown={e=>startResize(e,item,"west")}/>
+          return <div key={item.id}
+            className={"placed-sticker placed-object "+(item.kind==="text"?"placed-text":"placed-decor")+(selected?" is-selected":"")}
+            role="group" tabIndex={0}
+            aria-label={item.kind==="text"?"텍스트":"표지 장식"}
+            style={itemStyle}
+            onPointerDown={e=>pointerDown(e,item)}
+            onPointerMove={pointerMove}
+            onPointerUp={finishInteraction}
+            onPointerCancel={finishInteraction}
+            onFocus={()=>setSelectedItemId(item.id)}>
+            {item.kind==="text"
+              ? <span className="placed-text-content">{item.value}</span>
+              : item.kind==="photo"
+                ? <img src={photoUrls[item.value]||""} alt="표지 장식 사진" draggable={false}/>
+                : <span className="placed-sticker-content">{item.value}</span>}
+            <button type="button" className="cover-object-handle cover-object-delete" aria-label="요소 삭제"
+              onPointerDown={e=>{e.preventDefault();e.stopPropagation();}}
+              onClick={e=>{e.stopPropagation();removeItem(item.id);}}>
+              <Trash2 size={14}/>
+            </button>
+            <button type="button" className="cover-object-handle cover-object-rotate" aria-label="요소 회전"
+              onPointerDown={e=>startRotate(e,item)}>
+              <RotateCw size={14}/>
+            </button>
+            <button type="button" className="cover-object-handle cover-object-resize" aria-label="요소 크기 조절"
+              onPointerDown={e=>startResize(e,item)}>
+              <Expand size={14}/>
+            </button>
           </div>;
-          return <button type="button" key={item.id} className="placed-sticker" aria-label="장식을 드래그하여 이동" style={itemStyle} onPointerDown={e=>pointerDown(e,item)} onPointerMove={pointerMove} onPointerUp={()=>{interactionRef.current=null;}} onPointerCancel={()=>{interactionRef.current=null;}}>
-            {item.kind==="photo"?<img src={photoUrls[item.value]||""} alt="표지 장식 사진" draggable={false}/>:item.value}
-          </button>;
         })}
       </div>
     </div></div>
@@ -307,9 +351,6 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
         {cover.items.filter(item=>item.kind==="text").length===0&&<p className="cover-empty-note">추가된 텍스트가 없어.</p>}
         {cover.items.filter(item=>item.kind==="text").map(item=><div className="cover-object-editor" key={item.id}>
           <input aria-label="텍스트 내용" maxLength={75} value={item.value} onChange={e=>updateItem(item.id,{value:e.target.value})}/>
-          <label>크기 <input type="range" min={8} max={40} value={item.size} onChange={e=>updateItem(item.id,{size:Number(e.target.value)})}/></label>
-          <label>회전 <input type="range" min={-180} max={180} value={item.rotation??0} onChange={e=>updateItem(item.id,{rotation:Number(e.target.value)})}/></label>
-          <button type="button" className="icon-btn small" aria-label="텍스트 삭제" onClick={()=>removeItem(item.id)}><Trash2 size={15}/></button>
         </div>)}
       </div>
 
@@ -324,16 +365,8 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
         <input ref={fileInput} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={e=>{const f=e.target.files?.[0];if(f)void handleUpload(f);e.target.value="";}}/>
       </div>
 
-      {cover.items.filter(item=>item.kind!=="text").length>0&&<div className="cover-editor-section">
-        <div className="editor-label">추가된 스티커 · 이미지</div>
-        <div className="placed-list">{cover.items.filter(item=>item.kind!=="text").map(item=><div key={item.id} className="placed-item cover-object-row">
-          <span>{item.kind==="sticker"?item.value:"사진"}</span>
-          <label className="size-control">크기 <input type="range" min={24} max={110} value={item.size} onChange={e=>updateItem(item.id,{size:Number(e.target.value)})}/></label>
-          <label className="size-control">회전 <input type="range" min={-180} max={180} value={item.rotation??0} onChange={e=>updateItem(item.id,{rotation:Number(e.target.value)})}/></label>
-          <button type="button" className="icon-btn small" aria-label="장식 삭제" onClick={()=>removeItem(item.id)}><Trash2 size={15}/></button>
-        </div>)}</div>
-      </div>}
-      <p className="gentle-tip"><Sparkles size={16}/> 표지 위의 텍스트와 장식은 드래그하여 이동하고, 회전 슬라이더로 각도를 조절할 수 있어.</p>
+
+      <p className="gentle-tip"><Sparkles size={16}/> 표지에서 요소를 선택하면 삭제·회전·크기 조절 버튼이 나타나.</p>
     </div>
   </section>;
 }
