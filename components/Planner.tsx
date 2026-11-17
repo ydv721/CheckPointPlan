@@ -435,7 +435,7 @@ export default function Planner() {
 
   if(checking)return <div className="boot-screen"><AppIcon/><h1>CHECKPOINT</h1><p>플래너를 불러오는 중입니다...</p></div>;
   if(!user)return <AuthScreen onUser={beginAuthTransition}/>;
-  return <div className="app-shell" style={vars}>
+  return <div className={view==="planner"?"app-shell planner-view":"app-shell cover-view"} style={vars}>
     <header className="site-header"><div className="header-inner">
       <button className="brand" onClick={()=>setView("planner")}><span className="brand-lockup"><AppIcon/><span>CHECKPOINT</span></span><small>YOUR PACE, YOUR CHECKPOINT</small></button>
       <nav className={mobileMenu?"nav-links open":"nav-links"} aria-label="페이지 이동">
@@ -501,7 +501,17 @@ export default function Planner() {
           </section>
           <section className="paper-page right-page"><div className="right-top"><div className="section-heading todo-header">
               <div className="todo-heading-group"><span>TO DO LIST</span></div>
-              <small className="todo-save-status" role="status" aria-live="polite"><span className={status==="자동 저장되었어요."?"indicator-dot saved":"indicator-dot"}/>{status}</small>
+              <div className="todo-tools">
+                <small className="todo-save-status" role="status" aria-live="polite"><span className={status==="자동 저장되었어요."?"indicator-dot saved":"indicator-dot"}/>{status}</small>
+                <div className="planner-menu-wrap">
+                  <button type="button" className="icon-btn small planner-menu-trigger" aria-label="플래너 메뉴" aria-expanded={mobileMenu} onClick={()=>setMobileMenu(value=>!value)}><Menu size={17}/></button>
+                  {mobileMenu&&<div className="planner-menu-panel" role="menu">
+                    <button type="button" role="menuitem" onClick={()=>{setView("cover");setMobileMenu(false);}}><Sparkles size={15}/> 표지 꾸미기</button>
+                    <button type="button" role="menuitem" onClick={()=>{setShowSettings(true);setMobileMenu(false);}}><Palette size={15}/> 테마 설정</button>
+                    <button type="button" role="menuitem" onClick={()=>{setMobileMenu(false);void signOut();}}><LogOut size={15}/> 로그아웃</button>
+                  </div>}
+                </div>
+              </div>
             </div>
             <div className="todo-list">{entry.todos.slice(0,7).map((todo,idx)=>{
               const todoStatus:TodoStatus=todo.status??(todo.checked?"done":"todo");
