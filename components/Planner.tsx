@@ -24,6 +24,9 @@ const dateView = (date: string) => {
   return `${y}년 ${m}월 ${d}일 ${DAYS[new Date(y,m-1,d).getDay()]}요일`;
 };
 const sanitizeHex = (s: string) => /^#[0-9a-fA-F]{6}$/.test(s) ? s : "#8b9ec4";
+const isCoverBrandSlogan = (item: CoverItem) =>
+  item.kind === "text" &&
+  item.value.trim().replace(/[.!?]+$/, "").replace(/\s+/g, " ").toUpperCase() === "YOUR PACE, YOUR CHECKPOINT";
 
 function parseFocusItems(raw: unknown): FocusItem[] {
   const makeBlankRows = (items: FocusItem[]) => {
@@ -257,12 +260,13 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
       <div className="spiral-binding">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
       <div className={`cover-art cover-${theme}`} style={{backgroundColor:cover.backgroundColor||undefined}}>
         {cover.backgroundImage&&photoUrls[cover.backgroundImage]&&<img className="cover-background-image" src={photoUrls[cover.backgroundImage]} alt="" draggable={false}/>}
-        <div className="cover-signature" aria-label="CHECKPOINT 심볼">
+        <div className="cover-signature" aria-label="CHECKPOINT — YOUR PACE, YOUR CHECKPOINT">
           <svg className="cover-signature-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
             <rect x="3.5" y="5" width="21" height="21" rx="6.5" stroke="currentColor" strokeWidth="1.8"/>
             <path d="m9 15.5 4.1 4 7.4-8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
             <path d="M26 2.5c.45 1.65 1.1 2.3 2.7 2.75-1.6.45-2.25 1.1-2.7 2.75-.45-1.65-1.1-2.3-2.7-2.75 1.6-.45 2.25-1.1 2.7-2.75Z" fill="currentColor"/>
           </svg>
+          <span className="cover-signature-text">YOUR PACE, YOUR CHECKPOINT</span>
         </div>
         {cover.items.map(item=>{
           const rotation=Number(item.rotation??0);
@@ -422,6 +426,8 @@ export default function Planner() {
         if(!subtitleConverted&&typeof savedCover.subtitle==="string"&&savedCover.subtitle.trim()&&!coverItems.some(item=>item.kind==="text")) {
           coverItems=[...coverItems,{id:"migrated-cover-subtitle",kind:"text",value:savedCover.subtitle,x:50,y:69,size:11,rotation:0}];
         }
+        const removedBrandSlogan=coverItems.some(isCoverBrandSlogan);
+        coverItems=coverItems.filter(item=>!isCoverBrandSlogan(item));
         const nextCover:Cover={
           subtitle:"",
           subtitleConverted:true,
@@ -431,7 +437,7 @@ export default function Planner() {
           ...(typeof savedCover.backgroundImage==="string"?{backgroundImage:savedCover.backgroundImage}:{})
         };
         setTheme(nextTheme);setCustomColor(nextCustom);setCover(nextCover);
-        lastSettings.current=JSON.stringify({theme:nextTheme,customColor:nextCustom,cover:nextCover});
+        lastSettings.current=removedBrandSlogan?"":JSON.stringify({theme:nextTheme,customColor:nextCustom,cover:nextCover});
         setSettingsHydrated(true);
       });
     return()=>{active=false;};
