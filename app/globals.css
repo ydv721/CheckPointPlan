@@ -3812,8 +3812,19 @@ html,body{width:100%;overflow-x:clip}
   cursor: pointer;
 }
 
+.cover-color-control {
+  position: relative;
+  justify-content: center;
+}
+
+.cover-color-control > span {
+  width: 100%;
+  text-align: center;
+}
+
 .cover-color-control input[type="color"] {
-  flex: 0 0 34px;
+  position: absolute;
+  right: 8px;
   width: 34px;
   height: 30px;
   padding: 2px;
@@ -3824,6 +3835,7 @@ html,body{width:100%;overflow-x:clip}
 }
 
 .cover-reset-color {
+  justify-content: center;
   text-align: center;
 }
 
