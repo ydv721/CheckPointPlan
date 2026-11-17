@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent, type PointerEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import {
-  BookOpen, CalendarDays, Check,
+  BookOpen, CalendarDays, Check, CircleUserRound,
   ImagePlus, LogOut, Menu, Plus,
   Sparkles, Trash2, X, CircleHelp, CheckCircle2, Palette
 } from "lucide-react";
@@ -19,6 +19,7 @@ const today = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 const uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+function CircleUserIcon() { return <CircleUserRound size={17}/>; }
 const dateView = (date: string) => {
   const [y,m,d] = date.split("-").map(Number);
   return `${y}년 ${m}월 ${d}일 ${DAYS[new Date(y,m-1,d).getDay()]}요일`;
@@ -249,6 +250,9 @@ export default function Planner() {
   const [pen,setPen]=useState(PENS[0]);
   const [tool,setTool]=useState<"paint"|"erase">("paint");
   const [showSettings,setShowSettings]=useState(false);
+  const [showDeleteAccount,setShowDeleteAccount]=useState(false);
+  const [deleteEmail,setDeleteEmail]=useState("");
+  const [deletingAccount,setDeletingAccount]=useState(false);
   const [mobileMenu,setMobileMenu]=useState(false);
   const [loading,setLoading]=useState(false);
   const [hydrated,setHydrated]=useState(false);
@@ -425,6 +429,39 @@ export default function Planner() {
     await client.auth.signOut();setUser(null);setView("planner");
   }
 
+  async function deleteAccount() {
+    if(!client||!user?.email||deletingAccount)return;
+    if(deleteEmail.trim().toLowerCase()!==user.email.toLowerCase()) {
+      setAlert("로그인한 이메일 주소와 일치하지 않습니다.");
+      return;
+    }
+    setDeletingAccount(true);
+    setAlert("");
+    try {
+      const {data,error}=await client.functions.invoke("delete-account",{
+        body:{confirmEmail:deleteEmail.trim()},
+      });
+      if(error) {
+        const detail=typeof data?.error==="string"?data.error:error.message;
+        throw new Error(detail||"계정 삭제 요청에 실패했습니다.");
+      }
+      if(!data?.success) throw new Error(data?.error||"계정 삭제를 완료하지 못했습니다.");
+      await client.auth.signOut({scope:"local"});
+      authenticatedUser.current=null;
+      pendingAuthUser.current=null;
+      setUser(null);
+      setView("planner");
+      setShowDeleteAccount(false);
+      setDeleteEmail("");
+      setPhotoUrls({});
+      setAlert("");
+    } catch(error) {
+      setAlert(error instanceof Error?error.message:"계정 삭제 중 오류가 발생했습니다.");
+    } finally {
+      setDeletingAccount(false);
+    }
+  }
+
   function updateTodo(id:string,patch:Partial<Entry["todos"][number]>) {
     setEntry(v=>({...v,todos:v.todos.map(item=>item.id===id?{...item,...patch}:item)}));
   }
@@ -534,19 +571,50 @@ export default function Planner() {
         </div>}
       </>}
         </div>
-        <aside className="workspace-sidebar" aria-label="플래너 메뉴">
-          <button type="button" className={view==="cover"?"workspace-action active":"workspace-action"} onClick={()=>setView("cover")} aria-current={view==="cover"?"page":undefined}>
-            <Sparkles size={20}/><span>표지 꾸미기</span>
+        <aside className="workspace-sidebar" aria-label="CHECKPOINT 메뉴">
+          <button type="button" className="sidebar-brand" onClick={()=>setView("planner")} aria-label="CHECKPOINT 플래너로 이동">
+            <AppIcon/><span>CHECKPOINT</span><small>YOUR PACE, YOUR CHECKPOINT</small>
           </button>
-          <button type="button" className="workspace-action" onClick={()=>setShowSettings(true)}>
-            <Palette size={20}/><span>테마 설정</span>
-          </button>
-          <button type="button" className="workspace-action" onClick={()=>void signOut()}>
-            <LogOut size={20}/><span>로그아웃</span>
-          </button>
+          <div className="sidebar-nav">
+            <button type="button" className={view==="cover"?"workspace-action active":"workspace-action"} onClick={()=>setView("cover")} aria-current={view==="cover"?"page":undefined}>
+              <Sparkles size={19}/><span>표지 꾸미기</span>
+            </button>
+            <button type="button" className="workspace-action" onClick={()=>setShowSettings(true)}>
+              <Palette size={19}/><span>테마 설정</span>
+            </button>
+            <button type="button" className="workspace-action" onClick={()=>void signOut()}>
+              <LogOut size={19}/><span>로그아웃</span>
+            </button>
+          </div>
+          <div className="sidebar-account">
+            <div className="sidebar-account-heading"><CircleUserIcon/><span>계정 정보</span></div>
+            <span className="sidebar-email-label">로그인한 이메일</span>
+            <div className="sidebar-email" title={user?.email??""}>{user?.email??""}</div>
+            <button type="button" className="sidebar-delete-account" onClick={()=>{setDeleteEmail("");setShowDeleteAccount(true);}}>
+              <Trash2 size={14}/><span>회원 탈퇴</span>
+            </button>
+          </div>
         </aside>
       </div>
     </main>
+
+    {showDeleteAccount&&<div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget&&!deletingAccount)setShowDeleteAccount(false)}} role="presentation">
+      <section className="delete-account-modal" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
+        <div className="delete-account-icon"><Trash2 size={22}/></div>
+        <div className="eyebrow">ACCOUNT DELETION</div>
+        <h2 id="delete-account-title">회원 탈퇴</h2>
+        <p>회원 탈퇴를 진행하면 계정과 저장된 플래너 내용, 표지 이미지가 영구적으로 삭제됩니다. 삭제한 정보는 복구할 수 없습니다.</p>
+        <label className="delete-confirm-label">확인을 위해 로그인한 이메일 주소를 입력해 주세요.
+          <input type="email" autoComplete="off" value={deleteEmail} onChange={e=>setDeleteEmail(e.target.value)} placeholder="로그인한 이메일 주소"/>
+        </label>
+        <div className="delete-account-actions">
+          <button type="button" className="outline-btn" disabled={deletingAccount} onClick={()=>{setShowDeleteAccount(false);setDeleteEmail("");}}>취소</button>
+          <button type="button" className="delete-confirm-btn" disabled={deletingAccount||deleteEmail.trim().toLowerCase()!==user?.email?.toLowerCase()} onClick={()=>void deleteAccount()}>
+            {deletingAccount?"삭제 처리 중...":"계정 영구 삭제"}
+          </button>
+        </div>
+      </section>
+    </div>}
 
     {showSettings&&<div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setShowSettings(false)}} role="presentation">
       <section className="settings-modal" role="dialog" aria-modal="true" aria-label="테마 설정"><div className="settings-header"><div><div className="eyebrow">MAKE IT FEEL LIKE YOU</div><h2>테마 설정</h2></div><button className="icon-btn" aria-label="닫기" onClick={()=>setShowSettings(false)}><X size={21}/></button></div>
