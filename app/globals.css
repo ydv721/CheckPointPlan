@@ -3661,21 +3661,90 @@ html,body{width:100%;overflow-x:clip}
 }
 
 .placed-text {
-  min-width: 0;
-  min-height: 0;
+  box-sizing: border-box;
+  min-width: 12%;
+  min-height: 8%;
   padding: 4px 7px;
   border: 1px dashed transparent;
   border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: inherit;
   font-weight: 800;
   letter-spacing: .02em;
+  text-align: center;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  cursor: grab;
+  touch-action: none;
   text-shadow: 0 1px 3px #00000030;
+}
+
+.placed-text-content {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  pointer-events: none;
+  user-select: none;
 }
 
 .placed-text:hover,
 .placed-text:focus-visible {
   border-color: currentColor;
   outline: none;
+}
+
+.cover-resize-handle {
+  position: absolute;
+  z-index: 7;
+  width: 11px;
+  height: 11px;
+  min-width: 11px;
+  min-height: 11px;
+  padding: 0;
+  border: 1.5px solid var(--accent);
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 1px 4px #172b4438;
+  opacity: 0;
+  pointer-events: none;
+  touch-action: none;
+}
+
+.placed-text:hover .cover-resize-handle,
+.placed-text:focus .cover-resize-handle,
+.placed-text:focus-visible .cover-resize-handle {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.cover-resize-north {
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  cursor: ns-resize;
+}
+
+.cover-resize-east {
+  top: 50%;
+  right: 0;
+  transform: translate(50%, -50%);
+  cursor: ew-resize;
+}
+
+.cover-resize-south {
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 50%);
+  cursor: ns-resize;
+}
+
+.cover-resize-west {
+  top: 50%;
+  left: 0;
+  transform: translate(-50%, -50%);
+  cursor: ew-resize;
 }
 
 .cover-editor-section {
