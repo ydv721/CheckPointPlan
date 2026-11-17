@@ -3566,3 +3566,49 @@ html,body{width:100%;overflow-x:clip}
     color: #a43e4d !important;
   }
 }
+
+
+/* Account dropdown actions: normal sign-out first, destructive action separated below. */
+@media (min-width: 781px) {
+  .sidebar-account-menu .sidebar-signout,
+  .sidebar-account-menu .sidebar-delete-account {
+    display: flex !important;
+    align-items: center !important;
+    gap: 9px !important;
+    width: 100% !important;
+    min-height: 38px !important;
+    margin: 0 !important;
+    padding: 9px 10px !important;
+    border: 0 !important;
+    border-radius: 7px !important;
+    background: transparent !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    text-align: left !important;
+    cursor: pointer !important;
+  }
+
+  .sidebar-account-menu .sidebar-signout {
+    color: var(--ink) !important;
+  }
+
+  .sidebar-account-menu .sidebar-signout:hover {
+    background: var(--soft) !important;
+    color: var(--accent) !important;
+  }
+
+  .sidebar-account-menu .sidebar-menu-divider {
+    height: 1px !important;
+    margin: 5px 4px !important;
+    background: var(--line) !important;
+  }
+
+  .sidebar-account-menu .sidebar-delete-account {
+    color: #bd6874 !important;
+  }
+
+  .sidebar-account-menu .sidebar-delete-account:hover {
+    background: #fbecef !important;
+    color: #a43e4d !important;
+  }
+}
