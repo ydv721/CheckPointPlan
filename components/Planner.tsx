@@ -198,6 +198,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
   const fileInput=useRef<HTMLInputElement>(null);
   const backgroundInput=useRef<HTMLInputElement>(null);
   const [patternMenuOpen,setPatternMenuOpen]=useState(false);
+  const backgroundPanRef=useRef<{pointerId:number;startX:number;startY:number;originX:number;originY:number;overflowX:number;overflowY:number}|null>(null);
   const activePattern:CoverPattern=cover.backgroundPattern??"grid";
   const patternColor=cover.patternColor||(theme==="white"?"#788393":theme==="black"?"#A9B4D5":"#FFFFFF");
   const patternLabel=COVER_PATTERNS.find(pattern=>pattern.value===activePattern)?.label??"모눈";
@@ -208,6 +209,37 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
   const [selectedItemId,setSelectedItemId]=useState<string|null>(null);
   const interactionRef=useRef<CoverInteraction|null>(null);
   const clamp=(value:number,min:number,max:number)=>Math.min(max,Math.max(min,value));
+
+  function startBackgroundPan(e:PointerEvent<HTMLImageElement>) {
+    const image=e.currentTarget;
+    if(!image.naturalWidth||!image.naturalHeight)return;
+    const rect=image.getBoundingClientRect();
+    const scale=Math.max(rect.width/image.naturalWidth,rect.height/image.naturalHeight);
+    const overflowX=Math.max(0,image.naturalWidth*scale-rect.width);
+    const overflowY=Math.max(0,image.naturalHeight*scale-rect.height);
+    if(overflowX<1&&overflowY<1)return;
+    e.preventDefault();
+    backgroundPanRef.current={
+      pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,
+      originX:cover.backgroundPositionX??50,originY:cover.backgroundPositionY??50,
+      overflowX,overflowY
+    };
+    image.setPointerCapture(e.pointerId);
+  }
+  function moveBackgroundPan(e:PointerEvent<HTMLImageElement>) {
+    const active=backgroundPanRef.current;
+    if(!active||active.pointerId!==e.pointerId)return;
+    const backgroundPositionX=active.overflowX>0
+      ?clamp(active.originX-(e.clientX-active.startX)/active.overflowX*100,0,100)
+      :active.originX;
+    const backgroundPositionY=active.overflowY>0
+      ?clamp(active.originY-(e.clientY-active.startY)/active.overflowY*100,0,100)
+      :active.originY;
+    setCover(c=>({...c,backgroundPositionX,backgroundPositionY}));
+  }
+  function finishBackgroundPan(e:PointerEvent<HTMLImageElement>) {
+    if(backgroundPanRef.current?.pointerId===e.pointerId)backgroundPanRef.current=null;
+  }
 
   function addSticker(s:string) {
     const item:CoverItem={id:uid(),kind:"sticker",value:s,x:50,y:50,size:42,rotation:0};
@@ -293,7 +325,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
     <div className="cover-stage"><div className="spiral-cover">
       <div className="spiral-binding">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
       <div className={`cover-art cover-${theme}`} style={{backgroundColor:cover.backgroundColor||undefined}} onPointerDown={e=>{if(e.target===e.currentTarget)setSelectedItemId(null);}}>
-        {cover.backgroundImage&&photoUrls[cover.backgroundImage]&&<img className="cover-background-image" src={photoUrls[cover.backgroundImage]} alt="" draggable={false}/>}
+        {cover.backgroundImage&&photoUrls[cover.backgroundImage]&&<img className="cover-background-image" src={photoUrls[cover.backgroundImage]} alt="" draggable={false} style={{objectPosition:(cover.backgroundPositionX??50)+"% "+(cover.backgroundPositionY??50)+"%"}} onPointerDown={startBackgroundPan} onPointerMove={moveBackgroundPan} onPointerUp={finishBackgroundPan} onPointerCancel={finishBackgroundPan}/>}
         {activePattern!=="none"&&<div className={`cover-pattern-layer cover-pattern-${activePattern}`} style={{"--pattern-color":patternColor} as CSSProperties} aria-hidden="true"/>}
         <div className="cover-signature" aria-label="CHECKPOINT — YOUR PACE, YOUR CHECKPOINT">
           <svg className="cover-signature-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
@@ -311,7 +343,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
             left:String(item.x)+"%",top:String(item.y)+"%",fontSize:item.size,
             transform:"translate(-50%,-50%)",
             rotate:safeRotation===0?"none":String(safeRotation)+"deg",
-            ...(item.kind==="text"?{width:String(item.width??76)+"%",height:String(item.height??20)+"%",color:item.color||undefined}:{})
+            ...(item.kind==="text"?{width:String(item.width??76)+"%",height:String(item.height??20)+"%",color:item.color||undefined,fontWeight:item.weight??800}:{})
           };
           return <div key={item.id}
             className={"placed-sticker placed-object "+(item.kind==="text"?"placed-text":"placed-decor")+(selected?" is-selected":"")}
@@ -353,7 +385,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
           <div className="cover-pattern-wrap" onBlur={e=>{const next=e.relatedTarget;if(!(next instanceof Node)||!e.currentTarget.contains(next))setPatternMenuOpen(false);}}>
             <div className="cover-pattern-option cover-background-option">
               <button type="button" className="cover-pattern-trigger" aria-label="배경 패턴 선택" aria-expanded={patternMenuOpen} onClick={()=>setPatternMenuOpen(open=>!open)}>
-                <span>패턴</span><strong>{patternLabel}</strong><ChevronDown size={13}/>
+                <span>패턴</span><span className="cover-pattern-value">{patternLabel}</span><ChevronDown size={13}/>
               </button>
               <input type="color" aria-label="패턴 색상" value={patternColor} onChange={e=>setCover(c=>({...c,patternColor:e.target.value}))}/>
             </div>
@@ -368,19 +400,23 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
         </div>
         <button type="button" className="outline-btn upload-btn" onClick={()=>backgroundInput.current?.click()}><ImagePlus size={16}/> 배경 이미지 업로드</button>
         <input ref={backgroundInput} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>{const f=e.target.files?.[0];if(f)void handleUpload(f,true);e.target.value="";}}/>
-        {cover.backgroundImage&&<button type="button" className="cover-remove-background" onClick={()=>setCover(c=>({...c,backgroundImage:""}))}><Trash2 size={14}/> 배경 이미지 제거</button>}
+        {cover.backgroundImage&&<button type="button" className="cover-remove-background" onClick={()=>setCover(c=>({...c,backgroundImage:"",backgroundPositionX:50,backgroundPositionY:50}))}><Trash2 size={14}/> 배경 이미지 제거</button>}
       </div>
 
       <div className="cover-editor-section">
         <div className="cover-editor-section-heading"><span>텍스트</span><button type="button" className="cover-add-text" onClick={addText}><Plus size={14}/> 텍스트 추가</button></div>
-        <p className="cover-editor-help">텍스트를 추가한 뒤 표지에서 드래그해 위치를 옮길 수 있어.</p>
-        {cover.items.filter(item=>item.kind==="text").length===0&&<p className="cover-empty-note">추가된 텍스트가 없어.</p>}
         {cover.items.filter(item=>item.kind==="text").map(item=><div className="cover-object-editor" key={item.id}>
           <div className="cover-text-editor-row">
             <input aria-label="텍스트 내용" maxLength={75} value={item.value} onChange={e=>updateItem(item.id,{value:e.target.value})}/>
             <label className="cover-text-color-control" title="텍스트 색상">
               <input type="color" aria-label="텍스트 색상" value={item.color||themes[theme].coverInk} onChange={e=>updateItem(item.id,{color:e.target.value})}/>
             </label>
+          </div>
+          <div className="cover-text-weight-row">
+            <label>굵기
+              <input type="range" min={400} max={900} step={100} value={item.weight??800} onChange={e=>updateItem(item.id,{weight:Number(e.target.value)})}/>
+            </label>
+            <span>{item.weight??800}</span>
           </div>
         </div>)}
       </div>
@@ -391,13 +427,12 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
       </div>
 
       <div className="cover-editor-section">
-        <div className="cover-editor-section-heading"><span>장식 이미지</span></div>
+        <div className="cover-editor-section-heading"><span>이미지 스티커</span></div>
         <button type="button" className="outline-btn upload-btn" onClick={()=>fileInput.current?.click()}><ImagePlus size={17}/> 내 이미지 추가</button>
         <input ref={fileInput} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={e=>{const f=e.target.files?.[0];if(f)void handleUpload(f);e.target.value="";}}/>
       </div>
 
 
-      <p className="gentle-tip"><Sparkles size={16}/> 표지에서 요소를 선택하면 삭제·회전·크기 조절 버튼이 나타나.</p>
     </div>
   </section>;
 }
@@ -491,9 +526,11 @@ export default function Planner() {
           coverItems=[...coverItems,{id:"migrated-cover-subtitle",kind:"text",value:savedCover.subtitle,x:50,y:69,size:11,rotation:0}];
         }
         const removedBrandSlogan=coverItems.some(isCoverBrandSlogan);
-        coverItems=coverItems.filter(item=>!isCoverBrandSlogan(item)).map(item=>
-          item.kind==="text"&&typeof item.color==="string"?{...item,color:sanitizeHex(item.color)}:item
-        );
+        coverItems=coverItems.filter(item=>!isCoverBrandSlogan(item)).map(item=>({
+          ...item,
+          ...(typeof item.color==="string"?{color:sanitizeHex(item.color)}:{}),
+          ...(item.kind==="text"?{weight:typeof item.weight==="number"&&Number.isFinite(item.weight)?Math.min(900,Math.max(400,Math.round(item.weight/100)*100)):800}: {})
+        }));
         const savedPattern=savedCover.backgroundPattern;
         const validPatterns:CoverPattern[]=["none","grid","dots","stripes","polaroid"];
         const nextCover:Cover={
@@ -504,7 +541,9 @@ export default function Planner() {
           backgroundPattern:validPatterns.includes(savedPattern as CoverPattern)?savedPattern as CoverPattern:"grid",
           ...(typeof savedCover.backgroundColor==="string"?{backgroundColor:savedCover.backgroundColor}:{}),
           ...(typeof savedCover.backgroundImage==="string"?{backgroundImage:savedCover.backgroundImage}:{}),
-          ...(typeof savedCover.patternColor==="string"?{patternColor:sanitizeHex(savedCover.patternColor)}:{})
+          ...(typeof savedCover.patternColor==="string"?{patternColor:sanitizeHex(savedCover.patternColor)}:{}),
+          backgroundPositionX:typeof savedCover.backgroundPositionX==="number"&&Number.isFinite(savedCover.backgroundPositionX)?Math.min(100,Math.max(0,savedCover.backgroundPositionX)):50,
+          backgroundPositionY:typeof savedCover.backgroundPositionY==="number"&&Number.isFinite(savedCover.backgroundPositionY)?Math.min(100,Math.max(0,savedCover.backgroundPositionY)):50
         };
         setTheme(nextTheme);setCustomColor(nextCustom);setCover(nextCover);
         lastSettings.current=removedBrandSlogan?"":JSON.stringify({theme:nextTheme,customColor:nextCustom,cover:nextCover});
@@ -603,7 +642,7 @@ export default function Planner() {
     if(error){setAlert(`이미지 업로드에 실패했습니다: ${error.message}`);return;}
     const signed=await client.storage.from("checkpoint-covers").createSignedUrl(path,60*60);
     if(signed.data)setPhotoUrls(old=>({...old,[path]:signed.data.signedUrl}));
-    if(asBackground)setCover(c=>({...c,backgroundImage:path,backgroundColor:""}));
+    if(asBackground)setCover(c=>({...c,backgroundImage:path,backgroundColor:"",backgroundPositionX:50,backgroundPositionY:50}));
     else setCover(c=>({...c,items:[...c.items,{id:uid(),kind:"photo",value:path,x:50,y:52,size:96,rotation:0}]}));
   }
 
