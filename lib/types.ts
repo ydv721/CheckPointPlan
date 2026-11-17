@@ -33,4 +33,4 @@ export const themes: Record<ThemeName, { bg: string; paper: string; ink: string;
   black: {bg:"#15181e",paper:"#22262d",ink:"#f0f1f5",accent:"#a9b4d5",soft:"#343b48",line:"#3b414a",cover:"#2c3038",coverInk:"#f7f3ec"},
   custom: {bg:"#f2f4f6",paper:"#ffffff",ink:"#303946",accent:"#8b9ec4",soft:"#ecf0f7",line:"#dee2e8",cover:"#8b9ec4",coverInk:"#ffffff"}
 };
-export const STICKERS = ["✨", "💗", "☁️", "🌷", "⭐", "☕", "📝", "🌙", "☀️", "🍀"];
+export const STICKERS = ["✨", "💗", "☁️", "🌷", "⭐", "☕", "📝", "🌙", "☀️", "🍀", "🎀", "🦋", "🌸", "🌼", "🌺", "🌻", "🍓", "🍒", "🍑", "🍰", "🧁", "🍡", "🐰", "🐻", "🐱", "🐣", "🐾", "💌", "📖", "🎧"];
