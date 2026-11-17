@@ -4415,3 +4415,14 @@ html,body{width:100%;overflow-x:clip}
   border-width: var(--pattern-preview-frame-border, 5px);
   border-bottom-width: var(--pattern-preview-frame-bottom, 10px);
 }
+
+
+/* Keep the custom sticker upload button visually consistent with background upload. */
+.cover-sticker-upload {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  margin-top: 18px;
+  padding: 9px 12px;
+  justify-content: center;
+}
