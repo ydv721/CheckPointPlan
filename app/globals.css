@@ -3985,3 +3985,9 @@ html,body{width:100%;overflow-x:clip}
     letter-spacing: .08em;
   }
 }
+
+
+/* Ten Windows emoji stickers: balanced two-row palette. */
+.sticker-palette {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
