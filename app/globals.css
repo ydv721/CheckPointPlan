@@ -4332,3 +4332,51 @@ html,body{width:100%;overflow-x:clip}
   align-items: center;
   gap: 6px;
 }
+
+
+/* The thickness slider controls every selectable pattern style. */
+.cover-pattern-grid {
+  background-image:
+    linear-gradient(to right, var(--pattern-color) 0 var(--pattern-thickness, 2px), transparent var(--pattern-thickness, 2px)),
+    linear-gradient(to bottom, var(--pattern-color) 0 var(--pattern-thickness, 2px), transparent var(--pattern-thickness, 2px));
+}
+
+.cover-pattern-dots {
+  background-image: radial-gradient(var(--pattern-color) var(--pattern-thickness, 2px), transparent calc(var(--pattern-thickness, 2px) + .2px));
+}
+
+.cover-pattern-stripes {
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--pattern-color) 0 var(--pattern-thickness, 2px),
+    transparent var(--pattern-thickness, 2px) calc(var(--pattern-thickness, 2px) + 12px)
+  );
+}
+
+.cover-pattern-polaroid {
+  border: var(--pattern-thickness, 2px) solid var(--pattern-color);
+  border-bottom-width: calc(var(--pattern-thickness, 2px) * 4.4);
+}
+
+.cover-pattern-preview-grid {
+  background-image:
+    linear-gradient(to right, var(--pattern-color) 0 var(--pattern-thickness, 2px), transparent var(--pattern-thickness, 2px)),
+    linear-gradient(to bottom, var(--pattern-color) 0 var(--pattern-thickness, 2px), transparent var(--pattern-thickness, 2px));
+}
+
+.cover-pattern-preview-dots {
+  background-image: radial-gradient(var(--pattern-color) var(--pattern-thickness, 2px), transparent calc(var(--pattern-thickness, 2px) + .2px));
+}
+
+.cover-pattern-preview-stripes {
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--pattern-color) 0 var(--pattern-thickness, 2px),
+    transparent var(--pattern-thickness, 2px) calc(var(--pattern-thickness, 2px) + 4px)
+  );
+}
+
+.cover-pattern-preview-polaroid {
+  border: var(--pattern-thickness, 2px) solid var(--pattern-color);
+  border-bottom-width: calc(var(--pattern-thickness, 2px) * 2);
+}
