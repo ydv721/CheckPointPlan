@@ -3617,7 +3617,7 @@ html,body{width:100%;overflow-x:clip}
 /* Keep the return-to-planner label on one line in the right-side panel. */
 @media (min-width: 1051px) {
   .workspace-sidebar .workspace-action.back-to-planner {
-    min-height: 62px !important;
+    min-height: 48px !important;
   }
 
   .workspace-sidebar .workspace-action.back-to-planner span {
