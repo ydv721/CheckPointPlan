@@ -181,9 +181,10 @@ function Timetable({ value, onChange, highlighter, tool }: {
   </div></div>;
 }
 
-function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
+function CoverPage({cover,setCover,theme,handleUpload,photoUrls,onBack,onSettings,onSignOut}: {
   cover:Cover;setCover:React.Dispatch<React.SetStateAction<Cover>>;
   theme:ThemeName;handleUpload:(file:File)=>Promise<void>;photoUrls:Record<string,string>;
+  onBack:()=>void;onSettings:()=>void;onSignOut:()=>void;
 }) {
   const fileInput=useRef<HTMLInputElement>(null);
   const moveRef=useRef<{id:string;startX:number;startY:number;originX:number;originY:number;w:number;h:number}|null>(null);
@@ -215,7 +216,15 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
         </button>)}
       </div>
     </div></div>
-    <div className="cover-editor"><div className="eyebrow">MAKE IT YOURS</div><h2>나만의 표지</h2><p>꾸미지 않아도 충분합니다. 마음에 드는 요소만 조금씩 더해 보세요.</p>
+    <div className="cover-editor">
+      <div className="cover-editor-toolbar">
+        <button type="button" className="cover-back-btn" onClick={onBack}><BookOpen size={15}/> 플래너로 돌아가기</button>
+        <div className="cover-toolbar-actions">
+          <button type="button" className="icon-btn small" aria-label="테마 설정" title="테마 설정" onClick={onSettings}><Palette size={16}/></button>
+          <button type="button" className="icon-btn small" aria-label="로그아웃" title="로그아웃" onClick={onSignOut}><LogOut size={16}/></button>
+        </div>
+      </div>
+      <div className="eyebrow">MAKE IT YOURS</div><h2>나만의 표지</h2><p>꾸미지 않아도 충분합니다. 마음에 드는 요소만 조금씩 더해 보세요.</p>
       <label className="input-label">표지 제목<input maxLength={24} value={cover.title} onChange={e=>setCover(c=>({...c,title:e.target.value}))}/></label>
       <label className="input-label">한 줄 문구<input maxLength={75} value={cover.subtitle} onChange={e=>setCover(c=>({...c,subtitle:e.target.value}))}/></label>
       <div className="editor-label">작은 스티커</div><div className="sticker-palette">{STICKERS.map(s=><button key={s} type="button" onClick={()=>addSticker(s)} aria-label={`${s} 스티커 추가`}>{s}</button>)}</div>
@@ -452,7 +461,7 @@ export default function Planner() {
     <main className="main-area">
 
       {alert&&<div className="message-banner" role="alert"><CircleHelp size={17}/><span>{alert}</span><button aria-label="알림 닫기" onClick={()=>setAlert("")}><X size={15}/></button></div>}
-      {view==="cover"? <CoverPage cover={cover} setCover={setCover} theme={theme} handleUpload={handleUpload} photoUrls={photoUrls}/> : <>
+      {view==="cover"? <CoverPage cover={cover} setCover={setCover} theme={theme} handleUpload={handleUpload} photoUrls={photoUrls} onBack={()=>setView("planner")} onSettings={()=>setShowSettings(true)} onSignOut={()=>{void signOut();}}/> : <>
         {loading?<div className="page-loading">페이지를 불러오는 중입니다...</div>:<div className="book-frame">
           <div className="book-spine" aria-hidden="true">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
           <section className="paper-page left-page">
