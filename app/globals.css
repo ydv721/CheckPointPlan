@@ -2601,3 +2601,49 @@ html,body{width:100%;overflow-x:clip}
   border-top-color: transparent !important;
   border-bottom-color: transparent !important;
 }
+
+
+/* Match the cover canvas to one exact page of the live planner spread. */
+@media (min-width: 561px) {
+  .cover-layout {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    width: min(1050px, calc(100vw - 40px), calc(141.9dvh - 136px)) !important;
+    height: auto !important;
+    min-height: 0 !important;
+    aspect-ratio: 210 / 148 !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    border: 0 !important;
+    align-items: stretch !important;
+    overflow: hidden !important;
+  }
+
+  .cover-stage {
+    display: flex !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+  }
+
+  .spiral-cover {
+    width: 100% !important;
+    max-width: none !important;
+    height: 100% !important;
+    aspect-ratio: auto !important;
+  }
+
+  .cover-editor {
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    overflow-y: auto !important;
+    padding: clamp(18px, 3vw, 42px) !important;
+  }
+}
