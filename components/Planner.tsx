@@ -8,11 +8,18 @@ import {
   Sparkles, Trash2, X, CircleHelp, CheckCircle2, Palette
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { defaultCover, emptyEntry, STICKERS, themes, type Cover, type CoverItem, type Entry, type FocusItem, type ThemeName, type Todo, type TodoStatus } from "@/lib/types";
+import { defaultCover, emptyEntry, STICKERS, themes, type Cover, type CoverItem, type CoverPattern, type Entry, type FocusItem, type ThemeName, type Todo, type TodoStatus } from "@/lib/types";
 
 const HOURS = [...Array.from({ length: 18 }, (_, i) => i + 6), 0, 1, 2, 3, 4, 5];
 const TIMES = ["00", "10", "20", "30", "40", "50"];
 const PENS = ["#F4B8CA", "#F6E39A", "#CDE7B8", "#B9D8F4", "#CDBDEB"];
+const COVER_PATTERNS: {value:CoverPattern;label:string}[] = [
+  {value:"none",label:"없음"},
+  {value:"grid",label:"모눈"},
+  {value:"dots",label:"도트"},
+  {value:"stripes",label:"스트라이프"},
+  {value:"polaroid",label:"폴라로이드"}
+];
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 const today = () => {
   const d = new Date();
@@ -190,6 +197,10 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
 }) {
   const fileInput=useRef<HTMLInputElement>(null);
   const backgroundInput=useRef<HTMLInputElement>(null);
+  const [patternMenuOpen,setPatternMenuOpen]=useState(false);
+  const activePattern:CoverPattern=cover.backgroundPattern??"grid";
+  const patternColor=cover.patternColor||(theme==="white"?"#788393":theme==="black"?"#A9B4D5":"#FFFFFF");
+  const patternLabel=COVER_PATTERNS.find(pattern=>pattern.value===activePattern)?.label??"모눈";
   type CoverInteraction =
     | {kind:"move";id:string;startX:number;startY:number;originX:number;originY:number;w:number;h:number}
     | {kind:"rotate";id:string;centerX:number;centerY:number;startAngle:number;originRotation:number}
@@ -283,6 +294,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
       <div className="spiral-binding">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
       <div className={`cover-art cover-${theme}`} style={{backgroundColor:cover.backgroundColor||undefined}} onPointerDown={e=>{if(e.target===e.currentTarget)setSelectedItemId(null);}}>
         {cover.backgroundImage&&photoUrls[cover.backgroundImage]&&<img className="cover-background-image" src={photoUrls[cover.backgroundImage]} alt="" draggable={false}/>}
+        {activePattern!=="none"&&<div className={`cover-pattern-layer cover-pattern-${activePattern}`} style={{"--pattern-color":patternColor} as CSSProperties} aria-hidden="true"/>}
         <div className="cover-signature" aria-label="CHECKPOINT — YOUR PACE, YOUR CHECKPOINT">
           <svg className="cover-signature-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
             <rect x="3.5" y="5" width="21" height="21" rx="6.5" stroke="currentColor" strokeWidth="1.8"/>
@@ -299,7 +311,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
             left:String(item.x)+"%",top:String(item.y)+"%",fontSize:item.size,
             transform:"translate(-50%,-50%)",
             rotate:safeRotation===0?"none":String(safeRotation)+"deg",
-            ...(item.kind==="text"?{width:String(item.width??76)+"%",height:String(item.height??20)+"%"}:{})
+            ...(item.kind==="text"?{width:String(item.width??76)+"%",height:String(item.height??20)+"%",color:item.color||undefined}:{})
           };
           return <div key={item.id}
             className={"placed-sticker placed-object "+(item.kind==="text"?"placed-text":"placed-decor")+(selected?" is-selected":"")}
@@ -338,7 +350,21 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
         <div className="cover-editor-section-heading"><span>표지 배경</span></div>
         <div className="cover-background-options">
           <label className="cover-color-control cover-background-option"><span>단색 배경</span><input type="color" aria-label="표지 배경 색상" value={cover.backgroundColor||themes[theme].cover} onChange={e=>setCover(c=>({...c,backgroundColor:e.target.value,backgroundImage:""}))}/></label>
-          <button type="button" className="cover-reset-color cover-background-option" onClick={()=>setCover(c=>({...c,backgroundColor:"",backgroundImage:""}))}>테마 기본 배경으로</button>
+          <div className="cover-pattern-wrap" onBlur={e=>{const next=e.relatedTarget;if(!(next instanceof Node)||!e.currentTarget.contains(next))setPatternMenuOpen(false);}}>
+            <div className="cover-pattern-option cover-background-option">
+              <button type="button" className="cover-pattern-trigger" aria-label="배경 패턴 선택" aria-expanded={patternMenuOpen} onClick={()=>setPatternMenuOpen(open=>!open)}>
+                <span>패턴</span><strong>{patternLabel}</strong><ChevronDown size={13}/>
+              </button>
+              <input type="color" aria-label="패턴 색상" value={patternColor} onChange={e=>setCover(c=>({...c,patternColor:e.target.value}))}/>
+            </div>
+            {patternMenuOpen&&<div className="cover-pattern-menu" role="group" aria-label="패턴 종류">
+              {COVER_PATTERNS.map(pattern=><button key={pattern.value} type="button" className="cover-pattern-choice" aria-pressed={activePattern===pattern.value} onClick={()=>{setCover(c=>({...c,backgroundPattern:pattern.value}));setPatternMenuOpen(false);}}>
+                <span className={`cover-pattern-preview cover-pattern-preview-${pattern.value}`} style={{"--pattern-color":patternColor} as CSSProperties} aria-hidden="true"/>
+                <span>{pattern.label}</span>
+                {activePattern===pattern.value&&<Check size={14}/>}
+              </button>)}
+            </div>}
+          </div>
         </div>
         <button type="button" className="outline-btn upload-btn" onClick={()=>backgroundInput.current?.click()}><ImagePlus size={16}/> 배경 이미지 업로드</button>
         <input ref={backgroundInput} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>{const f=e.target.files?.[0];if(f)void handleUpload(f,true);e.target.value="";}}/>
@@ -350,7 +376,12 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
         <p className="cover-editor-help">텍스트를 추가한 뒤 표지에서 드래그해 위치를 옮길 수 있어.</p>
         {cover.items.filter(item=>item.kind==="text").length===0&&<p className="cover-empty-note">추가된 텍스트가 없어.</p>}
         {cover.items.filter(item=>item.kind==="text").map(item=><div className="cover-object-editor" key={item.id}>
-          <input aria-label="텍스트 내용" maxLength={75} value={item.value} onChange={e=>updateItem(item.id,{value:e.target.value})}/>
+          <div className="cover-text-editor-row">
+            <input aria-label="텍스트 내용" maxLength={75} value={item.value} onChange={e=>updateItem(item.id,{value:e.target.value})}/>
+            <label className="cover-text-color-control" title="텍스트 색상">
+              <input type="color" aria-label="텍스트 색상" value={item.color||themes[theme].coverInk} onChange={e=>updateItem(item.id,{color:e.target.value})}/>
+            </label>
+          </div>
         </div>)}
       </div>
 
@@ -460,14 +491,20 @@ export default function Planner() {
           coverItems=[...coverItems,{id:"migrated-cover-subtitle",kind:"text",value:savedCover.subtitle,x:50,y:69,size:11,rotation:0}];
         }
         const removedBrandSlogan=coverItems.some(isCoverBrandSlogan);
-        coverItems=coverItems.filter(item=>!isCoverBrandSlogan(item));
+        coverItems=coverItems.filter(item=>!isCoverBrandSlogan(item)).map(item=>
+          item.kind==="text"&&typeof item.color==="string"?{...item,color:sanitizeHex(item.color)}:item
+        );
+        const savedPattern=savedCover.backgroundPattern;
+        const validPatterns:CoverPattern[]=["none","grid","dots","stripes","polaroid"];
         const nextCover:Cover={
           subtitle:"",
           subtitleConverted:true,
           items:coverItems,
           colorLabels:Array.from({length:PENS.length},(_,index)=>typeof savedCover.colorLabels?.[index]==="string"?savedCover.colorLabels[index]:""),
+          backgroundPattern:validPatterns.includes(savedPattern as CoverPattern)?savedPattern as CoverPattern:"grid",
           ...(typeof savedCover.backgroundColor==="string"?{backgroundColor:savedCover.backgroundColor}:{}),
-          ...(typeof savedCover.backgroundImage==="string"?{backgroundImage:savedCover.backgroundImage}:{})
+          ...(typeof savedCover.backgroundImage==="string"?{backgroundImage:savedCover.backgroundImage}:{}),
+          ...(typeof savedCover.patternColor==="string"?{patternColor:sanitizeHex(savedCover.patternColor)}:{})
         };
         setTheme(nextTheme);setCustomColor(nextCustom);setCover(nextCover);
         lastSettings.current=removedBrandSlogan?"":JSON.stringify({theme:nextTheme,customColor:nextCustom,cover:nextCover});
