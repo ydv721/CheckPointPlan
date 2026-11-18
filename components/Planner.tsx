@@ -963,6 +963,7 @@ export default function Planner() {
                   </div>
                 </section>
               </div>
+              {monthStickerDate&&<button type="button" className="month-sticker-dismiss-layer" aria-label="스티커 선택 닫기" onClick={()=>setMonthStickerDate(null)}/>}
               {monthStickerDate&&<div className="month-sticker-picker cover-emoji-picker" role="dialog" aria-label="이모지 및 기호">
                 <div className="cover-emoji-picker-header"><span>이모지 및 기호</span><button type="button" aria-label="이모지 선택 닫기" onClick={()=>setMonthStickerDate(null)}><X size={17}/></button></div>
                 <label className="cover-emoji-search"><Search size={17}/><input type="search" autoFocus value={monthStickerSearch} onChange={e=>setMonthStickerSearch(e.target.value)} placeholder="이모지 검색"/></label>
