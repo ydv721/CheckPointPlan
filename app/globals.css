@@ -3236,7 +3236,7 @@ html,body{width:100%;overflow-x:clip}
     min-height: 0 !important;
     max-height: 100% !important;
     overflow-y: auto !important;
-    padding: clamp(8px, 1vw, 16px) clamp(18px, 2.2vw, 34px) clamp(18px, 2.2vw, 34px) !important;
+    padding: 0 clamp(18px, 2.2vw, 34px) clamp(18px, 2.2vw, 34px) !important;
   }
 
   .workspace-sidebar {
