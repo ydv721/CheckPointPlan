@@ -530,6 +530,7 @@ export default function Planner() {
   const [monthStickerPending,setMonthStickerPending]=useState<string|null>(null);
   const [monthStickerCategory,setMonthStickerCategory]=useState("recommended");
   const [monthStickerSearch,setMonthStickerSearch]=useState("");
+  const [monthRecentEmojis,setMonthRecentEmojis]=useState<string[]>([]);
   const [date,setDate]=useState(today());
   const [entry,setEntry]=useState<Entry>(()=>emptyEntry(today()));
   const [theme,setTheme]=useState<ThemeName>("blue");
@@ -566,10 +567,16 @@ export default function Planner() {
     });
   },[monthCursor]);
   const monthStickerItems=useMemo(()=>{
+    const query=monthStickerSearch.trim().toLocaleLowerCase();
+    if(query) return Array.from(new Set(EMOJI_CATEGORIES.flatMap(category=>category.items.filter(emoji=>
+      category.label.toLocaleLowerCase().includes(query)||
+      (EMOJI_SEARCH_TERMS[emoji]??"").toLocaleLowerCase().includes(query)||
+      emoji.includes(monthStickerSearch.trim())
+    ))));
+    if(monthStickerCategory==="recent") return monthRecentEmojis;
     const category=EMOJI_CATEGORIES.find(item=>item.id===monthStickerCategory)??EMOJI_CATEGORIES[0];
-    const query=monthStickerSearch.trim();
-    return category.items.filter(item=>!query||item.includes(query)).slice(0,120);
-  },[monthStickerCategory,monthStickerSearch]);
+    return category.items;
+  },[monthStickerCategory,monthStickerSearch,monthRecentEmojis]);
   const monthTitle=`${monthCursor.slice(0,4)}. ${monthCursor.slice(5,7)}`;
   const todayKey=today();
 
@@ -955,15 +962,18 @@ export default function Planner() {
                   </div>
                 </section>
               </div>
-              {monthStickerDate&&<div className="month-sticker-picker" role="dialog" aria-label="월간 스티커 선택">
-                <div className="month-sticker-picker-heading"><strong>스티커 선택</strong><button type="button" aria-label="스티커 선택 닫기" onClick={()=>setMonthStickerDate(null)}><X size={15}/></button></div>
-                <label className="month-sticker-search"><Search size={15}/><input type="search" value={monthStickerSearch} onChange={e=>setMonthStickerSearch(e.target.value)} placeholder="이모지 검색"/></label>
-                <div className="month-sticker-category-tabs" role="tablist" aria-label="스티커 카테고리">
-                  {EMOJI_CATEGORIES.map(category=><button type="button" key={category.id} role="tab" aria-selected={monthStickerCategory===category.id} className={monthStickerCategory===category.id?"is-active":""} title={category.label} aria-label={category.label} onClick={()=>setMonthStickerCategory(category.id)}>{category.icon}</button>)}
+              {monthStickerDate&&<div className="month-sticker-picker cover-emoji-picker" role="dialog" aria-label="이모지 및 기호">
+                <div className="cover-emoji-picker-header"><span>이모지 및 기호</span><button type="button" aria-label="이모지 선택 닫기" onClick={()=>setMonthStickerDate(null)}><X size={17}/></button></div>
+                <label className="cover-emoji-search"><Search size={17}/><input type="search" autoFocus value={monthStickerSearch} onChange={e=>setMonthStickerSearch(e.target.value)} placeholder="이모지 검색"/></label>
+                <div className="cover-emoji-tabs" role="tablist" aria-label="이모지 카테고리">
+                  <button type="button" role="tab" aria-selected={monthStickerCategory==="recent"} className={monthStickerCategory==="recent"?"active":""} title="최근 사용" aria-label="최근 사용" onClick={()=>{setMonthStickerCategory("recent");setMonthStickerSearch("");}}>🕘</button>
+                  {EMOJI_CATEGORIES.map(category=><button key={category.id} type="button" role="tab" aria-selected={monthStickerCategory===category.id} className={monthStickerCategory===category.id?"active":""} title={category.label} aria-label={category.label} onClick={()=>{setMonthStickerCategory(category.id);setMonthStickerSearch("");}}>{category.icon}</button>)}
                 </div>
-                <div className="month-sticker-grid">
-                  {monthStickerItems.map((sticker,index)=><button type="button" key={`${sticker}-${index}`} onClick={()=>addMonthSticker(sticker)}>{sticker}</button>)}
-                  {!monthStickerItems.length&&<span className="month-sticker-empty">검색 결과가 없습니다.</span>}
+                <div className="cover-emoji-results">
+                  <div className="cover-emoji-category-title">{monthStickerSearch.trim()?"검색 결과":monthStickerCategory==="recent"?"최근 사용":EMOJI_CATEGORIES.find(category=>category.id===monthStickerCategory)?.label??"추천 스티커"}</div>
+                  {monthStickerItems.length>0?<div className="cover-emoji-grid">
+                    {monthStickerItems.map((sticker,index)=><button type="button" key={`${sticker}-${index}`} title={EMOJI_SEARCH_TERMS[sticker]??sticker} aria-label={`${sticker} 스티커 추가`} onClick={()=>{addMonthSticker(sticker);setMonthRecentEmojis(current=>[sticker,...current.filter(value=>value!==sticker)].slice(0,32));}}>{sticker}</button>)}
+                  </div>:<div className="cover-emoji-empty">{monthStickerSearch.trim()?"검색 결과가 없습니다.":"아직 사용한 이모지가 없습니다."}</div>}
                 </div>
               </div>}
             </section>
