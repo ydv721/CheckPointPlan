@@ -4684,3 +4684,55 @@ html,body{width:100%;overflow-x:clip}
 .placed-sticker {
   font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
 }
+
+
+/* Keep the sticker picker inline so the cover editor has a single page scrollbar. */
+.cover-sticker-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cover-sticker-picker-anchor {
+  position: static;
+  z-index: auto;
+}
+
+.cover-emoji-picker {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  max-height: none;
+  overflow: visible;
+  box-shadow: none;
+}
+
+.cover-emoji-picker-header button {
+  display: none;
+}
+
+.cover-emoji-results {
+  flex: 0 0 auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+.cover-emoji-results::-webkit-scrollbar {
+  display: none;
+}
+
+.cover-emoji-results {
+  scrollbar-width: auto;
+}
+
+.cover-sticker-upload {
+  width: 100%;
+  margin-top: 0;
+}
+
+@media (max-width: 560px) {
+  .cover-emoji-picker {
+    width: 100%;
+    max-height: none;
+  }
+}
