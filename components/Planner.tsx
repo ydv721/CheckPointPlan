@@ -868,6 +868,7 @@ export default function Planner() {
       {view==="cover"? <CoverPage cover={cover} setCover={setCover} theme={theme} handleUpload={handleUpload} photoUrls={photoUrls}/> : <>
         {loading?<div className="page-loading">페이지를 불러오는 중입니다...</div>:plannerPage==="month" ? (
           <div className="book-frame month-book-frame">
+            <div className="book-spine" aria-hidden="true">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
             <section className="paper-page month-page">
               <div className="month-page-header">
                 <div className="month-page-heading">
@@ -951,10 +952,6 @@ export default function Planner() {
                     </div>
                   </div>
                 </section>
-              </div>
-              <div className="month-page-footer">
-                <span>날짜를 누르면 해당 DAY 페이지로 이동합니다.</span>
-                <span>월간 일정은 자동 저장됩니다.</span>
               </div>
               {monthStickerDate&&<div className="month-sticker-picker" role="dialog" aria-label="월간 스티커 선택">
                 <div className="month-sticker-picker-heading"><strong>스티커 선택</strong><button type="button" aria-label="스티커 선택 닫기" onClick={()=>setMonthStickerDate(null)}><X size={15}/></button></div>
