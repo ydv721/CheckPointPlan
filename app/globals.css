@@ -6573,3 +6573,31 @@ html,body{width:100%;overflow-x:clip}
   flex: initial !important;
   justify-self: stretch !important;
 }
+
+
+/* MONTH sticker results: match the cover sticker scrollbar and make it slightly slimmer. */
+.month-sticker-picker .cover-emoji-results {
+  scrollbar-width: thin !important;
+  scrollbar-color: color-mix(in srgb, var(--ink) 30%, transparent) transparent !important;
+}
+
+.month-sticker-picker .cover-emoji-results::-webkit-scrollbar {
+  width: 4px !important;
+  height: 4px !important;
+}
+
+.month-sticker-picker .cover-emoji-results::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.month-sticker-picker .cover-emoji-results::-webkit-scrollbar-thumb {
+  border: 1px solid transparent !important;
+  border-radius: 999px !important;
+  background: color-mix(in srgb, var(--ink) 30%, transparent) !important;
+  background-clip: padding-box !important;
+}
+
+.month-sticker-picker .cover-emoji-results::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--ink) 46%, transparent) !important;
+  background-clip: padding-box !important;
+}
