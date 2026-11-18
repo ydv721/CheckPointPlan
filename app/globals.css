@@ -4516,22 +4516,22 @@ html,body{width:100%;overflow-x:clip}
 
 .cover-emoji-tabs {
   display: flex;
-  flex: 0 0 60px;
-  min-height: 60px;
-  gap: 5px;
+  flex: 0 0 66px;
+  min-height: 66px;
+  gap: 4px;
   margin: 9px -2px 0;
   padding: 0 2px;
-  overflow-x: auto;
+  overflow-x: hidden;
   border-bottom: 1px solid var(--line);
-  scrollbar-width: thin;
+  scrollbar-width: none;
 }
 
 .cover-emoji-tabs button {
   position: relative;
   display: grid;
-  flex: 0 0 34px;
+  flex: 0 0 32px;
   place-items: center;
-  height: 52px;
+  height: 58px;
   padding: 0;
   border: 0;
   border-radius: 6px 6px 0 0;
