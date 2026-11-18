@@ -6644,3 +6644,45 @@ html,body{width:100%;overflow-x:clip}
     font-size: 9px;
   }
 }
+
+
+/* MONTH date notes: two centered lines with larger, readable text. */
+.month-day-note {
+  flex: 0 0 auto !important;
+  align-self: stretch;
+  width: 100%;
+  height: calc(2.7em + 8px) !important;
+  min-height: calc(2.7em + 8px) !important;
+  max-height: calc(2.7em + 8px) !important;
+  margin: auto 0 !important;
+  padding: 4px 2px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  resize: none !important;
+  text-align: center !important;
+  vertical-align: middle;
+  font-size: 14px !important;
+  line-height: 1.35 !important;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 781px) and (max-width: 1100px) {
+  .month-day-note {
+    height: calc(2.7em + 6px) !important;
+    min-height: calc(2.7em + 6px) !important;
+    max-height: calc(2.7em + 6px) !important;
+    padding: 3px 2px !important;
+    font-size: 11px !important;
+  }
+}
+
+@media (max-width: 780px) {
+  .month-day-note {
+    height: calc(2.7em + 6px) !important;
+    min-height: calc(2.7em + 6px) !important;
+    max-height: calc(2.7em + 6px) !important;
+    padding: 3px 2px !important;
+    font-size: 12px !important;
+  }
+}
