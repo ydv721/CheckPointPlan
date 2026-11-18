@@ -5383,3 +5383,191 @@ html,body{width:100%;overflow-x:clip}
     max-height: 72vh;
   }
 }
+
+
+/* Monthly calendar uses a full two-page spread, matching the DAY planner book. */
+@media (min-width: 781px) {
+  .workspace-canvas > .book-frame.month-book-frame {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    width: min(1000px, calc(100% - 54px), calc(141.9dvh - 34px)) !important;
+    max-width: 1000px !important;
+    aspect-ratio: 210 / 148 !important;
+  }
+
+  .month-book-frame > .month-page {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 22px 30px 17px !important;
+    border-radius: 15px !important;
+    background: var(--paper) !important;
+    box-shadow: inset 0 0 0 1px var(--line) !important;
+  }
+}
+
+/* Subtle center fold: the calendar remains continuous across both pages. */
+.month-book-frame > .month-page::after {
+  left: 50% !important;
+  right: auto !important;
+  width: 18px !important;
+  transform: translateX(-50%) !important;
+  background: linear-gradient(90deg, transparent, #26364b0b 48%, #26364b0b 52%, transparent) !important;
+  opacity: 1 !important;
+  z-index: 0 !important;
+}
+
+.month-book-frame > .month-page > * {
+  z-index: 1;
+}
+
+.month-book-frame .month-sticker-picker {
+  z-index: 35 !important;
+}
+
+.month-calendar-grid {
+  column-gap: 8px;
+  row-gap: 7px;
+}
+
+.month-day-cell {
+  padding: 7px 9px 6px;
+}
+
+.month-day-note {
+  overflow: hidden;
+  scrollbar-width: none;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.month-day-note::-webkit-scrollbar {
+  display: none;
+}
+
+.month-day-stickers {
+  flex-basis: 21px;
+  min-height: 21px;
+}
+
+.month-day-stickers > button {
+  flex-basis: 22px;
+  width: 22px;
+  height: 20px;
+  font-size: 15px;
+}
+
+/* Narrow screens keep the full spread and allow horizontal panning. */
+@media (max-width: 780px) {
+  .workspace-canvas {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 14px 16px !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    box-sizing: border-box !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .workspace-canvas > .book-frame.month-book-frame {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    width: 820px !important;
+    min-width: 820px !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    aspect-ratio: 210 / 148 !important;
+    margin: 0 32px 0 0 !important;
+    overflow: visible !important;
+  }
+
+  .month-book-frame > .month-page {
+    grid-column: 1 / -1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 18px 22px 14px !important;
+    overflow: visible !important;
+    border-radius: 12px !important;
+  }
+
+  .month-page-header {
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .month-page-title {
+    font-size: 25px;
+  }
+
+  .month-weekdays {
+    gap: 6px;
+  }
+
+  .month-weekdays span {
+    padding: 5px 7px;
+    font-size: 9px;
+    text-align: left;
+  }
+
+  .month-calendar-grid {
+    grid-template-rows: repeat(6, minmax(0, 1fr));
+    gap: 6px;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .month-day-cell {
+    min-height: 0;
+    padding: 5px 7px 4px;
+    border-radius: 7px;
+  }
+
+  .month-day-date,
+  .month-day-important {
+    min-width: 21px;
+    width: 21px;
+    height: 21px;
+    font-size: 11px;
+  }
+
+  .month-day-note {
+    min-height: 0;
+    font-size: 10px;
+    padding: 3px 2px;
+  }
+
+  .month-day-stickers {
+    flex-basis: 19px;
+    min-height: 19px;
+  }
+
+  .month-day-stickers > button {
+    flex-basis: 20px;
+    width: 20px;
+    height: 19px;
+    font-size: 14px;
+  }
+
+  .month-page-footer {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding-top: 8px;
+    font-size: 8px;
+  }
+
+  .month-sticker-picker {
+    position: fixed;
+    top: 12vh;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-height: 72vh;
+  }
+}
