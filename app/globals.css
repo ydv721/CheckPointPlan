@@ -6686,3 +6686,33 @@ html,body{width:100%;overflow-x:clip}
     font-size: 12px !important;
   }
 }
+
+
+/* MONTH date notes: size to the actual one/two text lines and center the block vertically. */
+.month-day-cell > .month-day-note {
+  field-sizing: content !important;
+  flex: 0 0 auto !important;
+  height: auto !important;
+  min-height: 1.35em !important;
+  max-height: 2.7em !important;
+  margin-block: auto !important;
+  padding: 0 2px !important;
+  line-height: 1.35 !important;
+  box-sizing: content-box !important;
+  overflow: hidden !important;
+  text-align: center !important;
+}
+
+@media (min-width: 781px) and (max-width: 1100px) {
+  .month-day-cell > .month-day-note {
+    min-height: 1.35em !important;
+    max-height: 2.7em !important;
+  }
+}
+
+@media (max-width: 780px) {
+  .month-day-cell > .month-day-note {
+    min-height: 1.35em !important;
+    max-height: 2.7em !important;
+  }
+}
