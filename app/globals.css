@@ -6266,3 +6266,38 @@ html,body{width:100%;overflow-x:clip}
     box-sizing: border-box !important;
   }
 }
+
+
+/* MONTH binding: reuse the DAY book spine without taking layout space. */
+@media (min-width: 781px) {
+  .workspace-canvas > .book-frame.month-book-frame > .book-spine {
+    display: flex !important;
+    position: absolute !important;
+    z-index: 4 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 50% !important;
+    width: 30px !important;
+    padding: 17px 0 !important;
+    transform: translateX(-50%) !important;
+    flex-direction: column !important;
+    justify-content: space-around !important;
+    align-items: center !important;
+    pointer-events: none !important;
+  }
+
+  .workspace-canvas > .book-frame.month-book-frame > .book-spine span {
+    display: block !important;
+    width: 18px !important;
+    height: 2px !important;
+    border: 0 !important;
+    border-radius: 2px !important;
+    background: #b8b2a8 !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  .workspace-canvas > .book-frame.month-book-frame > .book-spine::before {
+    display: none !important;
+  }
+}
