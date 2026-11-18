@@ -5805,3 +5805,38 @@ html,body{width:100%;overflow-x:clip}
     );
   }
 }
+
+
+/* Final override: size the MONTH book from the viewport, not the narrow inner column. */
+@media (min-width: 781px) {
+  .workspace-canvas:has(> .book-frame.month-book-frame) {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    min-width: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+  }
+
+  .workspace-canvas > .book-frame.month-book-frame {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    width: min(1120px, calc(100vw - 88px)) !important;
+    min-width: min(1120px, calc(100vw - 88px)) !important;
+    max-width: none !important;
+    flex: 0 0 min(1120px, calc(100vw - 88px)) !important;
+    aspect-ratio: 210 / 148 !important;
+    margin: auto !important;
+  }
+
+  .workspace-canvas > .book-frame.month-book-frame > .month-page {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .planner-index-tabs {
+    top: 6% !important;
+  }
+}
