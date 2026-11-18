@@ -6777,3 +6777,17 @@ html,body{width:100%;overflow-x:clip}
 .paper-page .color-guide-input:focus {
   border-bottom-color: var(--line) !important;
 }
+
+
+/* Cover editor on the left, live cover preview on the right. */
+@media (min-width: 781px) {
+  .cover-layout > .cover-editor {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+  }
+
+  .cover-layout > .cover-stage {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+  }
+}
