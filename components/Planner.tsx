@@ -3,12 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent, type PointerEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import {
-  ArrowLeft, BookOpen, CalendarDays, Check, ChevronDown,
-  Expand, ImagePlus, LogOut, Menu, Plus, RotateCw,
+  ArrowLeft, BookOpen, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight,
+  Expand, ImagePlus, LogOut, Menu, Plus, RotateCw, Star,
   Sparkles, Trash2, X, Search, CircleHelp, CheckCircle2, Palette
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { defaultCover, emptyEntry, STICKERS, themes, type Cover, type CoverItem, type CoverPattern, type Entry, type FocusItem, type ThemeName, type Todo, type TodoStatus } from "@/lib/types";
+import { defaultCover, emptyEntry, STICKERS, themes, type Cover, type CoverItem, type CoverPattern, type Entry, type FocusItem, type MonthEntry, type ThemeName, type Todo, type TodoStatus } from "@/lib/types";
 
 const HOURS = [...Array.from({ length: 18 }, (_, i) => i + 6), 0, 1, 2, 3, 4, 5];
 const TIMES = ["00", "10", "20", "30", "40", "50"];
@@ -52,6 +52,21 @@ const dateView = (date: string) => {
   const [y,m,d] = date.split("-").map(Number);
   return `${y}년 ${m}월 ${d}일 ${DAYS[new Date(y,m-1,d).getDay()]}요일`;
 };
+
+function parseMonthEntries(raw: unknown): Record<string, MonthEntry> {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+  const result: Record<string, MonthEntry> = {};
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(key) || !value || typeof value !== "object" || Array.isArray(value)) continue;
+    const item = value as Record<string, unknown>;
+    result[key] = {
+      note: typeof item.note === "string" ? item.note.slice(0, 100) : "",
+      important: item.important === true,
+      stickers: Array.isArray(item.stickers) ? item.stickers.filter((sticker): sticker is string => typeof sticker === "string").slice(0, 3) : []
+    };
+  }
+  return result;
+}
 const sanitizeHex = (s: string) => /^#[0-9a-fA-F]{6}$/.test(s) ? s : "#8b9ec4";
 const isCoverBrandSlogan = (item: CoverItem) =>
   item.kind === "text" &&
@@ -500,6 +515,11 @@ export default function Planner() {
   const pendingAuthUser=useRef<User|null>(null);
   const authenticatedUser=useRef<User|null>(null);
   const [view,setView]=useState<"planner"|"cover">("planner");
+  const [plannerPage,setPlannerPage]=useState<"day"|"month">("day");
+  const [monthCursor,setMonthCursor]=useState(()=>today().slice(0,7));
+  const [monthStickerDate,setMonthStickerDate]=useState<string|null>(null);
+  const [monthStickerCategory,setMonthStickerCategory]=useState("recommended");
+  const [monthStickerSearch,setMonthStickerSearch]=useState("");
   const [date,setDate]=useState(today());
   const [entry,setEntry]=useState<Entry>(()=>emptyEntry(today()));
   const [theme,setTheme]=useState<ThemeName>("blue");
@@ -526,6 +546,22 @@ export default function Planner() {
   const client=useMemo(()=>supabase(),[]);
   const palette=theme==="custom"?{...themes.custom,accent:sanitizeHex(customColor),cover:sanitizeHex(customColor),soft:setOpacity(customColor,.13),line:setOpacity(customColor,.19)}:themes[theme];
   const vars={"--bg":palette.bg,"--paper":palette.paper,"--ink":palette.ink,"--accent":palette.accent,"--soft":palette.soft,"--line":palette.line,"--cover":palette.cover,"--cover-ink":palette.coverInk} as CSSProperties;
+  const monthCalendarDays=useMemo(()=>{
+    const [year,month]=monthCursor.split("-").map(Number);
+    const firstDay=new Date(year,month-1,1);
+    const firstCell=new Date(year,month-1,1-firstDay.getDay());
+    return Array.from({length:42},(_,index)=>{
+      const day=new Date(firstCell.getFullYear(),firstCell.getMonth(),firstCell.getDate()+index);
+      return `${day.getFullYear()}-${String(day.getMonth()+1).padStart(2,"0")}-${String(day.getDate()).padStart(2,"0")}`;
+    });
+  },[monthCursor]);
+  const monthStickerItems=useMemo(()=>{
+    const category=EMOJI_CATEGORIES.find(item=>item.id===monthStickerCategory)??EMOJI_CATEGORIES[0];
+    const query=monthStickerSearch.trim();
+    return category.items.filter(item=>!query||item.includes(query)).slice(0,120);
+  },[monthStickerCategory,monthStickerSearch]);
+  const monthTitle=`${monthCursor.slice(0,4)}. ${monthCursor.slice(5,7)}`;
+  const todayKey=today();
 
   const beginAuthTransition=useCallback((nextUser:User)=>{
     if(authenticatedUser.current?.id===nextUser.id||pendingAuthUser.current?.id===nextUser.id)return;
@@ -595,6 +631,7 @@ export default function Planner() {
           subtitleConverted:true,
           items:coverItems,
           colorLabels:Array.from({length:PENS.length},(_,index)=>typeof savedCover.colorLabels?.[index]==="string"?savedCover.colorLabels[index]:""),
+          monthEntries:parseMonthEntries(savedCover.monthEntries),
           backgroundPattern:validPatterns.includes(savedPattern as CoverPattern)?savedPattern as CoverPattern:"grid",
           ...(typeof savedCover.backgroundColor==="string"?{backgroundColor:savedCover.backgroundColor}:{}),
           ...(typeof savedCover.backgroundImage==="string"?{backgroundImage:savedCover.backgroundImage}:{}),
@@ -747,6 +784,38 @@ export default function Planner() {
   function updateTodo(id:string,patch:Partial<Entry["todos"][number]>) {
     setEntry(v=>({...v,todos:v.todos.map(item=>item.id===id?{...item,...patch}:item)}));
   }
+  function updateMonthEntry(dayKey:string,patch:Partial<MonthEntry>) {
+    setCover(current=>{
+      const existing=current.monthEntries?.[dayKey]??{note:"",important:false,stickers:[]};
+      return {...current,monthEntries:{...(current.monthEntries??{}),[dayKey]:{...existing,...patch}}};
+    });
+  }
+  function shiftMonth(offset:number) {
+    const [year,month]=monthCursor.split("-").map(Number);
+    const next=new Date(year,month-1+offset,1);
+    setMonthCursor(`${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,"0")}`);
+    setMonthStickerDate(null);
+  }
+  function openMonthDay(dayKey:string) {
+    void saveNow(entry);
+    setDate(dayKey);
+    setMonthCursor(dayKey.slice(0,7));
+    setPlannerPage("day");
+    setMonthStickerDate(null);
+  }
+  function addMonthSticker(sticker:string) {
+    if(!monthStickerDate)return;
+    const current=cover.monthEntries?.[monthStickerDate]??{note:"",important:false,stickers:[]};
+    if(current.stickers.length>=3){setAlert("날짜 칸에는 스티커를 최대 3개까지 추가할 수 있습니다.");return;}
+    updateMonthEntry(monthStickerDate,{stickers:[...current.stickers,sticker]});
+    setMonthStickerDate(null);
+    setMonthStickerSearch("");
+  }
+  function removeMonthSticker(dayKey:string,index:number) {
+    const current=cover.monthEntries?.[dayKey];
+    if(!current)return;
+    updateMonthEntry(dayKey,{stickers:current.stickers.filter((_,itemIndex)=>itemIndex!==index)});
+  }
   function cycleTodoStatus(id:string) {
     setEntry(v=>({...v,todos:v.todos.map(item=>{
       if(item.id!==id)return item;
@@ -779,7 +848,64 @@ export default function Planner() {
       <div className="workspace-shell">
         <div className="workspace-canvas">
       {view==="cover"? <CoverPage cover={cover} setCover={setCover} theme={theme} handleUpload={handleUpload} photoUrls={photoUrls}/> : <>
-        {loading?<div className="page-loading">페이지를 불러오는 중입니다...</div>:<div className="book-frame">
+        {loading?<div className="page-loading">페이지를 불러오는 중입니다...</div>:plannerPage==="month" ? (
+          <div className="book-frame month-book-frame">
+            <section className="paper-page month-page">
+              <div className="month-page-header">
+                <div className="month-page-heading">
+                  <span className="month-page-kicker">MONTHLY PLANNER</span>
+                  <h2 className="month-page-title">{monthTitle}</h2>
+                </div>
+                <div className="month-page-controls">
+                  <button type="button" className="month-nav-button" aria-label="이전 달" onClick={()=>shiftMonth(-1)}><ChevronLeft size={17}/></button>
+                  <button type="button" className="month-today-button" onClick={()=>setMonthCursor(date.slice(0,7))}>오늘</button>
+                  <button type="button" className="month-nav-button" aria-label="다음 달" onClick={()=>shiftMonth(1)}><ChevronRight size={17}/></button>
+                </div>
+              </div>
+              <div className="month-weekdays" aria-hidden="true">
+                {["SUN","MON","TUE","WED","THU","FRI","SAT"].map(day=><span key={day}>{day}</span>)}
+              </div>
+              <div className="month-calendar-grid">
+                {monthCalendarDays.map(dayKey=>{
+                  const inMonth=dayKey.slice(0,7)===monthCursor;
+                  const dayNumber=Number(dayKey.slice(-2));
+                  const dayEntry=cover.monthEntries?.[dayKey]??{note:"",important:false,stickers:[]};
+                  return <div key={dayKey} className={`month-day-cell${inMonth?"":" is-outside"}${dayKey===todayKey?" is-today":""}`}>
+                    <div className="month-day-topline">
+                      <button type="button" className="month-day-date" onClick={()=>openMonthDay(dayKey)} title="해당 날짜의 DAY 페이지 열기">{dayNumber}</button>
+                      {inMonth&&<button type="button" className={dayEntry.important?"month-day-important is-active":"month-day-important"} aria-label={dayEntry.important?"중요한 날 표시 해제":"중요한 날 표시"} aria-pressed={dayEntry.important} title="중요한 날" onClick={()=>updateMonthEntry(dayKey,{important:!dayEntry.important})}><Star size={13} fill={dayEntry.important?"currentColor":"none"}/></button>}
+                    </div>
+                    <textarea className="month-day-note" rows={2} maxLength={100} aria-label={`${dayKey} 일정`} placeholder={inMonth?"일정 입력":""} value={dayEntry.note} disabled={!inMonth} onChange={e=>updateMonthEntry(dayKey,{note:e.target.value})}/>
+                    <div className="month-day-stickers">
+                      {dayEntry.stickers.map((sticker,index)=><button type="button" key={`${sticker}-${index}`} title="스티커 제거" aria-label={`${dayKey} 스티커 제거`} onClick={()=>removeMonthSticker(dayKey,index)}>{sticker}</button>)}
+                      {inMonth&&dayEntry.stickers.length<3&&<button type="button" className="month-day-sticker-add" aria-label={`${dayNumber}일 스티커 추가`} title="스티커 추가" onClick={()=>{setMonthStickerDate(dayKey);setMonthStickerSearch("");}}><Plus size={12}/></button>}
+                    </div>
+                  </div>;
+                })}
+              </div>
+              <div className="month-page-footer">
+                <span>날짜를 누르면 해당 DAY 페이지로 이동합니다.</span>
+                <span>월간 일정은 자동 저장됩니다.</span>
+              </div>
+              {monthStickerDate&&<div className="month-sticker-picker" role="dialog" aria-label="월간 스티커 선택">
+                <div className="month-sticker-picker-heading"><strong>{monthStickerDate.replace(/-/g,". ")} 스티커</strong><button type="button" aria-label="스티커 선택 닫기" onClick={()=>setMonthStickerDate(null)}><X size={15}/></button></div>
+                <label className="month-sticker-search"><Search size={15}/><input type="search" value={monthStickerSearch} onChange={e=>setMonthStickerSearch(e.target.value)} placeholder="이모지 검색"/></label>
+                <div className="month-sticker-category-tabs" role="tablist" aria-label="스티커 카테고리">
+                  {EMOJI_CATEGORIES.map(category=><button type="button" key={category.id} role="tab" aria-selected={monthStickerCategory===category.id} className={monthStickerCategory===category.id?"is-active":""} title={category.label} aria-label={category.label} onClick={()=>setMonthStickerCategory(category.id)}>{category.icon}</button>)}
+                </div>
+                <div className="month-sticker-grid">
+                  {monthStickerItems.map((sticker,index)=><button type="button" key={`${sticker}-${index}`} onClick={()=>addMonthSticker(sticker)}>{sticker}</button>)}
+                  {!monthStickerItems.length&&<span className="month-sticker-empty">검색 결과가 없습니다.</span>}
+                </div>
+              </div>}
+            </section>
+            <div className="planner-index-tabs" role="tablist" aria-label="속지 페이지 선택">
+              <button type="button" role="tab" aria-selected="true" className="planner-index-tab is-active" onClick={()=>setMonthStickerDate(null)}><span>MONTH</span></button>
+              <button type="button" role="tab" aria-selected="false" className="planner-index-tab" onClick={()=>{setPlannerPage("day");setMonthStickerDate(null);}}><span>DAY</span></button>
+            </div>
+          </div>
+        ) : (
+          <div className="book-frame day-book-frame">
           <div className="book-spine" aria-hidden="true">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
           <section className="paper-page left-page">
             <div className="page-date">
@@ -852,7 +978,12 @@ export default function Planner() {
             </div>
             
           </section>
-        </div>}
+          <div className="planner-index-tabs" role="tablist" aria-label="속지 페이지 선택">
+            <button type="button" role="tab" aria-selected="false" className="planner-index-tab" onClick={()=>{setPlannerPage("month");setMonthCursor(date.slice(0,7));setMonthStickerDate(null);}}><span>MONTH</span></button>
+            <button type="button" role="tab" aria-selected="true" className="planner-index-tab is-active" onClick={()=>setMonthStickerDate(null)}><span>DAY</span></button>
+          </div>
+        </div>
+        )}
       </>}
         </div>
         <aside className="workspace-sidebar" aria-label="CHECKPOINT 메뉴">
