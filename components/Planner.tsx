@@ -57,7 +57,7 @@ function parseMonthEntries(raw: unknown): Record<string, MonthEntry> {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
   const result: Record<string, MonthEntry> = {};
   for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
-    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(key) || !value || typeof value !== "object" || Array.isArray(value)) continue;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(key) || !value || typeof value !== "object" || Array.isArray(value)) continue;
     const item = value as Record<string, unknown>;
     result[key] = {
       note: typeof item.note === "string" ? item.note.slice(0, 100) : "",
