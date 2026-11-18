@@ -4249,19 +4249,16 @@ html,body{width:100%;overflow-x:clip}
 
 .cover-text-weight-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 34px;
+  grid-template-columns: 66px minmax(0, 1fr) 22px;
   align-items: center;
-  gap: 9px;
-  margin-top: 10px;
+  gap: 10px;
+  margin-top: 12px;
   color: var(--ink);
   font-size: 11px;
 }
 
 .cover-text-weight-row label {
-  display: grid;
-  grid-template-columns: 30px minmax(0, 1fr);
-  align-items: center;
-  gap: 9px;
+  display: contents;
 }
 
 .cover-text-weight-row input[type="range"] {
