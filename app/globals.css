@@ -6394,3 +6394,17 @@ html,body{width:100%;overflow-x:clip}
     min-height: 21px;
   }
 }
+
+
+/* Match the sticker-add button's outer width to the memo paper below it. */
+.month-memo-column > .month-memo-actions {
+  padding: 0 !important;
+  justify-content: stretch !important;
+}
+
+.month-memo-column > .month-memo-actions > .month-sticker-add-button {
+  display: flex !important;
+  width: 100% !important;
+  min-width: 100% !important;
+  box-sizing: border-box !important;
+}
