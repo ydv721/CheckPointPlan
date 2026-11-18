@@ -6203,3 +6203,22 @@ html,body{width:100%;overflow-x:clip}
     margin: auto !important;
   }
 }
+
+
+/* Sidebar is a companion paper page, aligned with the planner spread. */
+@media (min-width: 781px) {
+  .workspace-shell > .workspace-sidebar {
+    align-self: center !important;
+    width: 260px !important;
+    height: min(694px, calc(100dvh - 40px)) !important;
+    min-height: 0 !important;
+    max-height: calc(100dvh - 40px) !important;
+    margin: 0 !important;
+    padding: 28px 20px 22px !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 15px !important;
+    background: var(--paper) !important;
+    box-shadow: 0 13px 42px #172b4414 !important;
+    overflow: visible !important;
+  }
+}
