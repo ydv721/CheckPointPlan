@@ -6055,3 +6055,22 @@ html,body{width:100%;overflow-x:clip}
     font-size: 7px;
   }
 }
+
+
+/* Match the MONTH spread's outer dimensions to the DAY book exactly. */
+@media (min-width: 781px) {
+  .workspace-canvas > .book-frame.month-book-frame {
+    width: min(1000px, calc(100% - 54px), calc(141.9dvh - 34px)) !important;
+    min-width: 0 !important;
+    max-width: 1000px !important;
+    height: auto !important;
+    max-height: none !important;
+    aspect-ratio: 210 / 148 !important;
+    flex: 0 1 auto !important;
+    margin: 0 auto !important;
+  }
+
+  .workspace-canvas:has(> .book-frame.month-book-frame) {
+    overflow: hidden !important;
+  }
+}
