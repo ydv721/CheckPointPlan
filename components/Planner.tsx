@@ -482,7 +482,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
               <div className="cover-emoji-category-title">{normalizedEmojiSearch?"검색 결과":emojiCategory==="recent"?"최근 사용":activeEmojiCategory?.label??"이모지"}</div>
               {visibleEmojiItems.length>0?<div className="cover-emoji-grid">
                 {visibleEmojiItems.map((emoji,index)=><button key={`${emoji}-${index}`} type="button" title={EMOJI_SEARCH_TERMS[emoji]??emoji} aria-label={`${emoji} 스티커 추가`} onClick={()=>selectEmoji(emoji)}>{emoji}</button>)}
-              </div>:<div className="cover-emoji-empty">{normalizedEmojiSearch?"검색 결과가 없어.":"아직 사용한 이모지가 없어."}</div>}
+              </div>:<div className="cover-emoji-empty">{normalizedEmojiSearch?"검색 결과가 없어.":"아직 사용한 이모지가 없습니다."}</div>}
             </div>
           </div>
         </div>
