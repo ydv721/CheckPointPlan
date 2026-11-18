@@ -6581,3 +6581,66 @@ html,body{width:100%;overflow-x:clip}
   background: color-mix(in srgb, var(--ink) 46%, transparent) !important;
   background-clip: padding-box !important;
 }
+
+
+
+/* MONTH header controls: Today first, then sticker action. */
+.month-page-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.month-page-controls > .month-sticker-add-button {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: auto !important;
+  min-width: 0 !important;
+  min-height: 31px;
+  padding: 0 9px !important;
+  white-space: nowrap;
+  font-size: 10px;
+}
+
+.month-page-controls > .month-sticker-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 31px;
+}
+
+.month-page-title-row {
+  gap: 16px !important;
+}
+
+.month-memo-column {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.month-memo-column > .month-memo-panel {
+  flex: 1 1 0 !important;
+  height: 100%;
+  min-height: 0;
+}
+
+@media (max-width: 780px) {
+  .month-page-title-row {
+    gap: 10px !important;
+  }
+
+  .month-page-controls {
+    gap: 4px;
+  }
+
+  .month-page-controls > .month-sticker-add-button {
+    min-height: 28px;
+    padding: 0 6px !important;
+    font-size: 9px;
+  }
+}
