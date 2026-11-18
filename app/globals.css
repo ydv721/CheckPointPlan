@@ -4755,8 +4755,8 @@ html,body{width:100%;overflow-x:clip}
   width: auto !important;
   min-width: 0 !important;
   margin: 0 16px !important;
-  border: 1px solid var(--line) !important;
-  border-radius: 7px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
   background-color: transparent !important;
   background-image: repeating-linear-gradient(
     to bottom,
