@@ -807,6 +807,14 @@ export default function Planner() {
       return {...current,monthEntries:{...(current.monthEntries??{}),[dayKey]:{...existing,...patch}}};
     });
   }
+  function updateMonthNote(dayKey:string,textarea:HTMLTextAreaElement) {
+    let value=textarea.value;
+    while(value.length>0&&textarea.scrollHeight>textarea.clientHeight+1) {
+      value=value.slice(0,-1);
+      textarea.value=value;
+    }
+    updateMonthEntry(dayKey,{note:value});
+  }
   function shiftMonth(offset:number) {
     const [year,month]=monthCursor.split("-").map(Number);
     const next=new Date(year,month-1+offset,1);
@@ -916,7 +924,7 @@ export default function Planner() {
                             </div>
                           {inMonth&&<button type="button" className={dayEntry.important?"month-day-important is-active":"month-day-important"} aria-label={dayEntry.important?"중요한 날 표시 해제":"중요한 날 표시"} aria-pressed={dayEntry.important} title="중요한 날" onClick={()=>updateMonthEntry(dayKey,{important:!dayEntry.important})}><Star size={13} fill={dayEntry.important?"currentColor":"none"}/></button>}
                         </div>
-                        <textarea className="month-day-note" rows={2} maxLength={100} aria-label={`${dayKey} 일정`} value={dayEntry.note} disabled={!inMonth} onChange={e=>updateMonthEntry(dayKey,{note:e.target.value})}/>
+                        <textarea className="month-day-note" rows={2} maxLength={100} aria-label={`${dayKey} 일정`} value={dayEntry.note} disabled={!inMonth} onChange={e=>updateMonthNote(dayKey,e.currentTarget)}/>
 
                       </div>;
                     })}
@@ -940,7 +948,7 @@ export default function Planner() {
                             </div>
                             {inMonth&&<button type="button" className={dayEntry.important?"month-day-important is-active":"month-day-important"} aria-label={dayEntry.important?"중요한 날 표시 해제":"중요한 날 표시"} aria-pressed={dayEntry.important} title="중요한 날" onClick={()=>updateMonthEntry(dayKey,{important:!dayEntry.important})}><Star size={13} fill={dayEntry.important?"currentColor":"none"}/></button>}
                           </div>
-                          <textarea className="month-day-note" rows={2} maxLength={100} aria-label={`${dayKey} 일정`} value={dayEntry.note} disabled={!inMonth} onChange={e=>updateMonthEntry(dayKey,{note:e.target.value})}/>
+                          <textarea className="month-day-note" rows={2} maxLength={100} aria-label={`${dayKey} 일정`} value={dayEntry.note} disabled={!inMonth} onChange={e=>updateMonthNote(dayKey,e.currentTarget)}/>
 
                         </div>;
                       })}
