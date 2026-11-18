@@ -468,6 +468,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
       </div>
 
       <div className="cover-editor-section cover-sticker-section">
+        <div className="cover-editor-section-heading"><span>스티커</span></div>
         <button type="button" className="outline-btn upload-btn cover-sticker-upload" onClick={()=>fileInput.current?.click()}><ImagePlus size={17}/> 스티커 이미지 업로드</button>
         <div className="cover-sticker-picker-anchor">
           <div className="cover-emoji-picker" role="region" aria-label="이모지 선택기">
