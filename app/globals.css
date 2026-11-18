@@ -6515,3 +6515,20 @@ html,body{width:100%;overflow-x:clip}
 .month-sticker-picker.cover-emoji-picker {
   z-index: 80 !important;
 }
+
+
+/* MONTH emoji category strip: use the full picker width and distribute categories evenly. */
+.month-sticker-picker .cover-emoji-tabs {
+  display: flex !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  justify-content: space-between !important;
+  gap: 2px !important;
+  padding-inline: 2px !important;
+}
+
+.month-sticker-picker .cover-emoji-tabs button {
+  flex: 1 1 0 !important;
+  min-width: 30px !important;
+  max-width: none !important;
+}
