@@ -5595,9 +5595,16 @@ html,body{width:100%;overflow-x:clip}
   isolation: isolate;
 }
 
-.month-book-frame > .month-page > :not(.month-sticker-picker) {
+.month-book-frame > .month-page > :not(.month-sticker-picker):not(.month-sticker-dismiss-layer) {
   position: relative;
   z-index: 1;
+}
+
+/* The outside-click layer must stay fixed and never participate in the page flex layout. */
+.month-book-frame > .month-page > .month-sticker-dismiss-layer {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 79 !important;
 }
 
 .month-book-frame > .month-page > .month-sticker-picker {
