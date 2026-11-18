@@ -5052,8 +5052,11 @@ html,body{width:100%;overflow-x:clip}
   opacity: .28;
 }
 
-.month-day-note:focus {
-  background: var(--soft);
+.month-day-note:focus,
+.month-day-note:focus-visible {
+  background: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .month-day-note:disabled {
