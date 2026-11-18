@@ -6233,11 +6233,10 @@ html,body{width:100%;overflow-x:clip}
 }
 
 
-/* MONTH: remove the right inset from the parent layout so the paper sidebar
-   reaches the viewport edge; keep the left inset for the planner canvas. */
+/* MONTH: use the exact same paper sidebar geometry and placement as DAY. */
 @media (min-width: 781px) {
   .app-shell.planner-view:has(.month-book-frame) > .main-area {
-    padding: 8px 0 8px 12px !important;
+    padding: 0 !important;
   }
 
   .workspace-shell:has(.month-book-frame) {
@@ -6248,10 +6247,22 @@ html,body{width:100%;overflow-x:clip}
   }
 
   .workspace-shell:has(.month-book-frame) > .workspace-sidebar {
-    position: static !important;
-    left: auto !important;
+    position: relative !important;
+    align-self: center !important;
+    left: 12px !important;
     right: auto !important;
-    margin-right: 0 !important;
+    width: 260px !important;
+    height: min(694px, calc(100dvh - 40px)) !important;
+    min-height: 0 !important;
+    max-height: calc(100dvh - 40px) !important;
+    margin: 0 !important;
+    padding: 28px 20px 22px !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 15px !important;
+    background: var(--paper) !important;
+    box-shadow: 0 13px 42px #172b4414 !important;
+    overflow: visible !important;
     transform: none !important;
+    box-sizing: border-box !important;
   }
 }
