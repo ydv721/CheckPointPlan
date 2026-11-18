@@ -5595,16 +5595,9 @@ html,body{width:100%;overflow-x:clip}
   isolation: isolate;
 }
 
-.month-book-frame > .month-page > :not(.month-sticker-picker):not(.month-sticker-dismiss-layer) {
+.month-book-frame > .month-page > :not(.month-sticker-picker) {
   position: relative;
   z-index: 1;
-}
-
-/* The outside-click layer must stay fixed and never participate in the page flex layout. */
-.month-book-frame > .month-page > .month-sticker-dismiss-layer {
-  position: fixed !important;
-  inset: 0 !important;
-  z-index: 34 !important;
 }
 
 .month-book-frame > .month-page > .month-sticker-picker {
@@ -6501,26 +6494,6 @@ html,body{width:100%;overflow-x:clip}
     min-width: 27px;
     height: 28px;
   }
-}
-
-
-/* MONTH sticker picker only: dismiss on clicks outside while keeping the picker above the layer. */
-.month-sticker-dismiss-layer {
-  position: fixed;
-  inset: 0;
-  z-index: 79;
-  display: block;
-  width: 100%;
-  height: 100%;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  cursor: default;
-}
-
-.month-sticker-picker.cover-emoji-picker {
-  z-index: 80 !important;
 }
 
 
