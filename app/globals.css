@@ -6231,3 +6231,27 @@ html,body{width:100%;overflow-x:clip}
     left: 12px !important;
   }
 }
+
+
+/* MONTH: remove the right inset from the parent layout so the paper sidebar
+   reaches the viewport edge; keep the left inset for the planner canvas. */
+@media (min-width: 781px) {
+  .app-shell.planner-view:has(.month-book-frame) > .main-area {
+    padding: 8px 0 8px 12px !important;
+  }
+
+  .workspace-shell:has(.month-book-frame) {
+    width: 100% !important;
+    margin: 0 !important;
+    grid-template-columns: minmax(0, 1fr) 260px !important;
+    gap: 0 !important;
+  }
+
+  .workspace-shell:has(.month-book-frame) > .workspace-sidebar {
+    position: static !important;
+    left: auto !important;
+    right: auto !important;
+    margin-right: 0 !important;
+    transform: none !important;
+  }
+}
