@@ -929,8 +929,7 @@ export default function Planner() {
                       })}
                     </div>
                     <div className="month-memo-column">
-                      <div className="month-memo-toolbar">
-                        <strong>MEMO</strong>
+                      <div className="month-memo-actions">
                         {monthStickerPending ? (
                           <div className="month-sticker-pending">
                             <span>{monthStickerPending} 날짜를 선택하세요</span>
@@ -943,6 +942,7 @@ export default function Planner() {
                         )}
                       </div>
                       <div className="month-memo-panel">
+                        <div className="month-memo-toolbar"><strong>MEMO</strong></div>
                         <textarea
                           className="month-memo-note"
                           aria-label={`${monthCursor} 월간 메모`}
