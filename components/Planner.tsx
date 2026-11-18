@@ -460,9 +460,8 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
             </label>
           </div>
           <div className="cover-text-weight-row">
-            <label>굵기
-              <input type="range" min={400} max={900} step={100} value={item.weight??800} onChange={e=>updateItem(item.id,{weight:Number(e.target.value)})}/>
-            </label>
+            <span className="cover-text-weight-label">굵기</span>
+            <input type="range" min={400} max={900} step={100} value={item.weight??800} onChange={e=>updateItem(item.id,{weight:Number(e.target.value)})}/>
             <span>{item.weight??800}</span>
           </div>
         </div>)}
