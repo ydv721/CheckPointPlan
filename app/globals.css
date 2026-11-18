@@ -4257,8 +4257,9 @@ html,body{width:100%;overflow-x:clip}
   font-size: 11px;
 }
 
-.cover-text-weight-row label {
-  display: contents;
+.cover-text-weight-row .cover-text-weight-label {
+  display: block;
+  white-space: nowrap;
 }
 
 .cover-text-weight-row input[type="range"] {
