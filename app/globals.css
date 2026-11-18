@@ -6222,3 +6222,12 @@ html,body{width:100%;overflow-x:clip}
     overflow: visible !important;
   }
 }
+
+
+/* Nudge the paper-style sidebar flush with the right edge of the workspace. */
+@media (min-width: 781px) {
+  .workspace-shell > .workspace-sidebar {
+    position: relative !important;
+    left: 12px !important;
+  }
+}
