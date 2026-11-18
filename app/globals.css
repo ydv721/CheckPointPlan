@@ -4760,3 +4760,54 @@ html,body{width:100%;overflow-x:clip}
     max-height: none;
   }
 }
+
+/* Final free-note layout: outer frame with an inset lined writing area. */
+.free-note-paper {
+  position: relative !important;
+  display: flex !important;
+  width: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  padding: 12px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 10px !important;
+  background: var(--soft) !important;
+}
+
+.free-note-paper::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 12px !important;
+  border-radius: 5px !important;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 23px,
+    var(--line) 23px,
+    var(--line) 24px
+  ) !important;
+  background-position: 0 0 !important;
+  background-size: 100% 24px !important;
+  pointer-events: none !important;
+}
+
+.key-section .free-note-input {
+  position: relative !important;
+  z-index: 1 !important;
+  display: block !important;
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  padding: 0 2px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  background-image: none !important;
+  background-position: 0 0 !important;
+  background-size: auto !important;
+  line-height: 24px !important;
+  color: var(--ink) !important;
+}
