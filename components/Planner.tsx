@@ -868,20 +868,15 @@ export default function Planner() {
       {view==="cover"? <CoverPage cover={cover} setCover={setCover} theme={theme} handleUpload={handleUpload} photoUrls={photoUrls}/> : <>
         {loading?<div className="page-loading">페이지를 불러오는 중입니다...</div>:plannerPage==="month" ? (
           <div className="book-frame month-book-frame">
-            <section className="paper-page month-page">
-              <div className="month-page-header">
+            <div className="book-spine" aria-hidden="true">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
+            <section className="paper-page left-page month-page month-page-left">
+              <div className="month-page-header month-page-header-left">
                 <div className="month-page-heading">
                   <span className="month-page-kicker">MONTHLY PLANNER</span>
                   <h2 className="month-page-title">{monthTitle}</h2>
                 </div>
-                <div className="month-page-controls">
-                  <button type="button" className="month-nav-button" aria-label="이전 달" onClick={()=>shiftMonth(-1)}><ChevronLeft size={17}/></button>
-                  <button type="button" className="month-today-button" onClick={()=>setMonthCursor(todayKey.slice(0,7))}>오늘</button>
-                  <button type="button" className="month-nav-button" aria-label="다음 달" onClick={()=>shiftMonth(1)}><ChevronRight size={17}/></button>
-                </div>
               </div>
-              <div className="month-spread-grid">
-                <section className="month-half month-half-left" aria-label="일요일부터 수요일">
+              <section className="month-half month-half-left" aria-label="일요일부터 수요일">
                   <div className="month-weekdays month-weekdays-left" aria-hidden="true">
                     {["SUN","MON","TUE","WED"].map(day=><span key={day}>{day}</span>)}
                   </div>
@@ -904,7 +899,19 @@ export default function Planner() {
                     })}
                   </div>
                 </section>
-                <section className="month-half month-half-right" aria-label="목요일부터 토요일 및 메모">
+              <div className="month-page-footer month-page-footer-left">
+                <span>날짜를 누르면 해당 DAY 페이지로 이동합니다.</span>
+              </div>
+            </section>
+            <section className="paper-page right-page month-page month-page-right">
+              <div className="month-page-header month-page-header-right">
+                <div className="month-page-controls">
+                  <button type="button" className="month-nav-button" aria-label="이전 달" onClick={()=>shiftMonth(-1)}><ChevronLeft size={17}/></button>
+                  <button type="button" className="month-today-button" onClick={()=>setMonthCursor(todayKey.slice(0,7))}>오늘</button>
+                  <button type="button" className="month-nav-button" aria-label="다음 달" onClick={()=>shiftMonth(1)}><ChevronRight size={17}/></button>
+                </div>
+              </div>
+              <section className="month-half month-half-right" aria-label="목요일부터 토요일 및 메모">
                   <div className="month-weekdays month-weekdays-right" aria-hidden="true">
                     {["THU","FRI","SAT"].map(day=><span key={day}>{day}</span>)}
                   </div>
@@ -951,12 +958,11 @@ export default function Planner() {
                     </div>
                   </div>
                 </section>
-              </div>
-              <div className="month-page-footer">
-                <span>날짜를 누르면 해당 DAY 페이지로 이동합니다.</span>
+              <div className="month-page-footer month-page-footer-right">
                 <span>월간 일정은 자동 저장됩니다.</span>
               </div>
-              {monthStickerDate&&<div className="month-sticker-picker" role="dialog" aria-label="월간 스티커 선택">
+            </section>
+            {monthStickerDate&&<div className="month-sticker-picker" role="dialog" aria-label="월간 스티커 선택">
                 <div className="month-sticker-picker-heading"><strong>스티커 선택</strong><button type="button" aria-label="스티커 선택 닫기" onClick={()=>setMonthStickerDate(null)}><X size={15}/></button></div>
                 <label className="month-sticker-search"><Search size={15}/><input type="search" value={monthStickerSearch} onChange={e=>setMonthStickerSearch(e.target.value)} placeholder="이모지 검색"/></label>
                 <div className="month-sticker-category-tabs" role="tablist" aria-label="스티커 카테고리">
@@ -967,7 +973,6 @@ export default function Planner() {
                   {!monthStickerItems.length&&<span className="month-sticker-empty">검색 결과가 없습니다.</span>}
                 </div>
               </div>}
-            </section>
             <div className="planner-index-tabs" role="tablist" aria-label="속지 페이지 선택">
               <button type="button" role="tab" aria-selected="true" className="planner-index-tab is-active" onClick={()=>setMonthStickerDate(null)}><span>MONTH</span></button>
               <button type="button" role="tab" aria-selected="false" className="planner-index-tab" onClick={()=>{setPlannerPage("day");setMonthStickerDate(null);}}><span>DAY</span></button>
