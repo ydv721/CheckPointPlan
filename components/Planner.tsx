@@ -928,7 +928,7 @@ export default function Planner() {
                         </div>;
                       })}
                     </div>
-                    <div className="month-memo-panel">
+                    <div className="month-memo-column">
                       <div className="month-memo-toolbar">
                         <strong>MEMO</strong>
                         {monthStickerPending ? (
@@ -942,13 +942,15 @@ export default function Planner() {
                           </button>
                         )}
                       </div>
-                      <textarea
-                        className="month-memo-note"
-                        aria-label={`${monthCursor} 월간 메모`}
-                        maxLength={3000}
-                        value={cover.monthMemos?.[monthCursor]??""}
-                        onChange={e=>setCover(current=>({...current,monthMemos:{...(current.monthMemos??{}),[monthCursor]:e.target.value}}))}
-                      />
+                      <div className="month-memo-panel">
+                        <textarea
+                          className="month-memo-note"
+                          aria-label={`${monthCursor} 월간 메모`}
+                          maxLength={3000}
+                          value={cover.monthMemos?.[monthCursor]??""}
+                          onChange={e=>setCover(current=>({...current,monthMemos:{...(current.monthMemos??{}),[monthCursor]:e.target.value}}))}
+                        />
+                      </div>
                     </div>
                   </div>
                 </section>
