@@ -6462,3 +6462,35 @@ html,body{width:100%;overflow-x:clip}
     grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
   }
 }
+
+
+/* Keep month navigation arrows directly beside the displayed month. */
+.month-page-title-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.month-page-title-row .month-nav-button {
+  flex: 0 0 32px;
+  width: 32px;
+  min-width: 32px;
+  height: 31px;
+  padding: 0;
+}
+
+.month-page-controls {
+  margin-left: auto;
+}
+@media (max-width: 780px) {
+  .month-page-title-row {
+    gap: 5px;
+  }
+
+  .month-page-title-row .month-nav-button {
+    flex-basis: 27px;
+    width: 27px;
+    min-width: 27px;
+    height: 28px;
+  }
+}
