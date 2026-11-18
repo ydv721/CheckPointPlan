@@ -471,7 +471,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
       <div className="cover-editor-section cover-sticker-section">
         <button type="button" className="outline-btn upload-btn cover-sticker-upload" onClick={()=>fileInput.current?.click()}><ImagePlus size={17}/> 스티커 이미지 업로드</button>
         <div className="cover-sticker-picker-anchor">
-          <div ref={emojiPickerRef} className="cover-emoji-picker" role="region" aria-label="이모지 선택기">
+          <div className="cover-emoji-picker" role="region" aria-label="이모지 선택기">
             <div className="cover-emoji-picker-header"><span>이모지 및 기호</span></div>
             <label className="cover-emoji-search"><Search size={17}/><input autoFocus type="search" value={emojiSearch} onChange={e=>setEmojiSearch(e.target.value)} placeholder="이모지 검색"/></label>
             <div className="cover-emoji-tabs" role="tablist" aria-label="이모지 카테고리">
