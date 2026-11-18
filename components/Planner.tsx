@@ -878,7 +878,6 @@ export default function Planner() {
             <section className="paper-page month-page">
               <div className="month-page-header">
                 <div className="month-page-heading">
-                  <span className="month-page-kicker">MONTHLY PLANNER</span>
                   <div className="month-page-title-row">
                     <button type="button" className="month-nav-button" aria-label="이전 달" onClick={()=>shiftMonth(-1)}><ChevronLeft size={17}/></button>
                     <h2 className="month-page-title">{monthTitle}</h2>
@@ -887,6 +886,16 @@ export default function Planner() {
                 </div>
                 <div className="month-page-controls">
                   <button type="button" className="month-today-button" onClick={()=>setMonthCursor(todayKey.slice(0,7))}>오늘</button>
+                  {monthStickerPending ? (
+                    <div className="month-sticker-pending">
+                      <span>{monthStickerPending} 날짜를 선택하세요</span>
+                      <button type="button" onClick={()=>setMonthStickerPending(null)}>취소</button>
+                    </div>
+                  ) : (
+                    <button type="button" className="month-sticker-add-button" onClick={()=>{setMonthStickerDate("picker");setMonthStickerSearch("");}}>
+                      <Plus size={12}/> 스티커 추가
+                    </button>
+                  )}
                 </div>
               </div>
               <div className="month-spread-grid">
@@ -937,18 +946,6 @@ export default function Planner() {
                       })}
                     </div>
                     <div className="month-memo-column">
-                      <div className="month-memo-actions">
-                        {monthStickerPending ? (
-                          <div className="month-sticker-pending">
-                            <span>{monthStickerPending} 날짜를 선택하세요</span>
-                            <button type="button" onClick={()=>setMonthStickerPending(null)}>취소</button>
-                          </div>
-                        ) : (
-                          <button type="button" className="month-sticker-add-button" onClick={()=>{setMonthStickerDate("picker");setMonthStickerSearch("");}}>
-                            <Plus size={12}/> 스티커 추가
-                          </button>
-                        )}
-                      </div>
                       <div className="month-memo-panel">
                         <div className="month-memo-toolbar"><strong>MEMO</strong></div>
                         <textarea
