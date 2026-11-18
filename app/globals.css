@@ -5587,3 +5587,18 @@ html,body{width:100%;overflow-x:clip}
     flex: 0 0 860px !important;
   }
 }
+
+
+/* Keep the fold behind the monthly content and the sticker picker above it. */
+.month-book-frame > .month-page {
+  isolation: isolate;
+}
+
+.month-book-frame > .month-page > :not(.month-sticker-picker) {
+  position: relative;
+  z-index: 1;
+}
+
+.month-book-frame > .month-page > .month-sticker-picker {
+  z-index: 35 !important;
+}
