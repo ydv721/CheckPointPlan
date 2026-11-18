@@ -5840,3 +5840,218 @@ html,body{width:100%;overflow-x:clip}
     top: 6% !important;
   }
 }
+
+
+/* MONTH final layout: keep the full spread inside the viewport without page scrollbars. */
+@media (min-width: 781px) {
+  html:has(.app-shell.planner-view .month-book-frame),
+  body:has(.app-shell.planner-view .month-book-frame) {
+    width: 100%;
+    height: 100%;
+    overflow: hidden !important;
+  }
+
+  .app-shell.planner-view:has(.month-book-frame) {
+    width: 100%;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .app-shell.planner-view:has(.month-book-frame) > .main-area {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 8px 12px !important;
+    overflow: hidden !important;
+  }
+
+  .workspace-shell:has(.month-book-frame) {
+    width: min(1136px, calc(100vw - 32px), calc(141.9dvh - 50px)) !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    grid-template-columns: minmax(0, 1fr) 72px !important;
+    gap: 14px !important;
+    overflow: visible !important;
+  }
+
+  .workspace-canvas:has(> .month-book-frame) {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .workspace-canvas > .book-frame.month-book-frame {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: auto !important;
+    max-height: calc(100dvh - 28px) !important;
+    flex: 1 1 auto !important;
+    aspect-ratio: 210 / 148 !important;
+    margin: 0 !important;
+  }
+
+  .month-book-frame > .month-page {
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .planner-index-tabs {
+    top: 6% !important;
+  }
+}
+
+/* Stickers sit beside the date number instead of taking space at the bottom of each day. */
+.month-day-date-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.month-day-inline-sticker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 17px;
+  width: 17px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ink);
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.month-day-inline-sticker:hover {
+  background: var(--soft);
+}
+
+.month-day-date.is-sticker-target {
+  color: var(--accent);
+  background: var(--soft);
+  outline: 1px dashed var(--accent);
+  outline-offset: -1px;
+}
+
+.month-memo-panel {
+  flex-direction: column;
+  gap: 6px;
+}
+
+.month-memo-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  flex: 0 0 auto;
+  min-width: 0;
+  min-height: 23px;
+}
+
+.month-memo-toolbar > strong {
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.month-sticker-add-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--accent);
+  font: inherit;
+  font-size: 8px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.month-sticker-add-button:hover {
+  border-color: var(--accent);
+  background: var(--soft);
+}
+
+.month-sticker-pending {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  min-width: 0;
+  color: var(--accent);
+  font-size: 8px;
+  font-weight: 750;
+}
+
+.month-sticker-pending span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.month-sticker-pending button {
+  flex: 0 0 auto;
+  padding: 3px 4px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--soft);
+  color: var(--ink);
+  font: inherit;
+  font-size: 8px;
+  cursor: pointer;
+}
+
+.month-memo-note {
+  flex: 1 1 auto;
+  overflow: hidden;
+  resize: none;
+}
+
+@media (max-width: 780px) {
+  .month-day-date-group {
+    gap: 1px;
+  }
+
+  .month-day-inline-sticker {
+    flex-basis: 14px;
+    width: 14px;
+    height: 18px;
+    font-size: 11px;
+  }
+
+  .month-memo-toolbar > strong {
+    font-size: 8px;
+  }
+
+  .month-sticker-add-button {
+    padding: 3px 4px;
+    font-size: 7px;
+  }
+
+  .month-sticker-pending {
+    font-size: 7px;
+  }
+}
