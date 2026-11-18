@@ -6750,3 +6750,27 @@ html,body{width:100%;overflow-x:clip}
     ) !important;
   }
 }
+
+
+/* Keep planner text fields clean while editing: remove the browser's blue focus ring. */
+.paper-page input:focus,
+.paper-page input:focus-visible,
+.paper-page textarea:focus,
+.paper-page textarea:focus-visible,
+.month-book-frame input:focus,
+.month-book-frame input:focus-visible,
+.month-book-frame textarea:focus,
+.month-book-frame textarea:focus-visible,
+.month-book-frame select:focus,
+.month-book-frame select:focus-visible {
+  outline: none !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Preserve the normal ruled-line color on DAY text fields while focused. */
+.paper-page .focus-check-text:focus,
+.paper-page .keypoint-input:focus,
+.paper-page .color-guide-input:focus {
+  border-bottom-color: var(--line) !important;
+}
