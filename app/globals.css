@@ -5604,7 +5604,7 @@ html,body{width:100%;overflow-x:clip}
 .month-book-frame > .month-page > .month-sticker-dismiss-layer {
   position: fixed !important;
   inset: 0 !important;
-  z-index: 79 !important;
+  z-index: 34 !important;
 }
 
 .month-book-frame > .month-page > .month-sticker-picker {
