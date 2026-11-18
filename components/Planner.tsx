@@ -67,6 +67,15 @@ function parseMonthEntries(raw: unknown): Record<string, MonthEntry> {
   }
   return result;
 }
+
+function parseMonthMemos(raw: unknown): Record<string, string> {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+  return Object.fromEntries(
+    Object.entries(raw as Record<string, unknown>)
+      .filter(([key, value]) => /^\d{4}-\d{2}$/.test(key) && typeof value === "string")
+      .map(([key, value]) => [key, (value as string).slice(0, 3000)])
+  );
+}
 const sanitizeHex = (s: string) => /^#[0-9a-fA-F]{6}$/.test(s) ? s : "#8b9ec4";
 const isCoverBrandSlogan = (item: CoverItem) =>
   item.kind === "text" &&
@@ -632,6 +641,7 @@ export default function Planner() {
           items:coverItems,
           colorLabels:Array.from({length:PENS.length},(_,index)=>typeof savedCover.colorLabels?.[index]==="string"?savedCover.colorLabels[index]:""),
           monthEntries:parseMonthEntries(savedCover.monthEntries),
+          monthMemos:parseMonthMemos(savedCover.monthMemos),
           backgroundPattern:validPatterns.includes(savedPattern as CoverPattern)?savedPattern as CoverPattern:"grid",
           ...(typeof savedCover.backgroundColor==="string"?{backgroundColor:savedCover.backgroundColor}:{}),
           ...(typeof savedCover.backgroundImage==="string"?{backgroundImage:savedCover.backgroundImage}:{}),
@@ -862,26 +872,65 @@ export default function Planner() {
                   <button type="button" className="month-nav-button" aria-label="다음 달" onClick={()=>shiftMonth(1)}><ChevronRight size={17}/></button>
                 </div>
               </div>
-              <div className="month-weekdays" aria-hidden="true">
-                {["SUN","MON","TUE","WED","THU","FRI","SAT"].map(day=><span key={day}>{day}</span>)}
-              </div>
-              <div className="month-calendar-grid">
-                {monthCalendarDays.map(dayKey=>{
-                  const inMonth=dayKey.slice(0,7)===monthCursor;
-                  const dayNumber=Number(dayKey.slice(-2));
-                  const dayEntry=cover.monthEntries?.[dayKey]??{note:"",important:false,stickers:[]};
-                  return <div key={dayKey} className={`month-day-cell${inMonth?"":" is-outside"}${dayKey===todayKey?" is-today":""}`}>
-                    <div className="month-day-topline">
-                      <button type="button" className="month-day-date" onClick={()=>openMonthDay(dayKey)} title="해당 날짜의 DAY 페이지 열기">{dayNumber}</button>
-                      {inMonth&&<button type="button" className={dayEntry.important?"month-day-important is-active":"month-day-important"} aria-label={dayEntry.important?"중요한 날 표시 해제":"중요한 날 표시"} aria-pressed={dayEntry.important} title="중요한 날" onClick={()=>updateMonthEntry(dayKey,{important:!dayEntry.important})}><Star size={13} fill={dayEntry.important?"currentColor":"none"}/></button>}
+              <div className="month-spread-grid">
+                <section className="month-half month-half-left" aria-label="일요일부터 수요일">
+                  <div className="month-weekdays month-weekdays-left" aria-hidden="true">
+                    {["SUN","MON","TUE","WED"].map(day=><span key={day}>{day}</span>)}
+                  </div>
+                  <div className="month-calendar-grid month-calendar-grid-left">
+                    {monthCalendarDays.filter((_,index)=>index%7<4).map(dayKey=>{
+                      const inMonth=dayKey.slice(0,7)===monthCursor;
+                      const dayNumber=Number(dayKey.slice(-2));
+                      const dayEntry=cover.monthEntries?.[dayKey]??{note:"",important:false,stickers:[]};
+                      return <div key={dayKey} className={`month-day-cell${inMonth?"":" is-outside"}${dayKey===todayKey?" is-today":""}`}>
+                        <div className="month-day-topline">
+                          <button type="button" className="month-day-date" onClick={()=>openMonthDay(dayKey)} title="해당 날짜의 DAY 페이지 열기">{dayNumber}</button>
+                          {inMonth&&<button type="button" className={dayEntry.important?"month-day-important is-active":"month-day-important"} aria-label={dayEntry.important?"중요한 날 표시 해제":"중요한 날 표시"} aria-pressed={dayEntry.important} title="중요한 날" onClick={()=>updateMonthEntry(dayKey,{important:!dayEntry.important})}><Star size={13} fill={dayEntry.important?"currentColor":"none"}/></button>}
+                        </div>
+                        <textarea className="month-day-note" rows={2} maxLength={100} aria-label={`${dayKey} 일정`} placeholder={inMonth?"일정 입력":""} value={dayEntry.note} disabled={!inMonth} onChange={e=>updateMonthEntry(dayKey,{note:e.target.value})}/>
+                        <div className="month-day-stickers">
+                          {dayEntry.stickers.map((sticker,index)=><button type="button" key={`${sticker}-${index}`} title="스티커 제거" aria-label={`${dayKey} 스티커 제거`} onClick={()=>removeMonthSticker(dayKey,index)}>{sticker}</button>)}
+                          {inMonth&&dayEntry.stickers.length<3&&<button type="button" className="month-day-sticker-add" aria-label={`${dayNumber}일 스티커 추가`} title="스티커 추가" onClick={()=>{setMonthStickerDate(dayKey);setMonthStickerSearch("");}}><Plus size={12}/></button>}
+                        </div>
+                      </div>;
+                    })}
+                  </div>
+                </section>
+                <section className="month-half month-half-right" aria-label="목요일부터 토요일 및 메모">
+                  <div className="month-weekdays month-weekdays-right" aria-hidden="true">
+                    {["THU","FRI","SAT","MEMO"].map(day=><span key={day}>{day}</span>)}
+                  </div>
+                  <div className="month-right-content">
+                    <div className="month-calendar-grid month-calendar-grid-right">
+                      {monthCalendarDays.filter((_,index)=>index%7>=4).map(dayKey=>{
+                        const inMonth=dayKey.slice(0,7)===monthCursor;
+                        const dayNumber=Number(dayKey.slice(-2));
+                        const dayEntry=cover.monthEntries?.[dayKey]??{note:"",important:false,stickers:[]};
+                        return <div key={dayKey} className={`month-day-cell${inMonth?"":" is-outside"}${dayKey===todayKey?" is-today":""}`}>
+                          <div className="month-day-topline">
+                            <button type="button" className="month-day-date" onClick={()=>openMonthDay(dayKey)} title="해당 날짜의 DAY 페이지 열기">{dayNumber}</button>
+                            {inMonth&&<button type="button" className={dayEntry.important?"month-day-important is-active":"month-day-important"} aria-label={dayEntry.important?"중요한 날 표시 해제":"중요한 날 표시"} aria-pressed={dayEntry.important} title="중요한 날" onClick={()=>updateMonthEntry(dayKey,{important:!dayEntry.important})}><Star size={13} fill={dayEntry.important?"currentColor":"none"}/></button>}
+                          </div>
+                          <textarea className="month-day-note" rows={2} maxLength={100} aria-label={`${dayKey} 일정`} placeholder={inMonth?"일정 입력":""} value={dayEntry.note} disabled={!inMonth} onChange={e=>updateMonthEntry(dayKey,{note:e.target.value})}/>
+                          <div className="month-day-stickers">
+                            {dayEntry.stickers.map((sticker,index)=><button type="button" key={`${sticker}-${index}`} title="스티커 제거" aria-label={`${dayKey} 스티커 제거`} onClick={()=>removeMonthSticker(dayKey,index)}>{sticker}</button>)}
+                            {inMonth&&dayEntry.stickers.length<3&&<button type="button" className="month-day-sticker-add" aria-label={`${dayNumber}일 스티커 추가`} title="스티커 추가" onClick={()=>{setMonthStickerDate(dayKey);setMonthStickerSearch("");}}><Plus size={12}/></button>}
+                          </div>
+                        </div>;
+                      })}
                     </div>
-                    <textarea className="month-day-note" rows={2} maxLength={100} aria-label={`${dayKey} 일정`} placeholder={inMonth?"일정 입력":""} value={dayEntry.note} disabled={!inMonth} onChange={e=>updateMonthEntry(dayKey,{note:e.target.value})}/>
-                    <div className="month-day-stickers">
-                      {dayEntry.stickers.map((sticker,index)=><button type="button" key={`${sticker}-${index}`} title="스티커 제거" aria-label={`${dayKey} 스티커 제거`} onClick={()=>removeMonthSticker(dayKey,index)}>{sticker}</button>)}
-                      {inMonth&&dayEntry.stickers.length<3&&<button type="button" className="month-day-sticker-add" aria-label={`${dayNumber}일 스티커 추가`} title="스티커 추가" onClick={()=>{setMonthStickerDate(dayKey);setMonthStickerSearch("");}}><Plus size={12}/></button>}
+                    <div className="month-memo-panel">
+                      <textarea
+                        className="month-memo-note"
+                        aria-label={`${monthCursor} 월간 메모`}
+                        maxLength={3000}
+                        placeholder="이번 달의 목표나 기억할 일을 적어보세요."
+                        value={cover.monthMemos?.[monthCursor]??""}
+                        onChange={e=>setCover(current=>({...current,monthMemos:{...(current.monthMemos??{}),[monthCursor]:e.target.value}}))}
+                      />
                     </div>
-                  </div>;
-                })}
+                  </div>
+                </section>
               </div>
               <div className="month-page-footer">
                 <span>날짜를 누르면 해당 DAY 페이지로 이동합니다.</span>
