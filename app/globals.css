@@ -6159,3 +6159,47 @@ html,body{width:100%;overflow-x:clip}
     box-sizing: border-box !important;
   }
 }
+
+
+/* MONTH: restore the same full-height sidebar grid used by DAY. */
+@media (min-width: 781px) {
+  .workspace-shell:has(.month-book-frame) {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 260px !important;
+    align-items: stretch !important;
+    gap: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .workspace-canvas:has(> .month-book-frame) {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    padding: 20px 24px !important;
+    overflow: hidden !important;
+  }
+
+  .workspace-sidebar {
+    width: 260px !important;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .workspace-canvas > .book-frame.month-book-frame {
+    width: min(984px, calc(100vw - 360px)) !important;
+    max-width: 984px !important;
+    height: auto !important;
+    aspect-ratio: 210 / 148 !important;
+    flex: 0 1 984px !important;
+    margin: auto !important;
+  }
+}
