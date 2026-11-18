@@ -880,12 +880,14 @@ export default function Planner() {
               <div className="month-page-header">
                 <div className="month-page-heading">
                   <span className="month-page-kicker">MONTHLY PLANNER</span>
-                  <h2 className="month-page-title">{monthTitle}</h2>
+                  <div className="month-page-title-row">
+                    <button type="button" className="month-nav-button" aria-label="이전 달" onClick={()=>shiftMonth(-1)}><ChevronLeft size={17}/></button>
+                    <h2 className="month-page-title">{monthTitle}</h2>
+                    <button type="button" className="month-nav-button" aria-label="다음 달" onClick={()=>shiftMonth(1)}><ChevronRight size={17}/></button>
+                  </div>
                 </div>
                 <div className="month-page-controls">
-                  <button type="button" className="month-nav-button" aria-label="이전 달" onClick={()=>shiftMonth(-1)}><ChevronLeft size={17}/></button>
                   <button type="button" className="month-today-button" onClick={()=>setMonthCursor(todayKey.slice(0,7))}>오늘</button>
-                  <button type="button" className="month-nav-button" aria-label="다음 달" onClick={()=>shiftMonth(1)}><ChevronRight size={17}/></button>
                 </div>
               </div>
               <div className="month-spread-grid">
