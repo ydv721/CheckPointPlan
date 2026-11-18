@@ -8,7 +8,7 @@ import {
   Sparkles, Trash2, X, Search, CircleHelp, CheckCircle2, Palette
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { defaultCover, emptyEntry, STICKERS, themes, type Cover, type CoverItem, type CoverPattern, type Entry, type FocusItem, type MonthEntry, type ThemeName, type Todo, type TodoStatus } from "@/lib/types";
+import { defaultCover, emptyEntry, themes, type Cover, type CoverItem, type CoverPattern, type Entry, type FocusItem, type MonthEntry, type ThemeName, type Todo, type TodoStatus } from "@/lib/types";
 
 const HOURS = [...Array.from({ length: 18 }, (_, i) => i + 6), 0, 1, 2, 3, 4, 5];
 const TIMES = ["00", "10", "20", "30", "40", "50"];
@@ -23,7 +23,6 @@ const COVER_PATTERNS: {value:CoverPattern;label:string}[] = [
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 const makeEmojiItems = (value: string) => value.split(" ");
 const EMOJI_CATEGORIES: { id: string; label: string; icon: string; items: string[] }[] = [
-  { id: "recommended", label: "추천 스티커", icon: "✨", items: STICKERS },
   { id: "smileys", label: "웃는 얼굴 및 감정", icon: "😀", items: makeEmojiItems("😀 😃 😄 😁 😆 😅 😂 🤣 🥲 ☺️ 😊 😇 🙂 🙃 😉 😌 😍 🥰 😘 😗 😙 😚 😋 😛 😜 🤪 😝 🤑 🤗 🤭 🫢 🫣 🤫 🤔 🫡 🤐 🤨 😐 😑 😶 🫥 😏 😒 🙄 😬 🤥 😴 🥱 😪 🥴 🤤 😷 🤒 🤕 🤢 🤮 🥵 🥶 🥳 🥸 😎 🤓 🧐 😕 🫤 😟 🙁 ☹️ 😮 😯 😲 😳 🥺 😦 😧 😨 😰 😥 😢 😭 😱 😖 😣 😞 😓 😩 😫 😤 😡 😠 🤬 🥹 🫠 🫨") },
   { id: "people", label: "사람 및 신체", icon: "👋", items: makeEmojiItems("👋 🤚 🖐️ ✋ 🖖 🫱 🫲 🫳 🫴 👌 🤌 🤏 ✌️ 🤞 🫰 🤟 🤘 🤙 👈 👉 👆 👇 ☝️ 👍 👎 ✊ 👊 🤛 🤜 👏 🙌 🫶 🤝 🙏 ✍️ 💅 🤳 💪 🦾 🦿 🦵 🦶 👂 👃 🧠 👀 👁️ 👄 🫦 👶 🧒 👦 👧 🧑 👨 👩 🧓 👴 👵 🙋 🙆 🙅 💁 🙇 🧏 💃 🕺 🧍 🧎 🧘 🛌") },
   { id: "animals", label: "동물 및 자연", icon: "🐻", items: makeEmojiItems("🐶 🐱 🐭 🐹 🐰 🦊 🐻 🐼 🐻‍❄️ 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🙈 🙉 🙊 🐔 🐧 🐦 🐤 🐣 🦆 🦉 🦄 🐝 🦋 🐌 🐞 🐢 🐍 🦎 🐙 🦑 🦀 🐠 🐟 🐬 🐳 🦈 🐊 🦖 🦕 🐘 🦒 🦓 🦍 🦧 🐪 🐫 🦙 🐐 🐑 🐎 🐖 🐄 🐕 🐈 🐓 🦃 🦚 🦜 🦢 🪿 🦩 🦔 🐿️ 🦦 🦥 🦨 🦡 🦫 🦝 🦛 🦏 🐇 🐁 🐀 🦇 🐺 🦌 🦬 🦣 🌵 🎄 🌲 🌳 🌴 🪴 🌱 🌿 ☘️ 🍀 🍁 🍂 🍃 🌷 🌸 🌹 🌺 🌻 🌼 🌾 💐 🪷 🪻 🌞 🌝 🌛 🌜 🌙 ⭐ 🌟 ☀️ 🌤️ ⛅ 🌈 ☁️ ⛈️ 🌧️ ❄️ ☃️ 🌊 🔥") },
@@ -31,7 +30,7 @@ const EMOJI_CATEGORIES: { id: string; label: string; icon: string; items: string
   { id: "travel", label: "여행 및 장소", icon: "🚗", items: makeEmojiItems("🚗 🚕 🚙 🚌 🚎 🏎️ 🚓 🚑 🚒 🚐 🛻 🚚 🚛 🚜 🛵 🏍️ 🚲 🛴 🛹 🛼 🚂 🚆 🚄 🚅 🚇 🚊 🚉 ✈️ 🛫 🛬 🛩️ 🚁 🚀 🛸 ⛵ 🚤 🛥️ 🛳️ 🚢 🗺️ 🗽 🗼 🏰 🏯 🏝️ 🏖️ 🏜️ 🏕️ ⛺ 🏠 🏡 🏘️ 🏢 🏙️ 🌃 🌉 🌌 🌠 🌋 ⛰️ 🏔️ 🗻 🏞️ 🌅 🌄 ⛲ ⛪ 🕌 🛕 🕍 🏛️ 🏟️ 🏗️ 🧭 🧳 🛎️") },
   { id: "activities", label: "활동 및 취미", icon: "⚽", items: makeEmojiItems("⚽ 🏀 🏈 ⚾ 🥎 🎾 🏐 🏉 🥏 🎱 🪀 🏓 🏸 🏒 🏑 🥍 🏏 🪃 🥅 ⛳ 🪁 🏹 🎣 🤿 🥊 🥋 🎽 🛹 🛼 ⛸️ 🥌 🎿 ⛷️ 🏂 🪂 🏋️ 🤼 🤸 ⛹️ 🤺 🏇 🧘 🏄 🏊 🚣 🧗 🚴 🚵 🏆 🥇 🥈 🥉 🏅 🎖️ 🎗️ 🎫 🎟️ 🎪 🎭 🎨 🎬 🎤 🎧 🎼 🎹 🥁 🎷 🎺 🎸 🪕 🎻 🎲 ♟️ 🎯 🎳 🎮 🕹️ 🎰 🧩 🪅 🎉 🎊 🎈 🎁 🪄 🪩") },
   { id: "objects", label: "사물 및 문구", icon: "💡", items: makeEmojiItems("💡 🔦 🕯️ 🪔 🧯 🛢️ 💸 💵 💴 💶 💷 💰 💳 💎 ⚖️ 🔧 🔨 ⚒️ 🛠️ ⛏️ 🪚 🔩 ⚙️ 🧰 🧲 🔬 🔭 🧪 🧫 🧬 💊 💉 🩹 🩺 🧻 🚽 🚿 🛁 🧼 🪥 🧴 🛒 🎁 🎈 🎀 🪄 🪅 🎊 🎉 🪩 🧸 🪆 🪡 🧵 🧶 📌 📍 📎 🖇️ 📏 📐 ✂️ 🖊️ 🖋️ ✒️ 📝 📚 📖 📓 📔 📒 📕 📗 📘 📙 📦 📫 📮 📧 ✉️ 💌 🗓️ 📅 📆 🗂️ 📂 📁 💻 🖥️ ⌨️ 🖱️ 🖨️ 📱 📷 📸 🎥 📺 📻 🔋 🔌 ⏰ ⌚ 🕰️ 🪞 🛏️ 🪑 🛋️ 🚪 🪟") },
-  { id: "symbols", label: "기호", icon: "♡", items: makeEmojiItems("❤️ 🩷 🧡 💛 💚 💙 🩵 💜 🖤 🤍 🤎 💔 ❤️‍🔥 ❤️‍🩹 💕 💞 💓 💗 💖 💘 💝 💟 ❣️ 💢 💥 💫 💦 💨 💤 💬 🗯️ 💭 ♨️ 💯 🔥 ✨ ⭐ 🌟 ⚡ ☀️ 🌙 ☁️ 🌈 ☔ ❄️ ☃️ ⚠️ 🚫 ⛔ ✅ ❌ ❎ ➕ ➖ ➗ ✖️ ♾️ 💠 🔰 🔱 ♻️ 🔆 🔅 🔔 🔕 🔒 🔓 🔑 🗝️ ♠️ ♥️ ♦️ ♣️ 🃏 🎴 🀄 🔴 🟠 🟡 🟢 🔵 🟣 ⚫ ⚪ 🟤 🟥 🟧 🟨 🟩 🟦 🟪 ⬛ ⬜ ◼️ ◻️ 🔶 🔷 🔸 🔹") },
+  { id: "symbols", label: "기호", icon: "❤️", items: makeEmojiItems("❤️ 🩷 🧡 💛 💚 💙 🩵 💜 🖤 🤍 🤎 💔 ❤️‍🔥 ❤️‍🩹 💕 💞 💓 💗 💖 💘 💝 💟 ❣️ 💢 💥 💫 💦 💨 💤 💬 🗯️ 💭 ♨️ 💯 🔥 ✨ ⭐ 🌟 ⚡ ☀️ 🌙 ☁️ 🌈 ☔ ❄️ ☃️ ⚠️ 🚫 ⛔ ✅ ❌ ❎ ➕ ➖ ➗ ✖️ ♾️ 💠 🔰 🔱 ♻️ 🔆 🔅 🔔 🔕 🔒 🔓 🔑 🗝️ ♠️ ♥️ ♦️ ♣️ 🃏 🎴 🀄 🔴 🟠 🟡 🟢 🔵 🟣 ⚫ ⚪ 🟤 🟥 🟧 🟨 🟩 🟦 🟪 ⬛ ⬜ ◼️ ◻️ 🔶 🔷 🔸 🔹") },
   { id: "flags", label: "깃발", icon: "🏳️", items: makeEmojiItems("🏁 🚩 🎌 🏴 🏳️ 🏳️‍🌈 🏳️‍⚧️ 🏴‍☠️ 🇰🇷 🇯🇵 🇺🇸 🇬🇧 🇫🇷 🇩🇪 🇮🇹 🇪🇸 🇨🇦 🇦🇺 🇳🇿 🇨🇳 🇹🇼 🇭🇰 🇸🇬 🇹🇭 🇻🇳 🇵🇭 🇮🇩 🇲🇾 🇮🇳 🇧🇷 🇲🇽 🇦🇷 🇨🇭 🇳🇱 🇸🇪 🇳🇴 🇩🇰 🇫🇮 🇺🇦 🇺🇳") }
 ];
 const EMOJI_SEARCH_TERMS: Record<string, string> = {
@@ -528,7 +527,7 @@ export default function Planner() {
   const [monthCursor,setMonthCursor]=useState(()=>today().slice(0,7));
   const [monthStickerDate,setMonthStickerDate]=useState<string|null>(null);
   const [monthStickerPending,setMonthStickerPending]=useState<string|null>(null);
-  const [monthStickerCategory,setMonthStickerCategory]=useState("recommended");
+  const [monthStickerCategory,setMonthStickerCategory]=useState("smileys");
   const [monthStickerSearch,setMonthStickerSearch]=useState("");
   const [monthRecentEmojis,setMonthRecentEmojis]=useState<string[]>([]);
   const [date,setDate]=useState(today());
@@ -972,7 +971,7 @@ export default function Planner() {
                   {EMOJI_CATEGORIES.map(category=><button key={category.id} type="button" role="tab" aria-selected={monthStickerCategory===category.id} className={monthStickerCategory===category.id?"active":""} title={category.label} aria-label={category.label} onClick={()=>{setMonthStickerCategory(category.id);setMonthStickerSearch("");}}>{category.icon}</button>)}
                 </div>
                 <div className="cover-emoji-results">
-                  <div className="cover-emoji-category-title">{monthStickerSearch.trim()?"검색 결과":monthStickerCategory==="recent"?"최근 사용":EMOJI_CATEGORIES.find(category=>category.id===monthStickerCategory)?.label??"추천 스티커"}</div>
+                  <div className="cover-emoji-category-title">{monthStickerSearch.trim()?"검색 결과":monthStickerCategory==="recent"?"최근 사용":EMOJI_CATEGORIES.find(category=>category.id===monthStickerCategory)?.label??"이모지"}</div>
                   {monthStickerItems.length>0?<div className="cover-emoji-grid">
                     {monthStickerItems.map((sticker,index)=><button type="button" key={`${sticker}-${index}`} title={EMOJI_SEARCH_TERMS[sticker]??sticker} aria-label={`${sticker} 스티커 추가`} onClick={()=>{addMonthSticker(sticker);setMonthRecentEmojis(current=>[sticker,...current.filter(value=>value!==sticker)].slice(0,32));}}>{sticker}</button>)}
                   </div>:<div className="cover-emoji-empty">{monthStickerSearch.trim()?"검색 결과가 없습니다.":"아직 사용한 이모지가 없습니다."}</div>}
