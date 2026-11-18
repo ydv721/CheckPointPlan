@@ -220,26 +220,9 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
   const fileInput=useRef<HTMLInputElement>(null);
   const backgroundInput=useRef<HTMLInputElement>(null);
   const [patternMenuOpen,setPatternMenuOpen]=useState(false);
-  const [emojiPickerOpen,setEmojiPickerOpen]=useState(false);
   const [emojiCategory,setEmojiCategory]=useState("smileys");
   const [emojiSearch,setEmojiSearch]=useState("");
   const [recentEmojis,setRecentEmojis]=useState<string[]>([]);
-  const emojiPickerRef=useRef<HTMLDivElement>(null);
-  const emojiPickerButtonRef=useRef<HTMLButtonElement>(null);
-  useEffect(()=>{
-    if(!emojiPickerOpen)return;
-    const handleOutsidePointerDown=(event:Event)=>{
-      const target=event.target as Node|null;
-      if(target&&!emojiPickerRef.current?.contains(target)&&!emojiPickerButtonRef.current?.contains(target))setEmojiPickerOpen(false);
-    };
-    const handleKeyDown=(event:KeyboardEvent)=>{if(event.key==="Escape")setEmojiPickerOpen(false);};
-    document.addEventListener("pointerdown",handleOutsidePointerDown);
-    document.addEventListener("keydown",handleKeyDown);
-    return()=>{
-      document.removeEventListener("pointerdown",handleOutsidePointerDown);
-      document.removeEventListener("keydown",handleKeyDown);
-    };
-  },[emojiPickerOpen]);
   const backgroundPanRef=useRef<{pointerId:number;startX:number;startY:number;originX:number;originY:number;overflowX:number;overflowY:number}|null>(null);
   const activePattern:CoverPattern=cover.backgroundPattern??"grid";
   const patternColor=cover.patternColor||(theme==="white"?"#788393":theme==="black"?"#A9B4D5":"#FFFFFF");
@@ -485,14 +468,11 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
         </div>)}
       </div>
 
-      <div className="cover-editor-section">
+      <div className="cover-editor-section cover-sticker-section">
+        <button type="button" className="outline-btn upload-btn cover-sticker-upload" onClick={()=>fileInput.current?.click()}><ImagePlus size={17}/> 스티커 이미지 업로드</button>
         <div className="cover-sticker-picker-anchor">
-          <div className="cover-editor-section-heading">
-            <span>스티커</span>
-            <button ref={emojiPickerButtonRef} type="button" className="cover-add-text cover-emoji-trigger" onClick={()=>{setEmojiPickerOpen(open=>!open);setEmojiSearch("");setEmojiCategory("smileys");}} aria-expanded={emojiPickerOpen} aria-haspopup="dialog" aria-label="이모지 추가"><Plus size={14}/> 이모지 추가</button>
-          </div>
-          {emojiPickerOpen&&<div ref={emojiPickerRef} className="cover-emoji-picker" role="dialog" aria-label="이모지 선택기">
-            <div className="cover-emoji-picker-header"><span>이모지 및 기호</span><button type="button" onClick={()=>setEmojiPickerOpen(false)} aria-label="이모지 창 닫기"><X size={17}/></button></div>
+          <div ref={emojiPickerRef} className="cover-emoji-picker" role="region" aria-label="이모지 선택기">
+            <div className="cover-emoji-picker-header"><span>이모지 및 기호</span></div>
             <label className="cover-emoji-search"><Search size={17}/><input autoFocus type="search" value={emojiSearch} onChange={e=>setEmojiSearch(e.target.value)} placeholder="이모지 검색"/></label>
             <div className="cover-emoji-tabs" role="tablist" aria-label="이모지 카테고리">
               <button type="button" role="tab" aria-selected={emojiCategory==="recent"} className={emojiCategory==="recent"?"active":""} title="최근 사용" aria-label="최근 사용" onClick={()=>{setEmojiCategory("recent");setEmojiSearch("");}}>🕘</button>
@@ -504,9 +484,8 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
                 {visibleEmojiItems.map((emoji,index)=><button key={`${emoji}-${index}`} type="button" title={EMOJI_SEARCH_TERMS[emoji]??emoji} aria-label={`${emoji} 스티커 추가`} onClick={()=>selectEmoji(emoji)}>{emoji}</button>)}
               </div>:<div className="cover-emoji-empty">{normalizedEmojiSearch?"검색 결과가 없어.":"아직 사용한 이모지가 없어."}</div>}
             </div>
-          </div>}
+          </div>
         </div>
-        <button type="button" className="outline-btn upload-btn cover-sticker-upload" onClick={()=>fileInput.current?.click()}><ImagePlus size={17}/> 스티커 이미지 업로드</button>
         <input ref={fileInput} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={e=>{const f=e.target.files?.[0];if(f)void handleUpload(f);e.target.value="";}}/>
       </div>
 
