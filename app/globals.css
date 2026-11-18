@@ -6408,3 +6408,57 @@ html,body{width:100%;overflow-x:clip}
   min-width: 100% !important;
   box-sizing: border-box !important;
 }
+
+
+/* Monthly sticker picker reuses the exact cover-editor emoji picker design. */
+.month-sticker-picker.cover-emoji-picker {
+  position: absolute !important;
+  top: 67px !important;
+  right: 24px !important;
+  left: auto !important;
+  width: min(430px, calc(100% - 32px)) !important;
+  max-height: min(490px, 68%) !important;
+  padding: 12px !important;
+  gap: 0 !important;
+  overflow: hidden !important;
+  border-radius: 13px !important;
+  box-shadow: 0 16px 42px #1f2b3d30 !important;
+}
+
+.month-sticker-picker .cover-emoji-tabs {
+  flex: 0 0 66px !important;
+  min-height: 66px !important;
+  overflow-x: auto !important;
+}
+
+.month-sticker-picker .cover-emoji-results {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+}
+
+.month-sticker-picker .cover-emoji-grid {
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+}
+
+.month-sticker-picker .cover-emoji-grid button {
+  height: 43px !important;
+  font-size: 27px !important;
+}
+
+@media (max-width: 780px) {
+  .month-sticker-picker.cover-emoji-picker {
+    position: fixed !important;
+    top: 12vh !important;
+    right: 12px !important;
+    left: 12px !important;
+    width: auto !important;
+    max-height: 72vh !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .month-sticker-picker .cover-emoji-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  }
+}
