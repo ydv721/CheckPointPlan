@@ -846,7 +846,9 @@ export default function Planner() {
               </div>;
             })}</div></div>
             <div className="paper-section key-section"><div className="section-heading"><span>FREE NOTE</span></div>
-              <textarea className="free-note-input" rows={10} aria-label="자유롭게 작성하는 노트" value={entry.freeNote} onChange={e=>setEntry(current=>({...current,freeNote:e.target.value}))}/>
+              <div className="free-note-paper">
+                <textarea className="free-note-input" rows={10} aria-label="자유롭게 작성하는 노트" value={entry.freeNote} onChange={e=>setEntry(current=>({...current,freeNote:e.target.value}))}/>
+              </div>
             </div>
             
           </section>
