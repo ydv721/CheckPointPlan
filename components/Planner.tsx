@@ -922,7 +922,7 @@ export default function Planner() {
                             </div>
                             {inMonth&&<button type="button" className={dayEntry.important?"month-day-important is-active":"month-day-important"} aria-label={dayEntry.important?"중요한 날 표시 해제":"중요한 날 표시"} aria-pressed={dayEntry.important} title="중요한 날" onClick={()=>updateMonthEntry(dayKey,{important:!dayEntry.important})}><Star size={13} fill={dayEntry.important?"currentColor":"none"}/></button>}
                           </div>
-                          <textarea className="month-day-note" rows={2} maxLength={100} aria-label={`${dayKey} 일정`} placeholder={inMonth?"일정 입력":""} value={dayEntry.note} disabled={!inMonth} onChange={e=>updateMonthEntry(dayKey,{note:e.target.value})}/>
+                          <textarea className="month-day-note" rows={2} maxLength={100} aria-label={`${dayKey} 일정`} value={dayEntry.note} disabled={!inMonth} onChange={e=>updateMonthEntry(dayKey,{note:e.target.value})}/>
 
                         </div>;
                       })}
