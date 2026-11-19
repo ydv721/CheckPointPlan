@@ -115,7 +115,6 @@ export default function NotebookLibrary({email,notebooks,coverPhotoUrls,loading,
       <main className="notebook-library-main">
         <div className="notebook-library-heading">
           <div><span className="eyebrow">MY NOTEBOOKS</span><h1>내 다이어리</h1><p>나만의 기록을 한곳에서 관리해 보세요.</p></div>
-          <button type="button" className="primary-btn notebook-library-create" onClick={onCreate}><Plus size={18}/> 새 다이어리</button>
         </div>
         {notice?<div className="notebook-library-notice" role="status">{notice}</div>:null}
         {loading?<div className="notebook-library-empty">다이어리를 불러오는 중입니다...</div>:notebooks.length===0?(
