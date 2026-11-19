@@ -3777,8 +3777,6 @@ html,body{width:100%;overflow-x:clip}
 
 .cover-editor-section {
   margin-top: 20px;
-  padding-top: 0;
-  border-top: 0 !important;
 }
 
 .cover-editor-section-heading {
@@ -3919,10 +3917,7 @@ html,body{width:100%;overflow-x:clip}
 }
 
 
-/* Remove the separator above the first cover editor section (after the menu slot). */
-.cover-editor > .cover-editor-section:nth-child(2) {
-  border-top: 0 !important;
-}
+
 
 
 /* CHECKPOINT cover signature */
@@ -8186,11 +8181,3 @@ html,body{width:100%;overflow-x:clip}
   box-shadow: none !important;
 }
 
-/* Remove all dividers between text editors and the sticker section. */
-.cover-editor .cover-object-editor {
-  border-bottom: 0 !important;
-}
-
-.cover-editor .cover-editor-section.cover-sticker-section {
-  border-top: 0 !important;
-}
