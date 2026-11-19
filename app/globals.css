@@ -7810,6 +7810,22 @@ html,body{width:100%;overflow-x:clip}
 }
 
 /* Shared right-side navigation and account panel. */
+.app-shell.planner-view > .app-sidebar-trigger,
+.app-shell.cover-view > .app-sidebar-trigger {
+  position:fixed;
+  top:12px;
+  right:16px;
+  z-index:1000;
+  border:1px solid var(--line);
+  background:var(--paper);
+  box-shadow:0 3px 12px rgba(24,38,58,.10);
+}
+.app-shell.planner-view > .app-sidebar-trigger:hover,
+.app-shell.cover-view > .app-sidebar-trigger:hover,
+.app-shell.planner-view > .app-sidebar-trigger[aria-expanded="true"],
+.app-shell.cover-view > .app-sidebar-trigger[aria-expanded="true"] {
+  background:var(--soft);
+}
 .app-sidebar-trigger {
   width:42px;
   height:42px;
