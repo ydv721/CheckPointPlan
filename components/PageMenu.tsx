@@ -75,24 +75,24 @@ export default function PageMenu({
     <>
       <div className="page-menu-slot" ref={anchorRef}>
         <div className="page-menu-anchor">
-        <button
-          type="button"
-          className="page-menu-trigger"
-          aria-label="다이어리 메뉴"
-          aria-haspopup="menu"
-          aria-expanded={open}
-          title="메뉴"
-          onClick={() => {
-            if (open) {
-              setOpen(false);
-              return;
-            }
-            updatePosition();
-            setOpen(true);
-          }}
-        >
-          <MoreHorizontal size={20} />
-        </button>
+          <button
+            type="button"
+            className="page-menu-trigger"
+            aria-label="다이어리 메뉴"
+            aria-haspopup="menu"
+            aria-expanded={open}
+            title="메뉴"
+            onClick={() => {
+              if (open) {
+                setOpen(false);
+                return;
+              }
+              updatePosition();
+              setOpen(true);
+            }}
+          >
+            <MoreHorizontal size={20} />
+          </button>
         </div>
       </div>
       {open && position && typeof document !== "undefined" && createPortal(
