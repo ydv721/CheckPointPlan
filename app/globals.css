@@ -7614,7 +7614,8 @@ html,body{width:100%;overflow-x:clip}
 }
 
 /* CHECKPOINT notebook library: cover-first bookshelf layout. */
-.notebook-library-shell { min-height:100vh; background:var(--bg); color:var(--ink); }
+.notebook-library-shell { min-height:100vh; background:var(--bg); color:var(--ink); transition:background .22s ease,color .22s ease; }
+.notebook-library-shell[data-theme="dark"] .notebook-book-add { background:rgba(255,255,255,.035); }
 .notebook-library-header { width:min(1320px,calc(100% - 72px)); height:78px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); }
 .notebook-library-brand { display:flex; align-items:center; gap:10px; }
 .notebook-library-brand > span:last-child { display:flex; flex-direction:column; gap:2px; }
@@ -7849,12 +7850,12 @@ html,body{width:100%;overflow-x:clip}
   display:flex;
   flex-direction:column;
   box-sizing:border-box;
-  width:min(280px,calc(100vw - 18px));
+  width:min(248px,calc(100vw - 18px));
   height:100%;
   max-height:100dvh;
   overflow-y:auto;
   overscroll-behavior:contain;
-  padding:16px 16px 20px;
+  padding:16px 13px 20px;
   border-left:0;
   background:var(--paper);
   color:var(--ink);
@@ -7905,14 +7906,14 @@ html,body{width:100%;overflow-x:clip}
   min-height:48px;
   display:flex;
   align-items:center;
-  gap:12px;
-  padding:0 12px;
+  gap:10px;
+  padding:0 9px;
   border:0;
   border-radius:11px;
   background:transparent;
   color:var(--ink);
   font:inherit;
-  font-size:13px;
+  font-size:12px;
   font-weight:800;
   text-align:left;
 }
@@ -7954,8 +7955,8 @@ html,body{width:100%;overflow-x:clip}
 }
 @media(max-width:480px) {
   .app-sidebar-panel {
-    width:min(280px,calc(100vw - 18px));
-    padding:18px 16px 18px;
+    width:min(248px,calc(100vw - 18px));
+    padding:18px 13px 18px;
   }
 }
 
@@ -7965,9 +7966,9 @@ html,body{width:100%;overflow-x:clip}
   min-height:48px;
   display:flex;
   align-items:center;
-  gap:12px;
+  gap:9px;
   margin-top:6px;
-  padding:0 12px;
+  padding:0 9px;
   border:0;
   border-radius:11px;
   background:transparent;
@@ -7979,6 +7980,10 @@ html,body{width:100%;overflow-x:clip}
 }
 .app-sidebar-theme-toggle:hover { background:var(--soft); }
 .app-sidebar-theme-toggle > span:first-of-type { flex:1; }
+.app-sidebar-navigation .app-sidebar-theme-toggle > .app-sidebar-switch {
+  flex:0 0 38px;
+  width:38px;
+}
 .app-sidebar-switch {
   position:relative;
   width:38px;
@@ -8015,14 +8020,14 @@ html,body{width:100%;overflow-x:clip}
   min-height:48px;
   display:flex;
   align-items:center;
-  gap:12px;
-  padding:0 12px;
+  gap:8px;
+  padding:0 9px;
   border:0;
   border-radius:11px;
   background:transparent;
   color:var(--ink);
   font:inherit;
-  font-size:13px;
+  font-size:12px;
   font-weight:800;
   text-align:left;
 }
@@ -8034,7 +8039,7 @@ html,body{width:100%;overflow-x:clip}
   display:flex;
   flex-direction:column;
   gap:4px;
-  margin:4px 0 8px 29px;
+  margin:4px 0 8px 25px;
   padding:7px;
   border:1px solid var(--line);
   border-radius:11px;
@@ -8098,5 +8103,5 @@ html,body{width:100%;overflow-x:clip}
 }
 .app-sidebar-custom-theme input[type="color"] { padding:3px; }
 @media(max-width:480px) {
-  .app-sidebar-theme-options { margin-left:25px; }
+  .app-sidebar-theme-options { margin-left:22px; }
 }
