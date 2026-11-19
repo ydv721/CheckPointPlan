@@ -10,6 +10,7 @@ create table if not exists public.planner_entries (
   todos jsonb not null default '[]'::jsonb,
   memo text not null default '',
   timetable jsonb not null default '{}'::jsonb,
+  color_labels jsonb not null default '["","","","",""]'::jsonb,
   focus text not null default '',
   keypoint text not null default '',
   created_at timestamptz not null default now(),
