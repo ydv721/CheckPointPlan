@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent, type PointerEvent as ReactPointerEvent } from "react";
 import type { User } from "@supabase/supabase-js";
-import PageMenu from "@/components/PageMenu";
+import AppSidebar from "@/components/AppSidebar";
 import PlannerSpread from "@/components/PlannerSpread";
 import NotebookTypeSelection, { type NotebookType } from "@/components/NotebookTypeSelection";
 import NotebookLibrary, { type NotebookRecord } from "@/components/NotebookLibrary";
 import {
-  BookOpen, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight,
-  Expand, ImagePlus, LogOut, Menu, Plus, RotateCw, Star,
-  Sparkles, Trash2, X, Search, CircleHelp, CheckCircle2, Palette
+  CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight,
+  Expand, ImagePlus, Plus, RotateCw, Star,
+  Sparkles, Trash2, X, Search, CircleHelp, CheckCircle2
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { defaultCover, emptyEntry, themes, type Cover, type CoverItem, type CoverPattern, type Entry, type FocusItem, type MonthEntry, type ThemeName, type Todo, type TodoStatus } from "@/lib/types";
@@ -244,7 +244,6 @@ function Timetable({ value, onChange, highlighter, tool }: {
 function CoverPage({cover,setCover,theme,handleUpload,photoUrls,menu}: {
   cover:Cover;setCover:React.Dispatch<React.SetStateAction<Cover>>;
   theme:ThemeName;handleUpload:(file:File,asBackground?:boolean)=>Promise<void>;photoUrls:Record<string,string>;
-  menu:React.ReactNode;
 }) {
   const fileInput=useRef<HTMLInputElement>(null);
   const backgroundInput=useRef<HTMLInputElement>(null);
@@ -447,7 +446,6 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls,menu}: {
       </div>
     </div></div>
     <div className="cover-editor">
-      {menu}
       <div className="cover-editor-section">
         <div className="cover-editor-section-heading"><span>표지 배경</span></div>
         <div className="cover-background-options">
@@ -559,7 +557,6 @@ export default function Planner() {
   const [showDeleteAccount,setShowDeleteAccount]=useState(false);
   const [deleteEmail,setDeleteEmail]=useState("");
   const [deletingAccount,setDeletingAccount]=useState(false);
-  const [mobileMenu,setMobileMenu]=useState(false);
   const [loading,setLoading]=useState(false);
   const [hydrated,setHydrated]=useState(false);
   const [settingsHydrated,setSettingsHydrated]=useState(false);
@@ -997,6 +994,26 @@ export default function Planner() {
     }
   }
 
+  const deleteAccountModal=showDeleteAccount&&user?(
+    <div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget&&!deletingAccount)setShowDeleteAccount(false)}} role="presentation">
+      <section className="delete-account-modal" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
+        <div className="delete-account-icon"><Trash2 size={22}/></div>
+        <div className="eyebrow">ACCOUNT DELETION</div>
+        <h2 id="delete-account-title">회원 탈퇴</h2>
+        <p>회원 탈퇴를 진행하면 계정과 저장된 플래너 내용, 표지 이미지가 영구적으로 삭제됩니다. 삭제한 정보는 복구할 수 없습니다.</p>
+        <label className="delete-confirm-label">확인을 위해 로그인한 이메일 주소를 입력해 주세요.
+          <input type="email" autoComplete="off" value={deleteEmail} onChange={e=>setDeleteEmail(e.target.value)} placeholder="로그인한 이메일 주소"/>
+        </label>
+        <div className="delete-account-actions">
+          <button type="button" className="outline-btn" disabled={deletingAccount} onClick={()=>{setShowDeleteAccount(false);setDeleteEmail("");}}>취소</button>
+          <button type="button" className="delete-confirm-btn" disabled={deletingAccount||deleteEmail.trim().toLowerCase()!==user.email?.toLowerCase()} onClick={()=>void deleteAccount()}>
+            {deletingAccount?"삭제 처리 중...":"계정 영구 삭제"}
+          </button>
+        </div>
+      </section>
+    </div>
+  ):null;
+
   function updateTodo(id:string,patch:Partial<Entry["todos"][number]>) {
     setEntry(v=>({...v,todos:v.todos.map(item=>item.id===id?{...item,...patch}:item)}));
   }
@@ -1064,7 +1081,6 @@ export default function Planner() {
     setNotebookTypeChosen(false);
     
     setNotebookTypeNotice("");
-    setMobileMenu(false);
   }
 
   async function createNotebook(type: NotebookType) {
@@ -1119,27 +1135,14 @@ export default function Planner() {
     setView("planner");
     setPlannerPage("day");
     setDate(today());
-    setMobileMenu(false);
   }
-
-  const pageMenu=(
-    <PageMenu
-      email={user?.email??""}
-      view={view}
-      themeStyle={vars}
-      onViewChange={setView}
-      onOpenSettings={()=>setShowSettings(true)}
-      onOpenNotebookList={()=>{void openNotebookList();}}
-      onSignOut={()=>{void signOut();}}
-      onDeleteAccount={()=>{setDeleteEmail("");setShowDeleteAccount(true);}}
-    />
-  );
 
   if(checking)return <div className="boot-screen"><AppIcon/><h1>CHECKPOINT</h1><p>CHECKPOINT를 불러오는 중입니다...</p></div>;
   if(!user)return <AuthScreen onUser={beginAuthTransition}/>;
   if(!activeNotebookId)return <>
     <NotebookLibrary
       email={user.email??""}
+      themeStyle={vars}
       notebooks={notebooks}
       coverPhotoUrls={notebookCoverPhotoUrls}
       loading={libraryLoading}
@@ -1147,7 +1150,9 @@ export default function Planner() {
       onCreate={()=>{setNotebookTypeNotice("");setNotebookTypeChosen(true);}}
       onOpen={notebook=>{void openNotebook(notebook);}}
       onSignOut={()=>{void signOut();}}
+      onDeleteAccount={()=>{setDeleteEmail("");setShowDeleteAccount(true);}}
     />
+    {deleteAccountModal}
     {notebookTypeChosen&&<NotebookTypeSelection
       themeStyle={vars}
       notice={notebookTypeNotice}
@@ -1164,15 +1169,17 @@ export default function Planner() {
   return <div className={view==="planner"?"app-shell planner-view":"app-shell cover-view"} style={vars}>
     <header className="site-header"><div className="header-inner">
       <button className="brand" onClick={()=>setView("planner")}><span className="brand-lockup"><AppIcon/><span>CHECKPOINT</span></span><small>YOUR PACE, YOUR CHECKPOINT</small></button>
-      <nav className={mobileMenu?"nav-links open":"nav-links"} aria-label="페이지 이동">
-        <button className={view==="planner"?"nav-active":""} onClick={()=>{setView("planner");setMobileMenu(false);}}><BookOpen size={17}/> 플래너</button>
-        <button className={view==="cover"?"nav-active":""} onClick={()=>{setView("cover");setMobileMenu(false);}}><Sparkles size={17}/> 표지 꾸미기</button>
-      </nav>
       <div className="header-actions">
-        <div className="user-badge"><span className="user-dot"/>{user.email}</div>
-        <button className="icon-btn" aria-label="테마 설정" title="테마 설정" onClick={()=>setShowSettings(true)}><Palette size={19}/></button>
-        <button className="signout-btn" onClick={()=>void signOut()} title="로그아웃"><LogOut size={17}/><span>로그아웃</span></button>
-        <button className="icon-btn mobile-menu" aria-label="메뉴" onClick={()=>setMobileMenu(!mobileMenu)}><Menu size={21}/></button>
+        <AppSidebar
+          email={user.email??""}
+          currentView={view}
+          themeStyle={vars}
+          onOpenNotebookList={()=>{void openNotebookList();}}
+          onViewChange={setView}
+          onOpenSettings={()=>setShowSettings(true)}
+          onSignOut={()=>{void signOut();}}
+          onDeleteAccount={()=>{setDeleteEmail("");setShowDeleteAccount(true);}}
+        />
       </div></div></header>
 
     <main className="main-area">
@@ -1180,12 +1187,11 @@ export default function Planner() {
       {alert&&<div className="message-banner" role="alert"><CircleHelp size={17}/><span>{alert}</span><button aria-label="알림 닫기" onClick={()=>setAlert("")}><X size={15}/></button></div>}
       <div className="workspace-shell">
         <div className="workspace-canvas">
-      {view==="cover"? <CoverPage cover={cover} setCover={setCover} theme={theme} handleUpload={handleUpload} photoUrls={photoUrls} menu={pageMenu}/> : <>
+      {view==="cover"? <CoverPage cover={cover} setCover={setCover} theme={theme} handleUpload={handleUpload} photoUrls={photoUrls}/> : <>
         {loading?<div className="page-loading">페이지를 불러오는 중입니다...</div>:plannerPage==="month" ? (
           <PlannerSpread className="book-frame month-book-frame">
             <div className="book-spine" aria-hidden="true">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
             <section className="paper-page month-page">
-              {pageMenu}
               <div className="month-page-header">
                 <div className="month-page-heading">
                   <div className="month-page-title-row">
@@ -1344,7 +1350,6 @@ export default function Planner() {
           </section>
           <section className="paper-page right-page">
             <span className="sr-only" role="status" aria-live="polite">{status}</span>
-            {pageMenu}
             <div className="right-top"><div className="section-heading todo-header">
               <div className="todo-heading-group"><span>TO DO LIST</span></div>
             </div>
@@ -1379,23 +1384,7 @@ export default function Planner() {
       </div>
     </main>
 
-    {showDeleteAccount&&<div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget&&!deletingAccount)setShowDeleteAccount(false)}} role="presentation">
-      <section className="delete-account-modal" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
-        <div className="delete-account-icon"><Trash2 size={22}/></div>
-        <div className="eyebrow">ACCOUNT DELETION</div>
-        <h2 id="delete-account-title">회원 탈퇴</h2>
-        <p>회원 탈퇴를 진행하면 계정과 저장된 플래너 내용, 표지 이미지가 영구적으로 삭제됩니다. 삭제한 정보는 복구할 수 없습니다.</p>
-        <label className="delete-confirm-label">확인을 위해 로그인한 이메일 주소를 입력해 주세요.
-          <input type="email" autoComplete="off" value={deleteEmail} onChange={e=>setDeleteEmail(e.target.value)} placeholder="로그인한 이메일 주소"/>
-        </label>
-        <div className="delete-account-actions">
-          <button type="button" className="outline-btn" disabled={deletingAccount} onClick={()=>{setShowDeleteAccount(false);setDeleteEmail("");}}>취소</button>
-          <button type="button" className="delete-confirm-btn" disabled={deletingAccount||deleteEmail.trim().toLowerCase()!==user?.email?.toLowerCase()} onClick={()=>void deleteAccount()}>
-            {deletingAccount?"삭제 처리 중...":"계정 영구 삭제"}
-          </button>
-        </div>
-      </section>
-    </div>}
+    {deleteAccountModal}
 
     {showSettings&&<div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setShowSettings(false)}} role="presentation">
       <section className="settings-modal" role="dialog" aria-modal="true" aria-label="테마 설정"><div className="settings-header"><div><div className="eyebrow">MAKE IT FEEL LIKE YOU</div><h2>테마 설정</h2></div><button className="icon-btn" aria-label="닫기" onClick={()=>setShowSettings(false)}><X size={21}/></button></div>
