@@ -386,7 +386,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls,menu}: {
   const updateItem=(id:string,patch:Partial<CoverItem>)=>setCover(c=>({...c,items:c.items.map(item=>item.id===id?{...item,...patch}:item)}));
   const removeItem=(id:string)=>{setCover(c=>({...c,items:c.items.filter(item=>item.id!==id)}));setSelectedItemId(current=>current===id?null:current);};
 
-  return <section className="cover-layout">
+  return <section className="cover-layout planner-spread">
     <div className="cover-stage"><div className="spiral-cover">
       <div className="spiral-binding">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
       <div className={`cover-art cover-${theme}`} style={{backgroundColor:cover.backgroundColor||undefined}} onPointerDown={e=>{if(e.target===e.currentTarget)setSelectedItemId(null);}}>
@@ -443,7 +443,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls,menu}: {
       </div>
     </div></div>
     <div className="cover-editor">
-      <div className="cover-menu-slot">{menu}</div>
+      {menu}
       <div className="cover-editor-section">
         <div className="cover-editor-section-heading"><span>표지 배경</span></div>
         <div className="cover-background-options">
@@ -917,9 +917,9 @@ export default function Planner() {
         <div className="workspace-canvas">
       {view==="cover"? <CoverPage cover={cover} setCover={setCover} theme={theme} handleUpload={handleUpload} photoUrls={photoUrls} menu={pageMenu}/> : <>
         {loading?<div className="page-loading">페이지를 불러오는 중입니다...</div>:plannerPage==="month" ? (
-          <div className="book-frame month-book-frame">
+          <div className="book-frame month-book-frame planner-spread">
             <div className="book-spine" aria-hidden="true">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
-            <section className="paper-page month-page">
+            <section className="paper-page month-page">\n              {pageMenu}
               <div className="month-page-header">
                 <div className="month-page-heading">
                   <div className="month-page-title-row">
@@ -944,7 +944,7 @@ export default function Planner() {
                       <Plus size={12}/> 스티커 추가
                     </button>
                   )}
-                  {pageMenu}
+                  
                 </div>
               </div>
               <div className="month-spread-grid">
@@ -1030,7 +1030,7 @@ export default function Planner() {
             </div>
           </div>
         ) : (
-          <div className="book-frame day-book-frame">
+          <div className="book-frame day-book-frame planner-spread">
           <div className="book-spine" aria-hidden="true">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
           <section className="paper-page left-page">
             <div className="page-date">
@@ -1076,12 +1076,12 @@ export default function Planner() {
               </div>
             </div>
           </section>
-          <section className="paper-page right-page"><div className="right-top"><div className="section-heading todo-header">
+          <section className="paper-page right-page">
+            <span className="sr-only" role="status" aria-live="polite">{status}</span>
+            {pageMenu}
+            <div className="right-top"><div className="section-heading todo-header">
               <div className="todo-heading-group"><span>TO DO LIST</span></div>
-              <div className="todo-tools">
-                <span className="sr-only" role="status" aria-live="polite">{status}</span>
-                {pageMenu}
-              </div>
+              
             </div>
             <div className="todo-list">{entry.todos.slice(0,7).map((todo,idx)=>{
               const todoStatus:TodoStatus=todo.status??(todo.checked?"done":"todo");
