@@ -1,7 +1,8 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { BookOpen, BookText, CalendarDays, CheckSquare, Plus, LogOut, Clock3 } from "lucide-react";
+import { BookOpen, BookText, CalendarDays, CheckSquare, Plus, Clock3 } from "lucide-react";
+import AppSidebar from "@/components/AppSidebar";
 import type { NotebookType } from "@/components/NotebookTypeSelection";
 import { defaultCover, themes, type Cover, type ThemeName } from "@/lib/types";
 
@@ -18,6 +19,7 @@ export type NotebookRecord = {
 
 type Props = {
   email: string;
+  themeStyle: CSSProperties;
   notebooks: NotebookRecord[];
   coverPhotoUrls: Record<string, string>;
   loading: boolean;
@@ -25,6 +27,7 @@ type Props = {
   onCreate: () => void;
   onOpen: (notebook: NotebookRecord) => void;
   onSignOut: () => void;
+  onDeleteAccount: () => void;
 };
 
 const TYPES: Record<NotebookType,{label:string;description:string;icon:typeof BookOpen}> = {
@@ -99,7 +102,7 @@ function NotebookCoverPreview({notebook,photoUrls}:{notebook:NotebookRecord;phot
   </span>;
 }
 
-export default function NotebookLibrary({email,notebooks,coverPhotoUrls,loading,notice,onCreate,onOpen,onSignOut}:Props) {
+export default function NotebookLibrary({email,themeStyle,notebooks,coverPhotoUrls,loading,notice,onCreate,onOpen,onSignOut,onDeleteAccount}:Props) {
   return (
     <div className="notebook-library-shell">
       <header className="notebook-library-header">
@@ -107,10 +110,13 @@ export default function NotebookLibrary({email,notebooks,coverPhotoUrls,loading,
           <span className="brand-icon"><BookOpen size={18}/></span>
           <span><strong>CHECKPOINT</strong><small>YOUR PACE, YOUR CHECKPOINT</small></span>
         </div>
-        <div className="notebook-library-account">
-          <span>{email}</span>
-          <button type="button" onClick={onSignOut}><LogOut size={15}/> 로그아웃</button>
-        </div>
+        <AppSidebar
+          email={email}
+          currentView="library"
+          themeStyle={themeStyle}
+          onSignOut={onSignOut}
+          onDeleteAccount={onDeleteAccount}
+        />
       </header>
       <main className="notebook-library-main">
         <div className="notebook-library-heading">
