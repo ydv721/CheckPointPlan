@@ -6927,109 +6927,6 @@ html,body{width:100%;overflow-x:clip}
 }
 
 
-/* Replace the detached action rail with a compact menu on each page. */
-.page-menu-anchor {
-  position: relative;
-  z-index: 80;
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-}
-
-.page-menu-trigger {
-  display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
-  width: 30px !important;
-  height: 30px !important;
-  min-width: 30px !important;
-  padding: 0 !important;
-  border: 1px solid var(--line) !important;
-  border-radius: 50% !important;
-  background: transparent !important;
-  color: var(--ink) !important;
-  cursor: pointer;
-  transition: background .15s ease, border-color .15s ease, color .15s ease;
-}
-
-.page-menu-trigger:hover,
-.page-menu-trigger[aria-expanded="true"] {
-  border-color: var(--accent) !important;
-  background: var(--soft) !important;
-  color: var(--accent) !important;
-}
-
-.page-menu-trigger:focus-visible,
-.page-menu-popover button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.page-menu-popover {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: auto;
-  z-index: 99999;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  width: 205px;
-  min-width: 0 !important;
-  max-width: calc(100vw - 24px);
-  max-height: calc(100dvh - 24px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 7px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--paper);
-  color: var(--ink);
-  box-shadow: 0 12px 30px #172b4424;
-}
-
-.page-menu-popover button {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 38px;
-  padding: 8px 10px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--ink);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 750;
-  text-align: left;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.page-menu-popover button:hover {
-  background: var(--soft);
-}
-
-.page-menu-account {
-  padding: 8px 10px;
-  color: var(--ink);
-  font-size: 10px;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-  opacity: .62;
-}
-
-.page-menu-divider {
-  height: 1px;
-  margin: 3px 4px;
-  background: var(--line);
-}
-
-.page-menu-popover button.page-menu-danger {
-  color: #B65E6A;
-}
-
 .todo-header {
   position: relative;
   z-index: 25;
@@ -7105,10 +7002,6 @@ html,body{width:100%;overflow-x:clip}
 
   .cover-editor {
     padding-top: 48px !important;
-  }
-
-  .page-menu-popover {
-    min-width: 190px;
   }
 
   .header-actions > .icon-btn:not(.mobile-menu),
@@ -7233,8 +7126,6 @@ html,body{width:100%;overflow-x:clip}
 :root {
   --checkpoint-spread-max-width: 1120px;
   --checkpoint-spread-ratio: 210 / 148;
-  --checkpoint-page-menu-size: 30px;
-  --checkpoint-page-menu-inset: 14px;
 }
 
 @media (min-width: 781px) {
@@ -7331,45 +7222,6 @@ html,body{width:100%;overflow-x:clip}
   left: 0 !important;
 }
 
-.page-menu-slot {
-  position: absolute !important;
-  top: var(--checkpoint-page-menu-inset) !important;
-  right: var(--checkpoint-page-menu-inset) !important;
-  z-index: 80 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-end !important;
-  width: auto !important;
-  height: var(--checkpoint-page-menu-size) !important;
-  pointer-events: none;
-}
-
-.page-menu-slot > .page-menu-anchor {
-  pointer-events: auto;
-}
-
-.page-menu-anchor {
-  position: relative;
-  z-index: 80;
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-}
-
-.page-menu-trigger {
-  width: var(--checkpoint-page-menu-size) !important;
-  height: var(--checkpoint-page-menu-size) !important;
-  min-width: var(--checkpoint-page-menu-size) !important;
-  min-height: var(--checkpoint-page-menu-size) !important;
-}
-
-@media (max-width: 780px) {
-  .page-menu-slot {
-    top: 12px !important;
-    right: 12px !important;
-  }
-}
-
 /* Shared page sizing on tablet: all three views keep the same open-spread canvas. */
 @media (min-width: 561px) and (max-width: 780px) {
   .workspace-canvas > .planner-spread.book-frame.day-book-frame,
@@ -7440,11 +7292,6 @@ html,body{width:100%;overflow-x:clip}
     flex: 0 0 820px !important;
     margin: 0 32px 0 0 !important;
   }
-}
-
-/* Keep MONTH actions clear of the shared top-right menu. */
-.month-page-controls {
-  padding-right: calc(var(--checkpoint-page-menu-size) + var(--checkpoint-page-menu-inset) + 4px) !important;
 }
 
 /* MONTH header buttons: slightly larger touch targets. */
@@ -7773,9 +7620,6 @@ html,body{width:100%;overflow-x:clip}
 .notebook-library-brand > span:last-child { display:flex; flex-direction:column; gap:2px; }
 .notebook-library-brand strong { font-size:18px; font-weight:900; letter-spacing:.04em; }
 .notebook-library-brand small { font-size:8px; font-weight:850; letter-spacing:.12em; color:var(--accent); }
-.notebook-library-account { display:flex; align-items:center; gap:14px; font-size:11px; }
-.notebook-library-account > span { max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; opacity:.7; }
-.notebook-library-account button { min-height:36px; display:flex; align-items:center; gap:7px; padding:0 12px; border:1px solid var(--line); border-radius:9px; background:var(--paper); color:var(--ink); font-size:11px; font-weight:750; }
 .notebook-library-main { width:min(1120px,calc(100% - 72px)); margin:0 auto; padding:58px 0 80px; }
 .notebook-library-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin-bottom:34px; }
 .notebook-library-heading h1 { margin:9px 0 7px; font-size:32px; font-weight:900; letter-spacing:-.055em; }
@@ -7813,7 +7657,6 @@ html,body{width:100%;overflow-x:clip}
 @media(max-width:780px) {
  .notebook-library-header { width:calc(100% - 32px); height:68px; }
  .notebook-library-brand strong { font-size:15px; }
- .notebook-library-account > span { display:none; }
  .notebook-library-main { width:calc(100% - 36px); padding:38px 0 54px; }
  .notebook-library-heading { align-items:flex-start; flex-direction:column; margin-bottom:25px; }
  .notebook-library-heading h1 { font-size:26px; }
@@ -7964,3 +7807,178 @@ html,body{width:100%;overflow-x:clip}
     padding: 11px 13px;
   }
 }
+
+/* Shared right-side navigation and account panel. */
+.app-sidebar-trigger {
+  width:42px;
+  height:42px;
+  min-width:42px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:0;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--paper);
+  color:var(--ink);
+  transition:background .16s ease,border-color .16s ease,color .16s ease;
+}
+.app-sidebar-trigger:hover,
+.app-sidebar-trigger[aria-expanded="true"] {
+  border-color:var(--accent);
+  background:var(--soft);
+  color:var(--accent);
+}
+.app-sidebar-trigger:focus-visible,
+.app-sidebar-close:focus-visible,
+.app-sidebar-navigation button:focus-visible,
+.app-sidebar-footer button:focus-visible {
+  outline:2px solid var(--accent);
+  outline-offset:3px;
+}
+.app-sidebar-backdrop {
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  display:flex;
+  justify-content:flex-end;
+  background:rgba(22,31,46,.28);
+  animation:checkpoint-sidebar-fade .18s ease both;
+}
+.app-sidebar-panel {
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  width:min(390px,calc(100vw - 18px));
+  height:100%;
+  max-height:100dvh;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  padding:28px 25px 24px;
+  border-left:1px solid var(--line);
+  background:var(--paper);
+  color:var(--ink);
+  box-shadow:-18px 0 48px rgba(24,38,58,.16);
+  animation:checkpoint-sidebar-slide .22s cubic-bezier(.2,.75,.25,1) both;
+}
+.app-sidebar-header {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px;
+  padding-bottom:22px;
+  border-bottom:1px solid var(--line);
+}
+.app-sidebar-eyebrow {
+  color:var(--accent);
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.18em;
+}
+.app-sidebar-header h2 {
+  margin:7px 0 0;
+  font-size:25px;
+  font-weight:900;
+  letter-spacing:-.055em;
+}
+.app-sidebar-close {
+  width:38px;
+  height:38px;
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+  border:1px solid var(--line);
+  border-radius:11px;
+  background:transparent;
+  color:var(--ink);
+}
+.app-sidebar-close:hover { background:var(--soft); }
+.app-sidebar-account {
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+  padding:22px 1px;
+  border-bottom:1px solid var(--line);
+}
+.app-sidebar-section-label {
+  color:var(--accent);
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.14em;
+}
+.app-sidebar-account strong {
+  color:var(--ink);
+  font-size:13px;
+  font-weight:800;
+  line-height:1.6;
+  overflow-wrap:anywhere;
+}
+.app-sidebar-navigation {
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  padding:22px 0;
+  border-bottom:1px solid var(--line);
+}
+.app-sidebar-navigation > .app-sidebar-section-label { margin:0 0 7px 2px; }
+.app-sidebar-navigation button,
+.app-sidebar-current,
+.app-sidebar-footer button {
+  width:100%;
+  min-height:48px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:0 12px;
+  border:0;
+  border-radius:11px;
+  background:transparent;
+  color:var(--ink);
+  font:inherit;
+  font-size:13px;
+  font-weight:800;
+  text-align:left;
+}
+.app-sidebar-navigation button:hover,
+.app-sidebar-footer button:hover { background:var(--soft); }
+.app-sidebar-navigation button > span,
+.app-sidebar-current > span,
+.app-sidebar-footer button > span { flex:1; }
+.app-sidebar-arrow { margin-left:auto; color:var(--accent); opacity:.7; }
+.app-sidebar-current {
+  background:var(--soft);
+  color:var(--accent);
+  cursor:default;
+}
+.app-sidebar-current small {
+  margin-left:auto;
+  color:var(--accent);
+  font-size:10px;
+  font-weight:800;
+  opacity:.75;
+}
+.app-sidebar-footer {
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  margin-top:auto;
+  padding-top:20px;
+}
+.app-sidebar-footer button { min-height:46px; }
+.app-sidebar-footer .app-sidebar-delete { color:#B65E6A; }
+.app-sidebar-footer .app-sidebar-delete:hover { background:#B65E6A12; }
+@keyframes checkpoint-sidebar-fade {
+  from { opacity:0; }
+  to { opacity:1; }
+}
+@keyframes checkpoint-sidebar-slide {
+  from { transform:translateX(28px); opacity:.75; }
+  to { transform:translateX(0); opacity:1; }
+}
+@media(max-width:480px) {
+  .app-sidebar-panel {
+    width:min(100%,390px);
+    padding:24px 20px 20px;
+  }
+}
+
