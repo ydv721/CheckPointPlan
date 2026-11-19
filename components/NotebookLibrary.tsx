@@ -28,7 +28,6 @@ type Props = {
   onOpen: (notebook: NotebookRecord) => void;
   onSignOut: () => void;
   onDeleteAccount: () => void;
-  onOpenSettings: () => void;
 };
 
 const TYPES: Record<NotebookType,{label:string;description:string;icon:typeof BookOpen}> = {
@@ -103,7 +102,7 @@ function NotebookCoverPreview({notebook,photoUrls}:{notebook:NotebookRecord;phot
   </span>;
 }
 
-export default function NotebookLibrary({email,themeStyle,notebooks,coverPhotoUrls,loading,notice,onCreate,onOpen,onSignOut,onDeleteAccount,onOpenSettings}:Props) {
+export default function NotebookLibrary({email,themeStyle,notebooks,coverPhotoUrls,loading,notice,onCreate,onOpen,onSignOut,onDeleteAccount}:Props) {
   return (
     <div className="notebook-library-shell">
       <header className="notebook-library-header">
@@ -117,7 +116,6 @@ export default function NotebookLibrary({email,themeStyle,notebooks,coverPhotoUr
           themeStyle={themeStyle}
           onSignOut={onSignOut}
           onDeleteAccount={onDeleteAccount}
-          onOpenSettings={onOpenSettings}
         />
       </header>
       <main className="notebook-library-main">
