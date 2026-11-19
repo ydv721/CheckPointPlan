@@ -6791,3 +6791,137 @@ html,body{width:100%;overflow-x:clip}
     grid-row: 1 !important;
   }
 }
+
+/* 2026-11-19: Enlarge the planner spreads and cover previews together. */
+@media (min-width: 781px) {
+  .app-shell.planner-view,
+  .app-shell.cover-view {
+    --checkpoint-spread-width: min(1120px, calc(100vw - 320px), calc(141.9dvh - 68px));
+  }
+
+  .workspace-canvas > .book-frame.day-book-frame,
+  .workspace-canvas > .book-frame.month-book-frame,
+  .workspace-canvas > .cover-layout {
+    width: var(--checkpoint-spread-width) !important;
+    min-width: 0 !important;
+    max-width: 1120px !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    aspect-ratio: 210 / 148 !important;
+    flex: 0 1 var(--checkpoint-spread-width) !important;
+    align-self: center !important;
+    margin: auto !important;
+    box-sizing: border-box !important;
+  }
+
+  .workspace-canvas > .book-frame.day-book-frame,
+  .workspace-canvas > .book-frame.month-book-frame {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-rows: minmax(0, 1fr) !important;
+  }
+
+  .workspace-canvas > .cover-layout {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .workspace-canvas > .cover-layout > .cover-stage,
+  .workspace-canvas > .cover-layout > .cover-editor {
+    min-width: 0 !important;
+    min-height: 0 !important;
+  }
+
+  .workspace-canvas > .cover-layout > .cover-editor {
+    max-height: 100% !important;
+  }
+
+  .workspace-canvas .spiral-cover {
+    width: 100% !important;
+    max-width: none !important;
+    height: 100% !important;
+    aspect-ratio: auto !important;
+  }
+
+  .cover-main-word {
+    font-size: clamp(48px, 3.2vw, 54px) !important;
+  }
+
+  .cover-small-heading,
+  .cover-slogan {
+    font-size: 12px !important;
+  }
+
+  .cover-bottomline {
+    font-size: 11px !important;
+  }
+
+  .cover-art {
+    background-size: 37px 37px !important;
+  }
+}
+
+/* The login cover grows by the same proportion while keeping its A6 shape. */
+@media (min-width: 781px) {
+  .auth-book {
+    width: min(
+      600px,
+      calc((100vw - 40px) / 2),
+      calc((141.9dvh - 136px) / 2),
+      100%
+    ) !important;
+    height: auto !important;
+    aspect-ratio: 105 / 148 !important;
+  }
+
+  .auth-book > .auth-cover {
+    width: 100% !important;
+    height: 100% !important;
+    aspect-ratio: auto !important;
+    background-size: 39px 39px !important;
+  }
+
+  .auth-cover-center h1 {
+    font-size: clamp(64px, 4.3vw, 72px) !important;
+  }
+
+  .auth-cover-center > span {
+    font-size: 11px !important;
+  }
+
+  .auth-cover-center p {
+    font-size: 12px !important;
+  }
+
+  .auth-bottom {
+    font-size: 10px !important;
+  }
+
+  .auth-sticker {
+    font-size: 58px !important;
+  }
+}
+
+/* Keep the cover preview comfortably larger on narrow screens too. */
+@media (max-width: 780px) {
+  .workspace-canvas .spiral-cover {
+    width: min(100%, 330px, calc(55dvh - 55px)) !important;
+    max-width: 330px !important;
+    height: auto !important;
+    aspect-ratio: 105 / 148 !important;
+  }
+}
+
+@media (min-width: 561px) and (max-width: 780px) {
+  .auth-book {
+    width: min(360px, calc(100vw / 2 - 68px), calc(70.95dvh - 48px), 100%) !important;
+    height: auto !important;
+    aspect-ratio: 105 / 148 !important;
+  }
+
+  .auth-book > .auth-cover {
+    width: 100% !important;
+    height: 100% !important;
+    aspect-ratio: auto !important;
+  }
+}
