@@ -91,6 +91,7 @@ export default function AppSidebar({
             aria-label="메뉴"
           >
             <header className="app-sidebar-header">
+              <span className="app-sidebar-email" title={email}>{email}</span>
               <button
                 ref={closeRef}
                 type="button"
@@ -102,13 +103,7 @@ export default function AppSidebar({
               </button>
             </header>
 
-            <section className="app-sidebar-account" aria-label="계정 정보">
-              <span className="app-sidebar-section-label">계정</span>
-              <strong title={email}>{email}</strong>
-            </section>
-
             <nav className="app-sidebar-navigation" aria-label="다이어리 메뉴">
-              <span className="app-sidebar-section-label">이동</span>
               {currentView === "library" ? (
                 <div className="app-sidebar-current" aria-current="page">
                   <House size={18} />
