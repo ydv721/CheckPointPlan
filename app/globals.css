@@ -3919,9 +3919,9 @@ html,body{width:100%;overflow-x:clip}
 }
 
 
-/* Remove only the separator above the first cover editor section. */
-.cover-editor > .cover-editor-section:first-child {
-  border-top: 0;
+/* Remove the separator above the first cover editor section (after the menu slot). */
+.cover-editor > .cover-editor-section:nth-child(2) {
+  border-top: 0 !important;
 }
 
 
@@ -6779,14 +6779,14 @@ html,body{width:100%;overflow-x:clip}
 }
 
 
-/* Cover editor on the left, live cover preview on the right. */
+/* Live cover preview on the left, cover editor on the right. */
 @media (min-width: 781px) {
-  .cover-layout > .cover-editor {
+  .cover-layout > .cover-stage {
     grid-column: 1 !important;
     grid-row: 1 !important;
   }
 
-  .cover-layout > .cover-stage {
+  .cover-layout > .cover-editor {
     grid-column: 2 !important;
     grid-row: 1 !important;
   }
