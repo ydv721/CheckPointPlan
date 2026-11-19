@@ -1082,7 +1082,6 @@ export default function Planner() {
             {pageMenu}
             <div className="right-top"><div className="section-heading todo-header">
               <div className="todo-heading-group"><span>TO DO LIST</span></div>
-              
             </div>
             <div className="todo-list">{entry.todos.slice(0,7).map((todo,idx)=>{
               const todoStatus:TodoStatus=todo.status??(todo.checked?"done":"todo");
