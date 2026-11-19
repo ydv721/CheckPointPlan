@@ -7849,12 +7849,12 @@ html,body{width:100%;overflow-x:clip}
   display:flex;
   flex-direction:column;
   box-sizing:border-box;
-  width:min(340px,calc(100vw - 18px));
+  width:min(280px,calc(100vw - 18px));
   height:100%;
   max-height:100dvh;
   overflow-y:auto;
   overscroll-behavior:contain;
-  padding:18px 22px 24px;
+  padding:16px 16px 20px;
   border-left:0;
   background:var(--paper);
   color:var(--ink);
@@ -7954,8 +7954,8 @@ html,body{width:100%;overflow-x:clip}
 }
 @media(max-width:480px) {
   .app-sidebar-panel {
-    width:min(340px,calc(100vw - 18px));
-    padding:20px 20px 20px;
+    width:min(280px,calc(100vw - 18px));
+    padding:18px 16px 18px;
   }
 }
 
