@@ -1204,24 +1204,24 @@ export default function Planner() {
     />}
   </>;
   return <div className={view==="planner"?"app-shell planner-view":"app-shell cover-view"} style={vars}>
+    <AppSidebar
+      key={activeNotebookId}
+      email={user.email??""}
+      currentView={view}
+      themeStyle={vars}
+      onOpenNotebookList={()=>{void openNotebookList();}}
+      onViewChange={setView}
+      theme={theme}
+      customColor={customColor}
+      onThemeChange={setTheme}
+      onCustomColorChange={setCustomColor}
+      onSignOut={()=>{void signOut();}}
+      onDeleteAccount={()=>{setDeleteEmail("");setShowDeleteAccount(true);}}
+    />
     <header className="site-header"><div className="header-inner">
       <button className="brand" onClick={()=>setView("planner")}><span className="brand-lockup"><AppIcon/><span>CHECKPOINT</span></span><small>YOUR PACE, YOUR CHECKPOINT</small></button>
-      <div className="header-actions">
-        <AppSidebar
-          email={user.email??""}
-          currentView={view}
-          themeStyle={vars}
-          onOpenNotebookList={()=>{void openNotebookList();}}
-          onViewChange={setView}
-          theme={theme}
-          customColor={customColor}
-          onThemeChange={setTheme}
-          onCustomColorChange={setCustomColor}
-
-          onSignOut={()=>{void signOut();}}
-          onDeleteAccount={()=>{setDeleteEmail("");setShowDeleteAccount(true);}}
-        />
-      </div></div></header>
+      <div className="header-actions" />
+    </div></header>
 
     <main className="main-area">
 
