@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent, type PointerEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import {
-  ArrowLeft, BookOpen, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight,
+  BookOpen, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight,
   Expand, ImagePlus, LogOut, Menu, MoreHorizontal, Plus, RotateCw, Star,
   Sparkles, Trash2, X, Search, CircleHelp, CheckCircle2, Palette
 } from "lucide-react";
@@ -584,7 +584,7 @@ export default function Planner() {
 
   useEffect(()=>{
     if(!showPageMenu)return;
-    const closeOnOutside=(event:globalThis.PointerEvent)=>{
+    const closeOnOutside=(event:Event)=>{
       if(!pageMenuRef.current?.contains(event.target as Node))setShowPageMenu(false);
     };
     const closeOnEscape=(event:KeyboardEvent)=>{
