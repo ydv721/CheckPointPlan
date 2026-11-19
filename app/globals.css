@@ -7817,15 +7817,14 @@ html,body{width:100%;overflow-x:clip}
   align-items:center;
   justify-content:center;
   padding:0;
-  border:1px solid var(--line);
+  border:0;
   border-radius:12px;
-  background:var(--paper);
+  background:transparent;
   color:var(--ink);
-  transition:background .16s ease,border-color .16s ease,color .16s ease;
+  transition:background .16s ease,color .16s ease;
 }
 .app-sidebar-trigger:hover,
 .app-sidebar-trigger[aria-expanded="true"] {
-  border-color:var(--accent);
   background:var(--soft);
   color:var(--accent);
 }
@@ -7855,7 +7854,7 @@ html,body{width:100%;overflow-x:clip}
   overflow-y:auto;
   overscroll-behavior:contain;
   padding:28px 25px 24px;
-  border-left:1px solid var(--line);
+  border-left:0;
   background:var(--paper);
   color:var(--ink);
   box-shadow:-18px 0 48px rgba(24,38,58,.16);
@@ -7863,23 +7862,9 @@ html,body{width:100%;overflow-x:clip}
 }
 .app-sidebar-header {
   display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:18px;
-  padding-bottom:22px;
-  border-bottom:1px solid var(--line);
-}
-.app-sidebar-eyebrow {
-  color:var(--accent);
-  font-size:10px;
-  font-weight:900;
-  letter-spacing:.18em;
-}
-.app-sidebar-header h2 {
-  margin:7px 0 0;
-  font-size:25px;
-  font-weight:900;
-  letter-spacing:-.055em;
+  align-items:center;
+  justify-content:flex-end;
+  padding-bottom:10px;
 }
 .app-sidebar-close {
   width:38px;
@@ -7887,7 +7872,7 @@ html,body{width:100%;overflow-x:clip}
   display:grid;
   place-items:center;
   flex:0 0 auto;
-  border:1px solid var(--line);
+  border:0;
   border-radius:11px;
   background:transparent;
   color:var(--ink);
@@ -7897,8 +7882,8 @@ html,body{width:100%;overflow-x:clip}
   display:flex;
   flex-direction:column;
   gap:9px;
-  padding:22px 1px;
-  border-bottom:1px solid var(--line);
+  padding:18px 1px 22px;
+  border-bottom:0;
 }
 .app-sidebar-section-label {
   color:var(--accent);
@@ -7918,7 +7903,7 @@ html,body{width:100%;overflow-x:clip}
   flex-direction:column;
   gap:5px;
   padding:22px 0;
-  border-bottom:1px solid var(--line);
+  border-bottom:0;
 }
 .app-sidebar-navigation > .app-sidebar-section-label { margin:0 0 7px 2px; }
 .app-sidebar-navigation button,
