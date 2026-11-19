@@ -837,7 +837,6 @@ export default function Planner() {
           subtitle:"",
           subtitleConverted:true,
           items:coverItems,
-          colorLabels:Array.from({length:PENS.length},(_,index)=>typeof savedCover.colorLabels?.[index]==="string"?savedCover.colorLabels[index]:""),
           monthEntries:parseMonthEntries(savedCover.monthEntries),
           monthMemos:parseMonthMemos(savedCover.monthMemos),
           backgroundPattern:validPatterns.includes(savedPattern as CoverPattern)?savedPattern as CoverPattern:"grid",
@@ -858,12 +857,14 @@ export default function Planner() {
   useEffect(()=>{
     if(!client||!user||!activeNotebookId){setHydrated(false);return;}
     let active=true;setLoading(true);setHydrated(false);setAlert("");saveVersion.current++;
-    void client.from("planner_entries").select("entry_date,dday,header_label,header_value,focus,keypoint,todos,memo,timetable")
+    void client.from("planner_entries").select("entry_date,color_labels,dday,header_label,header_value,focus,keypoint,todos,memo,timetable")
       .eq("user_id",user.id).eq("notebook_id",activeNotebookId).eq("entry_date",date).maybeSingle().then(({data,error})=>{
         if(!active)return;
         if(error)setAlert(`기록을 불러오지 못했습니다: ${error.message}`);
         const next:Entry=data?{
-          date,dday:data.dday||"",headerLabel:data.header_label||"",headerValue:data.header_value||"",focusItems:parseFocusItems(data.focus),freeNote:parseFreeNote(data.keypoint),
+          date,
+          colorLabels:Array.isArray(data.color_labels)?Array.from({length:PENS.length},(_,index)=>typeof data.color_labels[index]==="string"?data.color_labels[index]:""):["","","","",""],
+          dday:data.dday||"",headerLabel:data.header_label||"",headerValue:data.header_value||"",focusItems:parseFocusItems(data.focus),freeNote:parseFreeNote(data.keypoint),
           todos:(()=>{
             const savedTodos:Todo[]=Array.isArray(data.todos)?data.todos.slice(0,10).map((todo:Partial<Todo>,idx:number)=>{
               const todoStatus:TodoStatus=todo.status==="todo"||todo.status==="doing"||todo.status==="done"?todo.status:todo.checked?"done":"todo";
@@ -888,7 +889,7 @@ export default function Planner() {
     const {error}=await client.from("planner_entries").upsert({
       user_id:user.id,notebook_id:activeNotebookId,entry_date:current.date,date_label:dateView(current.date),dday:current.dday,header_label:current.headerLabel,
       header_value:current.headerValue,focus:JSON.stringify(current.focusItems),keypoint:current.freeNote,
-      todos:current.todos,memo:current.memo,timetable:current.timetable,updated_at:updatedAt
+      todos:current.todos,memo:current.memo,timetable:current.timetable,color_labels:current.colorLabels,updated_at:updatedAt
     },{onConflict:"notebook_id,entry_date"});
     if(version!==saveVersion.current)return;
     if(error){setStatus("저장하지 못했어요. 다시 시도해 주세요.");setAlert(`기록 저장에 실패했습니다: ${error.message}`);}
@@ -1379,7 +1380,7 @@ export default function Planner() {
                   <div className="color-guide-list" aria-label="시간표 형광펜 색상별 의미">
                     {PENS.map((color,index)=><div className="color-guide-row" key={color}>
                       <span className="color-guide-swatch" style={{backgroundColor:color}} aria-hidden="true"/>
-                      <input className="color-guide-input" type="text" value={cover.colorLabels[index]??""} aria-label={`${index+1}번째 색상 의미`} onChange={e=>setCover(current=>({...current,colorLabels:PENS.map((_,i)=>i===index?e.target.value:(current.colorLabels[i]??""))}))}/>
+                      <input className="color-guide-input" type="text" value={entry.colorLabels[index]??""} aria-label={`${index+1}번째 색상 의미`} onChange={e=>setEntry(current=>({...current,colorLabels:PENS.map((_,i)=>i===index?e.target.value:(current.colorLabels[i]??""))}))}/>
                     </div>)}
                   </div>
                 </div>
