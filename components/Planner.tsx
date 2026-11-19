@@ -5,6 +5,7 @@ import type { User } from "@supabase/supabase-js";
 import PageMenu from "@/components/PageMenu";
 import PlannerSpread from "@/components/PlannerSpread";
 import NotebookTypeSelection, { type NotebookType } from "@/components/NotebookTypeSelection";
+import NotebookLibrary, { type NotebookRecord } from "@/components/NotebookLibrary";
 import {
   BookOpen, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight,
   Expand, ImagePlus, LogOut, Menu, Plus, RotateCw, Star,
@@ -50,6 +51,7 @@ const today = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 const uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+const NOTEBOOK_LABELS:Record<NotebookType,string>={planner:"플래너","study-notes":"필기 노트",diary:"일기",checklist:"체크리스트","free-notes":"프리 노트"};
 const dateView = (date: string) => {
   const [y,m,d] = date.split("-").map(Number);
   return `${y}년 ${m}월 ${d}일 ${DAYS[new Date(y,m-1,d).getDay()]}요일`;
@@ -528,6 +530,10 @@ export default function Planner() {
   const [notebookTypeChosen,setNotebookTypeChosen]=useState(false);
   const [selectedNotebookType,setSelectedNotebookType]=useState<NotebookType|null>(null);
   const [notebookTypeNotice,setNotebookTypeNotice]=useState("");
+  const [notebooks,setNotebooks]=useState<NotebookRecord[]>([]);
+  const [activeNotebookId,setActiveNotebookId]=useState<string|null>(null);
+  const [libraryLoading,setLibraryLoading]=useState(false);
+  const [creatingNotebook,setCreatingNotebook]=useState(false);
   const pendingAuthUser=useRef<User|null>(null);
   const authenticatedUser=useRef<User|null>(null);
   const [view,setView]=useState<"planner"|"cover">("planner");
@@ -616,6 +622,8 @@ export default function Planner() {
     setNotebookTypeChosen(false);
     setSelectedNotebookType(null);
     setNotebookTypeNotice("");
+    setNotebooks([]);
+    setActiveNotebookId(null);
     setUser(nextUser);
   },[]);
 
@@ -646,6 +654,8 @@ export default function Planner() {
         setNotebookTypeChosen(false);
         setSelectedNotebookType(null);
         setNotebookTypeNotice("");
+        setNotebooks([]);
+        setActiveNotebookId(null);
         setUser(null);
       }else if(event==="INITIAL_SESSION"&&!pendingAuthUser.current){
         const sessionUser=session?.user??null;
@@ -666,9 +676,23 @@ export default function Planner() {
   },[client,beginAuthTransition]);
 
   useEffect(()=>{
-    if(!client||!user){setSettingsHydrated(false);return;}
+    if(!client||!user){setLibraryLoading(false);setNotebooks([]);return;}
+    let active=true;
+    setLibraryLoading(true);
+    void client.from("notebooks").select("id,notebook_type,title,created_at,updated_at").eq("user_id",user.id).order("updated_at",{ascending:false})
+      .then(({data,error})=>{
+        if(!active)return;
+        if(error){setAlert("다이어리 목록을 불러오지 못했습니다: "+error.message);setNotebooks([]);}
+        else setNotebooks((data??[]) as NotebookRecord[]);
+        setLibraryLoading(false);
+      });
+    return()=>{active=false;};
+  },[client,user]);
+
+  useEffect(()=>{
+    if(!client||!user||!activeNotebookId){setSettingsHydrated(false);return;}
     let active=true;setSettingsHydrated(false);
-    void client.from("planner_settings").select("theme,custom_color,cover").eq("user_id",user.id).maybeSingle()
+    void client.from("planner_settings").select("theme,custom_color,cover").eq("user_id",user.id).eq("notebook_id",activeNotebookId).maybeSingle()
       .then(({data,error})=>{
         if(!active)return;
         if(error)setAlert(`설정을 불러오지 못했습니다: ${error.message}`);
@@ -709,13 +733,13 @@ export default function Planner() {
         setSettingsHydrated(true);
       });
     return()=>{active=false;};
-  },[user,client]);
+  },[user,client,activeNotebookId]);
 
   useEffect(()=>{
-    if(!client||!user){setHydrated(false);return;}
+    if(!client||!user||!activeNotebookId){setHydrated(false);return;}
     let active=true;setLoading(true);setHydrated(false);setAlert("");saveVersion.current++;
     void client.from("planner_entries").select("entry_date,dday,header_label,header_value,focus,keypoint,todos,memo,timetable")
-      .eq("user_id",user.id).eq("entry_date",date).maybeSingle().then(({data,error})=>{
+      .eq("user_id",user.id).eq("notebook_id",activeNotebookId).eq("entry_date",date).maybeSingle().then(({data,error})=>{
         if(!active)return;
         if(error)setAlert(`기록을 불러오지 못했습니다: ${error.message}`);
         const next:Entry=data?{
@@ -732,23 +756,23 @@ export default function Planner() {
         lastSaved.current=JSON.stringify(next);setEntry(next);setHydrated(true);setLoading(false);setStatus("5분마다 자동 저장돼요.");
       });
     return()=>{active=false;};
-  },[client,user,date]);
+  },[client,user,activeNotebookId,date]);
 
   const saveNow=useCallback(async (current:Entry)=>{
-    if(!client||!user||!hydrated)return;
+    if(!client||!user||!activeNotebookId||!hydrated)return;
     const currentJson=JSON.stringify(current);
     if(currentJson===lastSaved.current)return;
     const version=++saveVersion.current;
     setStatus("자동 저장 중이에요.");
     const {error}=await client.from("planner_entries").upsert({
-      user_id:user.id,entry_date:current.date,date_label:dateView(current.date),dday:current.dday,header_label:current.headerLabel,
+      user_id:user.id,notebook_id:activeNotebookId,entry_date:current.date,date_label:dateView(current.date),dday:current.dday,header_label:current.headerLabel,
       header_value:current.headerValue,focus:JSON.stringify(current.focusItems),keypoint:current.freeNote,
       todos:current.todos,memo:current.memo,timetable:current.timetable,updated_at:new Date().toISOString()
-    },{onConflict:"user_id,entry_date"});
+    },{onConflict:"notebook_id,entry_date"});
     if(version!==saveVersion.current)return;
     if(error){setStatus("저장하지 못했어요. 다시 시도해 주세요.");setAlert(`기록 저장에 실패했습니다: ${error.message}`);}
     else{lastSaved.current=currentJson;setStatus(JSON.stringify(entryRef.current)===currentJson?"자동 저장되었어요.":"변경 내용은 5분마다 자동 저장돼요.");}
-  },[client,user,hydrated]);
+  },[client,user,activeNotebookId,hydrated]);
 
   useEffect(()=>{
     entryRef.current=entry;
@@ -769,17 +793,17 @@ export default function Planner() {
   },[entry,hydrated]);
 
   useEffect(()=>{
-    if(!client||!user||!settingsHydrated)return;
+    if(!client||!user||!activeNotebookId||!settingsHydrated)return;
     const snapshot=JSON.stringify({theme,customColor,cover});if(snapshot===lastSettings.current)return;
     const t=setTimeout(async()=>{
-      const {error}=await client.from("planner_settings").upsert({user_id:user.id,theme,custom_color:customColor,cover,updated_at:new Date().toISOString()},{onConflict:"user_id"});
+      const {error}=await client.from("planner_settings").upsert({user_id:user.id,notebook_id:activeNotebookId,theme,custom_color:customColor,cover,updated_at:new Date().toISOString()},{onConflict:"notebook_id"});
       if(error)setAlert(`테마/표지 저장에 실패했습니다: ${error.message}`);else lastSettings.current=snapshot;
     },850);
     return()=>clearTimeout(t);
-  },[client,user,settingsHydrated,theme,customColor,cover]);
+  },[client,user,activeNotebookId,settingsHydrated,theme,customColor,cover]);
 
   useEffect(()=>{
-    if(!client||!user)return;
+    if(!client||!user||!activeNotebookId)return;
     let active=true;
     const paths=[...cover.items.filter(item=>item.kind==="photo" && !photoUrls[item.value]).map(i=>i.value),...(cover.backgroundImage&&!photoUrls[cover.backgroundImage]?[cover.backgroundImage]:[])];
     const unique=[...new Set(paths)];
@@ -789,7 +813,7 @@ export default function Planner() {
       return {path,url:error?null:data.signedUrl};
     })).then(res=>{if(active)setPhotoUrls(old=>({...old,...Object.fromEntries(res.filter(r=>r.url).map(r=>[r.path,r.url!]))}));});
     return()=>{active=false;};
-  },[client,user,cover.items,cover.backgroundImage,photoUrls]);
+  },[client,user,activeNotebookId,cover.items,cover.backgroundImage,photoUrls]);
 
   async function handleUpload(file:File,asBackground=false) {
     if(!client||!user)return;
@@ -908,9 +932,61 @@ export default function Planner() {
   const themeNames:Record<ThemeName,string>={white:"White",pink:"Pink",blue:"Blue",black:"Black",custom:"Custom"};
   async function openNotebookList() {
     if(hydrated) await saveNow(entry);
+    setActiveNotebookId(null);
     setNotebookTypeChosen(false);
     setSelectedNotebookType(null);
     setNotebookTypeNotice("");
+    setMobileMenu(false);
+  }
+
+  async function createNotebook(type: NotebookType) {
+    if(!client||!user||creatingNotebook)return;
+    setCreatingNotebook(true);
+    setAlert("");
+    const title=NOTEBOOK_LABELS[type];
+    const {data,error}=await client.from("notebooks").insert({user_id:user.id,notebook_type:type,title})
+      .select("id,notebook_type,title,created_at,updated_at").single();
+    if(error||!data){
+      setAlert("다이어리를 만들지 못했습니다: "+(error?.message??"알 수 없는 오류"));
+      setCreatingNotebook(false);
+      return;
+    }
+    if(type==="planner"){
+      const {error:settingsError}=await client.from("planner_settings").insert({
+        user_id:user.id,notebook_id:data.id,theme:"blue",custom_color:"#8b9ec4",cover:defaultCover
+      });
+      if(settingsError){
+        await client.from("notebooks").delete().eq("id",data.id).eq("user_id",user.id);
+        setAlert("플래너 설정을 만들지 못했습니다: "+settingsError.message);
+        setCreatingNotebook(false);
+        return;
+      }
+    }
+    setNotebooks(current=>[data as NotebookRecord,...current]);
+    setNotebookTypeChosen(false);
+    setSelectedNotebookType(null);
+    setNotebookTypeNotice("");
+    if(type==="planner"){
+      setActiveNotebookId(data.id);
+      setView("planner");
+      setPlannerPage("day");
+      setDate(today());
+    }else{
+      setNotebookTypeNotice(title+"은 책장에 추가했어. 전용 편집 화면은 다음 단계에서 연결할게.");
+    }
+    setCreatingNotebook(false);
+  }
+
+  async function openNotebook(notebook: NotebookRecord) {
+    if(notebook.notebook_type!=="planner"){
+      setNotebookTypeNotice(NOTEBOOK_LABELS[notebook.notebook_type]+" 편집 화면은 다음 단계에서 연결할게.");
+      return;
+    }
+    if(hydrated) await saveNow(entry);
+    setActiveNotebookId(notebook.id);
+    setView("planner");
+    setPlannerPage("day");
+    setDate(today());
     setMobileMenu(false);
   }
 
@@ -929,22 +1005,22 @@ export default function Planner() {
 
   if(checking)return <div className="boot-screen"><AppIcon/><h1>CHECKPOINT</h1><p>CHECKPOINT를 불러오는 중입니다...</p></div>;
   if(!user)return <AuthScreen onUser={beginAuthTransition}/>;
-  if(!notebookTypeChosen)return <NotebookTypeSelection
+  if(!activeNotebookId&&!notebookTypeChosen)return <NotebookLibrary
+    email={user.email??""}
+    notebooks={notebooks}
+    loading={libraryLoading}
+    notice={notebookTypeNotice}
+    onCreate={()=>{setSelectedNotebookType(null);setNotebookTypeNotice("");setNotebookTypeChosen(true);}}
+    onOpen={notebook=>{void openNotebook(notebook);}}
+    onSignOut={()=>{void signOut();}}
+  />;
+  if(!activeNotebookId&&notebookTypeChosen)return <NotebookTypeSelection
     email={user.email??""}
     themeStyle={vars}
     selectedType={selectedNotebookType}
     notice={notebookTypeNotice}
     onSelect={type=>{setSelectedNotebookType(type);setNotebookTypeNotice("");}}
-    onContinue={type=>{
-      if(type==="planner"){
-        setView("planner");
-        setNotebookTypeChosen(true);
-        setNotebookTypeNotice("");
-      }else{
-        const labels:Record<NotebookType,string>={planner:"플래너","study-notes":"필기 노트",diary:"일기",checklist:"체크리스트","free-notes":"프리 노트"};
-        setNotebookTypeNotice(`${labels[type]}은 다음 개발 단계에서 연결할 예정이야. 지금은 플래너를 먼저 사용할 수 있어.`);
-      }
-    }}
+    onContinue={type=>{void createNotebook(type);}}
     onSignOut={()=>{void signOut();}}
   />;
   return <div className={view==="planner"?"app-shell planner-view":"app-shell cover-view"} style={vars}>
