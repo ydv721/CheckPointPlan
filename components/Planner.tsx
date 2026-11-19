@@ -1076,7 +1076,7 @@ export default function Planner() {
     const {data,error}=await client.from("notebooks").insert({user_id:user.id,notebook_type:type,title})
       .select("id,notebook_type,title,created_at,updated_at").single();
     if(error||!data){
-      setAlert("다이어리를 만들지 못했습니다: "+(error?.message??"알 수 없는 오류"));
+      setNotebookTypeNotice("다이어리를 만들지 못했습니다: "+(error?.message??"알 수 없는 오류"));
       setCreatingNotebook(false);
       return;
     }
@@ -1086,7 +1086,7 @@ export default function Planner() {
       });
       if(settingsError){
         await client.from("notebooks").delete().eq("id",data.id).eq("user_id",user.id);
-        setAlert("플래너 설정을 만들지 못했습니다: "+settingsError.message);
+        setNotebookTypeNotice("플래너 설정을 만들지 못했습니다: "+settingsError.message);
         setCreatingNotebook(false);
         return;
       }
