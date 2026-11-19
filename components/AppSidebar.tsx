@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import {
-  ArrowRight, BookOpen, House, LogOut, Moon, MoreHorizontal,
-  Sparkles, Trash2, X
+  ArrowRight, BookOpen, Check, ChevronDown, House, LogOut, Menu,
+  Moon, Palette, Sparkles, Trash2, X
 } from "lucide-react";
+import { themes, type ThemeName } from "@/lib/types";
 
 type SidebarView = "library" | "planner" | "cover";
 
@@ -13,6 +14,10 @@ type AppSidebarProps = {
   email: string;
   currentView: SidebarView;
   themeStyle: CSSProperties;
+  theme?: ThemeName;
+  customColor?: string;
+  onThemeChange?: (theme: ThemeName) => void;
+  onCustomColorChange?: (color: string) => void;
   onOpenNotebookList?: () => void;
   onViewChange?: (view: "planner" | "cover") => void;
   onSignOut: () => void;
@@ -23,6 +28,10 @@ export default function AppSidebar({
   email,
   currentView,
   themeStyle,
+  theme = "blue",
+  customColor = "#8b9ec4",
+  onThemeChange,
+  onCustomColorChange,
   onOpenNotebookList,
   onViewChange,
   onSignOut,
@@ -31,6 +40,7 @@ export default function AppSidebar({
   const [open, setOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [darkModeLoaded, setDarkModeLoaded] = useState(false);
+  const [themeMenuOpen, setThemeMenuOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
 
@@ -52,7 +62,8 @@ export default function AppSidebar({
     }
   }, [darkMode, darkModeLoaded]);
 
-  const panelStyle = darkMode ? {
+  const panelDarkMode = currentView === "library" && darkMode;
+  const panelStyle = panelDarkMode ? {
     ...themeStyle,
     "--bg": "#171A21",
     "--paper": "#252A35",
@@ -61,6 +72,14 @@ export default function AppSidebar({
     "--soft": "rgba(175,199,245,.12)",
     "--line": "rgba(255,255,255,.12)"
   } as CSSProperties : themeStyle;
+  const safeCustomColor = /^#[0-9a-fA-F]{6}$/.test(customColor) ? customColor : "#8b9ec4";
+  const themeOptions: { value: ThemeName; label: string }[] = [
+    { value: "white", label: "White" },
+    { value: "pink", label: "Pink" },
+    { value: "blue", label: "Blue" },
+    { value: "black", label: "Black" },
+    { value: "custom", label: "Custom" }
+  ];
 
   useEffect(() => {
     if (!open) return;
@@ -99,7 +118,7 @@ export default function AppSidebar({
         title="메뉴"
         onClick={() => setOpen(true)}
       >
-        <MoreHorizontal size={21} />
+        <Menu size={21} />
       </button>
 
       {open && typeof document !== "undefined" && createPortal(
@@ -112,7 +131,7 @@ export default function AppSidebar({
         >
           <aside
             id="checkpoint-app-sidebar"
-            className={darkMode ? "app-sidebar-panel app-sidebar-panel-dark" : "app-sidebar-panel"}
+            className={panelDarkMode ? "app-sidebar-panel app-sidebar-panel-dark" : "app-sidebar-panel"}
             style={panelStyle}
             role="dialog"
             aria-modal="true"
@@ -161,16 +180,75 @@ export default function AppSidebar({
                 </button>
               )}
 
-              <button
-                type="button"
-                className="app-sidebar-theme-toggle"
-                aria-pressed={darkMode}
-                onClick={() => setDarkMode(value => !value)}
-              >
-                <Moon size={18} />
-                <span>다크 모드</span>
-                <span className="app-sidebar-switch" aria-hidden="true" />
-              </button>
+              {currentView === "library" ? (
+                <button
+                  type="button"
+                  className="app-sidebar-theme-toggle"
+                  aria-pressed={darkMode}
+                  onClick={() => setDarkMode(value => !value)}
+                >
+                  <Moon size={18} />
+                  <span>다크 모드</span>
+                  <span className="app-sidebar-switch" aria-hidden="true" />
+                </button>
+              ) : (
+                <div className="app-sidebar-theme-group">
+                  <button
+                    type="button"
+                    className="app-sidebar-theme-trigger"
+                    aria-expanded={themeMenuOpen}
+                    onClick={() => setThemeMenuOpen(value => !value)}
+                  >
+                    <Palette size={18} />
+                    <span>다이어리 테마 바꾸기</span>
+                    <ChevronDown size={16} className={themeMenuOpen ? "app-sidebar-chevron is-open" : "app-sidebar-chevron"} />
+                  </button>
+                  {themeMenuOpen && (
+                    <div className="app-sidebar-theme-options" role="group" aria-label="다이어리 테마 선택">
+                      {themeOptions.map(option => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          className={theme === option.value ? "app-sidebar-theme-option is-selected" : "app-sidebar-theme-option"}
+                          aria-pressed={theme === option.value}
+                          onClick={() => onThemeChange?.(option.value)}
+                        >
+                          <span
+                            className="app-sidebar-theme-swatch"
+                            style={{ background: option.value === "custom" ? safeCustomColor : themes[option.value].cover }}
+                          />
+                          <span>{option.label}</span>
+                          {theme === option.value && <Check size={15} />}
+                        </button>
+                      ))}
+                      {theme === "custom" && (
+                        <div className="app-sidebar-custom-theme">
+                          <label>
+                            컬러 피커
+                            <input
+                              aria-label="사용자 지정 컬러 피커"
+                              type="color"
+                              value={safeCustomColor}
+                              onChange={event => onCustomColorChange?.(event.target.value)}
+                            />
+                          </label>
+                          <label>
+                            HEX 코드
+                            <input
+                              aria-label="사용자 지정 HEX 코드"
+                              type="text"
+                              maxLength={7}
+                              placeholder="#8B9EC4"
+                              value={customColor}
+                              onChange={event => onCustomColorChange?.(event.target.value)}
+                            />
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </nav>
 
             <div className="app-sidebar-footer">
