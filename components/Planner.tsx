@@ -727,9 +727,20 @@ export default function Planner() {
       const nextNotebooks:NotebookRecord[]=rows.map(row=>{
         const settings=settingsByNotebook.get(row.id);
         if(!settings)return row as NotebookRecord;
-        const savedCover=settings.cover&&typeof settings.cover==="object"
-          ? settings.cover as Cover
-          : defaultCover;
+        const rawCover:Partial<Cover>=settings.cover&&typeof settings.cover==="object"
+          ? settings.cover as Partial<Cover>
+          : {};
+        let coverItems:CoverItem[]=Array.isArray(rawCover.items)?rawCover.items:defaultCover.items;
+        const subtitleConverted=rawCover.subtitleConverted===true;
+        if(!subtitleConverted&&typeof rawCover.subtitle==="string"&&rawCover.subtitle.trim()&&!coverItems.some(item=>item.kind==="text")){
+          coverItems=[...coverItems,{id:"migrated-cover-subtitle",kind:"text",value:rawCover.subtitle,x:50,y:69,size:11,rotation:0}];
+        }
+        coverItems=coverItems.filter(item=>!isCoverBrandSlogan(item)).map(item=>({
+          ...item,
+          ...(typeof item.color==="string"?{color:sanitizeHex(item.color)}:{}),
+          ...(item.kind==="text"?{weight:typeof item.weight==="number"&&Number.isFinite(item.weight)?Math.min(900,Math.max(400,Math.round(item.weight/100)*100)):800}:{})
+        }));
+        const savedCover:Cover={...defaultCover,...rawCover,subtitle:"",subtitleConverted:true,items:coverItems};
         const themeValue=settings.theme;
         const safeTheme=themeValue&&Object.prototype.hasOwnProperty.call(themes,themeValue)
           ? themeValue as ThemeName
