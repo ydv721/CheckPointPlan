@@ -7,10 +7,10 @@ export type NotebookType = "planner" | "study-notes" | "diary" | "checklist" | "
 
 const NOTEBOOK_TYPES: { type: NotebookType; title: string; description: string }[] = [
   { type: "planner", title: "플래너", description: "월간 · 일간 · 일정 관리" },
-  { type: "study-notes", title: "필기 노트", description: "공부 · 강의 · 지식 정리" },
+  { type: "study-notes", title: "필기 다이어리", description: "공부 · 강의 · 지식 정리" },
   { type: "diary", title: "일기", description: "하루의 기록 · 일상" },
   { type: "checklist", title: "체크리스트", description: "할 일 · 목표 · 점검" },
-  { type: "free-notes", title: "프리 노트", description: "Markdown · 자유로운 글쓰기 · 메모" }
+  { type: "free-notes", title: "프리 다이어리", description: "Markdown · 자유로운 글쓰기 · 메모" }
 ];
 
 type NotebookTypeSelectionProps = {
@@ -55,8 +55,8 @@ export default function NotebookTypeSelection({
         <div className="notebook-type-modal-header">
           <div className="notebook-select-heading">
             <span className="eyebrow">CHOOSE YOUR NOTEBOOK</span>
-            <h2 id="notebook-type-title">어떤 노트를 만들까요?</h2>
-            <p>원하는 노트 종류를 누르면 바로 만들어져요.</p>
+            <h2 id="notebook-type-title">어떤 다이어리를 만들까요?</h2>
+            <p>원하는 다이어리 종류를 누르면 바로 만들어져요.</p>
           </div>
           <button
             type="button"
@@ -69,7 +69,7 @@ export default function NotebookTypeSelection({
           </button>
         </div>
 
-        <div className="notebook-type-list" aria-label="노트 종류">
+        <div className="notebook-type-list" aria-label="다이어리 종류">
           {NOTEBOOK_TYPES.map(option => (
             <button
               type="button"
