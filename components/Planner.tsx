@@ -528,7 +528,6 @@ export default function Planner() {
   const [user,setUser]=useState<User|null>(null);
   const [checking,setChecking]=useState(true);
   const [notebookTypeChosen,setNotebookTypeChosen]=useState(false);
-  const [selectedNotebookType,setSelectedNotebookType]=useState<NotebookType|null>(null);
   const [notebookTypeNotice,setNotebookTypeNotice]=useState("");
   const [notebooks,setNotebooks]=useState<NotebookRecord[]>([]);
   const [notebookCoverPhotoUrls,setNotebookCoverPhotoUrls]=useState<Record<string,string>>({});
@@ -622,7 +621,7 @@ export default function Planner() {
     pendingAuthUser.current=nextUser;
     authenticatedUser.current=nextUser;
     setNotebookTypeChosen(false);
-    setSelectedNotebookType(null);
+    
     setNotebookTypeNotice("");
     setNotebooks([]);
     setNotebookCoverPhotoUrls({});
@@ -639,7 +638,7 @@ export default function Planner() {
         const resolvedUser=pendingAuthUser.current??data.user??null;
         if(authenticatedUser.current?.id!==resolvedUser?.id){
           setNotebookTypeChosen(false);
-          setSelectedNotebookType(null);
+          
           setNotebookTypeNotice("");
         }
         authenticatedUser.current=resolvedUser;
@@ -656,7 +655,7 @@ export default function Planner() {
         pendingAuthUser.current=null;
         authenticatedUser.current=null;
         setNotebookTypeChosen(false);
-        setSelectedNotebookType(null);
+        
         setNotebookTypeNotice("");
         setNotebooks([]);
         setActiveNotebookId(null);
@@ -665,7 +664,7 @@ export default function Planner() {
         const sessionUser=session?.user??null;
         if(authenticatedUser.current?.id!==sessionUser?.id){
           setNotebookTypeChosen(false);
-          setSelectedNotebookType(null);
+          
           setNotebookTypeNotice("");
         }
         authenticatedUser.current=sessionUser;
@@ -959,7 +958,7 @@ export default function Planner() {
     if(!client)return;
     if(hydrated)await saveNow(entry);
     if(!await saveSettingsNow())return;
-    await client.auth.signOut();setUser(null);setView("planner");setNotebookTypeChosen(false);setSelectedNotebookType(null);setNotebookTypeNotice("");
+    await client.auth.signOut();setUser(null);setView("planner");setNotebookTypeChosen(false);setNotebookTypeNotice("");
   }
 
   async function deleteAccount() {
@@ -985,7 +984,7 @@ export default function Planner() {
       setUser(null);
       setView("planner");
       setNotebookTypeChosen(false);
-      setSelectedNotebookType(null);
+      
       setNotebookTypeNotice("");
       setShowDeleteAccount(false);
       setDeleteEmail("");
@@ -1063,7 +1062,7 @@ export default function Planner() {
     setLibraryRefresh(value=>value+1);
     setActiveNotebookId(null);
     setNotebookTypeChosen(false);
-    setSelectedNotebookType(null);
+    
     setNotebookTypeNotice("");
     setMobileMenu(false);
   }
@@ -1071,6 +1070,7 @@ export default function Planner() {
   async function createNotebook(type: NotebookType) {
     if(!client||!user||creatingNotebook)return;
     setCreatingNotebook(true);
+    setNotebookTypeNotice("");
     setAlert("");
     const title=NOTEBOOK_LABELS[type];
     const {data,error}=await client.from("notebooks").insert({user_id:user.id,notebook_type:type,title})
@@ -1096,7 +1096,7 @@ export default function Planner() {
       ...(type==="planner"?{theme:"blue" as ThemeName,custom_color:"#8b9ec4",cover:defaultCover}:{})
     },...current]);
     setNotebookTypeChosen(false);
-    setSelectedNotebookType(null);
+    
     setNotebookTypeNotice("");
     if(type==="planner"){
       setActiveNotebookId(data.id);
@@ -1144,21 +1144,19 @@ export default function Planner() {
       coverPhotoUrls={notebookCoverPhotoUrls}
       loading={libraryLoading}
       notice={notebookTypeNotice}
-      onCreate={()=>{setSelectedNotebookType(null);setNotebookTypeNotice("");setNotebookTypeChosen(true);}}
+      onCreate={()=>{setNotebookTypeNotice("");setNotebookTypeChosen(true);}}
       onOpen={notebook=>{void openNotebook(notebook);}}
       onSignOut={()=>{void signOut();}}
     />
     {notebookTypeChosen&&<NotebookTypeSelection
       themeStyle={vars}
-      selectedType={selectedNotebookType}
       notice={notebookTypeNotice}
       creating={creatingNotebook}
-      onSelect={type=>{setSelectedNotebookType(type);setNotebookTypeNotice("");}}
       onContinue={type=>{void createNotebook(type);}}
       onClose={()=>{
         if(creatingNotebook)return;
         setNotebookTypeChosen(false);
-        setSelectedNotebookType(null);
+        
         setNotebookTypeNotice("");
       }}
     />}
