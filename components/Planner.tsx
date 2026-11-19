@@ -780,7 +780,7 @@ export default function Planner() {
   async function signOut() {
     if(!client)return;
     if(hydrated)await saveNow(entry);
-    setShowAccountMenu(false);
+    setShowPageMenu(false);
     await client.auth.signOut();setUser(null);setView("planner");
   }
 
