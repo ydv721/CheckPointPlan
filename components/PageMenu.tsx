@@ -108,7 +108,7 @@ export default function PageMenu({
           <div className="page-menu-account">{email}</div>
           <div className="page-menu-divider" role="separator" />
           <button type="button" role="menuitem" onClick={() => runAction(onOpenNotebookList)}>
-            <Home size={16} /><span>노트 목록</span>
+            <Home size={16} /><span>다이어리 목록</span>
           </button>
           {view === "cover" ? (
             <button type="button" role="menuitem" onClick={() => runAction(() => onViewChange("planner"))}>
