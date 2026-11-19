@@ -7229,43 +7229,6 @@ html,body{width:100%;overflow-x:clip}
 }
 
 
-/* DAY, MONTH and COVER share one desktop spread width and the same 210:148 canvas ratio. */
-@media (min-width: 781px) {
-  .app-shell.planner-view,
-  .app-shell.cover-view {
-    --checkpoint-spread-width: min(1120px, calc(100vw - 64px), calc(141.9dvh - 68px));
-  }
-
-  .workspace-canvas > .book-frame.day-book-frame,
-  .workspace-canvas > .book-frame.month-book-frame,
-  .workspace-canvas > .cover-layout {
-    width: var(--checkpoint-spread-width) !important;
-    min-width: 0 !important;
-    max-width: 1120px !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    aspect-ratio: 210 / 148 !important;
-    flex: 0 1 var(--checkpoint-spread-width) !important;
-    align-self: center !important;
-    margin: auto !important;
-    box-sizing: border-box !important;
-  }
-
-  .workspace-canvas > .book-frame.day-book-frame,
-  .workspace-canvas > .book-frame.month-book-frame {
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    grid-template-rows: minmax(0, 1fr) !important;
-  }
-
-  .workspace-canvas > .cover-layout {
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
-}
-
-
 /* CHECKPOINT shared page system: one spread size and one ellipsis slot for every page. */
 :root {
   --checkpoint-spread-max-width: 1120px;
@@ -7284,7 +7247,9 @@ html,body{width:100%;overflow-x:clip}
     );
   }
 
-  .workspace-canvas > .planner-spread {
+  .workspace-canvas > .planner-spread.book-frame.day-book-frame,
+  .workspace-canvas > .planner-spread.book-frame.month-book-frame,
+  .workspace-canvas > .planner-spread.cover-layout {
     width: var(--checkpoint-spread-width) !important;
     min-width: 0 !important;
     max-width: var(--checkpoint-spread-max-width) !important;
