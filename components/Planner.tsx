@@ -528,6 +528,8 @@ export default function Planner() {
   const [plannerPage,setPlannerPage]=useState<"day"|"month">("day");
   const [monthCursor,setMonthCursor]=useState(()=>today().slice(0,7));
   const [monthStickerDate,setMonthStickerDate]=useState<string|null>(null);
+  const monthStickerPickerRef=useRef<HTMLDivElement>(null);
+  const monthStickerTriggerRef=useRef<HTMLButtonElement>(null);
   const [monthStickerPending,setMonthStickerPending]=useState<string|null>(null);
   const [monthStickerCategory,setMonthStickerCategory]=useState("smileys");
   const [monthStickerSearch,setMonthStickerSearch]=useState("");
@@ -597,6 +599,24 @@ export default function Planner() {
       document.removeEventListener("keydown",closeOnEscape);
     };
   },[showPageMenu]);
+
+  useEffect(()=>{
+    if(!monthStickerDate)return;
+    const closeOnOutside=(event:PointerEvent)=>{
+      const target=event.target as Node;
+      if(monthStickerPickerRef.current?.contains(target)||monthStickerTriggerRef.current?.contains(target))return;
+      setMonthStickerDate(null);
+    };
+    const closeOnEscape=(event:KeyboardEvent)=>{
+      if(event.key==="Escape")setMonthStickerDate(null);
+    };
+    document.addEventListener("pointerdown",closeOnOutside);
+    document.addEventListener("keydown",closeOnEscape);
+    return()=>{
+      document.removeEventListener("pointerdown",closeOnOutside);
+      document.removeEventListener("keydown",closeOnEscape);
+    };
+  },[monthStickerDate]);
 
   const beginAuthTransition=useCallback((nextUser:User)=>{
     if(authenticatedUser.current?.id===nextUser.id||pendingAuthUser.current?.id===nextUser.id)return;
@@ -956,7 +976,11 @@ export default function Planner() {
                       <button type="button" onClick={()=>setMonthStickerPending(null)}>취소</button>
                     </div>
                   ) : (
-                    <button type="button" className="month-sticker-add-button" onClick={()=>{setMonthStickerDate("picker");setMonthStickerSearch("");}}>
+                    <button ref={monthStickerTriggerRef} type="button" className="month-sticker-add-button" onClick={()=>{
+                      if(monthStickerDate){setMonthStickerDate(null);return;}
+                      setMonthStickerSearch("");
+                      setMonthStickerDate("picker");
+                    }}>
                       <Plus size={12}/> 스티커 추가
                     </button>
                   )}
@@ -1025,7 +1049,7 @@ export default function Planner() {
                   </div>
                 </section>
               </div>
-              {monthStickerDate&&<div className="month-sticker-picker cover-emoji-picker" role="dialog" aria-label="이모지 및 기호">
+              {monthStickerDate&&<div ref={monthStickerPickerRef} className="month-sticker-picker cover-emoji-picker" role="dialog" aria-label="이모지 및 기호">
                 <div className="cover-emoji-picker-header"><span>이모지 및 기호</span><button type="button" aria-label="이모지 선택 닫기" onClick={()=>setMonthStickerDate(null)}><X size={17}/></button></div>
                 <label className="cover-emoji-search"><Search size={17}/><input type="search" autoFocus value={monthStickerSearch} onChange={e=>setMonthStickerSearch(e.target.value)} placeholder="이모지 검색"/></label>
                 <div className="cover-emoji-tabs" role="tablist" aria-label="이모지 카테고리">
