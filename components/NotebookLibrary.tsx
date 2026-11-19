@@ -20,6 +20,8 @@ export type NotebookRecord = {
 type Props = {
   email: string;
   themeStyle: CSSProperties;
+  darkMode: boolean;
+  onDarkModeChange: (enabled: boolean) => void;
   notebooks: NotebookRecord[];
   coverPhotoUrls: Record<string, string>;
   loading: boolean;
@@ -102,9 +104,9 @@ function NotebookCoverPreview({notebook,photoUrls}:{notebook:NotebookRecord;phot
   </span>;
 }
 
-export default function NotebookLibrary({email,themeStyle,notebooks,coverPhotoUrls,loading,notice,onCreate,onOpen,onSignOut,onDeleteAccount}:Props) {
+export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeChange,notebooks,coverPhotoUrls,loading,notice,onCreate,onOpen,onSignOut,onDeleteAccount}:Props) {
   return (
-    <div className="notebook-library-shell">
+    <div className="notebook-library-shell" data-theme={darkMode ? "dark" : "light"} style={themeStyle}>
       <header className="notebook-library-header">
         <div className="notebook-library-brand">
           <span className="brand-icon"><BookOpen size={18}/></span>
@@ -114,6 +116,8 @@ export default function NotebookLibrary({email,themeStyle,notebooks,coverPhotoUr
           email={email}
           currentView="library"
           themeStyle={themeStyle}
+          darkMode={darkMode}
+          onDarkModeChange={onDarkModeChange}
           onSignOut={onSignOut}
           onDeleteAccount={onDeleteAccount}
         />
