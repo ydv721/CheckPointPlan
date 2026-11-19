@@ -7133,3 +7133,14 @@ html,body{width:100%;overflow-x:clip}
 .paper-page .free-note-input {
   font-size: 12px !important;
 }
+
+
+/* Unify daily planner input typography at a comfortable reading size. */
+.paper-page .color-guide-input,
+.paper-page .memo-section textarea,
+.paper-page .todo-text,
+.paper-page .free-note-input {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.6 !important;
+}
