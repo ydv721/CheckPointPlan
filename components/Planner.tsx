@@ -680,7 +680,9 @@ export default function Planner() {
   },[client,beginAuthTransition]);
 
   useEffect(()=>{
-    if(!client||!user){
+    const activeClient=client;
+    const activeUser=user;
+    if(!activeClient||!activeUser){
       setLibraryLoading(false);
       setNotebooks([]);
       setNotebookCoverPhotoUrls({});
@@ -689,9 +691,9 @@ export default function Planner() {
     let active=true;
     async function loadNotebookLibrary(){
       setLibraryLoading(true);
-      const {data,error}=await client.from("notebooks")
+      const {data,error}=await activeClient.from("notebooks")
         .select("id,notebook_type,title,created_at,updated_at")
-        .eq("user_id",user.id)
+        .eq("user_id",activeUser.id)
         .order("updated_at",{ascending:false});
       if(!active)return;
       if(error){
@@ -706,9 +708,9 @@ export default function Planner() {
       const plannerIds=rows.filter(row=>row.notebook_type==="planner").map(row=>row.id);
       let settingsRows: {notebook_id:string;theme:string;custom_color:string;cover:unknown}[]=[];
       if(plannerIds.length){
-        const {data:settingsData,error:settingsError}=await client.from("planner_settings")
+        const {data:settingsData,error:settingsError}=await activeClient.from("planner_settings")
           .select("notebook_id,theme,custom_color,cover")
-          .eq("user_id",user.id)
+          .eq("user_id",activeUser.id)
           .in("notebook_id",plannerIds);
         if(!active)return;
         if(settingsError){
@@ -752,7 +754,7 @@ export default function Planner() {
       }
 
       const signedResults=await Promise.all([...imagePaths].map(async path=>{
-        const {data:signedData,error:signedError}=await client.storage.from("checkpoint-covers").createSignedUrl(path,60*60);
+        const {data:signedData,error:signedError}=await activeClient.storage.from("checkpoint-covers").createSignedUrl(path,60*60);
         return {path,url:signedError?null:signedData?.signedUrl??null};
       }));
       if(!active)return;
