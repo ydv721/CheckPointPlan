@@ -7247,7 +7247,7 @@ html,body{width:100%;overflow-x:clip}
   .right-page .todo-header > .todo-tools {
     position: absolute !important;
     top: 4px !important;
-    right: 2px !important;
+    right: -2px !important;
     z-index: 80 !important;
   }
 
@@ -7268,7 +7268,7 @@ html,body{width:100%;overflow-x:clip}
   .right-page .todo-header > .todo-tools {
     position: absolute !important;
     top: 0 !important;
-    right: -4px !important;
+    right: 4px !important;
     z-index: 80 !important;
   }
 
