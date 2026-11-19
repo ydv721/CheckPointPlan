@@ -1,7 +1,9 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { BookOpen, BookText, CalendarDays, CheckSquare, Plus, LogOut, Clock3 } from "lucide-react";
 import type { NotebookType } from "@/components/NotebookTypeSelection";
+import { defaultCover, themes, type Cover, type ThemeName } from "@/lib/types";
 
 export type NotebookRecord = {
   id: string;
@@ -9,11 +11,15 @@ export type NotebookRecord = {
   title: string;
   created_at: string;
   updated_at: string;
+  theme?: ThemeName;
+  custom_color?: string;
+  cover?: Cover;
 };
 
 type Props = {
   email: string;
   notebooks: NotebookRecord[];
+  coverPhotoUrls: Record<string, string>;
   loading: boolean;
   notice: string;
   onCreate: () => void;
@@ -34,7 +40,66 @@ function dateLabel(value:string) {
   return Number.isNaN(date.getTime())?"":new Intl.DateTimeFormat("ko-KR",{year:"numeric",month:"long",day:"numeric"}).format(date);
 }
 
-export default function NotebookLibrary({email,notebooks,loading,notice,onCreate,onOpen,onSignOut}:Props) {
+function NotebookCoverPreview({notebook,photoUrls}:{notebook:NotebookRecord;photoUrls:Record<string,string>}) {
+  const cover=notebook.cover??defaultCover;
+  const theme=notebook.theme??"blue";
+  const customColor=/^#[0-9a-fA-F]{6}$/.test(notebook.custom_color??"")?notebook.custom_color!:themes.custom.cover;
+  const palette=theme==="custom"?{...themes.custom,cover:customColor}:themes[theme];
+  const activePattern=cover.backgroundPattern??"grid";
+  const patternThickness=typeof cover.patternThickness==="number"?Math.min(8,Math.max(1,cover.patternThickness)):2;
+  const patternColor=cover.patternColor||(theme==="white"?"#788393":theme==="black"?"#A9B4D5":"#FFFFFF");
+  const items=Array.isArray(cover.items)?cover.items:[];
+  const artStyle={
+    "--cover":cover.backgroundColor||palette.cover,
+    "--cover-ink":palette.coverInk
+  } as CSSProperties;
+  const patternStyle={
+    "--pattern-color":patternColor,
+    "--pattern-thickness":(patternThickness*.48)+"px",
+    "--pattern-frame-border":((6+patternThickness*2)*.48)+"px",
+    "--pattern-frame-bottom":((6+patternThickness*2)*4.4*.48)+"px",
+    "--pattern-preview-frame-border":((3+patternThickness)*.48)+"px",
+    "--pattern-preview-frame-bottom":((6+patternThickness*2)*.48)+"px"
+  } as CSSProperties;
+
+  return <span className={`notebook-book-cover-art cover-art cover-${theme}`} style={artStyle} aria-hidden="true">
+    {cover.backgroundImage&&photoUrls[cover.backgroundImage]&&<img className="cover-background-image" src={photoUrls[cover.backgroundImage]} alt="" draggable={false} style={{objectPosition:(cover.backgroundPositionX??50)+"% "+(cover.backgroundPositionY??50)+"%"}}/>}
+    {activePattern!=="none"&&<span className={`cover-pattern-layer cover-pattern-${activePattern}`} style={patternStyle}/>}
+    <span className="cover-signature">
+      <svg className="cover-signature-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <rect x="3.5" y="5" width="21" height="21" rx="6.5" stroke="currentColor" strokeWidth="1.8"/>
+        <path d="m9 15.5 4.1 4 7.4-8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M26 2.5c.45 1.65 1.1 2.3 2.7 2.75-1.6.45-2.25 1.1-2.7 2.75-.45-1.65-1.1-2.3-2.7-2.75 1.6-.45 2.25-1.1 2.7-2.75Z" fill="currentColor"/>
+      </svg>
+      <span className="cover-signature-text">YOUR PACE, YOUR CHECKPOINT</span>
+    </span>
+    {items.map(item=>{
+      const rotation=Number(item.rotation??0);
+      const itemStyle:CSSProperties={
+        left:String(item.x)+"%",
+        top:String(item.y)+"%",
+        fontSize:Math.max(4,(item.size??12)*.48),
+        transform:"translate(-50%,-50%)",
+        rotate:Number.isFinite(rotation)&&rotation!==0?String(rotation)+"deg":"none",
+        ...(item.kind==="text"?{
+          width:String(item.width??76)+"%",
+          height:String(item.height??20)+"%",
+          color:item.color||undefined,
+          fontWeight:item.weight??800
+        }:{})
+      };
+      return <span key={item.id} className={"placed-sticker placed-object "+(item.kind==="text"?"placed-text":"placed-decor")} style={itemStyle}>
+        {item.kind==="text"
+          ? <span className="placed-text-content">{item.value}</span>
+          : item.kind==="photo"
+            ? (photoUrls[item.value]?<img src={photoUrls[item.value]} alt="" draggable={false}/>:null)
+            : <span className="placed-sticker-content">{item.value}</span>}
+      </span>;
+    })}
+  </span>;
+}
+
+export default function NotebookLibrary({email,notebooks,coverPhotoUrls,loading,notice,onCreate,onOpen,onSignOut}:Props) {
   return (
     <div className="notebook-library-shell">
       <header className="notebook-library-header">
@@ -65,13 +130,19 @@ export default function NotebookLibrary({email,notebooks,loading,notice,onCreate
             {notebooks.map(notebook=>{
               const meta=TYPES[notebook.notebook_type];
               const Icon=meta.icon;
+              const hasSavedCover=notebook.notebook_type==="planner"&&Boolean(notebook.cover);
               return <button type="button" key={notebook.id} className={"notebook-book-card notebook-book-"+notebook.notebook_type} onClick={()=>onOpen(notebook)}>
-                <span className="notebook-book-cover">
-                  <span className="notebook-book-binding" aria-hidden="true"/>
-                  <span className="notebook-book-mark"><Icon size={27}/></span>
-                  <strong>{notebook.title}</strong>
-                  <small>{meta.label.toUpperCase()}</small>
-                  <span className="notebook-book-lines" aria-hidden="true"><i/><i/><i/></span>
+                <span className={"notebook-book-cover"+(hasSavedCover?" has-saved-cover":"")}>
+                  {hasSavedCover
+                    ? <NotebookCoverPreview notebook={notebook} photoUrls={coverPhotoUrls}/>
+                    : <>
+                        <span className="notebook-book-binding" aria-hidden="true"/>
+                        <span className="notebook-book-mark"><Icon size={27}/></span>
+                        <strong>{notebook.title}</strong>
+                        <small>{meta.label.toUpperCase()}</small>
+                        <span className="notebook-book-lines" aria-hidden="true"><i/><i/><i/></span>
+                      </>}
+                  {hasSavedCover?<span className="notebook-book-binding" aria-hidden="true"/>:null}
                 </span>
                 <span className="notebook-book-info"><strong>{notebook.title}</strong><small>{meta.description}</small><small className="notebook-book-date"><Clock3 size={11}/> {dateLabel(notebook.updated_at)}</small></span>
               </button>;
