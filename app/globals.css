@@ -7545,3 +7545,7 @@ html,body{width:100%;overflow-x:clip}
   margin: 0 !important;
 }
 
+/* Match MONTH weekday labels to the MEMO heading size. */
+.month-book-frame .month-weekdays span {
+  font-size: 12px !important;
+}
