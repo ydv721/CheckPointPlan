@@ -624,6 +624,7 @@ export default function Planner() {
     setNotebookTypeNotice("");
     setNotebooks([]);
     setActiveNotebookId(null);
+    setLibraryLoading(true);
     setUser(nextUser);
   },[]);
 
