@@ -7146,8 +7146,45 @@ html,body{width:100%;overflow-x:clip}
 }
 
 
-/* MONTHLY: match DAY input typography and memo field styling. */
-/* Calendar notes keep their centered, two-line layout but use DAY input typography. */
+
+/* MONTHLY: use the same memo section structure and typography as the daily page. */
+.month-book-frame .month-memo-section {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+}
+
+.month-book-frame .month-memo-section > .month-memo-note {
+  box-sizing: border-box !important;
+  display: block !important;
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 17px !important;
+  resize: none !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 10px !important;
+  background: var(--soft) !important;
+  background-image: none !important;
+  color: var(--ink) !important;
+  font-family: var(--font) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.9 !important;
+}
+
+/* Keep Korean words intact and give the monthly memo enough room to read naturally. */
+@media (min-width: 901px) {
+  .month-book-frame .month-right-content {
+    grid-template-columns: minmax(0, 2fr) minmax(145px, 1fr);
+  }
+}
+
 .month-book-frame .month-day-cell > .month-day-note {
   font-family: var(--font) !important;
   font-size: 14px !important;
@@ -7156,49 +7193,6 @@ html,body{width:100%;overflow-x:clip}
   min-height: 1.6em !important;
   max-height: 3.2em !important;
   color: var(--ink) !important;
-}
-
-/* Put the monthly MEMO heading and writing area on the same visual system as DAY MEMO. */
-.month-memo-column > .month-memo-panel {
-  gap: 12px !important;
-  padding: 0 !important;
-  overflow: visible !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-}
-
-.month-memo-column > .month-memo-panel > .month-memo-toolbar {
-  flex: 0 0 auto !important;
-  min-height: 0 !important;
-  padding: 0 !important;
-}
-
-.month-memo-column > .month-memo-panel > .month-memo-toolbar > strong {
-  color: var(--ink) !important;
-  font-size: 12px !important;
-  font-weight: 900 !important;
-  letter-spacing: .08em !important;
-}
-
-.month-book-frame .month-memo-note {
-  box-sizing: border-box !important;
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-  padding: 12px !important;
-  border: 1px solid var(--line) !important;
-  border-radius: 10px !important;
-  background: var(--soft) !important;
-  background-image: none !important;
-  background-size: auto !important;
-  color: var(--ink) !important;
-  font-family: var(--font) !important;
-  font-size: 14px !important;
-  font-weight: 500 !important;
-  line-height: 1.6 !important;
-}
-
-.month-book-frame .month-memo-note:focus {
-  background: var(--soft) !important;
-  border-color: var(--accent) !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
 }
