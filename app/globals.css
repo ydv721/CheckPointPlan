@@ -7364,3 +7364,81 @@ html,body{width:100%;overflow-x:clip}
     right: 12px !important;
   }
 }
+
+/* Shared page sizing on tablet: all three views keep the same open-spread canvas. */
+@media (min-width: 561px) and (max-width: 780px) {
+  .workspace-canvas > .planner-spread.book-frame.day-book-frame,
+  .workspace-canvas > .planner-spread.book-frame.month-book-frame,
+  .workspace-canvas > .planner-spread.cover-layout {
+    width: 900px !important;
+    min-width: 900px !important;
+    max-width: none !important;
+    height: 634.286px !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    aspect-ratio: var(--checkpoint-spread-ratio) !important;
+    flex: 0 0 900px !important;
+    margin: 0 32px 0 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .workspace-canvas > .planner-spread.cover-layout {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-rows: minmax(0, 1fr) !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    border: 0 !important;
+    border-radius: 14px !important;
+    overflow: hidden !important;
+    background: var(--paper) !important;
+  }
+
+  .workspace-canvas > .planner-spread.cover-layout > .cover-stage {
+    display: flex !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+  }
+
+  .workspace-canvas > .planner-spread.cover-layout .spiral-cover {
+    width: 100% !important;
+    max-width: none !important;
+    height: 100% !important;
+    aspect-ratio: auto !important;
+  }
+
+  .workspace-canvas > .planner-spread.cover-layout > .cover-editor {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    overflow-y: auto !important;
+    padding: clamp(18px, 2.2vw, 34px) !important;
+  }
+}
+
+/* Phone-sized DAY and MONTH views share one scrollable spread width. */
+@media (max-width: 560px) {
+  .workspace-canvas > .planner-spread.book-frame.day-book-frame,
+  .workspace-canvas > .planner-spread.book-frame.month-book-frame {
+    width: 820px !important;
+    min-width: 820px !important;
+    max-width: none !important;
+    height: auto !important;
+    aspect-ratio: var(--checkpoint-spread-ratio) !important;
+    flex: 0 0 820px !important;
+    margin: 0 32px 0 0 !important;
+  }
+}
+
+/* Keep MONTH actions clear of the shared top-right menu. */
+.month-page-controls {
+  padding-right: calc(var(--checkpoint-page-menu-size) + var(--checkpoint-page-menu-inset) + 4px) !important;
+}
+

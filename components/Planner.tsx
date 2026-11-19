@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent, type PointerEvent as ReactPointerEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import PageMenu from "@/components/PageMenu";
+import PlannerSpread from "@/components/PlannerSpread";
 import {
   BookOpen, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight,
   Expand, ImagePlus, LogOut, Menu, Plus, RotateCw, Star,
@@ -386,7 +387,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls,menu}: {
   const updateItem=(id:string,patch:Partial<CoverItem>)=>setCover(c=>({...c,items:c.items.map(item=>item.id===id?{...item,...patch}:item)}));
   const removeItem=(id:string)=>{setCover(c=>({...c,items:c.items.filter(item=>item.id!==id)}));setSelectedItemId(current=>current===id?null:current);};
 
-  return <section className="cover-layout planner-spread">
+  return <PlannerSpread as="section" className="cover-layout">
     <div className="cover-stage"><div className="spiral-cover">
       <div className="spiral-binding">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
       <div className={`cover-art cover-${theme}`} style={{backgroundColor:cover.backgroundColor||undefined}} onPointerDown={e=>{if(e.target===e.currentTarget)setSelectedItemId(null);}}>
@@ -517,7 +518,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls,menu}: {
 
 
     </div>
-  </section>;
+  </PlannerSpread>;
 }
 
 export default function Planner() {
@@ -786,7 +787,6 @@ export default function Planner() {
   async function signOut() {
     if(!client)return;
     if(hydrated)await saveNow(entry);
-    setShowPageMenu(false);
     await client.auth.signOut();setUser(null);setView("planner");
   }
 
@@ -917,7 +917,7 @@ export default function Planner() {
         <div className="workspace-canvas">
       {view==="cover"? <CoverPage cover={cover} setCover={setCover} theme={theme} handleUpload={handleUpload} photoUrls={photoUrls} menu={pageMenu}/> : <>
         {loading?<div className="page-loading">페이지를 불러오는 중입니다...</div>:plannerPage==="month" ? (
-          <div className="book-frame month-book-frame planner-spread">
+          <PlannerSpread className="book-frame month-book-frame">
             <div className="book-spine" aria-hidden="true">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
             <section className="paper-page month-page">
               {pageMenu}
@@ -1029,9 +1029,9 @@ export default function Planner() {
               <button type="button" role="tab" aria-selected="true" className="planner-index-tab is-active" onClick={()=>setMonthStickerDate(null)}><span>MONTH</span></button>
               <button type="button" role="tab" aria-selected="false" className="planner-index-tab" onClick={()=>{setPlannerPage("day");setMonthStickerDate(null);}}><span>DAY</span></button>
             </div>
-          </div>
+          </PlannerSpread>
         ) : (
-          <div className="book-frame day-book-frame planner-spread">
+          <PlannerSpread className="book-frame day-book-frame">
           <div className="book-spine" aria-hidden="true">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
           <section className="paper-page left-page">
             <div className="page-date">
@@ -1107,7 +1107,7 @@ export default function Planner() {
             <button type="button" role="tab" aria-selected="false" className="planner-index-tab" onClick={()=>{setPlannerPage("month");setMonthCursor(date.slice(0,7));setMonthStickerDate(null);}}><span>MONTH</span></button>
             <button type="button" role="tab" aria-selected="true" className="planner-index-tab is-active" onClick={()=>setMonthStickerDate(null)}><span>DAY</span></button>
           </div>
-        </div>
+        </PlannerSpread>
         )}
       </>}
         </div>
