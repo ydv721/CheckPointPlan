@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, type CSSProperties } from "react";
-import { Check, ChevronRight, X } from "lucide-react";
+import { ArrowRight, X } from "lucide-react";
 
 export type NotebookType = "planner" | "study-notes" | "diary" | "checklist" | "free-notes";
 
@@ -15,20 +15,16 @@ const NOTEBOOK_TYPES: { type: NotebookType; title: string; description: string }
 
 type NotebookTypeSelectionProps = {
   themeStyle: CSSProperties;
-  selectedType: NotebookType | null;
   notice: string;
   creating: boolean;
-  onSelect: (type: NotebookType) => void;
   onContinue: (type: NotebookType) => void;
   onClose: () => void;
 };
 
 export default function NotebookTypeSelection({
   themeStyle,
-  selectedType,
   notice,
   creating,
-  onSelect,
   onContinue,
   onClose
 }: NotebookTypeSelectionProps) {
@@ -54,12 +50,13 @@ export default function NotebookTypeSelection({
         role="dialog"
         aria-modal="true"
         aria-labelledby="notebook-type-title"
+        aria-busy={creating}
       >
         <div className="notebook-type-modal-header">
           <div className="notebook-select-heading">
             <span className="eyebrow">CHOOSE YOUR NOTEBOOK</span>
             <h2 id="notebook-type-title">어떤 노트를 만들까요?</h2>
-            <p>기록할 목적에 맞는 노트 종류를 선택해 주세요.</p>
+            <p>원하는 노트 종류를 누르면 바로 만들어져요.</p>
           </div>
           <button
             type="button"
@@ -72,41 +69,22 @@ export default function NotebookTypeSelection({
           </button>
         </div>
 
-        <div className="notebook-type-list" role="radiogroup" aria-label="노트 종류 선택">
-          {NOTEBOOK_TYPES.map(option => {
-            const selected = selectedType === option.type;
-            return (
-              <button
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                className={selected ? "notebook-type-option selected" : "notebook-type-option"}
-                key={option.type}
-                disabled={creating}
-                onClick={() => onSelect(option.type)}
-              >
-                <span className="notebook-type-copy">
-                  <strong>{option.title}</strong>
-                  <span>{option.description}</span>
-                </span>
-                <span className="notebook-type-indicator" aria-hidden="true">
-                  {selected ? <Check size={14} strokeWidth={3} /> : null}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="notebook-select-footer">
-          <button
-            type="button"
-            className="primary-btn notebook-select-continue"
-            disabled={!selectedType || creating}
-            onClick={() => selectedType && onContinue(selectedType)}
-          >
-            {creating ? "만드는 중..." : selectedType === "planner" ? "플래너 열기" : "선택 완료"}
-            <ChevronRight size={17} />
-          </button>
+        <div className="notebook-type-list" aria-label="노트 종류">
+          {NOTEBOOK_TYPES.map(option => (
+            <button
+              type="button"
+              className="notebook-type-option"
+              key={option.type}
+              disabled={creating}
+              onClick={() => onContinue(option.type)}
+            >
+              <span className="notebook-type-copy">
+                <strong>{option.title}</strong>
+                <span>{option.description}</span>
+              </span>
+              <ArrowRight className="notebook-type-arrow" size={19} aria-hidden="true" />
+            </button>
+          ))}
         </div>
         {notice ? <p className="notebook-type-notice" role="status">{notice}</p> : null}
       </section>
