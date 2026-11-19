@@ -7866,3 +7866,75 @@ html,body{width:100%;overflow-x:clip}
  .notebook-book-add { min-height:0; aspect-ratio:.76; }
 }
 
+
+
+/* Render the saved planner cover as the actual bookshelf thumbnail. */
+.notebook-book-cover.has-saved-cover {
+  display: block;
+  padding: 0;
+  background: transparent;
+}
+.notebook-book-cover-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border-radius: inherit;
+  background-image: none;
+}
+.notebook-book-cover.has-saved-cover > .notebook-book-binding {
+  z-index: 5;
+  width: 9px;
+  pointer-events: none;
+}
+.notebook-book-cover-art .cover-pattern-grid {
+  background-size: 16px 16px;
+}
+.notebook-book-cover-art .cover-pattern-dots {
+  background-size: 9px 9px;
+}
+.notebook-book-cover-art .cover-pattern-stripes {
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--pattern-color) 0 var(--pattern-thickness, 1px),
+    transparent var(--pattern-thickness, 1px) calc(var(--pattern-thickness, 1px) + 6px)
+  );
+}
+.notebook-book-cover-art .cover-signature {
+  right: 6%;
+  bottom: 6%;
+  left: 6%;
+  gap: 3px;
+}
+.notebook-book-cover-art .cover-signature-mark {
+  flex-basis: 12px;
+  width: 12px;
+  height: 12px;
+}
+.notebook-book-cover-art .cover-signature-text {
+  font-size: 4px;
+  letter-spacing: .045em;
+}
+.notebook-book-cover-art .placed-sticker {
+  min-width: 14px;
+  min-height: 14px;
+  max-width: 90%;
+  cursor: default;
+  pointer-events: none;
+}
+.notebook-book-cover-art .placed-object {
+  outline: 0;
+  pointer-events: none;
+  touch-action: auto;
+}
+.notebook-book-cover-art .placed-text {
+  min-width: 12%;
+  min-height: 8%;
+  padding: 2px 3px;
+}
+.notebook-book-cover-art .placed-sticker img {
+  width: 1.6em;
+  height: 1.6em;
+}
