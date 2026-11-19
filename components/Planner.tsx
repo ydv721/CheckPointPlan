@@ -1074,7 +1074,7 @@ export default function Planner() {
     setMonthStickerPending(null);
   }
   async function navigateDate(nextDate:string) {
-    if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(nextDate))return;
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(nextDate))return;
     await saveNow(entry);
     setDate(nextDate);
     setMonthCursor(nextDate.slice(0,7));
