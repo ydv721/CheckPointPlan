@@ -7473,3 +7473,33 @@ html,body{width:100%;overflow-x:clip}
   }
 }
 
+/* MONTH sticker prompt: readable instruction and cancel text. */
+.month-page-controls > .month-sticker-pending {
+  gap: 8px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+.month-page-controls > .month-sticker-pending span {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+.month-page-controls > .month-sticker-pending button {
+  padding: 5px 8px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+}
+
+@media (max-width: 780px) {
+  .month-page-controls > .month-sticker-pending,
+  .month-page-controls > .month-sticker-pending span {
+    font-size: 11px !important;
+  }
+
+  .month-page-controls > .month-sticker-pending button {
+    padding: 4px 7px !important;
+    font-size: 10px !important;
+  }
+}
+
