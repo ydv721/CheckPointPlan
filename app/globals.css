@@ -7937,8 +7937,8 @@ html,body{width:100%;overflow-x:clip}
   display:flex;
   flex-direction:column;
   gap:5px;
-  margin-top:12px;
-  padding-top:12px;
+  margin-top:auto;
+  padding-top:20px;
 }
 .app-sidebar-footer button { min-height:46px; }
 .app-sidebar-footer .app-sidebar-delete { color:#B65E6A; }
