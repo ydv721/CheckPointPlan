@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
-import { BookOpen, LogOut, MoreHorizontal, Palette, Sparkles, Trash2 } from "lucide-react";
+import { BookOpen, Home, LogOut, MoreHorizontal, Palette, Sparkles, Trash2 } from "lucide-react";
 
 type PlannerView = "planner" | "cover";
 
@@ -12,6 +12,7 @@ type PageMenuProps = {
   themeStyle: CSSProperties;
   onViewChange: (view: PlannerView) => void;
   onOpenSettings: () => void;
+  onOpenNotebookList: () => void;
   onSignOut: () => void;
   onDeleteAccount: () => void;
 };
@@ -22,6 +23,7 @@ export default function PageMenu({
   themeStyle,
   onViewChange,
   onOpenSettings,
+  onOpenNotebookList,
   onSignOut,
   onDeleteAccount
 }: PageMenuProps) {
@@ -105,6 +107,9 @@ export default function PageMenu({
         >
           <div className="page-menu-account">{email}</div>
           <div className="page-menu-divider" role="separator" />
+          <button type="button" role="menuitem" onClick={() => runAction(onOpenNotebookList)}>
+            <Home size={16} /><span>노트 목록</span>
+          </button>
           {view === "cover" ? (
             <button type="button" role="menuitem" onClick={() => runAction(() => onViewChange("planner"))}>
               <BookOpen size={16} /><span>플래너로 돌아가기</span>

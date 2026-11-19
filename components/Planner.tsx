@@ -906,6 +906,14 @@ export default function Planner() {
     })}));
   }
   const themeNames:Record<ThemeName,string>={white:"White",pink:"Pink",blue:"Blue",black:"Black",custom:"Custom"};
+  async function openNotebookList() {
+    if(hydrated) await saveNow(entry);
+    setNotebookTypeChosen(false);
+    setSelectedNotebookType(null);
+    setNotebookTypeNotice("");
+    setMobileMenu(false);
+  }
+
   const pageMenu=(
     <PageMenu
       email={user?.email??""}
@@ -913,6 +921,7 @@ export default function Planner() {
       themeStyle={vars}
       onViewChange={setView}
       onOpenSettings={()=>setShowSettings(true)}
+      onOpenNotebookList={()=>{void openNotebookList();}}
       onSignOut={()=>{void signOut();}}
       onDeleteAccount={()=>{setDeleteEmail("");setShowDeleteAccount(true);}}
     />
