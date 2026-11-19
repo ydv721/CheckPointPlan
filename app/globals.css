@@ -7871,6 +7871,7 @@ html,body{width:100%;overflow-x:clip}
 /* Render the saved planner cover as the actual bookshelf thumbnail. */
 .notebook-book-cover.has-saved-cover {
   display: block;
+  aspect-ratio: .72;
   padding: 0;
   background: transparent;
 }
@@ -7894,6 +7895,9 @@ html,body{width:100%;overflow-x:clip}
 }
 .notebook-book-cover-art .cover-pattern-dots {
   background-size: 9px 9px;
+}
+.notebook-book-cover-art .cover-pattern-polaroid {
+  inset: 5px;
 }
 .notebook-book-cover-art .cover-pattern-stripes {
   background-image: repeating-linear-gradient(
