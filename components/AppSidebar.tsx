@@ -117,7 +117,6 @@ export default function AppSidebar({
                 <div className="app-sidebar-current" aria-current="page">
                   <House size={18} />
                   <span>다이어리 목록</span>
-                  <small>현재 위치</small>
                 </div>
               ) : (
                 <button type="button" onClick={() => runAction(onOpenNotebookList)}>
