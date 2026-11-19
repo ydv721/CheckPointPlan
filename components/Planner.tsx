@@ -9,7 +9,7 @@ import NotebookLibrary, { type NotebookRecord } from "@/components/NotebookLibra
 import {
   CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight,
   Expand, ImagePlus, Plus, RotateCw, Star,
-  Sparkles, Trash2, X, Search, CircleHelp, CheckCircle2
+  Sparkles, Trash2, X, Search, CircleHelp
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { defaultCover, emptyEntry, themes, type Cover, type CoverItem, type CoverPattern, type Entry, type FocusItem, type MonthEntry, type ThemeName, type Todo, type TodoStatus } from "@/lib/types";
@@ -241,9 +241,11 @@ function Timetable({ value, onChange, highlighter, tool }: {
   </div></div>;
 }
 
-function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
+function CoverPage({cover,setCover,theme,setTheme,customColor,setCustomColor,handleUpload,photoUrls}: {
   cover:Cover;setCover:React.Dispatch<React.SetStateAction<Cover>>;
-  theme:ThemeName;handleUpload:(file:File,asBackground?:boolean)=>Promise<void>;photoUrls:Record<string,string>;
+  theme:ThemeName;setTheme:React.Dispatch<React.SetStateAction<ThemeName>>;
+  customColor:string;setCustomColor:React.Dispatch<React.SetStateAction<string>>;
+  handleUpload:(file:File,asBackground?:boolean)=>Promise<void>;photoUrls:Record<string,string>;
 }) {
   const fileInput=useRef<HTMLInputElement>(null);
   const backgroundInput=useRef<HTMLInputElement>(null);
@@ -253,6 +255,13 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
   const [recentEmojis,setRecentEmojis]=useState<string[]>([]);
   const backgroundPanRef=useRef<{pointerId:number;startX:number;startY:number;originX:number;originY:number;overflowX:number;overflowY:number}|null>(null);
   const activePattern:CoverPattern=cover.backgroundPattern??"grid";
+  const themeOptions:{value:ThemeName;label:string}[]=[
+    {value:"white",label:"White"},
+    {value:"pink",label:"Pink"},
+    {value:"blue",label:"Blue"},
+    {value:"black",label:"Black"},
+    {value:"custom",label:"Custom"}
+  ];
   const patternColor=cover.patternColor||(theme==="white"?"#788393":theme==="black"?"#A9B4D5":"#FFFFFF");
   const patternLabel=COVER_PATTERNS.find(pattern=>pattern.value===activePattern)?.label??"모눈";
   type CoverInteraction =
@@ -446,6 +455,27 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
       </div>
     </div></div>
     <div className="cover-editor">
+      <div className="cover-editor-section cover-theme-section">
+        <div className="cover-editor-section-heading"><span>다이어리 테마</span></div>
+        <div className="cover-theme-choices" role="group" aria-label="다이어리 테마 선택">
+          {themeOptions.map(option=><button
+            key={option.value}
+            type="button"
+            className={theme===option.value?"cover-theme-choice is-selected":"cover-theme-choice"}
+            aria-pressed={theme===option.value}
+            onClick={()=>setTheme(option.value)}
+          >
+            <span className="cover-theme-swatch" style={{background:option.value==="custom"?sanitizeHex(customColor):themes[option.value].cover}}/>
+            <span>{option.label}</span>
+            {theme===option.value&&<Check size={13}/>}
+          </button>)}
+        </div>
+        {theme==="custom"&&<div className="cover-custom-color">
+          <label>컬러 피커<input aria-label="사용자 지정 컬러 피커" type="color" value={sanitizeHex(customColor)} onChange={e=>setCustomColor(e.target.value)}/></label>
+          <label>HEX 코드<input aria-label="HEX 컬러 코드" type="text" maxLength={7} placeholder="#8B9EC4" value={customColor} onChange={e=>setCustomColor(e.target.value)}/></label>
+        </div>}
+      </div>
+
       <div className="cover-editor-section">
         <div className="cover-editor-section-heading"><span>표지 배경</span></div>
         <div className="cover-background-options">
@@ -553,7 +583,6 @@ export default function Planner() {
   const [photoUrls,setPhotoUrls]=useState<Record<string,string>>({});
   const [pen,setPen]=useState(PENS[0]);
   const [tool,setTool]=useState<"paint"|"erase">("paint");
-  const [showSettings,setShowSettings]=useState(false);
   const [showDeleteAccount,setShowDeleteAccount]=useState(false);
   const [deleteEmail,setDeleteEmail]=useState("");
   const [deletingAccount,setDeletingAccount]=useState(false);
@@ -1084,46 +1113,6 @@ export default function Planner() {
       return {...item,status:next,checked:next==="done"};
     })}));
   }
-  const themeNames:Record<ThemeName,string>={white:"White",pink:"Pink",blue:"Blue",black:"Black",custom:"Custom"};
-  async function applyThemeSettings(){
-    if(!client||!user)return;
-    if(activeNotebookId){
-      if(!await saveSettingsNow())return;
-    }else{
-      const {data,error}=await client.auth.updateUser({
-        data:{
-          checkpoint_default_theme:theme,
-          checkpoint_default_custom_color:sanitizeHex(customColor)
-        }
-      });
-      if(error){
-        setNotebookTypeNotice("기본 테마를 저장하지 못했습니다: "+error.message);
-        return;
-      }
-      if(data.user)setUser(data.user);
-    }
-    setShowSettings(false);
-  }
-
-  const themeSettingsModal=showSettings?(
-    <div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)void applyThemeSettings()}} role="presentation">
-      <section className="settings-modal" role="dialog" aria-modal="true" aria-label="테마 설정">
-        <div className="settings-header">
-          <div><div className="eyebrow">MAKE IT FEEL LIKE YOU</div><h2>테마 설정</h2></div>
-          <button className="icon-btn" aria-label="닫기" onClick={()=>void applyThemeSettings()}><X size={21}/></button>
-        </div>
-        {activeNotebookId&&<p>속지와 표지 색상이 함께 변경됩니다. 원하는 색상을 선택해 주세요.</p>}
-        <div className="theme-choices">{(["white","pink","blue","black","custom"] as ThemeName[]).map(t=><button type="button" className={theme===t?"theme-choice active":"theme-choice"} key={t} onClick={()=>setTheme(t)}>
-          <span className="theme-thumb" style={{background:t==="custom"?sanitizeHex(customColor):themes[t].cover}}>{theme===t?<Check size={19}/>:null}</span><span>{themeNames[t]}</span>
-        </button>)}</div>
-        {theme==="custom"&&<div className="custom-color">
-          <label>컬러 피커<input aria-label="사용자 지정 컬러 피커" type="color" value={sanitizeHex(customColor)} onChange={e=>setCustomColor(e.target.value)}/></label>
-          <label>HEX 코드<input aria-label="HEX 컬러 코드" type="text" maxLength={7} placeholder="#8B9EC4" value={customColor} onChange={e=>setCustomColor(e.target.value)}/></label>
-        </div>}
-      </section>
-    </div>
-  ):null;
-
   async function openNotebookList() {
     if(hydrated) await saveNow(entry);
     if(!await saveSettingsNow())return;
@@ -1202,10 +1191,10 @@ export default function Planner() {
       onOpen={notebook=>{void openNotebook(notebook);}}
       onSignOut={()=>{void signOut();}}
       onDeleteAccount={()=>{setDeleteEmail("");setShowDeleteAccount(true);}}
-      onOpenSettings={()=>setShowSettings(true)}
+
     />
     {deleteAccountModal}
-    {themeSettingsModal}
+
     {notebookTypeChosen&&<NotebookTypeSelection
       themeStyle={vars}
       notice={notebookTypeNotice}
@@ -1229,7 +1218,7 @@ export default function Planner() {
           themeStyle={vars}
           onOpenNotebookList={()=>{void openNotebookList();}}
           onViewChange={setView}
-          onOpenSettings={()=>setShowSettings(true)}
+
           onSignOut={()=>{void signOut();}}
           onDeleteAccount={()=>{setDeleteEmail("");setShowDeleteAccount(true);}}
         />
@@ -1240,7 +1229,7 @@ export default function Planner() {
       {alert&&<div className="message-banner" role="alert"><CircleHelp size={17}/><span>{alert}</span><button aria-label="알림 닫기" onClick={()=>setAlert("")}><X size={15}/></button></div>}
       <div className="workspace-shell">
         <div className="workspace-canvas">
-      {view==="cover"? <CoverPage cover={cover} setCover={setCover} theme={theme} handleUpload={handleUpload} photoUrls={photoUrls}/> : <>
+      {view==="cover"? <CoverPage cover={cover} setCover={setCover} theme={theme} setTheme={setTheme} customColor={customColor} setCustomColor={setCustomColor} handleUpload={handleUpload} photoUrls={photoUrls}/> : <>
         {loading?<div className="page-loading">페이지를 불러오는 중입니다...</div>:plannerPage==="month" ? (
           <PlannerSpread className="book-frame month-book-frame">
             <div className="book-spine" aria-hidden="true">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
@@ -1439,6 +1428,5 @@ export default function Planner() {
 
     {deleteAccountModal}
 
-    {themeSettingsModal}
   </div>;
 }
