@@ -14,6 +14,8 @@ type AppSidebarProps = {
   email: string;
   currentView: SidebarView;
   themeStyle: CSSProperties;
+  darkMode?: boolean;
+  onDarkModeChange?: (enabled: boolean) => void;
   theme?: ThemeName;
   customColor?: string;
   onThemeChange?: (theme: ThemeName) => void;
@@ -28,6 +30,8 @@ export default function AppSidebar({
   email,
   currentView,
   themeStyle,
+  darkMode = false,
+  onDarkModeChange,
   theme = "blue",
   customColor = "#8b9ec4",
   onThemeChange,
@@ -38,29 +42,9 @@ export default function AppSidebar({
   onDeleteAccount
 }: AppSidebarProps) {
   const [open, setOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
-  const [darkModeLoaded, setDarkModeLoaded] = useState(false);
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    try {
-      setDarkMode(window.localStorage.getItem("checkpoint-sidebar-dark-mode") === "true");
-    } catch {
-      setDarkMode(false);
-    }
-    setDarkModeLoaded(true);
-  }, []);
-
-  useEffect(() => {
-    if (!darkModeLoaded) return;
-    try {
-      window.localStorage.setItem("checkpoint-sidebar-dark-mode", String(darkMode));
-    } catch {
-      // Keep the in-memory setting if browser storage is unavailable.
-    }
-  }, [darkMode, darkModeLoaded]);
 
   const panelDarkMode = currentView === "library" && darkMode;
   const panelStyle = panelDarkMode ? {
@@ -185,7 +169,7 @@ export default function AppSidebar({
                   type="button"
                   className="app-sidebar-theme-toggle"
                   aria-pressed={darkMode}
-                  onClick={() => setDarkMode(value => !value)}
+                  onClick={() => onDarkModeChange?.(!darkMode)}
                 >
                   <Moon size={18} />
                   <span>다크 모드</span>
