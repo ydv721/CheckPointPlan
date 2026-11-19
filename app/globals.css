@@ -7235,3 +7235,107 @@ html,body{width:100%;overflow-x:clip}
     margin: auto !important;
   }
 }
+
+
+/* 2026-11-19: Align MONTH and DAY menu anchors and unify the three desktop spread canvases. */
+@media (min-width: 901px) {
+  /* DAY menu: align its top/right edge with the MONTH page menu. */
+  .right-page .todo-header {
+    position: relative !important;
+  }
+
+  .right-page .todo-header > .todo-tools {
+    position: absolute !important;
+    top: 4px !important;
+    right: 2px !important;
+    z-index: 80 !important;
+  }
+
+  /* MONTH menu is removed from the control flow but keeps its reserved space. */
+  .month-page-controls {
+    padding-right: 37px !important;
+  }
+
+  .month-page-controls > .page-menu-anchor {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    z-index: 80 !important;
+  }
+}
+
+@media (min-width: 781px) and (max-width: 900px) {
+  .right-page .todo-header > .todo-tools {
+    position: absolute !important;
+    top: 0 !important;
+    right: -4px !important;
+    z-index: 80 !important;
+  }
+
+  .month-page-controls {
+    padding-right: 37px !important;
+  }
+
+  .month-page-controls > .page-menu-anchor {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    z-index: 80 !important;
+  }
+}
+
+@media (max-width: 780px) {
+  .right-page .todo-header > .todo-tools {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    z-index: 80 !important;
+  }
+
+  .month-page-controls {
+    padding-right: 37px !important;
+  }
+
+  .month-page-controls > .page-menu-anchor {
+    position: absolute !important;
+    top: 7px !important;
+    right: 2px !important;
+    z-index: 80 !important;
+  }
+}
+
+/* DAY, MONTH and COVER share one desktop spread width and the same 210:148 canvas ratio. */
+@media (min-width: 781px) {
+  .app-shell.planner-view,
+  .app-shell.cover-view {
+    --checkpoint-spread-width: min(1120px, calc(100vw - 64px), calc(141.9dvh - 68px));
+  }
+
+  .workspace-canvas > .book-frame.day-book-frame,
+  .workspace-canvas > .book-frame.month-book-frame,
+  .workspace-canvas > .cover-layout {
+    width: var(--checkpoint-spread-width) !important;
+    min-width: 0 !important;
+    max-width: 1120px !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    aspect-ratio: 210 / 148 !important;
+    flex: 0 1 var(--checkpoint-spread-width) !important;
+    align-self: center !important;
+    margin: auto !important;
+    box-sizing: border-box !important;
+  }
+
+  .workspace-canvas > .book-frame.day-book-frame,
+  .workspace-canvas > .book-frame.month-book-frame {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-rows: minmax(0, 1fr) !important;
+  }
+
+  .workspace-canvas > .cover-layout {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
