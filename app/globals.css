@@ -8086,11 +8086,11 @@ html,body{width:100%;overflow-x:clip}
   box-shadow:none;
 }
 .app-sidebar-theme-option:not(.is-selected):hover {
-  border-color:var(--accent);
-  background:#f7f8fa;
+  border-color:transparent;
+  background:var(--soft);
   color:var(--accent);
-  transform:translateX(3px);
-  box-shadow:0 2px 7px rgba(30,41,59,.08);
+  transform:translateX(2px);
+  box-shadow:none;
 }
 .app-sidebar-theme-option.is-selected:hover {
   border-color:var(--accent);
