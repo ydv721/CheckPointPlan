@@ -7549,3 +7549,264 @@ html,body{width:100%;overflow-x:clip}
 .month-book-frame .month-weekdays span {
   font-size: 12px !important;
 }
+
+/* CHECKPOINT notebook type selection: text-first rectangular choices. */
+.notebook-select-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.notebook-select-header {
+  width: min(1320px, calc(100% - 72px));
+  height: 78px;
+  flex: 0 0 78px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+}
+
+.notebook-select-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.notebook-select-brand-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.notebook-select-brand-copy strong {
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: .04em;
+}
+
+.notebook-select-brand-copy small {
+  color: var(--accent);
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: .12em;
+}
+
+.notebook-select-account {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 11px;
+}
+
+.notebook-select-email {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: .7;
+}
+
+.notebook-select-account button {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.notebook-select-account button:hover {
+  background: var(--soft);
+}
+
+.notebook-select-main {
+  width: min(620px, calc(100% - 36px));
+  margin: auto;
+  padding: 48px 0 66px;
+}
+
+.notebook-select-heading {
+  margin-bottom: 26px;
+}
+
+.notebook-select-heading .eyebrow {
+  font-size: 10px;
+}
+
+.notebook-select-heading h1 {
+  margin: 10px 0 8px;
+  color: var(--ink);
+  font-size: clamp(25px, 3vw, 32px);
+  font-weight: 900;
+  letter-spacing: -.055em;
+}
+
+.notebook-select-heading p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 13px;
+  opacity: .62;
+}
+
+.notebook-type-list {
+  display: grid;
+  gap: 10px;
+}
+
+.notebook-type-option {
+  width: 100%;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 18px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--paper);
+  color: var(--ink);
+  text-align: left;
+  transition: border-color .16s ease, background .16s ease, box-shadow .16s ease;
+}
+
+.notebook-type-option:hover {
+  border-color: var(--accent);
+  background: var(--soft);
+}
+
+.notebook-type-option.selected {
+  padding: 13px 17px;
+  border: 2px solid var(--accent);
+  background: var(--soft);
+  box-shadow: 0 3px 12px color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.notebook-type-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.notebook-type-copy strong {
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.notebook-type-copy > span {
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1.45;
+  opacity: .62;
+}
+
+.notebook-type-indicator {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--line);
+  border-radius: 50%;
+  color: #fff;
+}
+
+.notebook-type-option.selected .notebook-type-indicator {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.notebook-select-footer {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.notebook-select-footer p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 11px;
+  line-height: 1.6;
+  opacity: .58;
+}
+
+.notebook-select-continue {
+  min-height: 42px;
+  flex: 0 0 auto;
+  padding: 0 17px;
+}
+
+.notebook-select-continue:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+}
+
+.notebook-type-notice {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+@media (max-width: 780px) {
+  .notebook-select-header {
+    width: calc(100% - 32px);
+    height: 68px;
+    flex-basis: 68px;
+  }
+
+  .notebook-select-brand-copy strong {
+    font-size: 15px;
+  }
+
+  .notebook-select-brand-copy small {
+    font-size: 7px;
+  }
+
+  .notebook-select-email {
+    display: none;
+  }
+
+  .notebook-select-main {
+    padding: 38px 0 46px;
+  }
+
+  .notebook-select-heading h1 {
+    font-size: 25px;
+  }
+
+  .notebook-type-option {
+    min-height: 68px;
+    padding: 13px 15px;
+  }
+
+  .notebook-type-option.selected {
+    padding: 12px 14px;
+  }
+
+  .notebook-select-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .notebook-select-continue {
+    width: 100%;
+  }
+}
+

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 import type { User } from "@supabase/supabase-js";
 import PageMenu from "@/components/PageMenu";
 import PlannerSpread from "@/components/PlannerSpread";
+import NotebookTypeSelection, { type NotebookType } from "@/components/NotebookTypeSelection";
 import {
   BookOpen, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight,
   Expand, ImagePlus, LogOut, Menu, Plus, RotateCw, Star,
@@ -524,6 +525,9 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls,menu}: {
 export default function Planner() {
   const [user,setUser]=useState<User|null>(null);
   const [checking,setChecking]=useState(true);
+  const [notebookTypeChosen,setNotebookTypeChosen]=useState(false);
+  const [selectedNotebookType,setSelectedNotebookType]=useState<NotebookType|null>(null);
+  const [notebookTypeNotice,setNotebookTypeNotice]=useState("");
   const pendingAuthUser=useRef<User|null>(null);
   const authenticatedUser=useRef<User|null>(null);
   const [view,setView]=useState<"planner"|"cover">("planner");
@@ -609,6 +613,9 @@ export default function Planner() {
     if(authenticatedUser.current?.id===nextUser.id||pendingAuthUser.current?.id===nextUser.id)return;
     pendingAuthUser.current=nextUser;
     authenticatedUser.current=nextUser;
+    setNotebookTypeChosen(false);
+    setSelectedNotebookType(null);
+    setNotebookTypeNotice("");
     setUser(nextUser);
   },[]);
 
@@ -618,6 +625,11 @@ export default function Planner() {
     void client.auth.getUser().then(({data})=>{
       if(mounted){
         const resolvedUser=pendingAuthUser.current??data.user??null;
+        if(authenticatedUser.current?.id!==resolvedUser?.id){
+          setNotebookTypeChosen(false);
+          setSelectedNotebookType(null);
+          setNotebookTypeNotice("");
+        }
         authenticatedUser.current=resolvedUser;
         pendingAuthUser.current=null;
         setUser(resolvedUser);
@@ -631,10 +643,19 @@ export default function Planner() {
       }else if(event==="SIGNED_OUT"){
         pendingAuthUser.current=null;
         authenticatedUser.current=null;
+        setNotebookTypeChosen(false);
+        setSelectedNotebookType(null);
+        setNotebookTypeNotice("");
         setUser(null);
       }else if(event==="INITIAL_SESSION"&&!pendingAuthUser.current){
-        authenticatedUser.current=session?.user??null;
-        setUser(session?.user??null);
+        const sessionUser=session?.user??null;
+        if(authenticatedUser.current?.id!==sessionUser?.id){
+          setNotebookTypeChosen(false);
+          setSelectedNotebookType(null);
+          setNotebookTypeNotice("");
+        }
+        authenticatedUser.current=sessionUser;
+        setUser(sessionUser);
       }
       setChecking(false);
     });
@@ -787,7 +808,7 @@ export default function Planner() {
   async function signOut() {
     if(!client)return;
     if(hydrated)await saveNow(entry);
-    await client.auth.signOut();setUser(null);setView("planner");
+    await client.auth.signOut();setUser(null);setView("planner");setNotebookTypeChosen(false);setSelectedNotebookType(null);setNotebookTypeNotice("");
   }
 
   async function deleteAccount() {
@@ -812,6 +833,9 @@ export default function Planner() {
       pendingAuthUser.current=null;
       setUser(null);
       setView("planner");
+      setNotebookTypeChosen(false);
+      setSelectedNotebookType(null);
+      setNotebookTypeNotice("");
       setShowDeleteAccount(false);
       setDeleteEmail("");
       setPhotoUrls({});
@@ -894,8 +918,26 @@ export default function Planner() {
     />
   );
 
-  if(checking)return <div className="boot-screen"><AppIcon/><h1>CHECKPOINT</h1><p>플래너를 불러오는 중입니다...</p></div>;
+  if(checking)return <div className="boot-screen"><AppIcon/><h1>CHECKPOINT</h1><p>CHECKPOINT를 불러오는 중입니다...</p></div>;
   if(!user)return <AuthScreen onUser={beginAuthTransition}/>;
+  if(!notebookTypeChosen)return <NotebookTypeSelection
+    email={user.email??""}
+    themeStyle={vars}
+    selectedType={selectedNotebookType}
+    notice={notebookTypeNotice}
+    onSelect={type=>{setSelectedNotebookType(type);setNotebookTypeNotice("");}}
+    onContinue={type=>{
+      if(type==="planner"){
+        setView("planner");
+        setNotebookTypeChosen(true);
+        setNotebookTypeNotice("");
+      }else{
+        const labels:Record<NotebookType,string>={planner:"플래너","study-notes":"필기 노트",diary:"일기",checklist:"체크리스트","free-notes":"프리 노트"};
+        setNotebookTypeNotice(`${labels[type]}은 다음 개발 단계에서 연결할 예정이야. 지금은 플래너를 먼저 사용할 수 있어.`);
+      }
+    }}
+    onSignOut={()=>{void signOut();}}
+  />;
   return <div className={view==="planner"?"app-shell planner-view":"app-shell cover-view"} style={vars}>
     <header className="site-header"><div className="header-inner">
       <button className="brand" onClick={()=>setView("planner")}><span className="brand-lockup"><AppIcon/><span>CHECKPOINT</span></span><small>YOUR PACE, YOUR CHECKPOINT</small></button>
