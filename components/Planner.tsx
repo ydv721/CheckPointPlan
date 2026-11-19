@@ -241,7 +241,7 @@ function Timetable({ value, onChange, highlighter, tool }: {
   </div></div>;
 }
 
-function CoverPage({cover,setCover,theme,handleUpload,photoUrls,menu}: {
+function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
   cover:Cover;setCover:React.Dispatch<React.SetStateAction<Cover>>;
   theme:ThemeName;handleUpload:(file:File,asBackground?:boolean)=>Promise<void>;photoUrls:Record<string,string>;
 }) {
