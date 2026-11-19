@@ -1,7 +1,7 @@
 "use client";
 
-import type { CSSProperties } from "react";
-import { Check, ChevronRight, LogOut } from "lucide-react";
+import { useEffect, type CSSProperties } from "react";
+import { Check, ChevronRight, X } from "lucide-react";
 
 export type NotebookType = "planner" | "study-notes" | "diary" | "checklist" | "free-notes";
 
@@ -14,45 +14,62 @@ const NOTEBOOK_TYPES: { type: NotebookType; title: string; description: string }
 ];
 
 type NotebookTypeSelectionProps = {
-  email: string;
   themeStyle: CSSProperties;
   selectedType: NotebookType | null;
   notice: string;
+  creating: boolean;
   onSelect: (type: NotebookType) => void;
   onContinue: (type: NotebookType) => void;
-  onSignOut: () => void;
+  onClose: () => void;
 };
 
 export default function NotebookTypeSelection({
-  email,
   themeStyle,
   selectedType,
   notice,
+  creating,
   onSelect,
   onContinue,
-  onSignOut
+  onClose
 }: NotebookTypeSelectionProps) {
-  return (
-    <div className="notebook-select-shell" style={themeStyle}>
-      <header className="notebook-select-header">
-        <div className="notebook-select-brand">
-          <span className="brand-icon"><Check size={18} strokeWidth={3} /></span>
-          <span className="notebook-select-brand-copy">
-            <strong>CHECKPOINT</strong>
-            <small>YOUR PACE, YOUR CHECKPOINT</small>
-          </span>
-        </div>
-        <div className="notebook-select-account">
-          <span className="notebook-select-email">{email}</span>
-          <button type="button" onClick={onSignOut}><LogOut size={15} /> 로그아웃</button>
-        </div>
-      </header>
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !creating) onClose();
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [creating, onClose]);
 
-      <main className="notebook-select-main">
-        <div className="notebook-select-heading">
-          <span className="eyebrow">CHOOSE YOUR NOTEBOOK</span>
-          <h1>어떤 노트를 만들까요?</h1>
-          <p>기록할 목적에 맞는 노트 종류를 선택해 주세요.</p>
+  return (
+    <div
+      className="modal-backdrop notebook-type-backdrop"
+      style={themeStyle}
+      role="presentation"
+      onMouseDown={event => {
+        if (event.target === event.currentTarget && !creating) onClose();
+      }}
+    >
+      <section
+        className="notebook-type-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="notebook-type-title"
+      >
+        <div className="notebook-type-modal-header">
+          <div className="notebook-select-heading">
+            <span className="eyebrow">CHOOSE YOUR NOTEBOOK</span>
+            <h2 id="notebook-type-title">어떤 노트를 만들까요?</h2>
+            <p>기록할 목적에 맞는 노트 종류를 선택해 주세요.</p>
+          </div>
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label="닫기"
+            disabled={creating}
+            onClick={onClose}
+          >
+            <X size={20} />
+          </button>
         </div>
 
         <div className="notebook-type-list" role="radiogroup" aria-label="노트 종류 선택">
@@ -65,6 +82,7 @@ export default function NotebookTypeSelection({
                 aria-checked={selected}
                 className={selected ? "notebook-type-option selected" : "notebook-type-option"}
                 key={option.type}
+                disabled={creating}
                 onClick={() => onSelect(option.type)}
               >
                 <span className="notebook-type-copy">
@@ -84,15 +102,15 @@ export default function NotebookTypeSelection({
           <button
             type="button"
             className="primary-btn notebook-select-continue"
-            disabled={!selectedType}
+            disabled={!selectedType || creating}
             onClick={() => selectedType && onContinue(selectedType)}
           >
-            {selectedType === "planner" ? "플래너 열기" : "선택 완료"}
+            {creating ? "만드는 중..." : selectedType === "planner" ? "플래너 열기" : "선택 완료"}
             <ChevronRight size={17} />
           </button>
         </div>
         {notice ? <p className="notebook-type-notice" role="status">{notice}</p> : null}
-      </main>
+      </section>
     </div>
   );
 }
