@@ -975,6 +975,7 @@ export default function Planner() {
                 <section className="month-half month-half-right" aria-label="목요일부터 토요일 및 메모">
                   <div className="month-weekdays month-weekdays-right" aria-hidden="true">
                     {["THU","FRI","SAT"].map(day=><span key={day}>{day}</span>)}
+                    <span className="month-memo-heading">MEMO</span>
                   </div>
                   <div className="month-right-content">
                     <div className="month-calendar-grid month-calendar-grid-right">
@@ -997,7 +998,6 @@ export default function Planner() {
                     </div>
                     <div className="month-memo-column">
                       <div className="month-memo-panel">
-                        <div className="month-memo-toolbar"><strong>MEMO</strong></div>
                         <textarea
                           className="month-memo-note"
                           aria-label={`${monthCursor} 월간 메모`}
