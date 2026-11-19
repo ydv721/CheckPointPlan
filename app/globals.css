@@ -8142,3 +8142,46 @@ html,body{width:100%;overflow-x:clip}
 @media(max-width:480px) {
   .app-sidebar-theme-options { margin-left:22px; }
 }
+
+/* Cover customization: remove blue focus lines across every cover control. */
+.cover-layout :is(input, textarea, select, button, [tabindex]):focus,
+.cover-layout :is(input, textarea, select, button, [tabindex]):focus-visible,
+.cover-layout :is(.cover-background-option, .cover-text-color-control):focus-within {
+  outline: none !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
+}
+
+.cover-layout .cover-background-option:hover,
+.cover-layout .cover-background-option:focus-visible,
+.cover-layout .cover-text-color-control:focus-within {
+  border-color: var(--line) !important;
+}
+
+.cover-layout .cover-pattern-trigger:focus-visible,
+.cover-layout .cover-pattern-choice:focus-visible,
+.cover-layout .cover-object-handle:focus-visible {
+  outline: none !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
+}
+
+.cover-layout .cover-object-handle {
+  border-color: var(--line) !important;
+}
+
+.cover-layout .cover-emoji-search {
+  border-bottom: 1px solid var(--line) !important;
+}
+
+.cover-layout .cover-emoji-search:focus-within {
+  border-color: var(--line) !important;
+  box-shadow: none !important;
+}
+
+.cover-layout .cover-text-editor-row > input:focus,
+.cover-layout .cover-emoji-search input:focus {
+  border-color: var(--line) !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
