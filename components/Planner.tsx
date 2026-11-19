@@ -919,7 +919,8 @@ export default function Planner() {
         {loading?<div className="page-loading">페이지를 불러오는 중입니다...</div>:plannerPage==="month" ? (
           <div className="book-frame month-book-frame planner-spread">
             <div className="book-spine" aria-hidden="true">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
-            <section className="paper-page month-page">\n              {pageMenu}
+            <section className="paper-page month-page">
+              {pageMenu}
               <div className="month-page-header">
                 <div className="month-page-heading">
                   <div className="month-page-title-row">
