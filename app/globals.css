@@ -7997,6 +7997,7 @@ html,body{width:100%;overflow-x:clip}
 }
 .notebook-type-modal .notebook-select-footer {
   margin-top: 20px;
+  justify-content: flex-end;
 }
 .notebook-type-modal .notebook-type-notice {
   margin-bottom: 0;
