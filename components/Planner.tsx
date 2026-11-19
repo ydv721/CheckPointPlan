@@ -549,6 +549,8 @@ export default function Planner() {
   const [entry,setEntry]=useState<Entry>(()=>emptyEntry(today()));
   const [theme,setTheme]=useState<ThemeName>("blue");
   const [customColor,setCustomColor]=useState("#8b9ec4");
+  const [libraryDarkMode,setLibraryDarkMode]=useState(false);
+  const [libraryDarkModeLoaded,setLibraryDarkModeLoaded]=useState(false);
   const [cover,setCover]=useState<Cover>(defaultCover);
   const [photoUrls,setPhotoUrls]=useState<Record<string,string>>({});
   const [pen,setPen]=useState(PENS[0]);
@@ -568,6 +570,27 @@ export default function Planner() {
   const client=useMemo(()=>supabase(),[]);
   const palette=theme==="custom"?{...themes.custom,accent:sanitizeHex(customColor),cover:sanitizeHex(customColor),soft:setOpacity(customColor,.13),line:setOpacity(customColor,.19)}:themes[theme];
   const vars={"--bg":palette.bg,"--paper":palette.paper,"--ink":palette.ink,"--accent":palette.accent,"--soft":palette.soft,"--line":palette.line,"--cover":palette.cover,"--cover-ink":palette.coverInk} as CSSProperties;
+  const libraryPalette=libraryDarkMode?themes.black:themes.blue;
+  const libraryThemeStyle={"--bg":libraryPalette.bg,"--paper":libraryPalette.paper,"--ink":libraryPalette.ink,"--accent":libraryPalette.accent,"--soft":libraryPalette.soft,"--line":libraryPalette.line,"--cover":libraryPalette.cover,"--cover-ink":libraryPalette.coverInk} as CSSProperties;
+
+  useEffect(()=>{
+    try {
+      setLibraryDarkMode(window.localStorage.getItem("checkpoint-app-dark-mode")==="true");
+    } catch {
+      setLibraryDarkMode(false);
+    }
+    setLibraryDarkModeLoaded(true);
+  },[]);
+
+  useEffect(()=>{
+    if(!libraryDarkModeLoaded)return;
+    try {
+      window.localStorage.setItem("checkpoint-app-dark-mode",String(libraryDarkMode));
+    } catch {
+      // Keep the current setting if browser storage is unavailable.
+    }
+  },[libraryDarkMode,libraryDarkModeLoaded]);
+
   const monthCalendarDays=useMemo(()=>{
     const [year,month]=monthCursor.split("-").map(Number);
     const firstDay=new Date(year,month-1,1);
@@ -1006,7 +1029,7 @@ export default function Planner() {
   }
 
   const deleteAccountModal=showDeleteAccount&&user?(
-    <div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget&&!deletingAccount)setShowDeleteAccount(false)}} role="presentation">
+    <div className="modal-backdrop" style={activeNotebookId?vars:libraryThemeStyle} onMouseDown={e=>{if(e.target===e.currentTarget&&!deletingAccount)setShowDeleteAccount(false)}} role="presentation">
       <section className="delete-account-modal" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
         <div className="delete-account-icon"><Trash2 size={22}/></div>
         <div className="eyebrow">ACCOUNT DELETION</div>
@@ -1152,7 +1175,9 @@ export default function Planner() {
   if(!activeNotebookId)return <>
     <NotebookLibrary
       email={user.email??""}
-      themeStyle={vars}
+      themeStyle={libraryThemeStyle}
+      darkMode={libraryDarkMode}
+      onDarkModeChange={setLibraryDarkMode}
       notebooks={notebooks}
       coverPhotoUrls={notebookCoverPhotoUrls}
       loading={libraryLoading}
@@ -1166,7 +1191,7 @@ export default function Planner() {
     {deleteAccountModal}
 
     {notebookTypeChosen&&<NotebookTypeSelection
-      themeStyle={vars}
+      themeStyle={libraryThemeStyle}
       notice={notebookTypeNotice}
       creating={creatingNotebook}
       onContinue={type=>{void createNotebook(type);}}
