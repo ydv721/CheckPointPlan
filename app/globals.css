@@ -7055,15 +7055,6 @@ html,body{width:100%;overflow-x:clip}
   padding-top: 48px !important;
 }
 
-.cover-menu-slot {
-  position: absolute;
-  top: 9px;
-  right: clamp(18px, 3vw, 42px);
-  z-index: 80;
-  display: flex;
-  justify-content: flex-end;
-}
-
 @media (min-width: 781px) {
   .workspace-shell {
     display: flex !important;
@@ -7114,11 +7105,6 @@ html,body{width:100%;overflow-x:clip}
 
   .cover-editor {
     padding-top: 48px !important;
-  }
-
-  .cover-menu-slot {
-    top: 8px;
-    right: 12px;
   }
 
   .page-menu-popover {
@@ -7243,73 +7229,6 @@ html,body{width:100%;overflow-x:clip}
 }
 
 
-/* 2026-11-19: Align MONTH and DAY menu anchors and unify the three desktop spread canvases. */
-@media (min-width: 901px) {
-  /* DAY menu: align its top/right edge with the MONTH page menu. */
-  .right-page .todo-header {
-    position: relative !important;
-  }
-
-  .right-page .todo-header > .todo-tools {
-    position: absolute !important;
-    top: 4px !important;
-    right: -2px !important;
-    z-index: 80 !important;
-  }
-
-  /* MONTH menu is removed from the control flow but keeps its reserved space. */
-  .month-page-controls {
-    padding-right: 37px !important;
-  }
-
-  .month-page-controls > .page-menu-anchor {
-    position: absolute !important;
-    top: 0 !important;
-    right: -6px !important;
-    z-index: 80 !important;
-  }
-}
-
-@media (min-width: 781px) and (max-width: 900px) {
-  .right-page .todo-header > .todo-tools {
-    position: absolute !important;
-    top: 0 !important;
-    right: 4px !important;
-    z-index: 80 !important;
-  }
-
-  .month-page-controls {
-    padding-right: 37px !important;
-  }
-
-  .month-page-controls > .page-menu-anchor {
-    position: absolute !important;
-    top: 0 !important;
-    right: -6px !important;
-    z-index: 80 !important;
-  }
-}
-
-@media (max-width: 780px) {
-  .right-page .todo-header > .todo-tools {
-    position: absolute !important;
-    top: 0 !important;
-    right: 0 !important;
-    z-index: 80 !important;
-  }
-
-  .month-page-controls {
-    padding-right: 37px !important;
-  }
-
-  .month-page-controls > .page-menu-anchor {
-    position: absolute !important;
-    top: 7px !important;
-    right: -2px !important;
-    z-index: 80 !important;
-  }
-}
-
 /* DAY, MONTH and COVER share one desktop spread width and the same 210:148 canvas ratio. */
 @media (min-width: 781px) {
   .app-shell.planner-view,
@@ -7343,5 +7262,140 @@ html,body{width:100%;overflow-x:clip}
   .workspace-canvas > .cover-layout {
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+
+/* CHECKPOINT shared page system: one spread size and one ellipsis slot for every page. */
+:root {
+  --checkpoint-spread-max-width: 1120px;
+  --checkpoint-spread-ratio: 210 / 148;
+  --checkpoint-page-menu-size: 30px;
+  --checkpoint-page-menu-inset: 14px;
+}
+
+@media (min-width: 781px) {
+  .app-shell.planner-view,
+  .app-shell.cover-view {
+    --checkpoint-spread-width: min(
+      var(--checkpoint-spread-max-width),
+      calc(100vw - 64px),
+      calc(141.9dvh - 68px)
+    );
+  }
+
+  .workspace-canvas > .planner-spread {
+    width: var(--checkpoint-spread-width) !important;
+    min-width: 0 !important;
+    max-width: var(--checkpoint-spread-max-width) !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    aspect-ratio: var(--checkpoint-spread-ratio) !important;
+    flex: 0 1 var(--checkpoint-spread-width) !important;
+    align-self: center !important;
+    margin: auto !important;
+    box-sizing: border-box !important;
+  }
+
+  .workspace-canvas > .planner-spread.book-frame:is(.day-book-frame, .month-book-frame) {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-rows: minmax(0, 1fr) !important;
+  }
+
+  .workspace-canvas > .planner-spread.cover-layout {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-rows: minmax(0, 1fr) !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    border: 0 !important;
+    border-radius: 14px !important;
+    align-items: stretch !important;
+    overflow: hidden !important;
+    background: var(--paper) !important;
+  }
+
+  .workspace-canvas > .planner-spread.cover-layout > .cover-stage,
+  .workspace-canvas > .planner-spread.cover-layout > .cover-editor {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .workspace-canvas > .planner-spread.cover-layout > .cover-stage {
+    display: flex !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    padding: 0 !important;
+  }
+
+  .workspace-canvas > .planner-spread.cover-layout > .cover-editor {
+    max-height: 100% !important;
+    overflow-y: auto !important;
+  }
+
+  .workspace-canvas > .planner-spread.cover-layout .spiral-cover {
+    width: 100% !important;
+    max-width: none !important;
+    height: 100% !important;
+    aspect-ratio: auto !important;
+  }
+
+  .workspace-canvas > .planner-spread.month-book-frame > .month-page {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    box-sizing: border-box !important;
+  }
+}
+
+/* All three page types use the same upper-right menu anchor. */
+.right-page,
+.month-page,
+.cover-editor {
+  position: relative !important;
+}
+
+.page-menu-slot {
+  position: absolute !important;
+  top: var(--checkpoint-page-menu-inset) !important;
+  right: var(--checkpoint-page-menu-inset) !important;
+  z-index: 80 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  width: auto !important;
+  height: var(--checkpoint-page-menu-size) !important;
+  pointer-events: none;
+}
+
+.page-menu-slot > .page-menu-anchor {
+  pointer-events: auto;
+}
+
+.page-menu-anchor {
+  position: relative;
+  z-index: 80;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.page-menu-trigger {
+  width: var(--checkpoint-page-menu-size) !important;
+  height: var(--checkpoint-page-menu-size) !important;
+  min-width: var(--checkpoint-page-menu-size) !important;
+  min-height: var(--checkpoint-page-menu-size) !important;
+}
+
+@media (max-width: 780px) {
+  .page-menu-slot {
+    top: 12px !important;
+    right: 12px !important;
   }
 }
