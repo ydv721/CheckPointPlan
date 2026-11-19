@@ -776,6 +776,18 @@ export default function Planner() {
   },[client,user,libraryRefresh]);
 
   useEffect(()=>{
+    if(!user||activeNotebookId)return;
+    const metadata=user.user_metadata??{};
+    const savedTheme=metadata.checkpoint_default_theme;
+    const nextTheme:ThemeName=typeof savedTheme==="string"&&Object.keys(themes).includes(savedTheme)
+      ?savedTheme as ThemeName:"blue";
+    const savedColor=typeof metadata.checkpoint_default_custom_color==="string"
+      ?metadata.checkpoint_default_custom_color:"#8b9ec4";
+    setTheme(nextTheme);
+    setCustomColor(sanitizeHex(savedColor));
+  },[user,activeNotebookId]);
+
+  useEffect(()=>{
     if(!client||!user||!activeNotebookId){setSettingsHydrated(false);return;}
     let active=true;setSettingsHydrated(false);
     void client.from("planner_settings").select("theme,custom_color,cover").eq("user_id",user.id).eq("notebook_id",activeNotebookId).maybeSingle()
@@ -1073,6 +1085,51 @@ export default function Planner() {
     })}));
   }
   const themeNames:Record<ThemeName,string>={white:"White",pink:"Pink",blue:"Blue",black:"Black",custom:"Custom"};
+  async function applyThemeSettings(){
+    if(!client||!user)return;
+    if(activeNotebookId){
+      if(!await saveSettingsNow())return;
+    }else{
+      const {data,error}=await client.auth.updateUser({
+        data:{
+          checkpoint_default_theme:theme,
+          checkpoint_default_custom_color:sanitizeHex(customColor)
+        }
+      });
+      if(error){
+        setNotebookTypeNotice("기본 테마를 저장하지 못했습니다: "+error.message);
+        return;
+      }
+      if(data.user)setUser(data.user);
+    }
+    setShowSettings(false);
+  }
+
+  const themeSettingsModal=showSettings?(
+    <div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setShowSettings(false)}} role="presentation">
+      <section className="settings-modal" role="dialog" aria-modal="true" aria-label="테마 설정">
+        <div className="settings-header">
+          <div><div className="eyebrow">MAKE IT FEEL LIKE YOU</div><h2>테마 설정</h2></div>
+          <button className="icon-btn" aria-label="닫기" onClick={()=>setShowSettings(false)}><X size={21}/></button>
+        </div>
+        <p>{activeNotebookId
+          ?"속지와 표지 색상이 함께 변경됩니다. 원하는 색상을 선택해 주세요."
+          :"새 플래너에 적용할 기본 테마를 선택해 주세요. 이미 만든 다이어리의 테마는 변경되지 않습니다."}</p>
+        <div className="theme-choices">{(["white","pink","blue","black","custom"] as ThemeName[]).map(t=><button type="button" className={theme===t?"theme-choice active":"theme-choice"} key={t} onClick={()=>setTheme(t)}>
+          <span className="theme-thumb" style={{background:t==="custom"?sanitizeHex(customColor):themes[t].cover}}>{theme===t?<Check size={19}/>:null}</span><span>{themeNames[t]}</span>
+        </button>)}</div>
+        {theme==="custom"&&<div className="custom-color">
+          <label>컬러 피커<input aria-label="사용자 지정 컬러 피커" type="color" value={sanitizeHex(customColor)} onChange={e=>setCustomColor(e.target.value)}/></label>
+          <label>HEX 코드<input aria-label="HEX 컬러 코드" type="text" maxLength={7} placeholder="#8B9EC4" value={customColor} onChange={e=>setCustomColor(e.target.value)}/></label>
+        </div>}
+        <div className="settings-bottom">
+          <span><CheckCircle2 size={16}/>{activeNotebookId?"자동 저장이 적용됩니다.":"새 플래너의 기본 테마로 저장됩니다."}</span>
+          <button className="primary-btn" onClick={()=>void applyThemeSettings()}>적용하기</button>
+        </div>
+      </section>
+    </div>
+  ):null;
+
   async function openNotebookList() {
     if(hydrated) await saveNow(entry);
     if(!await saveSettingsNow())return;
@@ -1098,7 +1155,7 @@ export default function Planner() {
     }
     if(type==="planner"){
       const {error:settingsError}=await client.from("planner_settings").insert({
-        user_id:user.id,notebook_id:data.id,theme:"blue",custom_color:"#8b9ec4",cover:defaultCover
+        user_id:user.id,notebook_id:data.id,theme,custom_color:customColor,cover:defaultCover
       });
       if(settingsError){
         await client.from("notebooks").delete().eq("id",data.id).eq("user_id",user.id);
@@ -1109,7 +1166,7 @@ export default function Planner() {
     }
     setNotebooks(current=>[{
       ...(data as NotebookRecord),
-      ...(type==="planner"?{theme:"blue" as ThemeName,custom_color:"#8b9ec4",cover:defaultCover}:{})
+      ...(type==="planner"?{theme,custom_color:customColor,cover:defaultCover}:{})
     },...current]);
     setNotebookTypeChosen(false);
     
@@ -1151,8 +1208,10 @@ export default function Planner() {
       onOpen={notebook=>{void openNotebook(notebook);}}
       onSignOut={()=>{void signOut();}}
       onDeleteAccount={()=>{setDeleteEmail("");setShowDeleteAccount(true);}}
+      onOpenSettings={()=>setShowSettings(true)}
     />
     {deleteAccountModal}
+    {themeSettingsModal}
     {notebookTypeChosen&&<NotebookTypeSelection
       themeStyle={vars}
       notice={notebookTypeNotice}
@@ -1386,14 +1445,6 @@ export default function Planner() {
 
     {deleteAccountModal}
 
-    {showSettings&&<div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setShowSettings(false)}} role="presentation">
-      <section className="settings-modal" role="dialog" aria-modal="true" aria-label="테마 설정"><div className="settings-header"><div><div className="eyebrow">MAKE IT FEEL LIKE YOU</div><h2>테마 설정</h2></div><button className="icon-btn" aria-label="닫기" onClick={()=>setShowSettings(false)}><X size={21}/></button></div>
-      <p>속지와 표지 색상이 함께 변경됩니다. 원하는 색상을 선택해 주세요.</p>
-      <div className="theme-choices">{(["white","pink","blue","black","custom"] as ThemeName[]).map(t=><button type="button" className={theme===t?"theme-choice active":"theme-choice"} key={t} onClick={()=>setTheme(t)}>
-        <span className="theme-thumb" style={{background:t==="custom"?sanitizeHex(customColor):themes[t].cover}}>{theme===t?<Check size={19}/>:null}</span><span>{themeNames[t]}</span>
-      </button>)}</div>
-      {theme==="custom"&&<div className="custom-color"><label>컬러 피커<input aria-label="사용자 지정 컬러 피커" type="color" value={sanitizeHex(customColor)} onChange={e=>setCustomColor(e.target.value)}/></label><label>HEX 코드<input aria-label="HEX 컬러 코드" type="text" maxLength={7} placeholder="#8B9EC4" value={customColor} onChange={e=>setCustomColor(e.target.value)}/></label></div>}
-      <div className="settings-bottom"><span><CheckCircle2 size={16}/> 자동 저장이 적용됩니다.</span><button className="primary-btn" onClick={()=>setShowSettings(false)}>적용하기</button></div>
-      </section></div>}
+    {themeSettingsModal}
   </div>;
 }
