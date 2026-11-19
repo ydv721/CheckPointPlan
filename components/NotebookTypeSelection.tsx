@@ -98,7 +98,6 @@ export default function NotebookTypeSelection({
         </div>
 
         <div className="notebook-select-footer">
-          <p>노트 하나에는 한 가지 유형을 선택해 관리해요.</p>
           <button
             type="button"
             className="primary-btn notebook-select-continue"
