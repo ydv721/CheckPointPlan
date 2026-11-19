@@ -1106,15 +1106,13 @@ export default function Planner() {
   }
 
   const themeSettingsModal=showSettings?(
-    <div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setShowSettings(false)}} role="presentation">
+    <div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)void applyThemeSettings()}} role="presentation">
       <section className="settings-modal" role="dialog" aria-modal="true" aria-label="테마 설정">
         <div className="settings-header">
           <div><div className="eyebrow">MAKE IT FEEL LIKE YOU</div><h2>테마 설정</h2></div>
-          <button className="icon-btn" aria-label="닫기" onClick={()=>setShowSettings(false)}><X size={21}/></button>
+          <button className="icon-btn" aria-label="닫기" onClick={()=>void applyThemeSettings()}><X size={21}/></button>
         </div>
-        <p>{activeNotebookId
-          ?"속지와 표지 색상이 함께 변경됩니다. 원하는 색상을 선택해 주세요."
-          :"새 플래너에 적용할 기본 테마를 선택해 주세요. 이미 만든 다이어리의 테마는 변경되지 않습니다."}</p>
+        {activeNotebookId&&<p>속지와 표지 색상이 함께 변경됩니다. 원하는 색상을 선택해 주세요.</p>}
         <div className="theme-choices">{(["white","pink","blue","black","custom"] as ThemeName[]).map(t=><button type="button" className={theme===t?"theme-choice active":"theme-choice"} key={t} onClick={()=>setTheme(t)}>
           <span className="theme-thumb" style={{background:t==="custom"?sanitizeHex(customColor):themes[t].cover}}>{theme===t?<Check size={19}/>:null}</span><span>{themeNames[t]}</span>
         </button>)}</div>
@@ -1122,10 +1120,6 @@ export default function Planner() {
           <label>컬러 피커<input aria-label="사용자 지정 컬러 피커" type="color" value={sanitizeHex(customColor)} onChange={e=>setCustomColor(e.target.value)}/></label>
           <label>HEX 코드<input aria-label="HEX 컬러 코드" type="text" maxLength={7} placeholder="#8B9EC4" value={customColor} onChange={e=>setCustomColor(e.target.value)}/></label>
         </div>}
-        <div className="settings-bottom">
-          <span><CheckCircle2 size={16}/>{activeNotebookId?"자동 저장이 적용됩니다.":"새 플래너의 기본 테마로 저장됩니다."}</span>
-          <button className="primary-btn" onClick={()=>void applyThemeSettings()}>적용하기</button>
-        </div>
       </section>
     </div>
   ):null;
