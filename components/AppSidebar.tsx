@@ -133,13 +133,11 @@ export default function AppSidebar({
                 </button>
               )}
 
-              {currentView !== "library" && (
-                <button type="button" onClick={() => runAction(onOpenSettings)}>
-                  <Palette size={18} />
-                  <span>테마 설정</span>
-                  <ArrowRight size={16} className="app-sidebar-arrow" />
-                </button>
-              )}
+              <button type="button" onClick={() => runAction(onOpenSettings)}>
+                <Palette size={18} />
+                <span>테마 설정</span>
+                <ArrowRight size={16} className="app-sidebar-arrow" />
+              </button>
             </nav>
 
             <div className="app-sidebar-footer">
