@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent, type PointerEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import {
-  ArrowLeft, BookOpen, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight,
-  Expand, ImagePlus, LogOut, Menu, Plus, RotateCw, Star,
+  BookOpen, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight,
+  Expand, ImagePlus, LogOut, Menu, MoreHorizontal, Plus, RotateCw, Star,
   Sparkles, Trash2, X, Search, CircleHelp, CheckCircle2, Palette
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -236,9 +236,10 @@ function Timetable({ value, onChange, highlighter, tool }: {
   </div></div>;
 }
 
-function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
+function CoverPage({cover,setCover,theme,handleUpload,photoUrls,menu}: {
   cover:Cover;setCover:React.Dispatch<React.SetStateAction<Cover>>;
   theme:ThemeName;handleUpload:(file:File,asBackground?:boolean)=>Promise<void>;photoUrls:Record<string,string>;
+  menu:React.ReactNode;
 }) {
   const fileInput=useRef<HTMLInputElement>(null);
   const backgroundInput=useRef<HTMLInputElement>(null);
@@ -441,6 +442,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
       </div>
     </div></div>
     <div className="cover-editor">
+      <div className="cover-menu-slot">{menu}</div>
       <div className="cover-editor-section">
         <div className="cover-editor-section-heading"><span>표지 배경</span></div>
         <div className="cover-background-options">
@@ -542,7 +544,8 @@ export default function Planner() {
   const [showDeleteAccount,setShowDeleteAccount]=useState(false);
   const [deleteEmail,setDeleteEmail]=useState("");
   const [deletingAccount,setDeletingAccount]=useState(false);
-  const [showAccountMenu,setShowAccountMenu]=useState(false);
+  const [showPageMenu,setShowPageMenu]=useState(false);
+  const pageMenuRef=useRef<HTMLDivElement>(null);
   const [mobileMenu,setMobileMenu]=useState(false);
   const [loading,setLoading]=useState(false);
   const [hydrated,setHydrated]=useState(false);
@@ -578,6 +581,22 @@ export default function Planner() {
   },[monthStickerCategory,monthStickerSearch,monthRecentEmojis]);
   const monthTitle=`${monthCursor.slice(0,4)}. ${monthCursor.slice(5,7)}`;
   const todayKey=today();
+
+  useEffect(()=>{
+    if(!showPageMenu)return;
+    const closeOnOutside=(event:Event)=>{
+      if(!pageMenuRef.current?.contains(event.target as Node))setShowPageMenu(false);
+    };
+    const closeOnEscape=(event:KeyboardEvent)=>{
+      if(event.key==="Escape")setShowPageMenu(false);
+    };
+    document.addEventListener("pointerdown",closeOnOutside);
+    document.addEventListener("keydown",closeOnEscape);
+    return()=>{
+      document.removeEventListener("pointerdown",closeOnOutside);
+      document.removeEventListener("keydown",closeOnEscape);
+    };
+  },[showPageMenu]);
 
   const beginAuthTransition=useCallback((nextUser:User)=>{
     if(authenticatedUser.current?.id===nextUser.id||pendingAuthUser.current?.id===nextUser.id)return;
@@ -761,7 +780,7 @@ export default function Planner() {
   async function signOut() {
     if(!client)return;
     if(hydrated)await saveNow(entry);
-    setShowAccountMenu(false);
+    setShowPageMenu(false);
     await client.auth.signOut();setUser(null);setView("planner");
   }
 
@@ -857,6 +876,43 @@ export default function Planner() {
     })}));
   }
   const themeNames:Record<ThemeName,string>={white:"White",pink:"Pink",blue:"Blue",black:"Black",custom:"Custom"};
+  const pageMenu=(
+    <div className="page-menu-anchor" ref={pageMenuRef}>
+      <button
+        type="button"
+        className="page-menu-trigger"
+        aria-label="다이어리 메뉴"
+        aria-haspopup="menu"
+        aria-expanded={showPageMenu}
+        title="메뉴"
+        onClick={()=>setShowPageMenu(current=>!current)}
+      >
+        <MoreHorizontal size={20}/>
+      </button>
+      {showPageMenu&&<div className="page-menu-popover" role="menu" aria-label="다이어리 메뉴">
+        {view==="cover" ? (
+          <button type="button" role="menuitem" onClick={()=>{setView("planner");setShowPageMenu(false);}}>
+            <BookOpen size={16}/><span>플래너로 돌아가기</span>
+          </button>
+        ) : (
+          <button type="button" role="menuitem" onClick={()=>{setView("cover");setShowPageMenu(false);}}>
+            <Sparkles size={16}/><span>표지 꾸미기</span>
+          </button>
+        )}
+        <button type="button" role="menuitem" onClick={()=>{setShowSettings(true);setShowPageMenu(false);}}>
+          <Palette size={16}/><span>테마 설정</span>
+        </button>
+        <div className="page-menu-divider" role="separator"/>
+        <div className="page-menu-account">{user?.email??""}</div>
+        <button type="button" role="menuitem" onClick={()=>{setShowPageMenu(false);void signOut();}}>
+          <LogOut size={16}/><span>로그아웃</span>
+        </button>
+        <button type="button" role="menuitem" className="page-menu-danger" onClick={()=>{setShowPageMenu(false);setDeleteEmail("");setShowDeleteAccount(true);}}>
+          <Trash2 size={16}/><span>회원 탈퇴</span>
+        </button>
+      </div>}
+    </div>
+  );
 
   if(checking)return <div className="boot-screen"><AppIcon/><h1>CHECKPOINT</h1><p>플래너를 불러오는 중입니다...</p></div>;
   if(!user)return <AuthScreen onUser={beginAuthTransition}/>;
@@ -879,7 +935,7 @@ export default function Planner() {
       {alert&&<div className="message-banner" role="alert"><CircleHelp size={17}/><span>{alert}</span><button aria-label="알림 닫기" onClick={()=>setAlert("")}><X size={15}/></button></div>}
       <div className="workspace-shell">
         <div className="workspace-canvas">
-      {view==="cover"? <CoverPage cover={cover} setCover={setCover} theme={theme} handleUpload={handleUpload} photoUrls={photoUrls}/> : <>
+      {view==="cover"? <CoverPage cover={cover} setCover={setCover} theme={theme} handleUpload={handleUpload} photoUrls={photoUrls} menu={pageMenu}/> : <>
         {loading?<div className="page-loading">페이지를 불러오는 중입니다...</div>:plannerPage==="month" ? (
           <div className="book-frame month-book-frame">
             <div className="book-spine" aria-hidden="true">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
@@ -904,6 +960,7 @@ export default function Planner() {
                       <Plus size={12}/> 스티커 추가
                     </button>
                   )}
+                  {pageMenu}
                 </div>
               </div>
               <div className="month-spread-grid">
@@ -1038,8 +1095,8 @@ export default function Planner() {
           <section className="paper-page right-page"><div className="right-top"><div className="section-heading todo-header">
               <div className="todo-heading-group"><span>TO DO LIST</span></div>
               <div className="todo-tools">
-                <small className="todo-save-status" role="status" aria-live="polite"><span className={status==="자동 저장되었어요."?"indicator-dot saved":"indicator-dot"}/>{status}</small>
-
+                <span className="sr-only" role="status" aria-live="polite">{status}</span>
+                {pageMenu}
               </div>
             </div>
             <div className="todo-list">{entry.todos.slice(0,7).map((todo,idx)=>{
@@ -1070,48 +1127,6 @@ export default function Planner() {
         )}
       </>}
         </div>
-        <aside className="workspace-sidebar" aria-label="CHECKPOINT 메뉴">
-          <button type="button" className="sidebar-brand" onClick={()=>setView("planner")} aria-label="CHECKPOINT 플래너로 이동">
-            <AppIcon/><span>CHECKPOINT</span><small>YOUR PACE, YOUR CHECKPOINT</small>
-          </button>
-          <div className="sidebar-nav">
-            {view==="cover" ? (
-              <button type="button" className="workspace-action back-to-planner active" onClick={()=>setView("planner")} aria-current="page">
-                <ArrowLeft size={19}/><span>플래너로 돌아가기</span>
-              </button>
-            ) : (
-              <button type="button" className="workspace-action" onClick={()=>setView("cover")}>
-                <Sparkles size={19}/><span>표지 꾸미기</span>
-              </button>
-            )}
-            <button type="button" className="workspace-action" onClick={()=>setShowSettings(true)}>
-              <Palette size={19}/><span>테마 설정</span>
-            </button>
-          </div>
-          <div className="sidebar-account">
-            <button
-              type="button"
-              className="sidebar-email-trigger"
-              title={user?.email??""}
-              aria-label="계정 메뉴"
-              aria-expanded={showAccountMenu}
-              aria-controls="sidebar-account-menu"
-              onClick={()=>setShowAccountMenu(current=>!current)}
-            >
-              <span>{user?.email??""}</span>
-              <ChevronDown size={15} aria-hidden="true"/>
-            </button>
-            {showAccountMenu&&<div className="sidebar-account-menu" id="sidebar-account-menu">
-              <button type="button" className="sidebar-signout" onClick={()=>void signOut()}>
-                <LogOut size={14}/><span>로그아웃</span>
-              </button>
-              <div className="sidebar-menu-divider" role="separator"/>
-              <button type="button" className="sidebar-delete-account" onClick={()=>{setShowAccountMenu(false);setDeleteEmail("");setShowDeleteAccount(true);}}>
-                <Trash2 size={14}/><span>회원 탈퇴</span>
-              </button>
-            </div>}
-          </div>
-        </aside>
       </div>
     </main>
 

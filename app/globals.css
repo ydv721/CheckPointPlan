@@ -6925,3 +6925,202 @@ html,body{width:100%;overflow-x:clip}
     aspect-ratio: auto !important;
   }
 }
+
+
+/* Replace the detached action rail with a compact menu on each page. */
+.page-menu-anchor {
+  position: relative;
+  z-index: 80;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.page-menu-trigger {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  padding: 0 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  color: var(--ink) !important;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.page-menu-trigger:hover,
+.page-menu-trigger[aria-expanded="true"] {
+  border-color: var(--accent) !important;
+  background: var(--soft) !important;
+  color: var(--accent) !important;
+}
+
+.page-menu-trigger:focus-visible,
+.page-menu-popover button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.page-menu-popover {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 205px;
+  padding: 7px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 12px 30px #172b4424;
+}
+
+.page-menu-popover button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.page-menu-popover button:hover {
+  background: var(--soft);
+}
+
+.page-menu-account {
+  padding: 8px 10px;
+  color: var(--ink);
+  font-size: 10px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  opacity: .62;
+}
+
+.page-menu-divider {
+  height: 1px;
+  margin: 3px 4px;
+  background: var(--line);
+}
+
+.page-menu-popover button.page-menu-danger {
+  color: #B65E6A;
+}
+
+.todo-header {
+  position: relative;
+  z-index: 25;
+}
+
+.todo-tools {
+  position: relative;
+  z-index: 30;
+}
+
+.right-top {
+  overflow: visible !important;
+}
+
+.month-page-header,
+.month-page-controls {
+  position: relative;
+  z-index: 25;
+}
+
+.cover-editor {
+  position: relative;
+  padding-top: 48px !important;
+}
+
+.cover-menu-slot {
+  position: absolute;
+  top: 9px;
+  right: clamp(18px, 3vw, 42px);
+  z-index: 80;
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (min-width: 781px) {
+  .workspace-shell {
+    display: flex !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    align-items: stretch !important;
+    justify-content: center !important;
+    gap: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    flex: 1 1 auto !important;
+  }
+
+  .workspace-canvas {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    padding: 20px 32px !important;
+    box-sizing: border-box !important;
+  }
+
+  .app-shell.planner-view,
+  .app-shell.cover-view {
+    --checkpoint-spread-width: min(1120px, calc(100vw - 64px), calc(141.9dvh - 68px));
+  }
+
+  .workspace-sidebar {
+    display: none !important;
+  }
+}
+
+@media (max-width: 780px) {
+  .workspace-shell {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .workspace-canvas {
+    width: 100% !important;
+  }
+
+  .cover-editor {
+    padding-top: 48px !important;
+  }
+
+  .cover-menu-slot {
+    top: 8px;
+    right: 12px;
+  }
+
+  .page-menu-popover {
+    min-width: 190px;
+  }
+
+  .header-actions > .icon-btn:not(.mobile-menu),
+  .header-actions > .signout-btn {
+    display: none !important;
+  }
+}
