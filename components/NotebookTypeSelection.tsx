@@ -54,7 +54,7 @@ export default function NotebookTypeSelection({
       >
         <div className="notebook-type-modal-header">
           <div className="notebook-select-heading">
-            <span className="eyebrow">CHOOSE YOUR NOTEBOOK</span>
+            <span className="eyebrow">CHOOSE YOUR DIARY</span>
             <h2 id="notebook-type-title">어떤 다이어리를 만들까요?</h2>
             <p>원하는 다이어리 종류를 누르면 바로 만들어져요.</p>
           </div>
