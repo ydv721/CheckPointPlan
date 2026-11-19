@@ -73,7 +73,8 @@ export default function PageMenu({
 
   return (
     <>
-      <div className="page-menu-anchor" ref={anchorRef}>
+      <div className="page-menu-slot" ref={anchorRef}>
+        <div className="page-menu-anchor">
         <button
           type="button"
           className="page-menu-trigger"
@@ -92,6 +93,7 @@ export default function PageMenu({
         >
           <MoreHorizontal size={20} />
         </button>
+        </div>
       </div>
       {open && position && typeof document !== "undefined" && createPortal(
         <div
