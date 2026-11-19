@@ -944,7 +944,7 @@ export default function Planner() {
         <div
           ref={pageMenuPopoverRef}
           className="page-menu-popover"
-          style={{top:pageMenuPosition.top,left:pageMenuPosition.left,width:pageMenuPosition.width}}
+          style={{...vars,top:pageMenuPosition.top,left:pageMenuPosition.left,width:pageMenuPosition.width}}
           role="menu"
           aria-label="다이어리 메뉴"
         >
