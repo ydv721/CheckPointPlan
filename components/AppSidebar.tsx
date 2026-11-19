@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import {
-  ArrowRight, BookOpen, House, LogOut, MoreHorizontal, Palette,
+  ArrowRight, BookOpen, House, LogOut, Moon, MoreHorizontal,
   Sparkles, Trash2, X
 } from "lucide-react";
 
@@ -15,7 +15,6 @@ type AppSidebarProps = {
   themeStyle: CSSProperties;
   onOpenNotebookList?: () => void;
   onViewChange?: (view: "planner" | "cover") => void;
-  onOpenSettings?: () => void;
   onSignOut: () => void;
   onDeleteAccount: () => void;
 };
@@ -26,13 +25,42 @@ export default function AppSidebar({
   themeStyle,
   onOpenNotebookList,
   onViewChange,
-  onOpenSettings,
   onSignOut,
   onDeleteAccount
 }: AppSidebarProps) {
   const [open, setOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [darkModeLoaded, setDarkModeLoaded] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    try {
+      setDarkMode(window.localStorage.getItem("checkpoint-sidebar-dark-mode") === "true");
+    } catch {
+      setDarkMode(false);
+    }
+    setDarkModeLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!darkModeLoaded) return;
+    try {
+      window.localStorage.setItem("checkpoint-sidebar-dark-mode", String(darkMode));
+    } catch {
+      // Keep the in-memory setting if browser storage is unavailable.
+    }
+  }, [darkMode, darkModeLoaded]);
+
+  const panelStyle = darkMode ? {
+    ...themeStyle,
+    "--bg": "#171A21",
+    "--paper": "#252A35",
+    "--ink": "#F2F4F8",
+    "--accent": "#AFC7F5",
+    "--soft": "rgba(175,199,245,.12)",
+    "--line": "rgba(255,255,255,.12)"
+  } as CSSProperties : themeStyle;
 
   useEffect(() => {
     if (!open) return;
@@ -84,8 +112,8 @@ export default function AppSidebar({
         >
           <aside
             id="checkpoint-app-sidebar"
-            className="app-sidebar-panel"
-            style={themeStyle}
+            className={darkMode ? "app-sidebar-panel app-sidebar-panel-dark" : "app-sidebar-panel"}
+            style={panelStyle}
             role="dialog"
             aria-modal="true"
             aria-label="메뉴"
@@ -133,10 +161,15 @@ export default function AppSidebar({
                 </button>
               )}
 
-              <button type="button" onClick={() => runAction(onOpenSettings)}>
-                <Palette size={18} />
-                <span>테마 설정</span>
-                <ArrowRight size={16} className="app-sidebar-arrow" />
+              <button
+                type="button"
+                className="app-sidebar-theme-toggle"
+                aria-pressed={darkMode}
+                onClick={() => setDarkMode(value => !value)}
+              >
+                <Moon size={18} />
+                <span>다크 모드</span>
+                <span className="app-sidebar-switch" aria-hidden="true" />
               </button>
             </nav>
 
