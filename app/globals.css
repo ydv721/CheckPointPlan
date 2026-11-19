@@ -8057,9 +8057,9 @@ html,body{width:100%;overflow-x:clip}
   gap:4px;
   margin:4px 0 8px 25px;
   padding:7px;
-  border:1px solid var(--line);
+  border:1px solid rgba(48,57,70,.09);
   border-radius:11px;
-  background:var(--soft);
+  background:var(--paper);
 }
 .app-sidebar-theme-option {
   min-height:36px;
@@ -8070,7 +8070,7 @@ html,body{width:100%;overflow-x:clip}
   border:1px solid transparent;
   border-radius:8px;
   background:transparent;
-  color:var(--ink);
+  color:var(--accent);
   font:inherit;
   font-size:12px;
   font-weight:750;
@@ -8087,7 +8087,7 @@ html,body{width:100%;overflow-x:clip}
 }
 .app-sidebar-theme-option:not(.is-selected):hover {
   border-color:var(--accent);
-  background:var(--soft);
+  background:#f7f8fa;
   color:var(--accent);
   transform:translateX(3px);
   box-shadow:0 2px 7px rgba(30,41,59,.08);
