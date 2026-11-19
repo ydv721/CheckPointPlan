@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent, type PointerEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent, type PointerEvent as ReactPointerEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import {
   BookOpen, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight,
@@ -212,7 +212,7 @@ function Timetable({ value, onChange, highlighter, tool }: {
     valueRef.current=next;
     onChange(next);
   },[highlighter,onChange]);
-  const start=(key:string,e:PointerEvent<HTMLButtonElement>)=>{
+  const start=(key:string,e:ReactPointerEvent<HTMLButtonElement>)=>{
     e.preventDefault(); drawing.current=true;
     eraseCurrent.current=tool==="erase"||valueRef.current[key]===highlighter;
     apply(key,eraseCurrent.current);
@@ -259,7 +259,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls,menu}: {
   const interactionRef=useRef<CoverInteraction|null>(null);
   const clamp=(value:number,min:number,max:number)=>Math.min(max,Math.max(min,value));
 
-  function startBackgroundPan(e:PointerEvent<HTMLImageElement>) {
+  function startBackgroundPan(e:ReactPointerEvent<HTMLImageElement>) {
     const image=e.currentTarget;
     if(!image.naturalWidth||!image.naturalHeight)return;
     const rect=image.getBoundingClientRect();
@@ -275,7 +275,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls,menu}: {
     };
     image.setPointerCapture(e.pointerId);
   }
-  function moveBackgroundPan(e:PointerEvent<HTMLImageElement>) {
+  function moveBackgroundPan(e:ReactPointerEvent<HTMLImageElement>) {
     const active=backgroundPanRef.current;
     if(!active||active.pointerId!==e.pointerId)return;
     const backgroundPositionX=active.overflowX>0
@@ -286,7 +286,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls,menu}: {
       :active.originY;
     setCover(c=>({...c,backgroundPositionX,backgroundPositionY}));
   }
-  function finishBackgroundPan(e:PointerEvent<HTMLImageElement>) {
+  function finishBackgroundPan(e:ReactPointerEvent<HTMLImageElement>) {
     if(backgroundPanRef.current?.pointerId===e.pointerId)backgroundPanRef.current=null;
   }
 
@@ -315,7 +315,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls,menu}: {
     setCover(c=>({...c,items:[...c.items,item]}));
     setSelectedItemId(item.id);
   }
-  function pointerDown(e:PointerEvent<HTMLElement>,item:CoverItem) {
+  function pointerDown(e:ReactPointerEvent<HTMLElement>,item:CoverItem) {
     if((e.target as HTMLElement).closest(".cover-object-handle"))return;
     const stage=e.currentTarget.closest(".cover-art") as HTMLElement|null;
     const p=stage?.getBoundingClientRect();if(!p)return;
@@ -323,7 +323,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls,menu}: {
     interactionRef.current={kind:"move",id:item.id,startX:e.clientX,startY:e.clientY,originX:item.x,originY:item.y,w:p.width,h:p.height};
     e.currentTarget.setPointerCapture(e.pointerId);
   }
-  function startRotate(e:PointerEvent<HTMLButtonElement>,item:CoverItem) {
+  function startRotate(e:ReactPointerEvent<HTMLButtonElement>,item:CoverItem) {
     e.preventDefault();e.stopPropagation();
     const object=e.currentTarget.parentElement;
     const rect=object?.getBoundingClientRect();if(!rect)return;
@@ -337,7 +337,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls,menu}: {
     setSelectedItemId(item.id);
     e.currentTarget.setPointerCapture(e.pointerId);
   }
-  function startResize(e:PointerEvent<HTMLButtonElement>,item:CoverItem) {
+  function startResize(e:ReactPointerEvent<HTMLButtonElement>,item:CoverItem) {
     e.preventDefault();e.stopPropagation();
     const object=e.currentTarget.parentElement;
     const rect=object?.getBoundingClientRect();if(!rect)return;
@@ -351,7 +351,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls,menu}: {
     setSelectedItemId(item.id);
     e.currentTarget.setPointerCapture(e.pointerId);
   }
-  function pointerMove(e:PointerEvent<HTMLElement>) {
+  function pointerMove(e:ReactPointerEvent<HTMLElement>) {
     const active=interactionRef.current;if(!active)return;
     if(active.kind==="move") {
       setCover(c=>({...c,items:c.items.map(i=>i.id===active.id?{...i,
@@ -602,18 +602,21 @@ export default function Planner() {
 
   useEffect(()=>{
     if(!monthStickerDate)return;
-    const closeOnOutside=(event:PointerEvent)=>{
-      const target=event.target as Node;
+    const closeOnOutside=(event:Event)=>{
+      const target=event.target as Node|null;
+      if(!target)return;
       if(monthStickerPickerRef.current?.contains(target)||monthStickerTriggerRef.current?.contains(target))return;
       setMonthStickerDate(null);
     };
     const closeOnEscape=(event:KeyboardEvent)=>{
       if(event.key==="Escape")setMonthStickerDate(null);
     };
-    document.addEventListener("pointerdown",closeOnOutside);
+    document.addEventListener("pointerdown",closeOnOutside,true);
+    document.addEventListener("click",closeOnOutside,true);
     document.addEventListener("keydown",closeOnEscape);
     return()=>{
-      document.removeEventListener("pointerdown",closeOnOutside);
+      document.removeEventListener("pointerdown",closeOnOutside,true);
+      document.removeEventListener("click",closeOnOutside,true);
       document.removeEventListener("keydown",closeOnEscape);
     };
   },[monthStickerDate]);
