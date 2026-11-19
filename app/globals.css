@@ -7503,3 +7503,45 @@ html,body{width:100%;overflow-x:clip}
   }
 }
 
+/* MONTH memo height alignment: match the calendar grid. */
+.month-weekdays-right {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
+.month-weekdays-right > .month-memo-heading {
+  display: flex !important;
+  align-items: center !important;
+  min-width: 0;
+  padding: 5px 7px !important;
+  color: var(--ink) !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  letter-spacing: .08em !important;
+  text-align: left !important;
+}
+
+.month-memo-column {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+.month-memo-column > .month-memo-panel {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  gap: 0 !important;
+}
+
+.month-book-frame .month-memo-note {
+  display: block !important;
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+}
+
