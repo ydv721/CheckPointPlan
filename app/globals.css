@@ -7124,3 +7124,12 @@ html,body{width:100%;overflow-x:clip}
     display: none !important;
   }
 }
+
+
+/* Keep all DAY planner writing fields at one consistent text size. */
+.paper-page .color-guide-input,
+.paper-page .memo-section textarea,
+.paper-page .todo-text,
+.paper-page .free-note-input {
+  font-size: 12px !important;
+}
