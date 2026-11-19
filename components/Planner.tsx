@@ -1073,6 +1073,18 @@ export default function Planner() {
     setMonthStickerDate(null);
     setMonthStickerPending(null);
   }
+  async function navigateDate(nextDate:string) {
+    if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(nextDate))return;
+    await saveNow(entry);
+    setDate(nextDate);
+    setMonthCursor(nextDate.slice(0,7));
+  }
+  function shiftDate(offset:number) {
+    const [year,month,day]=date.split("-").map(Number);
+    const next=new Date(year,month-1,day+offset);
+    const nextDate=`${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,"0")}-${String(next.getDate()).padStart(2,"0")}`;
+    void navigateDate(nextDate);
+  }
   function openMonthDay(dayKey:string) {
     void saveNow(entry);
     setDate(dayKey);
@@ -1356,10 +1368,12 @@ export default function Planner() {
               </div>
               <div className="date-main">
                 <div className="date-main-row">
+                  <button type="button" className="date-step" aria-label="이전 날짜" title="이전 날짜" onClick={()=>shiftDate(-1)}><ChevronLeft size={15}/></button>
                   <span className="date-value">{date.replace(/-/g," ")}</span>
+                  <button type="button" className="date-step" aria-label="다음 날짜" title="다음 날짜" onClick={()=>shiftDate(1)}><ChevronRight size={15}/></button>
                   <label className="date-picker-trigger" title="달력에서 날짜 선택">
                     <CalendarDays size={16}/>
-                    <input aria-label="날짜 선택" type="date" value={date} onChange={e=>{void saveNow(entry);setDate(e.target.value);}}/>
+                    <input aria-label="날짜 선택" type="date" value={date} onChange={e=>{void navigateDate(e.target.value);}}/>
                   </label>
                 </div>
               </div>
