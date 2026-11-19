@@ -1011,8 +1011,8 @@ export default function Planner() {
                       })}
                     </div>
                     <div className="month-memo-column">
-                      <div className="month-memo-panel">
-                        <div className="month-memo-toolbar"><strong>MEMO</strong></div>
+                      <div className="memo-section month-memo-section">
+                        <div className="section-heading"><span>MEMO</span></div>
                         <textarea
                           className="month-memo-note"
                           aria-label={`${monthCursor} 월간 메모`}
