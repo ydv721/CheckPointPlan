@@ -241,11 +241,9 @@ function Timetable({ value, onChange, highlighter, tool }: {
   </div></div>;
 }
 
-function CoverPage({cover,setCover,theme,setTheme,customColor,setCustomColor,handleUpload,photoUrls}: {
+function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
   cover:Cover;setCover:React.Dispatch<React.SetStateAction<Cover>>;
-  theme:ThemeName;setTheme:React.Dispatch<React.SetStateAction<ThemeName>>;
-  customColor:string;setCustomColor:React.Dispatch<React.SetStateAction<string>>;
-  handleUpload:(file:File,asBackground?:boolean)=>Promise<void>;photoUrls:Record<string,string>;
+  theme:ThemeName;handleUpload:(file:File,asBackground?:boolean)=>Promise<void>;photoUrls:Record<string,string>;
 }) {
   const fileInput=useRef<HTMLInputElement>(null);
   const backgroundInput=useRef<HTMLInputElement>(null);
@@ -255,13 +253,6 @@ function CoverPage({cover,setCover,theme,setTheme,customColor,setCustomColor,han
   const [recentEmojis,setRecentEmojis]=useState<string[]>([]);
   const backgroundPanRef=useRef<{pointerId:number;startX:number;startY:number;originX:number;originY:number;overflowX:number;overflowY:number}|null>(null);
   const activePattern:CoverPattern=cover.backgroundPattern??"grid";
-  const themeOptions:{value:ThemeName;label:string}[]=[
-    {value:"white",label:"White"},
-    {value:"pink",label:"Pink"},
-    {value:"blue",label:"Blue"},
-    {value:"black",label:"Black"},
-    {value:"custom",label:"Custom"}
-  ];
   const patternColor=cover.patternColor||(theme==="white"?"#788393":theme==="black"?"#A9B4D5":"#FFFFFF");
   const patternLabel=COVER_PATTERNS.find(pattern=>pattern.value===activePattern)?.label??"모눈";
   type CoverInteraction =
@@ -455,27 +446,6 @@ function CoverPage({cover,setCover,theme,setTheme,customColor,setCustomColor,han
       </div>
     </div></div>
     <div className="cover-editor">
-      <div className="cover-editor-section cover-theme-section">
-        <div className="cover-editor-section-heading"><span>다이어리 테마</span></div>
-        <div className="cover-theme-choices" role="group" aria-label="다이어리 테마 선택">
-          {themeOptions.map(option=><button
-            key={option.value}
-            type="button"
-            className={theme===option.value?"cover-theme-choice is-selected":"cover-theme-choice"}
-            aria-pressed={theme===option.value}
-            onClick={()=>setTheme(option.value)}
-          >
-            <span className="cover-theme-swatch" style={{background:option.value==="custom"?sanitizeHex(customColor):themes[option.value].cover}}/>
-            <span>{option.label}</span>
-            {theme===option.value&&<Check size={13}/>}
-          </button>)}
-        </div>
-        {theme==="custom"&&<div className="cover-custom-color">
-          <label>컬러 피커<input aria-label="사용자 지정 컬러 피커" type="color" value={sanitizeHex(customColor)} onChange={e=>setCustomColor(e.target.value)}/></label>
-          <label>HEX 코드<input aria-label="HEX 컬러 코드" type="text" maxLength={7} placeholder="#8B9EC4" value={customColor} onChange={e=>setCustomColor(e.target.value)}/></label>
-        </div>}
-      </div>
-
       <div className="cover-editor-section">
         <div className="cover-editor-section-heading"><span>표지 배경</span></div>
         <div className="cover-background-options">
@@ -1218,6 +1188,10 @@ export default function Planner() {
           themeStyle={vars}
           onOpenNotebookList={()=>{void openNotebookList();}}
           onViewChange={setView}
+          theme={theme}
+          customColor={customColor}
+          onThemeChange={setTheme}
+          onCustomColorChange={setCustomColor}
 
           onSignOut={()=>{void signOut();}}
           onDeleteAccount={()=>{setDeleteEmail("");setShowDeleteAccount(true);}}
@@ -1229,7 +1203,7 @@ export default function Planner() {
       {alert&&<div className="message-banner" role="alert"><CircleHelp size={17}/><span>{alert}</span><button aria-label="알림 닫기" onClick={()=>setAlert("")}><X size={15}/></button></div>}
       <div className="workspace-shell">
         <div className="workspace-canvas">
-      {view==="cover"? <CoverPage cover={cover} setCover={setCover} theme={theme} setTheme={setTheme} customColor={customColor} setCustomColor={setCustomColor} handleUpload={handleUpload} photoUrls={photoUrls}/> : <>
+      {view==="cover"? <CoverPage cover={cover} setCover={setCover} theme={theme} handleUpload={handleUpload} photoUrls={photoUrls}/> : <>
         {loading?<div className="page-loading">페이지를 불러오는 중입니다...</div>:plannerPage==="month" ? (
           <PlannerSpread className="book-frame month-book-frame">
             <div className="book-spine" aria-hidden="true">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
