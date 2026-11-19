@@ -1137,25 +1137,32 @@ export default function Planner() {
 
   if(checking)return <div className="boot-screen"><AppIcon/><h1>CHECKPOINT</h1><p>CHECKPOINT를 불러오는 중입니다...</p></div>;
   if(!user)return <AuthScreen onUser={beginAuthTransition}/>;
-  if(!activeNotebookId&&!notebookTypeChosen)return <NotebookLibrary
-    email={user.email??""}
-    notebooks={notebooks}
-    coverPhotoUrls={notebookCoverPhotoUrls}
-    loading={libraryLoading}
-    notice={notebookTypeNotice}
-    onCreate={()=>{setSelectedNotebookType(null);setNotebookTypeNotice("");setNotebookTypeChosen(true);}}
-    onOpen={notebook=>{void openNotebook(notebook);}}
-    onSignOut={()=>{void signOut();}}
-  />;
-  if(!activeNotebookId&&notebookTypeChosen)return <NotebookTypeSelection
-    email={user.email??""}
-    themeStyle={vars}
-    selectedType={selectedNotebookType}
-    notice={notebookTypeNotice}
-    onSelect={type=>{setSelectedNotebookType(type);setNotebookTypeNotice("");}}
-    onContinue={type=>{void createNotebook(type);}}
-    onSignOut={()=>{void signOut();}}
-  />;
+  if(!activeNotebookId)return <>
+    <NotebookLibrary
+      email={user.email??""}
+      notebooks={notebooks}
+      coverPhotoUrls={notebookCoverPhotoUrls}
+      loading={libraryLoading}
+      notice={notebookTypeNotice}
+      onCreate={()=>{setSelectedNotebookType(null);setNotebookTypeNotice("");setNotebookTypeChosen(true);}}
+      onOpen={notebook=>{void openNotebook(notebook);}}
+      onSignOut={()=>{void signOut();}}
+    />
+    {notebookTypeChosen&&<NotebookTypeSelection
+      themeStyle={vars}
+      selectedType={selectedNotebookType}
+      notice={notebookTypeNotice}
+      creating={creatingNotebook}
+      onSelect={type=>{setSelectedNotebookType(type);setNotebookTypeNotice("");}}
+      onContinue={type=>{void createNotebook(type);}}
+      onClose={()=>{
+        if(creatingNotebook)return;
+        setNotebookTypeChosen(false);
+        setSelectedNotebookType(null);
+        setNotebookTypeNotice("");
+      }}
+    />}
+  </>;
   return <div className={view==="planner"?"app-shell planner-view":"app-shell cover-view"} style={vars}>
     <header className="site-header"><div className="header-inner">
       <button className="brand" onClick={()=>setView("planner")}><span className="brand-lockup"><AppIcon/><span>CHECKPOINT</span></span><small>YOUR PACE, YOUR CHECKPOINT</small></button>
