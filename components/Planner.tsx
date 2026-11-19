@@ -680,14 +680,14 @@ export default function Planner() {
   },[client,beginAuthTransition]);
 
   useEffect(()=>{
-    const activeClient=client;
-    const activeUser=user;
-    if(!activeClient||!activeUser){
+    if(!client||!user){
       setLibraryLoading(false);
       setNotebooks([]);
       setNotebookCoverPhotoUrls({});
       return;
     }
+    const activeClient=client;
+    const activeUser=user;
     let active=true;
     async function loadNotebookLibrary(){
       setLibraryLoading(true);
