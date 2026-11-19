@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent, type PointerEvent as ReactPointerEvent } from "react";
 import type { User } from "@supabase/supabase-js";
-import { createPortal } from "react-dom";
+import PageMenu from "@/components/PageMenu";
 import {
   BookOpen, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight,
-  Expand, ImagePlus, LogOut, Menu, MoreHorizontal, Plus, RotateCw, Star,
+  Expand, ImagePlus, LogOut, Menu, Plus, RotateCw, Star,
   Sparkles, Trash2, X, Search, CircleHelp, CheckCircle2, Palette
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -547,10 +547,6 @@ export default function Planner() {
   const [showDeleteAccount,setShowDeleteAccount]=useState(false);
   const [deleteEmail,setDeleteEmail]=useState("");
   const [deletingAccount,setDeletingAccount]=useState(false);
-  const [showPageMenu,setShowPageMenu]=useState(false);
-  const [pageMenuPosition,setPageMenuPosition]=useState<{top:number;left:number;width:number}|null>(null);
-  const pageMenuRef=useRef<HTMLDivElement>(null);
-  const pageMenuPopoverRef=useRef<HTMLDivElement>(null);
   const [mobileMenu,setMobileMenu]=useState(false);
   const [loading,setLoading]=useState(false);
   const [hydrated,setHydrated]=useState(false);
@@ -586,38 +582,6 @@ export default function Planner() {
   },[monthStickerCategory,monthStickerSearch,monthRecentEmojis]);
   const monthTitle=`${monthCursor.slice(0,4)}. ${monthCursor.slice(5,7)}`;
   const todayKey=today();
-
-  useEffect(()=>{
-    if(!showPageMenu)return;
-    const updatePageMenuPosition=()=>{
-      const trigger=pageMenuRef.current?.querySelector<HTMLButtonElement>(".page-menu-trigger");
-      if(!trigger)return;
-      const rect=trigger.getBoundingClientRect();
-      const width=Math.min(205,Math.max(160,window.innerWidth-24));
-      const left=Math.max(12,Math.min(rect.right-width,window.innerWidth-width-12));
-      setPageMenuPosition({top:rect.bottom+8,left,width});
-    };
-    const closeOnOutside=(event:Event)=>{
-      const target=event.target as Node|null;
-      if(!target)return;
-      if(pageMenuRef.current?.contains(target)||pageMenuPopoverRef.current?.contains(target))return;
-      setShowPageMenu(false);
-    };
-    const closeOnEscape=(event:KeyboardEvent)=>{
-      if(event.key==="Escape")setShowPageMenu(false);
-    };
-    updatePageMenuPosition();
-    document.addEventListener("pointerdown",closeOnOutside,true);
-    document.addEventListener("keydown",closeOnEscape);
-    window.addEventListener("resize",updatePageMenuPosition);
-    window.addEventListener("scroll",updatePageMenuPosition,true);
-    return()=>{
-      document.removeEventListener("pointerdown",closeOnOutside,true);
-      document.removeEventListener("keydown",closeOnEscape);
-      window.removeEventListener("resize",updatePageMenuPosition);
-      window.removeEventListener("scroll",updatePageMenuPosition,true);
-    };
-  },[showPageMenu]);
 
   useEffect(()=>{
     if(!monthStickerDate)return;
@@ -919,60 +883,15 @@ export default function Planner() {
   }
   const themeNames:Record<ThemeName,string>={white:"White",pink:"Pink",blue:"Blue",black:"Black",custom:"Custom"};
   const pageMenu=(
-    <>
-      <div className="page-menu-anchor" ref={pageMenuRef}>
-        <button
-          type="button"
-          className="page-menu-trigger"
-          aria-label="다이어리 메뉴"
-          aria-haspopup="menu"
-          aria-expanded={showPageMenu}
-          title="메뉴"
-          onClick={event=>{
-            if(showPageMenu){setShowPageMenu(false);return;}
-            const rect=event.currentTarget.getBoundingClientRect();
-            const width=Math.min(205,Math.max(160,window.innerWidth-24));
-            const left=Math.max(12,Math.min(rect.right-width,window.innerWidth-width-12));
-            setPageMenuPosition({top:rect.bottom+8,left,width});
-            setShowPageMenu(true);
-          }}
-        >
-          <MoreHorizontal size={20}/>
-        </button>
-      </div>
-      {showPageMenu&&pageMenuPosition&&typeof document!=="undefined"&&createPortal(
-        <div
-          ref={pageMenuPopoverRef}
-          className="page-menu-popover"
-          style={{...vars,top:pageMenuPosition.top,left:pageMenuPosition.left,width:pageMenuPosition.width}}
-          role="menu"
-          aria-label="다이어리 메뉴"
-        >
-          <div className="page-menu-account">{user?.email??""}</div>
-          <div className="page-menu-divider" role="separator"/>
-          {view==="cover" ? (
-            <button type="button" role="menuitem" onClick={()=>{setView("planner");setShowPageMenu(false);}}>
-              <BookOpen size={16}/><span>플래너로 돌아가기</span>
-            </button>
-          ) : (
-            <button type="button" role="menuitem" onClick={()=>{setView("cover");setShowPageMenu(false);}}>
-              <Sparkles size={16}/><span>표지 꾸미기</span>
-            </button>
-          )}
-          <button type="button" role="menuitem" onClick={()=>{setShowSettings(true);setShowPageMenu(false);}}>
-            <Palette size={16}/><span>테마 설정</span>
-          </button>
-          <div className="page-menu-divider" role="separator"/>
-          <button type="button" role="menuitem" onClick={()=>{setShowPageMenu(false);void signOut();}}>
-            <LogOut size={16}/><span>로그아웃</span>
-          </button>
-          <button type="button" role="menuitem" className="page-menu-danger" onClick={()=>{setShowPageMenu(false);setDeleteEmail("");setShowDeleteAccount(true);}}>
-            <Trash2 size={16}/><span>회원 탈퇴</span>
-          </button>
-        </div>,
-        document.body
-      )}
-    </>
+    <PageMenu
+      email={user?.email??""}
+      view={view}
+      themeStyle={vars}
+      onViewChange={setView}
+      onOpenSettings={()=>setShowSettings(true)}
+      onSignOut={()=>{void signOut();}}
+      onDeleteAccount={()=>{setDeleteEmail("");setShowDeleteAccount(true);}}
+    />
   );
 
   if(checking)return <div className="boot-screen"><AppIcon/><h1>CHECKPOINT</h1><p>플래너를 불러오는 중입니다...</p></div>;
