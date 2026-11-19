@@ -88,13 +88,9 @@ export default function AppSidebar({
             style={themeStyle}
             role="dialog"
             aria-modal="true"
-            aria-labelledby="app-sidebar-title"
+            aria-label="메뉴"
           >
             <header className="app-sidebar-header">
-              <div>
-                <span className="app-sidebar-eyebrow">CHECKPOINT</span>
-                <h2 id="app-sidebar-title">메뉴</h2>
-              </div>
               <button
                 ref={closeRef}
                 type="button"
