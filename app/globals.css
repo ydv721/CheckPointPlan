@@ -7326,6 +7326,11 @@ html,body{width:100%;overflow-x:clip}
   position: relative !important;
 }
 
+/* Keep the DAY page fold shadow on the book spine after right-page positioning. */
+.right-page::after {
+  left: 0 !important;
+}
+
 .page-menu-slot {
   position: absolute !important;
   top: var(--checkpoint-page-menu-inset) !important;
