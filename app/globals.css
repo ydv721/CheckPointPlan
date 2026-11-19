@@ -7259,7 +7259,7 @@ html,body{width:100%;overflow-x:clip}
   .month-page-controls > .page-menu-anchor {
     position: absolute !important;
     top: 0 !important;
-    right: 0 !important;
+    right: -6px !important;
     z-index: 80 !important;
   }
 }
@@ -7279,7 +7279,7 @@ html,body{width:100%;overflow-x:clip}
   .month-page-controls > .page-menu-anchor {
     position: absolute !important;
     top: 0 !important;
-    right: 0 !important;
+    right: -6px !important;
     z-index: 80 !important;
   }
 }
@@ -7299,7 +7299,7 @@ html,body{width:100%;overflow-x:clip}
   .month-page-controls > .page-menu-anchor {
     position: absolute !important;
     top: 7px !important;
-    right: 2px !important;
+    right: -2px !important;
     z-index: 80 !important;
   }
 }
