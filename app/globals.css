@@ -8083,10 +8083,14 @@ html,body{width:100%;overflow-x:clip}
   color:var(--accent);
 }
 .app-sidebar-theme-option > span:nth-child(2) { flex:1; }
-.app-sidebar-theme-swatch {
+.app-sidebar-navigation .app-sidebar-theme-option > .app-sidebar-theme-swatch {
   width:17px;
+  min-width:17px;
+  max-width:17px;
   height:17px;
-  flex:0 0 auto;
+  min-height:17px;
+  flex:0 0 17px;
+  display:block;
   border:1px solid rgba(30,41,59,.16);
   border-radius:50%;
 }
