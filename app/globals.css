@@ -7683,13 +7683,6 @@ html,body{width:100%;overflow-x:clip}
   background: var(--soft);
 }
 
-.notebook-type-option.selected {
-  padding: 13px 17px;
-  border: 2px solid var(--accent);
-  background: var(--soft);
-  box-shadow: 0 3px 12px color-mix(in srgb, var(--accent) 10%, transparent);
-}
-
 .notebook-type-copy {
   min-width: 0;
   display: flex;
@@ -7710,47 +7703,22 @@ html,body{width:100%;overflow-x:clip}
   opacity: .62;
 }
 
-.notebook-type-indicator {
-  width: 22px;
-  height: 22px;
-  flex: 0 0 22px;
-  display: grid;
-  place-items: center;
-  border: 1.5px solid var(--line);
-  border-radius: 50%;
-  color: #fff;
-}
-
-.notebook-type-option.selected .notebook-type-indicator {
-  border-color: var(--accent);
-  background: var(--accent);
-}
-
-.notebook-select-footer {
-  margin-top: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-}
-
-.notebook-select-footer p {
-  margin: 0;
+.notebook-type-arrow {
+  flex: 0 0 20px;
   color: var(--ink);
-  font-size: 11px;
-  line-height: 1.6;
-  opacity: .58;
+  opacity: .48;
+  transition: color .16s ease, opacity .16s ease, transform .16s ease;
 }
 
-.notebook-select-continue {
-  min-height: 42px;
-  flex: 0 0 auto;
-  padding: 0 17px;
+.notebook-type-option:hover .notebook-type-arrow {
+  color: var(--accent);
+  opacity: 1;
+  transform: translateX(3px);
 }
 
-.notebook-select-continue:disabled {
-  opacity: .42;
-  cursor: not-allowed;
+.notebook-type-option:disabled {
+  opacity: .62;
+  cursor: wait;
 }
 
 .notebook-type-notice {
@@ -7796,18 +7764,6 @@ html,body{width:100%;overflow-x:clip}
     padding: 13px 15px;
   }
 
-  .notebook-type-option.selected {
-    padding: 12px 14px;
-  }
-
-  .notebook-select-footer {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .notebook-select-continue {
-    width: 100%;
-  }
 }
 
 /* CHECKPOINT notebook library: cover-first bookshelf layout. */
@@ -7992,13 +7948,6 @@ html,body{width:100%;overflow-x:clip}
   min-height: 64px;
   padding: 12px 16px;
 }
-.notebook-type-modal .notebook-type-option.selected {
-  padding: 11px 15px;
-}
-.notebook-type-modal .notebook-select-footer {
-  margin-top: 20px;
-  justify-content: flex-end;
-}
 .notebook-type-modal .notebook-type-notice {
   margin-bottom: 0;
 }
@@ -8013,14 +7962,5 @@ html,body{width:100%;overflow-x:clip}
   .notebook-type-modal .notebook-type-option {
     min-height: 60px;
     padding: 11px 13px;
-  }
-  .notebook-type-modal .notebook-type-option.selected {
-    padding: 10px 12px;
-  }
-  .notebook-type-modal .notebook-select-footer {
-    align-items: stretch;
-  }
-  .notebook-type-modal .notebook-select-continue {
-    width: 100%;
   }
 }
