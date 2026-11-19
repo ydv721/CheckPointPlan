@@ -8185,3 +8185,8 @@ html,body{width:100%;overflow-x:clip}
   outline: none !important;
   box-shadow: none !important;
 }
+
+/* Remove the separator between the text and sticker editor sections. */
+.cover-editor .cover-sticker-section {
+  border-top: 0 !important;
+}
