@@ -1203,7 +1203,6 @@ export default function Planner() {
   if(activeMarkdownNotebookId && client){
     const markdownNotebook=notebooks.find(notebook=>notebook.id===activeMarkdownNotebookId);
     if(!markdownNotebook)return <div className="boot-screen"><AppIcon/><h1>CHECKPOINT</h1><p>다이어리를 불러오는 중입니다...</p></div>;
-    const markdownThemeStyle=libraryDarkMode?libraryThemeStyle:vars;
     return <>
       <MarkdownDiary
         key={activeMarkdownNotebookId}
@@ -1212,9 +1211,11 @@ export default function Planner() {
         email={user.email??""}
         notebookId={activeMarkdownNotebookId}
         notebookTitle={markdownNotebook.title}
-        themeStyle={markdownThemeStyle}
-        darkMode={libraryDarkMode}
-        onDarkModeChange={setLibraryDarkMode}
+        themeStyle={vars}
+        theme={theme}
+        customColor={customColor}
+        onThemeChange={setTheme}
+        onCustomColorChange={setCustomColor}
         onBack={openNotebookList}
         onSignOut={signOut}
         onDeleteAccount={()=>{setDeleteEmail("");setShowDeleteAccount(true);}}
