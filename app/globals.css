@@ -1592,7 +1592,7 @@ html,body{width:100%;overflow-x:clip}
   .page-date .date-value {
     font-size: 34px !important;
     line-height: .92 !important;
-    letter-spacing: .1em !important;
+    letter-spacing: 0 !important;
   }
 
   .page-date .dday-prefix,
