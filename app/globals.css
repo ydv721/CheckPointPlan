@@ -8307,6 +8307,36 @@ html,body{width:100%;overflow-x:clip}
   flex:0 0 auto !important;
   margin-bottom:14px !important;
 }
+.markdown-free-note-section > .markdown-note-heading{
+  align-items:center !important;
+}
+.markdown-note-heading-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  min-width:0;
+}
+.markdown-share-top-button{
+  display:inline-flex;
+  flex:0 0 36px;
+  align-items:center;
+  justify-content:center;
+  width:36px;
+  height:34px;
+  padding:0;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:var(--soft);
+  color:var(--accent);
+  opacity:1;
+  transition:background .15s ease,border-color .15s ease,transform .15s ease;
+}
+.markdown-share-top-button:hover{
+  border-color:var(--accent);
+  background:var(--paper);
+  transform:translateY(-1px);
+}
 .markdown-free-note-section > .free-note-paper{
   display:flex !important;
   flex:1 1 auto !important;
@@ -8333,7 +8363,7 @@ html,body{width:100%;overflow-x:clip}
   width:100%;
   min-height:46px;
   padding:7px 10px;
-  border-bottom:1px solid var(--line);
+  border-bottom:0;
   background:var(--soft);
 }
 .markdown-toolbar-button{
@@ -8540,11 +8570,7 @@ html,body{width:100%;overflow-x:clip}
 }
 
 
-/* Markdown toolbar share action: keep it anchored at the far right. */
-.markdown-toolbar-spacer{
-  flex:1 1 auto;
-  min-width:12px;
-}
+/* Share feedback stays beside the FREE NOTE heading action. */
 .markdown-share-feedback{
   flex:0 1 auto;
   max-width:220px;
@@ -8555,28 +8581,15 @@ html,body{width:100%;overflow-x:clip}
   text-overflow:ellipsis;
   white-space:nowrap;
 }
-.markdown-toolbar-button.markdown-toolbar-share{
-  flex:0 0 36px;
-  width:36px;
-  height:34px;
-  border:1px solid var(--line);
-  background:var(--paper);
-  color:var(--accent);
-  opacity:1;
-}
-.markdown-toolbar-button.markdown-toolbar-share:hover:not(:disabled){
-  border-color:var(--accent);
-  background:var(--paper);
-}
 @media(max-width:430px){
-  .markdown-toolbar-spacer{
-    min-width:4px;
+  .markdown-note-heading-actions{
+    gap:6px;
   }
   .markdown-share-feedback{
     max-width:130px;
     font-size:10px;
   }
-  .markdown-toolbar-button.markdown-toolbar-share{
+  .markdown-share-top-button{
     flex-basis:32px;
     width:32px;
     height:32px;
