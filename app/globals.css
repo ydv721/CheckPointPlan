@@ -8419,3 +8419,17 @@ html,body{width:100%;overflow-x:clip}
   font-size:10px;
   opacity:.58;
 }
+
+
+/* Markdown diary: make the two writing sheets identical in size and alignment. */
+@media(min-width:781px){
+  .markdown-diary-spread > .markdown-note-page.left-page,
+  .markdown-diary-spread > .markdown-note-page.right-page{
+    padding:18px 28px !important;
+  }
+  .markdown-diary-spread > .markdown-note-page > .markdown-free-note-section{
+    width:100% !important;
+    height:100% !important;
+    margin:0 !important;
+  }
+}
