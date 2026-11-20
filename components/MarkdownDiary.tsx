@@ -645,17 +645,19 @@ export default function MarkdownDiary({
                     </div>
 
                     {mode === "edit" ? (
-                      <textarea
-                        ref={editorRef}
-                        className="markdown-note-textarea"
-                        value={activeNote.content}
-                        onChange={event => updateActiveNote({ content: event.target.value })}
-                        placeholder="여기에 Markdown으로 자유롭게 기록해 보세요."
-                        aria-label="Markdown 본문"
-                        spellCheck
-                      />
+                      <div className="free-note-paper markdown-note-paper">
+                        <textarea
+                          ref={editorRef}
+                          className="markdown-note-textarea"
+                          value={activeNote.content}
+                          onChange={event => updateActiveNote({ content: event.target.value })}
+                          placeholder="여기에 Markdown으로 자유롭게 기록해 보세요."
+                          aria-label="Markdown 본문"
+                          spellCheck
+                        />
+                      </div>
                     ) : (
-                      <div className="markdown-note-preview">
+                      <div className="free-note-paper markdown-note-paper markdown-note-preview">
                         <MarkdownPreview source={activeNote.content}/>
                       </div>
                     )}
