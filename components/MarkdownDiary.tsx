@@ -92,9 +92,8 @@ export default function MarkdownDiary({
   const [notes, setNotes] = useState<MarkdownNote[]>([]);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
-  const [saveState, setSaveState] = useState<"saved" | "dirty" | "saving" | "error">("saved");
+  const [, setSaveState] = useState<"saved" | "dirty" | "saving" | "error">("saved");
   const [shareFeedback, setShareFeedback] = useState("");
   const leftEditorRef = useRef<HTMLTextAreaElement>(null);
   const currentNoteRef = useRef<MarkdownNote | null>(null);
@@ -257,74 +256,6 @@ export default function MarkdownDiary({
     return () => window.clearTimeout(timer);
   }, [activeNote, loading, saveNote]);
 
-  async function createNote() {
-    if (creating) return;
-    if (!(await saveCurrentNote())) return;
-
-    setCreating(true);
-    setError("");
-
-    const { data, error: createError } = await client
-      .from("markdown_notes")
-      .insert({
-        notebook_id: notebookId,
-        user_id: userId,
-        title: "새 노트",
-        content: encodeNotePages({ left: "", right: "" })
-      })
-      .select("id,notebook_id,user_id,title,content,created_at,updated_at")
-      .single();
-
-    if (createError || !data) {
-      setError("새 노트를 만들지 못했습니다: " + (createError?.message ?? "알 수 없는 오류"));
-      setCreating(false);
-      return;
-    }
-
-    const note = data as MarkdownNote;
-    savedSnapshotsRef.current[note.id] = JSON.stringify({ title: note.title, content: note.content });
-    setNotes(current => [note, ...current]);
-    setActiveNoteId(note.id);
-    setSaveState("saved");
-    setCreating(false);
-    requestAnimationFrame(() => leftEditorRef.current?.focus());
-  }
-
-  async function selectNote(noteId: string) {
-    if (noteId === activeNoteId) return;
-    if (!(await saveCurrentNote())) return;
-    setActiveNoteId(noteId);
-    setSaveState("saved");
-  }
-
-  async function deleteActiveNote() {
-    if (!activeNote) return;
-    if (!window.confirm("이 노트를 삭제하시겠습니까? 삭제한 노트는 복구할 수 없습니다.")) return;
-
-    const { error: deleteError } = await client
-      .from("markdown_notes")
-      .delete()
-      .eq("id", activeNote.id)
-      .eq("notebook_id", notebookId)
-      .eq("user_id", userId);
-
-    if (deleteError) {
-      setError("노트를 삭제하지 못했습니다: " + deleteError.message);
-      return;
-    }
-
-    const remaining = notes.filter(note => note.id !== activeNote.id);
-    delete savedSnapshotsRef.current[activeNote.id];
-    setNotes(remaining);
-    setActiveNoteId(remaining[0]?.id ?? null);
-    setSaveState("saved");
-
-    if (remaining.length === 0) {
-      currentNoteRef.current = null;
-      void createNote();
-    }
-  }
-
   async function leaveDiary(action: () => Promise<void>) {
     if (!(await saveCurrentNote())) return;
     await action();
@@ -466,16 +397,6 @@ export default function MarkdownDiary({
     }
   }
 
-  const saveLabel = loading
-    ? "불러오는 중"
-    : saveState === "saving"
-      ? "저장 중"
-      : saveState === "dirty"
-        ? "저장 대기 중"
-        : saveState === "error"
-          ? "저장 실패"
-          : "저장 완료";
-
   return (
     <div className="app-shell planner-view" style={themeStyle}>
       <AppSidebar
@@ -486,14 +407,6 @@ export default function MarkdownDiary({
         customColor={customColor}
         onThemeChange={onThemeChange}
         onCustomColorChange={onCustomColorChange}
-        noteOptions={notes.map(note => ({ id: note.id, title: note.title }))}
-        activeNoteId={activeNoteId}
-        noteSaveLabel={saveLabel}
-        noteActionsDisabled={loading || creating}
-        noteCanDelete={!!activeNote}
-        onNoteSelect={noteId => { void selectNote(noteId); }}
-        onCreateNote={() => { void createNote(); }}
-        onDeleteNote={() => { void deleteActiveNote(); }}
         onOpenNotebookList={() => { void leaveDiary(onBack); }}
         onSignOut={() => { void leaveDiary(onSignOut); }}
         onDeleteAccount={onDeleteAccount}
