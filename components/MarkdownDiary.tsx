@@ -253,7 +253,8 @@ function renderInlineMarkdown(value: string) {
   html = html.replace(/(^|[\s(])((?:https?:\/\/|www\.)[^\s<]+)/gi, (_match, prefix: string, rawUrl: string) => {
     const trailing = rawUrl.match(/[.,!?;:)\]}]+$/)?.[0] ?? "";
     const url = trailing ? rawUrl.slice(0, -trailing.length) : rawUrl;
-    const href = safeMarkdownHref(url.startsWith("www.") ? "https://" + url : url);
+    const decodedUrl = url.replace(/&amp;/g, "&");
+    const href = safeMarkdownHref(decodedUrl.startsWith("www.") ? "https://" + decodedUrl : decodedUrl);
     return href
       ? prefix + stash('<a href="' + escapeHtml(href) + '" target="_blank" rel="noopener noreferrer">' + url + "</a>") + trailing
       : prefix + rawUrl;
