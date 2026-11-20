@@ -99,7 +99,7 @@ export default function MarkdownDiary({
   const leftEditorRef = useRef<HTMLTextAreaElement>(null);
   const currentNoteRef = useRef<MarkdownNote | null>(null);
   const savedSnapshotsRef = useRef<Record<string, string>>({});
-  const initialNotePromiseRef = useRef<{ key: string; promise: Promise<MarkdownNote> } | null>(null);
+  const initialNotePromiseRef = useRef<{ key: string; promise: PromiseLike<MarkdownNote> } | null>(null);
   const saveQueueRef = useRef<Promise<boolean>>(Promise.resolve(true));
 
   const activeNote = useMemo(
@@ -136,9 +136,9 @@ export default function MarkdownDiary({
         let rows = (data ?? []) as MarkdownNote[];
         if (rows.length === 0) {
           const key = userId + ":" + notebookId;
-          let pending = initialNotePromiseRef.current;
+          let initialNotePromise = initialNotePromiseRef.current;
 
-          if (!pending || pending.key !== key) {
+          if (!initialNotePromise || initialNotePromise.key !== key) {
             const promise = client
               .from("markdown_notes")
               .insert({
@@ -155,11 +155,11 @@ export default function MarkdownDiary({
                 return created as MarkdownNote;
               });
 
-            pending = { key, promise };
-            initialNotePromiseRef.current = pending;
+            initialNotePromise = { key, promise };
+            initialNotePromiseRef.current = initialNotePromise;
           }
 
-          rows = [await pending.promise];
+          rows = [await initialNotePromise.promise];
         }
 
         if (!active) return;
