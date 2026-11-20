@@ -17,6 +17,7 @@
     padding:11px 12px 14px !important;
     font-size:12px;
   }
+}
 .page-heading h1{font-size:20px}.page-heading{margin-bottom:21px}.page-heading p{font-size:11px}.brand-icon{width:31px;height:31px}.planner-toolbar{align-items:flex-start;gap:6px}.date-navigation{gap:4px}.date-navigation input{width:115px;font-size:11px}.date-navigation svg{width:15px}.toolbar-right{gap:4px}.save-indicator{display:none}.toolbar-save{padding:10px;font-size:0}.toolbar-save svg{width:16px}.paper-page{padding:23px 18px}.time-table{grid-template-columns:44px repeat(6,minmax(0,1fr))}.memo-section{min-height:190px}.todo-text{font-size:13px}.todo-row{gap:7px}.todo-number{min-width:20px}.todo-remove{opacity:.23}.section-heading small{font-size:10px}.theme-choices{gap:5px}.theme-choice{font-size:10px}.theme-thumb{height:48px}.auth-wrap{grid-template-columns:1fr}.auth-left{display:none}.auth-right{min-height:100vh;padding:26px}.mini-brand{display:flex;align-items:center;gap:9px;font-weight:900;margin-bottom:64px}.auth-card .eyebrow{font-size:9px}.auth-card h2{font-size:27px}}
 
 .email-confirmed-page{min-height:100vh;display:grid;place-items:center;padding:28px;background:#f4f6fa;color:#35465d}
@@ -8669,6 +8670,7 @@ html,body{width:100%;overflow-x:clip}
   font:inherit;
   white-space:pre;
 }
+.markdown-editor-grid .code-token-directive{color:#e58d8d}
 .markdown-editor-grid .code-token-comment{color:#8993a3}
 .markdown-editor-grid .code-token-include{color:#a6d978}
 .markdown-editor-grid .code-token-string{color:#c6e86b}
