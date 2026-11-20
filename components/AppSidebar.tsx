@@ -46,7 +46,7 @@ export default function AppSidebar({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
 
-  const panelDarkMode = (currentView === "library" || currentView === "markdown") && darkMode;
+  const panelDarkMode = currentView === "library" && darkMode;
   const panelStyle = panelDarkMode ? {
     ...themeStyle,
     "--bg": "#171A21",
@@ -164,7 +164,7 @@ export default function AppSidebar({
                 </button>
               )}
 
-              {currentView === "library" || currentView === "markdown" ? (
+              {currentView === "library" ? (
                 <button
                   type="button"
                   className="app-sidebar-theme-toggle"
