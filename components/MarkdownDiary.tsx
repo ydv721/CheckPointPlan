@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { Bold, Code2, Heading1, Italic, Link2, List, ListOrdered, Minus, Quote, Share2, Strikethrough, Check } from "lucide-react";
+import { Bold, Code2, Heading1, Italic, Link2, List, ListOrdered, Minus, Palette, Quote, Share2, Strikethrough, Check } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import type { ThemeName } from "@/lib/types";
 
@@ -83,6 +83,16 @@ function escapeHtml(value: string) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 }
+function normalizeMarkdownColor(value: string) {
+  const color = value.trim().toLowerCase();
+  if (/^#[0-9a-f]{6}$/.test(color)) return color;
+  const rgb = color.match(/^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})(?:\s*,\s*(?:0|1|0?\.\d+))?\s*\)$/);
+  if (!rgb) return "";
+  const channels = rgb.slice(1, 4).map(Number);
+  if (channels.some(channel => channel < 0 || channel > 255)) return "";
+  return "#" + channels.map(channel => channel.toString(16).padStart(2, "0")).join("");
+}
+
 
 function safeMarkdownHref(value: string) {
   const href = value.trim();
@@ -99,7 +109,12 @@ function renderInlineMarkdown(value: string) {
     return "\u0000" + (tokens.length - 1) + "\u0000";
   };
 
-  let html = escapeHtml(value);
+  const source = value.replace(
+    /<span\s+style=["']color:\s*(#[0-9a-f]{6})["']\s*>([\s\S]*?)<\/span>/gi,
+    (_match, color: string, content: string) =>
+      stash('<span style="color: ' + color.toLowerCase() + '">' + renderInlineMarkdown(content) + "</span>")
+  );
+  let html = escapeHtml(source);
   html = html.replace(/\x60([^\x60]+)\x60/g, (_match, code: string) =>
     stash("<code>" + code + "</code>")
   );
@@ -131,7 +146,13 @@ function renderInlineMarkdown(value: string) {
       : label;
   });
 
-  return html.replace(/\u0000(\d+)\u0000/g, (_match, index: string) => tokens[Number(index)] ?? "");
+  let rendered = html;
+  for (let pass = 0; pass <= tokens.length; pass += 1) {
+    const next = rendered.replace(/\u0000(\d+)\u0000/g, (_match, index: string) => tokens[Number(index)] ?? "");
+    if (next === rendered) break;
+    rendered = next;
+  }
+  return rendered;
 }
 
 function markdownToHtml(markdown: string) {
@@ -237,6 +258,11 @@ function htmlToMarkdown(html: string) {
     if (tag === "I" || tag === "EM") return "*" + children + "*";
     if (tag === "S" || tag === "STRIKE" || tag === "DEL") return "~~" + children + "~~";
     if (tag === "CODE") return String.fromCharCode(96) + children + String.fromCharCode(96);
+    if (tag === "FONT" || tag === "SPAN") {
+      const rawColor = tag === "FONT" ? (element.getAttribute("color") ?? element.style.color) : element.style.color;
+      const color = normalizeMarkdownColor(rawColor);
+      return color ? '<span style="color: ' + color + '">' + children + "</span>" : children;
+    }
     if (tag === "A") {
       const href = safeMarkdownHref(element.getAttribute("href") ?? "");
       return href ? "[" + children + "](" + href + ")" : children;
@@ -333,7 +359,11 @@ export default function MarkdownDiary({
   const [error, setError] = useState("");
   const [, setSaveState] = useState<"saved" | "dirty" | "saving" | "error">("saved");
   const [shareFeedback, setShareFeedback] = useState("");
+  const [colorPaletteOpen, setColorPaletteOpen] = useState(false);
+  const [customTextColor, setCustomTextColor] = useState("#7868e8");
+  const [colorSelectionHint, setColorSelectionHint] = useState("");
   const leftEditorRef = useRef<HTMLDivElement>(null);
+  const editorSelectionRef = useRef<Range | null>(null);
   const currentNoteRef = useRef<MarkdownNote | null>(null);
   const savedSnapshotsRef = useRef<Record<string, string>>({});
   const initialNotePromiseRef = useRef<{ key: string; promise: PromiseLike<MarkdownNote> } | null>(null);
@@ -521,6 +551,59 @@ export default function MarkdownDiary({
     updateActiveNote({ content: encodeNotePages(nextPages) });
   }
 
+  function rememberEditorSelection() {
+    const editor = leftEditorRef.current;
+    const selection = window.getSelection();
+    if (!editor || !selection?.rangeCount || !selection.anchorNode || !selection.focusNode) return;
+    if (editor.contains(selection.anchorNode) && editor.contains(selection.focusNode)) {
+      editorSelectionRef.current = selection.getRangeAt(0).cloneRange();
+    }
+  }
+
+  function applyTextColor(color: string) {
+    const editor = leftEditorRef.current;
+    if (!editor || !activeNote || loading) return;
+
+    editor.focus();
+    const selection = window.getSelection();
+    const savedRange = editorSelectionRef.current;
+    if (selection && savedRange && editor.contains(savedRange.commonAncestorContainer)) {
+      selection.removeAllRanges();
+      selection.addRange(savedRange);
+    }
+
+    if (
+      !selection?.rangeCount ||
+      selection.isCollapsed ||
+      !selection.anchorNode ||
+      !selection.focusNode ||
+      !editor.contains(selection.anchorNode) ||
+      !editor.contains(selection.focusNode)
+    ) {
+      setColorSelectionHint("색상을 적용할 글자를 먼저 선택해 줘.");
+      return;
+    }
+
+    document.execCommand("foreColor", false, color);
+    updatePage("left", htmlToMarkdown(editor.innerHTML));
+    editorSelectionRef.current = null;
+    setColorSelectionHint("");
+    setColorPaletteOpen(false);
+    editor.focus();
+  }
+
+  function applyThemeTextColor() {
+    const editor = leftEditorRef.current;
+    const rawColor = editor ? getComputedStyle(editor).getPropertyValue("--accent").trim() : customColor;
+    applyTextColor(normalizeMarkdownColor(rawColor) || customColor || "#7868e8");
+  }
+
+  function applyDefaultTextColor() {
+    const editor = leftEditorRef.current;
+    const rawColor = editor ? getComputedStyle(editor).getPropertyValue("--ink").trim() : "";
+    applyTextColor(normalizeMarkdownColor(rawColor) || "#34465e");
+  }
+
   function applyMarkdown(action: MarkdownAction) {
     const editor = leftEditorRef.current;
     if (!editor || !activeNote || loading) return;
@@ -686,6 +769,86 @@ export default function MarkdownDiary({
                               <Icon size={16} strokeWidth={2}/>
                             </button>
                           ))}
+                          <div className="markdown-color-picker-wrap">
+                            <button
+                              type="button"
+                              className="markdown-toolbar-button"
+                              aria-label="글자색"
+                              title="글자색"
+                              aria-expanded={colorPaletteOpen}
+                              onMouseDown={event => {
+                                event.preventDefault();
+                                rememberEditorSelection();
+                              }}
+                              onClick={() => {
+                                setColorSelectionHint("");
+                                setColorPaletteOpen(open => !open);
+                              }}
+                            >
+                              <Palette size={16} strokeWidth={2}/>
+                            </button>
+                            {colorPaletteOpen && (
+                              <div className="markdown-color-palette" role="group" aria-label="글자색 선택">
+                                <div className="markdown-color-palette-title">글자색</div>
+                                <div className="markdown-color-swatches">
+                                  <button
+                                    type="button"
+                                    className="markdown-color-swatch markdown-color-default"
+                                    aria-label="기본 글자색"
+                                    title="기본 글자색"
+                                    onMouseDown={event => event.preventDefault()}
+                                    onClick={applyDefaultTextColor}
+                                  >
+                                    A
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="markdown-color-swatch markdown-color-theme"
+                                    aria-label="테마 색상"
+                                    title="테마 색상"
+                                    onMouseDown={event => event.preventDefault()}
+                                    onClick={applyThemeTextColor}
+                                  />
+                                  {[
+                                    { label: "빨강", color: "#d64545" },
+                                    { label: "주황", color: "#d97736" },
+                                    { label: "노랑", color: "#b58a00" },
+                                    { label: "초록", color: "#39845b" },
+                                    { label: "파랑", color: "#3978b8" },
+                                    { label: "보라", color: "#8063b5" },
+                                    { label: "분홍", color: "#c96b91" }
+                                  ].map(({ label, color }) => (
+                                    <button
+                                      key={color}
+                                      type="button"
+                                      className="markdown-color-swatch"
+                                      aria-label={label}
+                                      title={label}
+                                      style={{ backgroundColor: color }}
+                                      onMouseDown={event => event.preventDefault()}
+                                      onClick={() => applyTextColor(color)}
+                                    />
+                                  ))}
+                                </div>
+                                <label className="markdown-color-custom">
+                                  <span>직접 선택</span>
+                                  <input
+                                    type="color"
+                                    aria-label="사용자 지정 글자색"
+                                    value={customTextColor}
+                                    onChange={event => {
+                                      const color = event.target.value;
+                                      setCustomTextColor(color);
+                                      applyTextColor(color);
+                                    }}
+                                  />
+                                </label>
+                                <span className="markdown-color-hint" aria-live="polite">
+                                  {colorSelectionHint || "글자를 선택한 뒤 색상을 눌러 줘."}
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <div
                           ref={leftEditorRef}
