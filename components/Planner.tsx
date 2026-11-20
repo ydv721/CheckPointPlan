@@ -541,6 +541,7 @@ export default function Planner() {
   const [monthStickerDate,setMonthStickerDate]=useState<string|null>(null);
   const monthStickerPickerRef=useRef<HTMLDivElement>(null);
   const monthStickerTriggerRef=useRef<HTMLButtonElement>(null);
+  const datePickerRef=useRef<HTMLInputElement>(null);
   const [monthStickerPending,setMonthStickerPending]=useState<string|null>(null);
   const [monthStickerCategory,setMonthStickerCategory]=useState("smileys");
   const [monthStickerSearch,setMonthStickerSearch]=useState("");
@@ -1371,10 +1372,31 @@ export default function Planner() {
                   <button type="button" className="month-nav-button daily-date-nav-button" aria-label="이전 날짜" title="이전 날짜" onClick={()=>shiftDate(-1)}><ChevronLeft size={15}/></button>
                   <span className="date-value">{date.replace(/-/g," ")}</span>
                   <button type="button" className="month-nav-button daily-date-nav-button" aria-label="다음 날짜" title="다음 날짜" onClick={()=>shiftDate(1)}><ChevronRight size={15}/></button>
-                  <label className="date-picker-trigger" title="달력에서 날짜 선택">
-                    <CalendarDays size={16}/>
-                    <input aria-label="날짜 선택" type="date" value={date} onChange={e=>{void navigateDate(e.target.value);}}/>
-                  </label>
+                  <div className="date-picker-trigger">
+                    <button
+                      type="button"
+                      className="date-picker-trigger-button"
+                      aria-label="달력에서 날짜 선택"
+                      title="달력에서 날짜 선택"
+                      onClick={()=>{
+                        const picker=datePickerRef.current as (HTMLInputElement & {showPicker?:()=>void})|null;
+                        if(!picker)return;
+                        if(typeof picker.showPicker==="function")picker.showPicker();
+                        else picker.click();
+                      }}
+                    >
+                      <CalendarDays size={16}/>
+                    </button>
+                    <input
+                      ref={datePickerRef}
+                      className="date-picker-input"
+                      aria-hidden="true"
+                      tabIndex={-1}
+                      type="date"
+                      value={date}
+                      onChange={e=>{void navigateDate(e.target.value);}}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
