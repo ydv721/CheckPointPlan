@@ -6,6 +6,7 @@ import AppSidebar from "@/components/AppSidebar";
 import PlannerSpread from "@/components/PlannerSpread";
 import NotebookTypeSelection, { type NotebookType } from "@/components/NotebookTypeSelection";
 import NotebookLibrary, { type NotebookRecord } from "@/components/NotebookLibrary";
+import MarkdownDiary from "@/components/MarkdownDiary";
 import {
   CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight,
   Expand, ImagePlus, Plus, RotateCw, Star,
@@ -531,6 +532,7 @@ export default function Planner() {
   const [notebookCoverPhotoUrls,setNotebookCoverPhotoUrls]=useState<Record<string,string>>({});
   const [libraryRefresh,setLibraryRefresh]=useState(0);
   const [activeNotebookId,setActiveNotebookId]=useState<string|null>(null);
+  const [activeMarkdownNotebookId,setActiveMarkdownNotebookId]=useState<string|null>(null);
   const [libraryLoading,setLibraryLoading]=useState(false);
   const [creatingNotebook,setCreatingNotebook]=useState(false);
   const pendingAuthUser=useRef<User|null>(null);
@@ -646,6 +648,7 @@ export default function Planner() {
     setNotebooks([]);
     setNotebookCoverPhotoUrls({});
     setActiveNotebookId(null);
+    setActiveMarkdownNotebookId(null);
     setLibraryLoading(true);
     setUser(nextUser);
   },[]);
@@ -679,6 +682,7 @@ export default function Planner() {
         setNotebookTypeNotice("");
         setNotebooks([]);
         setActiveNotebookId(null);
+        setActiveMarkdownNotebookId(null);
         setUser(null);
       }else if(event==="INITIAL_SESSION"&&!pendingAuthUser.current){
         const sessionUser=session?.user??null;
@@ -991,7 +995,7 @@ export default function Planner() {
     if(!client)return;
     if(hydrated)await saveNow(entry);
     if(!await saveSettingsNow())return;
-    await client.auth.signOut();setUser(null);setView("planner");setNotebookTypeChosen(false);setNotebookTypeNotice("");
+    await client.auth.signOut();setUser(null);setView("planner");setNotebookTypeChosen(false);setActiveMarkdownNotebookId(null);setNotebookTypeNotice("");
   }
 
   async function deleteAccount() {
@@ -1015,6 +1019,7 @@ export default function Planner() {
       authenticatedUser.current=null;
       pendingAuthUser.current=null;
       setUser(null);
+      setActiveMarkdownNotebookId(null);
       setView("planner");
       setNotebookTypeChosen(false);
       
@@ -1125,6 +1130,7 @@ export default function Planner() {
     if(!await saveSettingsNow())return;
     setLibraryRefresh(value=>value+1);
     setActiveNotebookId(null);
+    setActiveMarkdownNotebookId(null);
     setNotebookTypeChosen(false);
     
     setNotebookTypeNotice("");
@@ -1166,6 +1172,8 @@ export default function Planner() {
       setView("planner");
       setPlannerPage("day");
       setDate(today());
+    }else if(type==="free-notes"){
+      setActiveMarkdownNotebookId(data.id);
     }else{
       setNotebookTypeNotice(title+"은 책장에 추가했어. 전용 편집 화면은 다음 단계에서 연결할게.");
     }
@@ -1173,10 +1181,16 @@ export default function Planner() {
   }
 
   async function openNotebook(notebook: NotebookRecord) {
+    if(notebook.notebook_type==="free-notes"){
+      setNotebookTypeNotice("");
+      setActiveMarkdownNotebookId(notebook.id);
+      return;
+    }
     if(notebook.notebook_type!=="planner"){
       setNotebookTypeNotice(NOTEBOOK_LABELS[notebook.notebook_type]+" 편집 화면은 다음 단계에서 연결할게.");
       return;
     }
+    setActiveMarkdownNotebookId(null);
     if(hydrated) await saveNow(entry);
     setActiveNotebookId(notebook.id);
     setView("planner");
@@ -1186,6 +1200,28 @@ export default function Planner() {
 
   if(checking)return <div className="boot-screen"><AppIcon/><h1>CHECKPOINT</h1><p>CHECKPOINT를 불러오는 중입니다...</p></div>;
   if(!user)return <AuthScreen onUser={beginAuthTransition}/>;
+  if(activeMarkdownNotebookId && client){
+    const markdownNotebook=notebooks.find(notebook=>notebook.id===activeMarkdownNotebookId);
+    if(!markdownNotebook)return <div className="boot-screen"><AppIcon/><h1>CHECKPOINT</h1><p>다이어리를 불러오는 중입니다...</p></div>;
+    const markdownThemeStyle=libraryDarkMode?libraryThemeStyle:vars;
+    return <>
+      <MarkdownDiary
+        key={activeMarkdownNotebookId}
+        client={client}
+        userId={user.id}
+        email={user.email??""}
+        notebookId={activeMarkdownNotebookId}
+        notebookTitle={markdownNotebook.title}
+        themeStyle={markdownThemeStyle}
+        darkMode={libraryDarkMode}
+        onDarkModeChange={setLibraryDarkMode}
+        onBack={openNotebookList}
+        onSignOut={signOut}
+        onDeleteAccount={()=>{setDeleteEmail("");setShowDeleteAccount(true);}}
+      />
+      {deleteAccountModal}
+    </>;
+  }
   if(!activeNotebookId)return <>
     <NotebookLibrary
       email={user.email??""}
