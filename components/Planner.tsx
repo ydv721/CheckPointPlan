@@ -1368,9 +1368,9 @@ export default function Planner() {
               </div>
               <div className="date-main">
                 <div className="date-main-row">
-                  <button type="button" className="date-step" aria-label="이전 날짜" title="이전 날짜" onClick={()=>shiftDate(-1)}><ChevronLeft size={15}/></button>
+                  <button type="button" className="month-nav-button daily-date-nav-button" aria-label="이전 날짜" title="이전 날짜" onClick={()=>shiftDate(-1)}><ChevronLeft size={15}/></button>
                   <span className="date-value">{date.replace(/-/g," ")}</span>
-                  <button type="button" className="date-step" aria-label="다음 날짜" title="다음 날짜" onClick={()=>shiftDate(1)}><ChevronRight size={15}/></button>
+                  <button type="button" className="month-nav-button daily-date-nav-button" aria-label="다음 날짜" title="다음 날짜" onClick={()=>shiftDate(1)}><ChevronRight size={15}/></button>
                   <label className="date-picker-trigger" title="달력에서 날짜 선택">
                     <CalendarDays size={16}/>
                     <input aria-label="날짜 선택" type="date" value={date} onChange={e=>{void navigateDate(e.target.value);}}/>
