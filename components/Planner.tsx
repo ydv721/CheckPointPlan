@@ -972,7 +972,7 @@ export default function Planner() {
   },[client,user,activeSettingsNotebookId,settingsHydrated,theme,customColor,cover]);
 
   useEffect(()=>{
-    if(!client||!user||!activeNotebookId)return;
+    if(!client||!user||!activeSettingsNotebookId)return;
     let active=true;
     const paths=[...cover.items.filter(item=>item.kind==="photo" && !photoUrls[item.value]).map(i=>i.value),...(cover.backgroundImage&&!photoUrls[cover.backgroundImage]?[cover.backgroundImage]:[])];
     const unique=[...new Set(paths)];
@@ -982,7 +982,7 @@ export default function Planner() {
       return {path,url:error?null:data.signedUrl};
     })).then(res=>{if(active)setPhotoUrls(old=>({...old,...Object.fromEntries(res.filter(r=>r.url).map(r=>[r.path,r.url!]))}));});
     return()=>{active=false;};
-  },[client,user,activeNotebookId,cover.items,cover.backgroundImage,photoUrls]);
+  },[client,user,activeSettingsNotebookId,cover.items,cover.backgroundImage,photoUrls]);
 
   async function handleUpload(file:File,asBackground=false) {
     if(!client||!user)return;
@@ -1180,6 +1180,8 @@ export default function Planner() {
       setPlannerPage("day");
       setDate(today());
     }else if(type==="free-notes"){
+      setView("planner");
+      setActiveNotebookId(null);
       setActiveMarkdownNotebookId(data.id);
     }else{
       setNotebookTypeNotice(title+"은 책장에 추가했어. 전용 편집 화면은 다음 단계에서 연결할게.");
@@ -1190,6 +1192,8 @@ export default function Planner() {
   async function openNotebook(notebook: NotebookRecord) {
     if(notebook.notebook_type==="free-notes"){
       setNotebookTypeNotice("");
+      setView("planner");
+      setActiveNotebookId(null);
       setActiveMarkdownNotebookId(notebook.id);
       return;
     }
@@ -1210,6 +1214,39 @@ export default function Planner() {
   if(activeMarkdownNotebookId && client){
     const markdownNotebook=notebooks.find(notebook=>notebook.id===activeMarkdownNotebookId);
     if(!markdownNotebook||!settingsHydrated)return <div className="boot-screen"><AppIcon/><h1>CHECKPOINT</h1><p>다이어리 설정을 불러오는 중입니다...</p></div>;
+
+    if(view==="cover")return <>
+      <div className="app-shell cover-view" style={vars}>
+        <AppSidebar
+          key={activeMarkdownNotebookId}
+          email={user.email??""}
+          currentView="markdown-cover"
+          themeStyle={vars}
+          onOpenNotebookList={()=>{void openNotebookList();}}
+          onViewChange={setView}
+          theme={theme}
+          customColor={customColor}
+          onThemeChange={setTheme}
+          onCustomColorChange={setCustomColor}
+          onSignOut={()=>{void signOut();}}
+          onDeleteAccount={()=>{setDeleteEmail("");setShowDeleteAccount(true);}}
+        />
+        <header className="site-header"><div className="header-inner">
+          <button className="brand" onClick={()=>setView("planner")}><span className="brand-lockup"><AppIcon/><span>CHECKPOINT</span></span><small>YOUR PACE, YOUR CHECKPOINT</small></button>
+          <div className="header-actions" />
+        </div></header>
+        <main className="main-area">
+          {alert&&<div className="message-banner" role="alert"><CircleHelp size={17}/><span>{alert}</span><button aria-label="알림 닫기" onClick={()=>setAlert("")}><X size={15}/></button></div>}
+          <div className="workspace-shell">
+            <div className="workspace-canvas">
+              <CoverPage cover={cover} setCover={setCover} theme={theme} handleUpload={handleUpload} photoUrls={photoUrls}/>
+            </div>
+          </div>
+        </main>
+      </div>
+      {deleteAccountModal}
+    </>;
+
     return <>
       <MarkdownDiary
         key={activeMarkdownNotebookId}
@@ -1224,6 +1261,7 @@ export default function Planner() {
         onThemeChange={setTheme}
         onCustomColorChange={setCustomColor}
         onBack={openNotebookList}
+        onOpenCover={()=>setView("cover")}
         onSignOut={signOut}
         onDeleteAccount={()=>{setDeleteEmail("");setShowDeleteAccount(true);}}
       />
