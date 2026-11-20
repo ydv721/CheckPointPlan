@@ -8652,7 +8652,10 @@ html,body{width:100%;overflow-x:clip}
 }
 .markdown-preview-content h1,
 .markdown-preview-content h2,
-.markdown-preview-content h3{
+.markdown-preview-content h3,
+.markdown-preview-content h4,
+.markdown-preview-content h5,
+.markdown-preview-content h6{
   margin:1.45em 0 .65em;
   color:var(--ink);
   font-weight:900;
@@ -8662,9 +8665,15 @@ html,body{width:100%;overflow-x:clip}
 .markdown-preview-content h1{font-size:27px}
 .markdown-preview-content h2{font-size:21px}
 .markdown-preview-content h3{font-size:17px}
+.markdown-preview-content h4{font-size:15px}
+.markdown-preview-content h5{font-size:14px}
+.markdown-preview-content h6{font-size:13px}
 .markdown-preview-content h1:first-child,
 .markdown-preview-content h2:first-child,
-.markdown-preview-content h3:first-child{margin-top:0}
+.markdown-preview-content h3:first-child,
+.markdown-preview-content h4:first-child,
+.markdown-preview-content h5:first-child,
+.markdown-preview-content h6:first-child{margin-top:0}
 .markdown-preview-content p{margin:0 0 1em}
 .markdown-preview-content ul,
 .markdown-preview-content ol{margin:0 0 1.1em;padding-left:1.7em}
@@ -8852,3 +8861,10 @@ html,body{width:100%;overflow-x:clip}
   .markdown-note-editor{min-height:600px}
   .markdown-editor-header{padding:0 0 12px}
 }
+.markdown-preview-content a{
+  color:var(--accent);
+  text-decoration:underline;
+  text-underline-offset:3px;
+  overflow-wrap:anywhere;
+}
+.markdown-preview-content a:hover{opacity:.72}
