@@ -48,6 +48,7 @@ type Props = {
   onThemeChange: (theme: ThemeName) => void;
   onCustomColorChange: (color: string) => void;
   onBack: () => Promise<void>;
+  onOpenCover: () => void;
   onSignOut: () => Promise<void>;
   onDeleteAccount: () => void;
 };
@@ -86,6 +87,7 @@ export default function MarkdownDiary({
   onThemeChange,
   onCustomColorChange,
   onBack,
+  onOpenCover,
   onSignOut,
   onDeleteAccount
 }: Props) {
@@ -407,6 +409,9 @@ export default function MarkdownDiary({
         customColor={customColor}
         onThemeChange={onThemeChange}
         onCustomColorChange={onCustomColorChange}
+        onViewChange={nextView => {
+          if (nextView === "cover") void leaveDiary(async () => { onOpenCover(); });
+        }}
         onOpenNotebookList={() => { void leaveDiary(onBack); }}
         onSignOut={() => { void leaveDiary(onSignOut); }}
         onDeleteAccount={onDeleteAccount}
