@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { Bold, Code2, Heading1, Italic, Link2, List, ListOrdered, Minus, Quote, Strikethrough, Check } from "lucide-react";
+import { Bold, Code2, FilePlus2, Heading1, Italic, Link2, List, ListOrdered, Minus, Quote, Strikethrough, Check } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import type { ThemeName } from "@/lib/types";
 
@@ -458,31 +458,48 @@ export default function MarkdownDiary({
                 <div className="paper-section key-section markdown-free-note-section">
                   <div className="section-heading"><span>FREE NOTE</span></div>
                   <div className="free-note-paper">
-                    <div className="markdown-toolbar" role="toolbar" aria-label="Markdown 도구 모음">
-                      {MARKDOWN_TOOLBAR.map(({ action, label, icon: Icon }) => (
+                    {loading ? (
+                      <div className="markdown-empty-state" role="status">노트를 불러오는 중...</div>
+                    ) : activeNote ? (
+                      <>
+                        <div className="markdown-toolbar" role="toolbar" aria-label="Markdown 도구 모음">
+                          {MARKDOWN_TOOLBAR.map(({ action, label, icon: Icon }) => (
+                            <button
+                              key={action}
+                              type="button"
+                              className="markdown-toolbar-button"
+                              aria-label={label}
+                              title={label}
+                              onMouseDown={event => event.preventDefault()}
+                              onClick={() => applyMarkdown(action)}
+                            >
+                              <Icon size={16} strokeWidth={2}/>
+                            </button>
+                          ))}
+                        </div>
+                        <textarea
+                          ref={leftEditorRef}
+                          className="free-note-input"
+                          aria-label="자유 노트 내용"
+                          value={pageContents.left}
+                          onChange={event => updatePage("left", event.target.value)}
+                          spellCheck
+                        />
+                      </>
+                    ) : (
+                      <div className="markdown-empty-state">
+                        <p>아직 작성한 노트가 없습니다.</p>
                         <button
-                          key={action}
                           type="button"
-                          className="markdown-toolbar-button"
-                          aria-label={label}
-                          title={label}
-                          disabled={!activeNote || loading}
-                          onMouseDown={event => event.preventDefault()}
-                          onClick={() => applyMarkdown(action)}
+                          className="markdown-empty-create-button"
+                          disabled={creating}
+                          onClick={() => { void createNote(); }}
                         >
-                          <Icon size={16} strokeWidth={2}/>
+                          <FilePlus2 size={16}/>
+                          <span>{creating ? "노트 만드는 중..." : "새 노트 만들기"}</span>
                         </button>
-                      ))}
-                    </div>
-                    <textarea
-                      ref={leftEditorRef}
-                      className="free-note-input"
-                      aria-label="자유 노트 내용"
-                      value={pageContents.left}
-                      disabled={!activeNote || loading}
-                      onChange={event => updatePage("left", event.target.value)}
-                      spellCheck
-                    />
+                      </div>
+                    )}
                   </div>
                 </div>
               </section>
