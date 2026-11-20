@@ -10,7 +10,7 @@ const NOTEBOOK_TYPES: { type: NotebookType; title: string; description: string }
   { type: "study-notes", title: "필기 다이어리", description: "공부 · 강의 · 지식 정리" },
   { type: "diary", title: "일기", description: "하루의 기록 · 일상" },
   { type: "checklist", title: "체크리스트", description: "할 일 · 목표 · 점검" },
-  { type: "free-notes", title: "프리 다이어리", description: "Markdown · 자유로운 글쓰기 · 메모" }
+  { type: "free-notes", title: "프리 다이어리", description: "Markdown · 자유로운 글쓰기" }
 ];
 
 type NotebookTypeSelectionProps = {
