@@ -575,6 +575,7 @@ export default function Planner() {
   const vars={"--bg":palette.bg,"--paper":palette.paper,"--ink":palette.ink,"--accent":palette.accent,"--soft":palette.soft,"--line":palette.line,"--cover":palette.cover,"--cover-ink":palette.coverInk} as CSSProperties;
   const libraryPalette=libraryDarkMode?themes.black:themes.blue;
   const libraryThemeStyle={"--bg":libraryPalette.bg,"--paper":libraryPalette.paper,"--ink":libraryPalette.ink,"--accent":libraryPalette.accent,"--soft":libraryPalette.soft,"--line":libraryPalette.line,"--cover":libraryPalette.cover,"--cover-ink":libraryPalette.coverInk} as CSSProperties;
+  const activeSettingsNotebookId=activeNotebookId??activeMarkdownNotebookId;
 
   useEffect(()=>{
     try {
@@ -803,7 +804,7 @@ export default function Planner() {
   },[client,user,libraryRefresh]);
 
   useEffect(()=>{
-    if(!user||activeNotebookId)return;
+    if(!user||activeNotebookId||activeMarkdownNotebookId)return;
     const metadata=user.user_metadata??{};
     const savedTheme=metadata.checkpoint_default_theme;
     const nextTheme:ThemeName=typeof savedTheme==="string"&&Object.keys(themes).includes(savedTheme)
@@ -812,12 +813,12 @@ export default function Planner() {
       ?metadata.checkpoint_default_custom_color:"#8b9ec4";
     setTheme(nextTheme);
     setCustomColor(sanitizeHex(savedColor));
-  },[user,activeNotebookId]);
+  },[user,activeNotebookId,activeMarkdownNotebookId]);
 
   useEffect(()=>{
-    if(!client||!user||!activeNotebookId){setSettingsHydrated(false);return;}
+    if(!client||!user||!activeSettingsNotebookId){setSettingsHydrated(false);return;}
     let active=true;setSettingsHydrated(false);
-    void client.from("planner_settings").select("theme,custom_color,cover").eq("user_id",user.id).eq("notebook_id",activeNotebookId).maybeSingle()
+    void client.from("planner_settings").select("theme,custom_color,cover").eq("user_id",user.id).eq("notebook_id",activeSettingsNotebookId).maybeSingle()
       .then(({data,error})=>{
         if(!active)return;
         if(error)setAlert(`설정을 불러오지 못했습니다: ${error.message}`);
@@ -857,7 +858,7 @@ export default function Planner() {
         setSettingsHydrated(true);
       });
     return()=>{active=false;};
-  },[user,client,activeNotebookId]);
+  },[user,client,activeSettingsNotebookId]);
 
   useEffect(()=>{
     if(!client||!user||!activeNotebookId){setHydrated(false);return;}
@@ -925,44 +926,44 @@ export default function Planner() {
   },[entry,hydrated]);
 
   useEffect(()=>{
-    if(!client||!user||!activeNotebookId||!settingsHydrated)return;
+    if(!client||!user||!activeSettingsNotebookId||!settingsHydrated)return;
     const snapshot=JSON.stringify({theme,customColor,cover});if(snapshot===lastSettings.current)return;
     const t=setTimeout(async()=>{
       const updatedAt=new Date().toISOString();
-      const {error}=await client.from("planner_settings").upsert({user_id:user.id,notebook_id:activeNotebookId,theme,custom_color:customColor,cover,updated_at:updatedAt},{onConflict:"notebook_id"});
+      const {error}=await client.from("planner_settings").upsert({user_id:user.id,notebook_id:activeSettingsNotebookId,theme,custom_color:customColor,cover,updated_at:updatedAt},{onConflict:"notebook_id"});
       if(error)setAlert(`테마/표지 저장에 실패했습니다: ${error.message}`);
       else{
         lastSettings.current=snapshot;
-        await client.from("notebooks").update({updated_at:updatedAt}).eq("id",activeNotebookId).eq("user_id",user.id);
+        await client.from("notebooks").update({updated_at:updatedAt}).eq("id",activeSettingsNotebookId).eq("user_id",user.id);
       }
     },850);
     return()=>clearTimeout(t);
-  },[client,user,activeNotebookId,settingsHydrated,theme,customColor,cover]);
+  },[client,user,activeSettingsNotebookId,settingsHydrated,theme,customColor,cover]);
 
   const saveSettingsNow=useCallback(async()=>{
-    if(!client||!user||!activeNotebookId)return true;
+    if(!client||!user||!activeSettingsNotebookId)return true;
     if(!settingsHydrated){
-      setAlert("표지 설정을 불러오는 중입니다. 잠시 후 다시 시도해 주세요.");
+      setAlert("다이어리 설정을 불러오는 중입니다. 잠시 후 다시 시도해 주세요.");
       return false;
     }
     const snapshot=JSON.stringify({theme,customColor,cover});
     if(snapshot===lastSettings.current)return true;
     const updatedAt=new Date().toISOString();
     const {error}=await client.from("planner_settings").upsert({
-      user_id:user.id,notebook_id:activeNotebookId,theme,custom_color:customColor,cover,updated_at:updatedAt
+      user_id:user.id,notebook_id:activeSettingsNotebookId,theme,custom_color:customColor,cover,updated_at:updatedAt
     },{onConflict:"notebook_id"});
     if(error){
-      setAlert("테마/표지 저장에 실패했습니다: "+error.message);
+      setAlert("다이어리 설정 저장에 실패했습니다: "+error.message);
       return false;
     }
     lastSettings.current=snapshot;
     await client.from("notebooks").update({updated_at:updatedAt})
-      .eq("id",activeNotebookId).eq("user_id",user.id);
-    setNotebooks(current=>current.map(notebook=>notebook.id===activeNotebookId
+      .eq("id",activeSettingsNotebookId).eq("user_id",user.id);
+    setNotebooks(current=>current.map(notebook=>notebook.id===activeSettingsNotebookId
       ? {...notebook,theme,custom_color:customColor,cover,updated_at:updatedAt}
       : notebook));
     return true;
-  },[client,user,activeNotebookId,settingsHydrated,theme,customColor,cover]);
+  },[client,user,activeSettingsNotebookId,settingsHydrated,theme,customColor,cover]);
 
   useEffect(()=>{
     if(!client||!user||!activeNotebookId)return;
@@ -1202,7 +1203,7 @@ export default function Planner() {
   if(!user)return <AuthScreen onUser={beginAuthTransition}/>;
   if(activeMarkdownNotebookId && client){
     const markdownNotebook=notebooks.find(notebook=>notebook.id===activeMarkdownNotebookId);
-    if(!markdownNotebook)return <div className="boot-screen"><AppIcon/><h1>CHECKPOINT</h1><p>다이어리를 불러오는 중입니다...</p></div>;
+    if(!markdownNotebook||!settingsHydrated)return <div className="boot-screen"><AppIcon/><h1>CHECKPOINT</h1><p>다이어리 설정을 불러오는 중입니다...</p></div>;
     return <>
       <MarkdownDiary
         key={activeMarkdownNotebookId}
