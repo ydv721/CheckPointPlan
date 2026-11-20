@@ -75,6 +75,241 @@ function encodeNotePages(pages: NotePages) {
   return PAGE_CONTENT_PREFIX + JSON.stringify(pages);
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function safeMarkdownHref(value: string) {
+  const href = value.trim();
+  if (/^(https?:\/\/|mailto:)/i.test(href) || href.startsWith("/") || href.startsWith("#")) {
+    return href;
+  }
+  return "";
+}
+
+function renderInlineMarkdown(value: string) {
+  const tokens: string[] = [];
+  const stash = (html: string) => {
+    tokens.push(html);
+    return "\u0000" + (tokens.length - 1) + "\u0000";
+  };
+
+  let html = escapeHtml(value);
+  html = html.replace(/\x60([^\x60]+)\x60/g, (_match, code: string) =>
+    stash("<code>" + code + "</code>")
+  );
+  html = html.replace(/\*\*\*(.+?)\*\*\*/g, (_match, text: string) =>
+    stash("<strong><em>" + text + "</em></strong>")
+  );
+  html = html.replace(/___(.+?)___/g, (_match, text: string) =>
+    stash("<strong><em>" + text + "</em></strong>")
+  );
+  html = html.replace(/\*\*(.+?)\*\*/g, (_match, text: string) =>
+    stash("<strong>" + text + "</strong>")
+  );
+  html = html.replace(/__(.+?)__/g, (_match, text: string) =>
+    stash("<strong>" + text + "</strong>")
+  );
+  html = html.replace(/~~(.+?)~~/g, (_match, text: string) =>
+    stash("<del>" + text + "</del>")
+  );
+  html = html.replace(/\*([^*\n]+)\*/g, (_match, text: string) =>
+    stash("<em>" + text + "</em>")
+  );
+  html = html.replace(/_([^_\n]+)_/g, (_match, text: string) =>
+    stash("<em>" + text + "</em>")
+  );
+  html = html.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_match, label: string, rawHref: string) => {
+    const href = safeMarkdownHref(rawHref.replace(/&amp;/g, "&"));
+    return href
+      ? stash('<a href="' + escapeHtml(href) + '" target="_blank" rel="noopener noreferrer">' + label + "</a>")
+      : label;
+  });
+
+  return html.replace(/\u0000(\d+)\u0000/g, (_match, index: string) => tokens[Number(index)] ?? "");
+}
+
+function markdownToHtml(markdown: string) {
+  const lines = markdown.replace(/\r\n?/g, "\n").split("\n");
+  const blocks: string[] = [];
+  let index = 0;
+
+  const isBlockStart = (line: string) =>
+    /^\s*\x60{3}/.test(line) ||
+    /^\s*~~~/.test(line) ||
+    /^#{1,3}\s+/.test(line) ||
+    /^\s*(?:---+|\*\*\*+|___+)\s*$/.test(line) ||
+    /^\s*>/.test(line) ||
+    /^\s*(?:[-+*]|\d+[.)])\s+/.test(line);
+
+  while (index < lines.length) {
+    const line = lines[index];
+    if (!line.trim()) {
+      index += 1;
+      continue;
+    }
+
+    const codeFence = line.match(/^\s*(\x60{3}|~~~)\s*(.*)$/);
+    if (codeFence) {
+      const fence = codeFence[1];
+      const codeLines: string[] = [];
+      index += 1;
+      while (index < lines.length && !lines[index].trim().startsWith(fence)) {
+        codeLines.push(lines[index]);
+        index += 1;
+      }
+      if (index < lines.length) index += 1;
+      blocks.push("<pre><code>" + escapeHtml(codeLines.join("\n")) + "</code></pre>");
+      continue;
+    }
+
+    const heading = line.match(/^(#{1,3})\s+(.*)$/);
+    if (heading) {
+      const level = heading[1].length;
+      blocks.push("<h" + level + ">" + renderInlineMarkdown(heading[2]) + "</h" + level + ">");
+      index += 1;
+      continue;
+    }
+
+    if (/^\s*(?:---+|\*\*\*+|___+)\s*$/.test(line)) {
+      blocks.push("<hr>");
+      index += 1;
+      continue;
+    }
+
+    if (/^\s*>/.test(line)) {
+      const quoteLines: string[] = [];
+      while (index < lines.length && /^\s*>/.test(lines[index])) {
+        quoteLines.push(lines[index].replace(/^\s*>\s?/, ""));
+        index += 1;
+      }
+      blocks.push("<blockquote><p>" + renderInlineMarkdown(quoteLines.join("\n")).replace(/\n/g, "<br>") + "</p></blockquote>");
+      continue;
+    }
+
+    const listMatch = line.match(/^\s*(?:(\d+)[.)]|[-+*])\s+(.*)$/);
+    if (listMatch) {
+      const ordered = Boolean(listMatch[1]);
+      const items: string[] = [];
+      while (index < lines.length) {
+        const item = lines[index].match(/^\s*(?:(\d+)[.)]|[-+*])\s+(.*)$/);
+        if (!item || Boolean(item[1]) !== ordered) break;
+        items.push("<li>" + renderInlineMarkdown(item[2]) + "</li>");
+        index += 1;
+      }
+      const tag = ordered ? "ol" : "ul";
+      blocks.push("<" + tag + ">" + items.join("") + "</" + tag + ">");
+      continue;
+    }
+
+    const paragraph: string[] = [];
+    while (index < lines.length && lines[index].trim() && (paragraph.length === 0 || !isBlockStart(lines[index]))) {
+      paragraph.push(lines[index]);
+      index += 1;
+    }
+    blocks.push("<p>" + renderInlineMarkdown(paragraph.join("\n")).replace(/\n/g, "<br>") + "</p>");
+  }
+
+  return blocks.join("");
+}
+
+function htmlToMarkdown(html: string) {
+  const parsed = new DOMParser().parseFromString("<div>" + html + "</div>", "text/html");
+  const root = parsed.body.firstElementChild;
+  if (!root) return "";
+
+  const inline = (node: Node): string => {
+    if (node.nodeType === 3) return node.textContent ?? "";
+    if (node.nodeType !== 1) return "";
+
+    const element = node as HTMLElement;
+    const tag = element.tagName;
+    const children = Array.from(element.childNodes).map(inline).join("");
+
+    if (tag === "BR") return "\n";
+    if (tag === "B" || tag === "STRONG") return "**" + children + "**";
+    if (tag === "I" || tag === "EM") return "*" + children + "*";
+    if (tag === "S" || tag === "STRIKE" || tag === "DEL") return "~~" + children + "~~";
+    if (tag === "CODE") return String.fromCharCode(96) + children + String.fromCharCode(96);
+    if (tag === "A") {
+      const href = safeMarkdownHref(element.getAttribute("href") ?? "");
+      return href ? "[" + children + "](" + href + ")" : children;
+    }
+    return children;
+  };
+
+  const serializeList = (element: HTMLElement, depth = 0): string => {
+    const ordered = element.tagName === "OL";
+    let number = 0;
+    const rows = Array.from(element.children)
+      .filter(child => child.tagName === "LI")
+      .map(child => {
+        number += 1;
+        const item = child as HTMLElement;
+        const text = Array.from(item.childNodes)
+          .filter(node => !(node.nodeType === 1 && ["UL", "OL"].includes((node as HTMLElement).tagName)))
+          .map(inline)
+          .join("")
+          .trim();
+        const nested = Array.from(item.children)
+          .filter(nestedList => nestedList.tagName === "UL" || nestedList.tagName === "OL")
+          .map(nestedList => serializeList(nestedList as HTMLElement, depth + 1))
+          .join("")
+          .trimEnd();
+        const prefix = ordered ? (number + ". ") : "- ";
+        return "  ".repeat(depth) + prefix + text + (nested ? "\n" + nested : "");
+      });
+    return rows.join("\n") + "\n\n";
+  };
+
+  const block = (node: Node): string => {
+    if (node.nodeType === 3) return node.textContent ?? "";
+    if (node.nodeType !== 1) return "";
+
+    const element = node as HTMLElement;
+    const tag = element.tagName;
+    const children = Array.from(element.childNodes);
+
+    if (tag === "H1" || tag === "H2" || tag === "H3") {
+      const level = Number(tag.slice(1));
+      return "#".repeat(level) + " " + children.map(inline).join("") + "\n\n";
+    }
+    if (tag === "P") return children.map(inline).join("") + "\n\n";
+    if (tag === "UL" || tag === "OL") return serializeList(element);
+    if (tag === "BLOCKQUOTE") {
+      const content = children.map(block).join("").trimEnd();
+      return content.split("\n").map(line => line ? "> " + line : ">").join("\n") + "\n\n";
+    }
+    if (tag === "PRE") {
+      const fence = String.fromCharCode(96).repeat(3);
+      return fence + "\n" + (element.textContent ?? "").replace(/\n+$/, "") + "\n" + fence + "\n\n";
+    }
+    if (tag === "HR") return "---\n\n";
+    if (tag === "DIV") {
+      const hasBlockChild = children.some(child =>
+        child.nodeType === 1 &&
+        ["DIV", "P", "UL", "OL", "BLOCKQUOTE", "PRE", "H1", "H2", "H3", "HR"].includes((child as HTMLElement).tagName)
+      );
+      const content = hasBlockChild ? children.map(block).join("") : children.map(inline).join("");
+      return content + (content.endsWith("\n") ? "" : "\n");
+    }
+    return inline(element);
+  };
+
+  return Array.from(root.childNodes)
+    .map(block)
+    .join("")
+    .replace(/\u00a0/g, " ")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 
 export default function MarkdownDiary({
   client,
@@ -97,7 +332,7 @@ export default function MarkdownDiary({
   const [error, setError] = useState("");
   const [, setSaveState] = useState<"saved" | "dirty" | "saving" | "error">("saved");
   const [shareFeedback, setShareFeedback] = useState("");
-  const leftEditorRef = useRef<HTMLTextAreaElement>(null);
+  const leftEditorRef = useRef<HTMLDivElement>(null);
   const currentNoteRef = useRef<MarkdownNote | null>(null);
   const savedSnapshotsRef = useRef<Record<string, string>>({});
   const initialNotePromiseRef = useRef<{ key: string; promise: PromiseLike<MarkdownNote> } | null>(null);
@@ -112,6 +347,15 @@ export default function MarkdownDiary({
     () => decodeNotePages(activeNote?.content ?? ""),
     [activeNote?.content]
   );
+
+  useEffect(() => {
+    const editor = leftEditorRef.current;
+    if (!editor || !activeNote || loading) return;
+    if (editor.dataset.noteId !== activeNote.id) {
+      editor.innerHTML = markdownToHtml(pageContents.left);
+      editor.dataset.noteId = activeNote.id;
+    }
+  }, [activeNote, loading, pageContents.left]);
 
   useEffect(() => {
     currentNoteRef.current = activeNote;
@@ -280,73 +524,39 @@ export default function MarkdownDiary({
     const editor = leftEditorRef.current;
     if (!editor || !activeNote || loading) return;
 
-    const source = editor.value;
-    const start = editor.selectionStart;
-    const end = editor.selectionEnd;
-    const selected = source.slice(start, end);
-    let replaceStart = start;
-    let replaceEnd = end;
-    let replacement = "";
-    let selectionStart = start;
-    let selectionEnd = start;
-
-    const wrap = (before: string, after: string, placeholder: string) => {
-      const inner = selected || placeholder;
-      replacement = before + inner + after;
-      selectionStart = start + before.length;
-      selectionEnd = selectionStart + inner.length;
-    };
+    editor.focus();
+    const selected = window.getSelection()?.toString() ?? "";
 
     if (action === "bold") {
-      wrap("**", "**", "굵은 텍스트");
+      document.execCommand("bold");
     } else if (action === "italic") {
-      wrap("*", "*", "기울임 텍스트");
+      document.execCommand("italic");
     } else if (action === "strike") {
-      wrap("~~", "~~", "취소선 텍스트");
+      document.execCommand("strikeThrough");
+    } else if (action === "heading") {
+      document.execCommand("formatBlock", false, "H1");
+    } else if (action === "bullet") {
+      document.execCommand("insertUnorderedList");
+    } else if (action === "ordered") {
+      document.execCommand("insertOrderedList");
+    } else if (action === "quote") {
+      document.execCommand("formatBlock", false, "BLOCKQUOTE");
     } else if (action === "code") {
-      wrap("`", "`", "코드");
+      const code = selected || "코드";
+      document.execCommand("insertHTML", false, "<code>" + escapeHtml(code) + "</code>");
     } else if (action === "link") {
-      if (selected) {
-        replacement = "[" + selected + "](https://주소)";
-        selectionStart = start + selected.length + 3;
-        selectionEnd = selectionStart + "https://주소".length;
-      } else {
-        replacement = "[링크 텍스트](https://주소)";
-        selectionStart = start + 1;
-        selectionEnd = selectionStart + "링크 텍스트".length;
-      }
+      const label = selected || "링크 텍스트";
+      document.execCommand(
+        "insertHTML",
+        false,
+        '<a href="https://주소" target="_blank" rel="noopener noreferrer">' + escapeHtml(label) + "</a>"
+      );
     } else if (action === "divider") {
-      replacement = (start > 0 && source[start - 1] !== "\n" ? "\n\n" : "") + "---\n\n";
-      selectionStart = start + replacement.length;
-      selectionEnd = selectionStart;
-    } else {
-      const lineStart = source.lastIndexOf("\n", Math.max(0, start - 1)) + 1;
-      const currentLineEndIndex = source.indexOf("\n", start);
-      const currentLineEnd = currentLineEndIndex < 0 ? source.length : currentLineEndIndex;
-      replaceStart = selected ? lineStart : lineStart;
-      replaceEnd = selected
-        ? (source.indexOf("\n", end) < 0 ? source.length : source.indexOf("\n", end))
-        : currentLineEnd;
-
-      const block = source.slice(replaceStart, replaceEnd);
-      const lines = block.split("\n");
-      const placeholder = action === "heading" ? "제목" : action === "quote" ? "인용문" : "목록 항목";
-      const prefix = action === "heading" ? "# " : action === "quote" ? "> " : action === "bullet" ? "- " : "";
-      replacement = lines.map((line, index) => {
-        const value = line || (!selected && index === 0 ? placeholder : "");
-        return action === "ordered" ? (index + 1) + ". " + value : prefix + value;
-      }).join("\n");
-      selectionStart = replaceStart;
-      selectionEnd = replaceStart + replacement.length;
+      document.execCommand("insertHorizontalRule");
     }
 
-    const nextValue = source.slice(0, replaceStart) + replacement + source.slice(replaceEnd);
-    updatePage("left", nextValue);
-
-    requestAnimationFrame(() => {
-      editor.focus();
-      editor.setSelectionRange(selectionStart, selectionEnd);
-    });
+    updatePage("left", htmlToMarkdown(editor.innerHTML));
+    editor.focus();
   }
 
   function getMarkdownContent(note: MarkdownNote) {
@@ -476,12 +686,68 @@ export default function MarkdownDiary({
                             </button>
                           ))}
                         </div>
-                        <textarea
+                        <div
                           ref={leftEditorRef}
-                          className="free-note-input"
+                          className="free-note-input markdown-editor-grid"
+                          role="textbox"
                           aria-label="자유 노트 내용"
-                          value={pageContents.left}
-                          onChange={event => updatePage("left", event.target.value)}
+                          aria-multiline="true"
+                          contentEditable
+                          suppressContentEditableWarning
+                          data-placeholder="여기에 내용을 자유롭게 작성해 보세요."
+                          onInput={() => {
+                            const editor = leftEditorRef.current;
+                            if (editor) updatePage("left", htmlToMarkdown(editor.innerHTML));
+                          }}
+                          onPaste={event => {
+                            event.preventDefault();
+                            const pasted = event.clipboardData.getData("text/plain");
+                            if (pasted) document.execCommand("insertHTML", false, markdownToHtml(pasted));
+                          }}
+                          onDrop={event => {
+                            event.preventDefault();
+                            const dropped = event.dataTransfer.getData("text/plain");
+                            if (dropped) document.execCommand("insertHTML", false, markdownToHtml(dropped));
+                          }}
+                          onKeyDown={event => {
+                            if (event.key !== " ") return;
+                            const editor = leftEditorRef.current;
+                            const selection = window.getSelection();
+                            if (!editor || !selection?.rangeCount || !selection.isCollapsed) return;
+                            const range = selection.getRangeAt(0);
+                            if (!editor.contains(range.startContainer)) return;
+
+                            let block = range.startContainer.nodeType === 1
+                              ? range.startContainer as HTMLElement
+                              : range.startContainer.parentElement;
+                            while (block && block !== editor && !["P", "DIV", "H1", "H2", "H3", "LI"].includes(block.tagName)) {
+                              block = block.parentElement;
+                            }
+                            if (!block || block === editor) return;
+
+                            const beforeCaret = range.cloneRange();
+                            beforeCaret.selectNodeContents(block);
+                            beforeCaret.setEnd(range.startContainer, range.startOffset);
+                            const marker = beforeCaret.toString();
+
+                            if (/^#{1,3}$/.test(marker)) {
+                              event.preventDefault();
+                              document.execCommand("delete");
+                              document.execCommand("formatBlock", false, "H" + marker.length);
+                            } else if (/^[-+*]$/.test(marker)) {
+                              event.preventDefault();
+                              document.execCommand("delete");
+                              document.execCommand("insertUnorderedList");
+                            } else if (/^\d+[.)]$/.test(marker)) {
+                              event.preventDefault();
+                              document.execCommand("delete");
+                              document.execCommand("insertOrderedList");
+                            } else if (marker === ">") {
+                              event.preventDefault();
+                              document.execCommand("delete");
+                              document.execCommand("formatBlock", false, "BLOCKQUOTE");
+                            }
+                          }}
                           spellCheck
                         />
                       </>
