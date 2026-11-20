@@ -733,18 +733,26 @@ export default function MarkdownDiary({
 
                             if (/^#{1,3}$/.test(marker)) {
                               event.preventDefault();
+                              selection.removeAllRanges();
+                              selection.addRange(beforeCaret);
                               document.execCommand("delete");
                               document.execCommand("formatBlock", false, "H" + marker.length);
                             } else if (/^[-+*]$/.test(marker)) {
                               event.preventDefault();
+                              selection.removeAllRanges();
+                              selection.addRange(beforeCaret);
                               document.execCommand("delete");
                               document.execCommand("insertUnorderedList");
                             } else if (/^\d+[.)]$/.test(marker)) {
                               event.preventDefault();
+                              selection.removeAllRanges();
+                              selection.addRange(beforeCaret);
                               document.execCommand("delete");
                               document.execCommand("insertOrderedList");
                             } else if (marker === ">") {
                               event.preventDefault();
+                              selection.removeAllRanges();
+                              selection.addRange(beforeCaret);
                               document.execCommand("delete");
                               document.execCommand("formatBlock", false, "BLOCKQUOTE");
                             }
