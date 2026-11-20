@@ -438,7 +438,24 @@ export default function MarkdownDiary({
             <div className="book-frame markdown-diary-single-page">
               <section className="paper-page markdown-note-page markdown-single-note-page" aria-label="자유 노트">
                 <div className="paper-section key-section markdown-free-note-section">
-                  <div className="section-heading"><span>FREE NOTE</span></div>
+                  <div className="section-heading markdown-note-heading">
+                    <span>FREE NOTE</span>
+                    <div className="markdown-note-heading-actions">
+                      {shareFeedback ? (
+                        <span className="markdown-share-feedback" aria-live="polite">{shareFeedback}</span>
+                      ) : null}
+                      <button
+                        type="button"
+                        className="markdown-share-top-button"
+                        aria-label="공유"
+                        title="공유"
+                        onMouseDown={event => event.preventDefault()}
+                        onClick={() => { void shareMarkdown(); }}
+                      >
+                        <Share2 size={16} strokeWidth={2}/>
+                      </button>
+                    </div>
+                  </div>
                   <div className="free-note-paper">
                     {loading ? (
                       <div className="markdown-empty-state" role="status">노트를 불러오는 중...</div>
@@ -458,20 +475,6 @@ export default function MarkdownDiary({
                               <Icon size={16} strokeWidth={2}/>
                             </button>
                           ))}
-                          <div className="markdown-toolbar-spacer" />
-                          {shareFeedback ? (
-                            <span className="markdown-share-feedback" aria-live="polite">{shareFeedback}</span>
-                          ) : null}
-                          <button
-                            type="button"
-                            className="markdown-toolbar-button markdown-toolbar-share"
-                            aria-label="공유"
-                            title="공유"
-                            onMouseDown={event => event.preventDefault()}
-                            onClick={() => { void shareMarkdown(); }}
-                          >
-                            <Share2 size={16} strokeWidth={2}/>
-                          </button>
                         </div>
                         <textarea
                           ref={leftEditorRef}
