@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
-  Bold, Code, Code2, Download, Eye, FilePlus2, Heading1, Heading2, Heading3, Link2,
+  Bold, Check, Code, Code2, Download, Eye, FilePlus2, Heading1, Heading2, Heading3, Link2,
   Italic, List, ListOrdered, MessageSquareQuote, Minus,
   Pencil, Search, Trash2
 } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import PlannerSpread from "@/components/PlannerSpread";
+import type { ThemeName } from "@/lib/types";
 
 type MarkdownNote = {
   id: string;
@@ -27,8 +28,10 @@ type Props = {
   notebookId: string;
   notebookTitle: string;
   themeStyle: CSSProperties;
-  darkMode: boolean;
-  onDarkModeChange: (enabled: boolean) => void;
+  theme: ThemeName;
+  customColor: string;
+  onThemeChange: (theme: ThemeName) => void;
+  onCustomColorChange: (color: string) => void;
   onBack: () => Promise<void>;
   onSignOut: () => Promise<void>;
   onDeleteAccount: () => void;
@@ -205,8 +208,10 @@ export default function MarkdownDiary({
   notebookId,
   notebookTitle,
   themeStyle,
-  darkMode,
-  onDarkModeChange,
+  theme,
+  customColor,
+  onThemeChange,
+  onCustomColorChange,
   onBack,
   onSignOut,
   onDeleteAccount
@@ -485,158 +490,225 @@ export default function MarkdownDiary({
         : "저장 완료";
 
   return (
-    <div className="markdown-diary-shell" style={themeStyle} data-theme={darkMode ? "dark" : "light"}>
-      <header className="markdown-diary-header">
-        <div className="markdown-diary-brand">
-          <span className="markdown-diary-brand-mark">C</span>
-          <span><strong>CHECKPOINT</strong><small>{notebookTitle}</small></span>
+    <div className="app-shell planner-view" style={themeStyle}>
+      <AppSidebar
+        email={email}
+        currentView="markdown"
+        themeStyle={themeStyle}
+        theme={theme}
+        customColor={customColor}
+        onThemeChange={onThemeChange}
+        onCustomColorChange={onCustomColorChange}
+        onOpenNotebookList={() => { void leaveDiary(onBack); }}
+        onSignOut={() => { void leaveDiary(onSignOut); }}
+        onDeleteAccount={onDeleteAccount}
+      />
+
+      <header className="site-header">
+        <div className="header-inner">
+          <button type="button" className="brand" onClick={() => { void leaveDiary(onBack); }}>
+            <span className="brand-lockup">
+              <span className="brand-icon"><Check size={18} strokeWidth={3}/></span>
+              <span>CHECKPOINT</span>
+            </span>
+            <small>YOUR PACE, YOUR CHECKPOINT</small>
+          </button>
+          <div className="header-actions"/>
         </div>
-        <AppSidebar
-          email={email}
-          currentView="markdown"
-          themeStyle={themeStyle}
-          darkMode={darkMode}
-          onDarkModeChange={onDarkModeChange}
-          onOpenNotebookList={() => { void leaveDiary(onBack); }}
-          onSignOut={() => { void leaveDiary(onSignOut); }}
-          onDeleteAccount={onDeleteAccount}
-        />
       </header>
 
-      <main className="markdown-diary-main">
-        <div className="markdown-diary-heading">
-          <div>
-            <span className="eyebrow">FREE DIARY · MARKDOWN</span>
-            <h1>{notebookTitle}</h1>
-            <p>생각과 지식을 자유롭게 기록하고 정리해 보세요.</p>
-          </div>
-          <div className="markdown-diary-save-status" role="status" aria-live="polite">
-            <span className={"markdown-save-dot markdown-save-" + saveState}/>
-            {saveLabel}
-          </div>
-        </div>
+      <main className="main-area">
+        {error ? <div className="message-banner markdown-diary-error" role="alert"><span>{error}</span></div> : null}
 
-        {error ? <div className="markdown-diary-error" role="alert">{error}</div> : null}
+        <div className="workspace-shell">
+          <div className="workspace-canvas">
+            <PlannerSpread className="book-frame day-book-frame">
+              <div className="book-spine" aria-hidden="true">
+                {Array.from({ length: 13 }, (_, index) => <span key={index}/>)}
+              </div>
 
-        <PlannerSpread className="book-frame markdown-book-frame">
-          <div className="book-spine" aria-hidden="true">{Array.from({ length: 13 }, (_, index) => <span key={index}/>)}</div>
-          <aside className="paper-page left-page markdown-note-library" aria-label="작성한 글 목록">
-            <div className="markdown-note-library-heading">
-              <div><strong>내 글</strong><span>{notes.length}개</span></div>
-              <button type="button" className="markdown-new-note-button" onClick={() => { void createNote(); }} disabled={creating}>
-                <FilePlus2 size={16}/><span>새 글</span>
-              </button>
-            </div>
-            <label className="markdown-note-search">
-              <Search size={16}/>
-              <input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="글 제목 또는 내용 검색"/>
-            </label>
-            <div className="markdown-note-list">
-              {loading ? (
-                <div className="markdown-note-list-empty">글을 불러오는 중입니다...</div>
-              ) : filteredNotes.length ? (
-                filteredNotes.map(note => {
-                  const snippet = note.content.replace(/\s+/g, " ").trim();
-                  return (
+              <aside className="paper-page left-page markdown-note-library" aria-label="작성한 글 목록">
+                <div className="page-date">
+                  <span>MY NOTES</span>
+                  <strong>{notes.length.toLocaleString("ko-KR")}개</strong>
+                </div>
+
+                <div className="paper-section markdown-note-library-section">
+                  <div className="section-heading">
+                    <span>NOTE LIST</span>
                     <button
                       type="button"
-                      key={note.id}
-                      className={"markdown-note-item" + (note.id === activeNoteId ? " is-active" : "")}
-                      onClick={() => { void selectNote(note.id); }}
+                      className="add-todo markdown-new-note-button"
+                      onClick={() => { void createNote(); }}
+                      disabled={creating}
                     >
-                      <strong>{note.title.trim() || "제목 없는 글"}</strong>
-                      <span>{snippet || "아직 작성한 내용이 없습니다."}</span>
-                      <time>{formatTime(note.updated_at)}</time>
+                      <FilePlus2 size={15}/>새 글
                     </button>
-                  );
-                })
-              ) : (
-                <div className="markdown-note-list-empty">
-                  {search.trim() ? "검색 결과가 없습니다." : "아직 작성한 글이 없습니다."}
-                </div>
-              )}
-            </div>
-          </aside>
+                  </div>
 
-          <section className="paper-page right-page markdown-note-editor" aria-label="Markdown 편집기">
-            {activeNote ? (
-              <>
-                <div className="markdown-editor-header">
-                  <input
-                    className="markdown-note-title"
-                    type="text"
-                    maxLength={120}
-                    value={activeNote.title}
-                    onChange={event => updateActiveNote({ title: event.target.value })}
-                    placeholder="글 제목"
-                    aria-label="글 제목"
-                  />
-                  <div className="markdown-editor-actions">
-                    <button type="button" onClick={exportMarkdown} title="Markdown 파일 내보내기">
-                      <Download size={16}/><span>.md 내보내기</span>
-                    </button>
-                    <button type="button" className="markdown-delete-note" onClick={() => { void deleteActiveNote(); }} title="현재 글 삭제">
-                      <Trash2 size={16}/><span>삭제</span>
-                    </button>
+                  <label className="small-info-block markdown-note-search">
+                    <Search size={15}/>
+                    <input
+                      type="search"
+                      value={search}
+                      onChange={event => setSearch(event.target.value)}
+                      placeholder="글 제목 또는 내용 검색"
+                      aria-label="글 검색"
+                    />
+                  </label>
+
+                  <div className="markdown-note-list">
+                    {loading ? (
+                      <div className="markdown-note-list-empty">글을 불러오는 중입니다...</div>
+                    ) : filteredNotes.length ? (
+                      filteredNotes.map(note => {
+                        const snippet = note.content.replace(/\s+/g, " ").trim();
+                        return (
+                          <button
+                            type="button"
+                            key={note.id}
+                            className={"markdown-note-item" + (note.id === activeNoteId ? " is-active" : "")}
+                            onClick={() => { void selectNote(note.id); }}
+                          >
+                            <strong>{note.title.trim() || "제목 없는 글"}</strong>
+                            <span>{snippet || "아직 작성한 내용이 없습니다."}</span>
+                            <time>{formatTime(note.updated_at)}</time>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="markdown-note-list-empty">
+                        {search.trim() ? "검색 결과가 없습니다." : "아직 작성한 글이 없습니다."}
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="markdown-editor-toolbar-row">
-                  {mode === "edit" ? (
-                    <div className="markdown-format-toolbar" aria-label="Markdown 서식 도구">
-                      <button type="button" title="제목 1" aria-label="제목 1" onClick={() => insertLinePrefix("# ")}><Heading1 size={17}/></button>
-                      <button type="button" title="제목 2" aria-label="제목 2" onClick={() => insertLinePrefix("## ")}><Heading2 size={17}/></button>
-                      <button type="button" title="제목 3" aria-label="제목 3" onClick={() => insertLinePrefix("### ")}><Heading3 size={17}/></button>
-                      <span className="markdown-toolbar-divider"/>
-                      <button type="button" title="굵게" aria-label="굵게" onClick={() => insertWrapped("**", "**", "굵은 글씨")}><Bold size={17}/></button>
-                      <button type="button" title="기울임" aria-label="기울임" onClick={() => insertWrapped("*", "*", "기울인 글씨")}><Italic size={17}/></button>
-                      <span className="markdown-toolbar-divider"/>
-                      <button type="button" title="글머리 기호 목록" aria-label="글머리 기호 목록" onClick={() => insertLinePrefix("- ")}><List size={17}/></button>
-                      <button type="button" title="번호 목록" aria-label="번호 목록" onClick={() => insertLinePrefix("1. ")}><ListOrdered size={17}/></button>
-                      <button type="button" title="인용" aria-label="인용" onClick={() => insertLinePrefix("> ")}><MessageSquareQuote size={17}/></button>
-                      <button type="button" title="인라인 코드" aria-label="인라인 코드" onClick={() => insertWrapped(String.fromCharCode(96), String.fromCharCode(96), "코드")}><Code size={17}/></button>
-                      <button type="button" title="코드 블록" aria-label="코드 블록" onClick={() => insertWrapped(String.fromCharCode(96).repeat(3) + "\n", "\n" + String.fromCharCode(96).repeat(3), "코드를 입력하세요.")}><Code2 size={17}/></button>
-                      <button type="button" title="링크" aria-label="링크" onClick={() => insertWrapped("[", "](https://example.com)", "링크 텍스트")}><Link2 size={17}/></button>
-                      <button type="button" title="구분선" aria-label="구분선" onClick={insertRule}><Minus size={17}/></button>
+                <div className="page-footer">
+                  <span>CHECKPOINT · MY NOTES</span>
+                  <span>✦</span>
+                </div>
+              </aside>
+
+              <section className="paper-page right-page markdown-note-editor" aria-label="Markdown 편집기">
+                <div className="page-date">
+                  <span>FREE DIARY · MARKDOWN</span>
+                  <div className="save-indicator">
+                    <span className={"indicator-dot markdown-save-dot markdown-save-" + saveState}/>
+                    {saveLabel}
+                  </div>
+                </div>
+
+                {activeNote ? (
+                  <>
+                    <div className="markdown-editor-header">
+                      <input
+                        className="markdown-note-title"
+                        type="text"
+                        maxLength={120}
+                        value={activeNote.title}
+                        onChange={event => updateActiveNote({ title: event.target.value })}
+                        placeholder="글 제목"
+                        aria-label="글 제목"
+                      />
+                      <div className="markdown-editor-actions">
+                        <button type="button" onClick={exportMarkdown} title="Markdown 파일 내보내기">
+                          <Download size={15}/><span>.md 내보내기</span>
+                        </button>
+                        <button type="button" className="markdown-delete-note" onClick={() => { void deleteActiveNote(); }} title="현재 글 삭제">
+                          <Trash2 size={15}/><span>삭제</span>
+                        </button>
+                      </div>
                     </div>
-                  ) : <span className="markdown-preview-mode-label"><Eye size={15}/> 미리보기</span>}
-                  <div className="markdown-mode-switch" role="tablist" aria-label="편집 및 미리보기">
-                    <button type="button" role="tab" aria-selected={mode === "edit"} className={mode === "edit" ? "is-active" : ""} onClick={() => setMode("edit")}><Pencil size={14}/>편집</button>
-                    <button type="button" role="tab" aria-selected={mode === "preview"} className={mode === "preview" ? "is-active" : ""} onClick={() => setMode("preview")}><Eye size={14}/>미리보기</button>
-                  </div>
-                </div>
 
-                {mode === "edit" ? (
-                  <textarea
-                    ref={editorRef}
-                    className="markdown-note-textarea"
-                    value={activeNote.content}
-                    onChange={event => updateActiveNote({ content: event.target.value })}
-                    placeholder="여기에 Markdown으로 자유롭게 기록해 보세요."
-                    aria-label="Markdown 본문"
-                    spellCheck
-                  />
+                    <div className="markdown-editor-toolbar-row">
+                      {mode === "edit" ? (
+                        <div className="markdown-format-toolbar" aria-label="Markdown 서식 도구">
+                          <button type="button" title="제목 1" aria-label="제목 1" onClick={() => insertLinePrefix("# ")}><Heading1 size={17}/></button>
+                          <button type="button" title="제목 2" aria-label="제목 2" onClick={() => insertLinePrefix("## ")}><Heading2 size={17}/></button>
+                          <button type="button" title="제목 3" aria-label="제목 3" onClick={() => insertLinePrefix("### ")}><Heading3 size={17}/></button>
+                          <span className="markdown-toolbar-divider"/>
+                          <button type="button" title="굵게" aria-label="굵게" onClick={() => insertWrapped("**", "**", "굵은 글씨")}><Bold size={17}/></button>
+                          <button type="button" title="기울임" aria-label="기울임" onClick={() => insertWrapped("*", "*", "기울인 글씨")}><Italic size={17}/></button>
+                          <span className="markdown-toolbar-divider"/>
+                          <button type="button" title="글머리 기호 목록" aria-label="글머리 기호 목록" onClick={() => insertLinePrefix("- ")}><List size={17}/></button>
+                          <button type="button" title="번호 목록" aria-label="번호 목록" onClick={() => insertLinePrefix("1. ")}><ListOrdered size={17}/></button>
+                          <button type="button" title="인용" aria-label="인용" onClick={() => insertLinePrefix("> ")}><MessageSquareQuote size={17}/></button>
+                          <button type="button" title="인라인 코드" aria-label="인라인 코드" onClick={() => insertWrapped(String.fromCharCode(96), String.fromCharCode(96), "코드")}><Code size={17}/></button>
+                          <button type="button" title="코드 블록" aria-label="코드 블록" onClick={() => insertWrapped(String.fromCharCode(96).repeat(3) + "\n", "\n" + String.fromCharCode(96).repeat(3), "코드를 입력하세요.")}><Code2 size={17}/></button>
+                          <button type="button" title="링크" aria-label="링크" onClick={() => insertWrapped("[", "](https://example.com)", "링크 텍스트")}><Link2 size={17}/></button>
+                          <button type="button" title="구분선" aria-label="구분선" onClick={insertRule}><Minus size={17}/></button>
+                        </div>
+                      ) : (
+                        <span className="markdown-preview-mode-label"><Eye size={15}/> 미리보기</span>
+                      )}
+                    </div>
+
+                    {mode === "edit" ? (
+                      <textarea
+                        ref={editorRef}
+                        className="markdown-note-textarea"
+                        value={activeNote.content}
+                        onChange={event => updateActiveNote({ content: event.target.value })}
+                        placeholder="여기에 Markdown으로 자유롭게 기록해 보세요."
+                        aria-label="Markdown 본문"
+                        spellCheck
+                      />
+                    ) : (
+                      <div className="markdown-note-preview">
+                        <MarkdownPreview source={activeNote.content}/>
+                      </div>
+                    )}
+
+                    <div className="page-footer markdown-editor-footer">
+                      <span>MARKDOWN · WRITE YOUR WAY</span>
+                      <span>{activeNote.content.length.toLocaleString("ko-KR")}자</span>
+                    </div>
+                  </>
                 ) : (
-                  <div className="markdown-note-preview">
-                    <MarkdownPreview source={activeNote.content}/>
+                  <div className="markdown-editor-empty">
+                    <div className="markdown-editor-empty-icon"><Pencil size={25}/></div>
+                    <strong>{loading ? "글을 불러오고 있습니다." : "어떤 내용을 기록할까요?"}</strong>
+                    <p>{loading ? "잠시만 기다려 주세요." : "왼쪽에서 새 글을 만들어 Markdown으로 작성해 보세요."}</p>
+                    {!loading ? (
+                      <button
+                        type="button"
+                        className="add-todo markdown-empty-create-button"
+                        onClick={() => { void createNote(); }}
+                        disabled={creating}
+                      >
+                        <FilePlus2 size={15}/>새 글 작성
+                      </button>
+                    ) : null}
                   </div>
                 )}
+              </section>
 
-                <footer className="markdown-editor-footer">
-                  <span>Markdown 지원: 제목 · 굵게 · 기울임 · 목록 · 인용 · 코드 블록</span>
-                  <span>{activeNote.content.length.toLocaleString("ko-KR")}자 · {formatDate(activeNote.updated_at)}</span>
-                </footer>
-              </>
-            ) : (
-              <div className="markdown-editor-empty">
-                <div className="markdown-editor-empty-icon"><Pencil size={25}/></div>
-                <strong>{loading ? "글을 불러오고 있습니다." : "어떤 내용을 기록할까요?"}</strong>
-                <p>{loading ? "잠시만 기다려 주세요." : "새 글을 만들어 Markdown으로 자유롭게 작성해 보세요."}</p>
-                {!loading ? <button type="button" className="markdown-empty-create-button" onClick={() => { void createNote(); }} disabled={creating}><FilePlus2 size={16}/>새 글 작성</button> : null}
+              <div className="planner-index-tabs" role="tablist" aria-label="Markdown 보기 방식">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={mode === "edit"}
+                  className="planner-index-tab"
+                  onClick={() => setMode("edit")}
+                  disabled={!activeNote}
+                >
+                  <span>WRITE</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={mode === "preview"}
+                  className="planner-index-tab"
+                  onClick={() => setMode("preview")}
+                  disabled={!activeNote}
+                >
+                  <span>PREVIEW</span>
+                </button>
               </div>
-            )}
-          </section>
-        </PlannerSpread>
+            </PlannerSpread>
+          </div>
+        </div>
       </main>
     </div>
   );
