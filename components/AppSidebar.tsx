@@ -3,12 +3,14 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import {
-  ArrowRight, BookOpen, Check, ChevronDown, House, LogOut, Menu,
+  ArrowRight, BookOpen, Check, ChevronDown, Download, FilePlus2, House, LogOut, Menu,
   Moon, Palette, Sparkles, Trash2, X
 } from "lucide-react";
 import { themes, type ThemeName } from "@/lib/types";
 
 type SidebarView = "library" | "planner" | "cover" | "markdown";
+
+type SidebarNoteOption = { id: string; title: string };
 
 type AppSidebarProps = {
   email: string;
@@ -20,6 +22,16 @@ type AppSidebarProps = {
   customColor?: string;
   onThemeChange?: (theme: ThemeName) => void;
   onCustomColorChange?: (color: string) => void;
+  noteOptions?: SidebarNoteOption[];
+  activeNoteId?: string | null;
+  noteSaveLabel?: string;
+  noteActionsDisabled?: boolean;
+  noteCanExport?: boolean;
+  noteCanDelete?: boolean;
+  onNoteSelect?: (noteId: string) => void;
+  onCreateNote?: () => void;
+  onExportNote?: () => void;
+  onDeleteNote?: () => void;
   onOpenNotebookList?: () => void;
   onViewChange?: (view: "planner" | "cover") => void;
   onSignOut: () => void;
@@ -36,6 +48,16 @@ export default function AppSidebar({
   customColor = "#8b9ec4",
   onThemeChange,
   onCustomColorChange,
+  noteOptions = [],
+  activeNoteId = null,
+  noteSaveLabel = "",
+  noteActionsDisabled = false,
+  noteCanExport = false,
+  noteCanDelete = false,
+  onNoteSelect,
+  onCreateNote,
+  onExportNote,
+  onDeleteNote,
   onOpenNotebookList,
   onViewChange,
   onSignOut,
@@ -234,6 +256,36 @@ export default function AppSidebar({
                 </div>
               )}
             </nav>
+
+            {currentView === "markdown" && (
+              <section className="app-sidebar-note-tools" aria-label="Markdown 노트 관리">
+                <div className="app-sidebar-note-tools-title">노트 관리</div>
+                <label className="app-sidebar-note-label" htmlFor="app-sidebar-note-select">현재 노트</label>
+                <select
+                  id="app-sidebar-note-select"
+                  className="app-sidebar-note-select"
+                  aria-label="노트 선택"
+                  value={activeNoteId ?? ""}
+                  disabled={noteActionsDisabled || noteOptions.length === 0}
+                  onChange={event => onNoteSelect?.(event.target.value)}
+                >
+                  {noteOptions.length === 0 ? <option value="">노트 없음</option> : null}
+                  {noteOptions.map(note => <option key={note.id} value={note.id}>{note.title || "제목 없는 노트"}</option>)}
+                </select>
+                <div className="app-sidebar-note-actions">
+                  <button type="button" onClick={() => runAction(onCreateNote)} disabled={noteActionsDisabled}>
+                    <FilePlus2 size={16}/><span>새 노트</span>
+                  </button>
+                  <button type="button" onClick={() => runAction(onExportNote)} disabled={!noteCanExport}>
+                    <Download size={16}/><span>Markdown 내보내기</span>
+                  </button>
+                  <button type="button" onClick={() => runAction(onDeleteNote)} disabled={!noteCanDelete}>
+                    <Trash2 size={16}/><span>현재 노트 삭제</span>
+                  </button>
+                </div>
+                {noteSaveLabel ? <div className="app-sidebar-note-save" aria-live="polite">{noteSaveLabel}</div> : null}
+              </section>
+            )}
 
             <div className="app-sidebar-footer">
               <button type="button" onClick={() => runAction(onSignOut)}>
