@@ -81,7 +81,7 @@ function inlineMarkdown(value: string): ReactNode[] {
     } else if (token.startsWith("~~") && token.endsWith("~~")) {
       nodes.push(<del key={key++}>{token.slice(2, -2)}</del>);
     } else if (token.startsWith("[") && match[2] && match[3]) {
-      nodes.push(<a key={key++} href={match[3]} target="_blank" rel="noreferrer">{match[2]}</a>);
+      nodes.push(<a key={key++} href={match[3]} target="_blank" rel="noopener noreferrer">{match[2]}</a>);
     } else if ((token.startsWith("*") && token.endsWith("*")) || (token.startsWith("_") && token.endsWith("_"))) {
       nodes.push(<em key={key++}>{token.slice(1, -1)}</em>);
     }
