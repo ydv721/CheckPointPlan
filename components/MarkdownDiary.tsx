@@ -2,9 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { Check } from "lucide-react";
+import { Bold, Code2, Heading1, Italic, Link2, List, ListOrdered, Minus, Quote, Strikethrough, Check } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
-import PlannerSpread from "@/components/PlannerSpread";
 import type { ThemeName } from "@/lib/types";
 
 type MarkdownNote = {
@@ -21,6 +20,21 @@ type NotePages = {
   left: string;
   right: string;
 };
+
+type MarkdownAction = "bold" | "italic" | "strike" | "heading" | "bullet" | "ordered" | "quote" | "code" | "link" | "divider";
+
+const MARKDOWN_TOOLBAR = [
+  { action: "bold", label: "굵게", icon: Bold },
+  { action: "italic", label: "기울임", icon: Italic },
+  { action: "strike", label: "취소선", icon: Strikethrough },
+  { action: "heading", label: "제목", icon: Heading1 },
+  { action: "bullet", label: "글머리표", icon: List },
+  { action: "ordered", label: "번호 목록", icon: ListOrdered },
+  { action: "quote", label: "인용", icon: Quote },
+  { action: "code", label: "코드", icon: Code2 },
+  { action: "link", label: "링크", icon: Link2 },
+  { action: "divider", label: "구분선", icon: Minus }
+] as const;
 
 type Props = {
   client: SupabaseClient;
@@ -82,7 +96,6 @@ export default function MarkdownDiary({
   const [error, setError] = useState("");
   const [saveState, setSaveState] = useState<"saved" | "dirty" | "saving" | "error">("saved");
   const leftEditorRef = useRef<HTMLTextAreaElement>(null);
-  const rightEditorRef = useRef<HTMLTextAreaElement>(null);
   const currentNoteRef = useRef<MarkdownNote | null>(null);
   const savedSnapshotsRef = useRef<Record<string, string>>({});
   const saveQueueRef = useRef<Promise<boolean>>(Promise.resolve(true));
@@ -290,6 +303,79 @@ export default function MarkdownDiary({
     updateActiveNote({ content: encodeNotePages(nextPages) });
   }
 
+  function applyMarkdown(action: MarkdownAction) {
+    const editor = leftEditorRef.current;
+    if (!editor || !activeNote || loading) return;
+
+    const source = editor.value;
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    const selected = source.slice(start, end);
+    let replaceStart = start;
+    let replaceEnd = end;
+    let replacement = "";
+    let selectionStart = start;
+    let selectionEnd = start;
+
+    const wrap = (before: string, after: string, placeholder: string) => {
+      const inner = selected || placeholder;
+      replacement = before + inner + after;
+      selectionStart = start + before.length;
+      selectionEnd = selectionStart + inner.length;
+    };
+
+    if (action === "bold") {
+      wrap("**", "**", "굵은 텍스트");
+    } else if (action === "italic") {
+      wrap("*", "*", "기울임 텍스트");
+    } else if (action === "strike") {
+      wrap("~~", "~~", "취소선 텍스트");
+    } else if (action === "code") {
+      wrap("`", "`", "코드");
+    } else if (action === "link") {
+      if (selected) {
+        replacement = "[" + selected + "](https://주소)";
+        selectionStart = start + selected.length + 3;
+        selectionEnd = selectionStart + "https://주소".length;
+      } else {
+        replacement = "[링크 텍스트](https://주소)";
+        selectionStart = start + 1;
+        selectionEnd = selectionStart + "링크 텍스트".length;
+      }
+    } else if (action === "divider") {
+      replacement = (start > 0 && source[start - 1] !== "\n" ? "\n\n" : "") + "---\n\n";
+      selectionStart = start + replacement.length;
+      selectionEnd = selectionStart;
+    } else {
+      const lineStart = source.lastIndexOf("\n", Math.max(0, start - 1)) + 1;
+      const currentLineEndIndex = source.indexOf("\n", start);
+      const currentLineEnd = currentLineEndIndex < 0 ? source.length : currentLineEndIndex;
+      replaceStart = selected ? lineStart : lineStart;
+      replaceEnd = selected
+        ? (source.indexOf("\n", end) < 0 ? source.length : source.indexOf("\n", end))
+        : currentLineEnd;
+
+      const block = source.slice(replaceStart, replaceEnd);
+      const lines = block.split("\n");
+      const placeholder = action === "heading" ? "제목" : action === "quote" ? "인용문" : "목록 항목";
+      const prefix = action === "heading" ? "# " : action === "quote" ? "> " : action === "bullet" ? "- " : "";
+      replacement = lines.map((line, index) => {
+        const value = line || (!selected && index === 0 ? placeholder : "");
+        return action === "ordered" ? (index + 1) + ". " + value : prefix + value;
+      }).join("\n");
+      selectionStart = replaceStart;
+      selectionEnd = replaceStart + replacement.length;
+    }
+
+    const nextValue = source.slice(0, replaceStart) + replacement + source.slice(replaceEnd);
+    updatePage("left", nextValue);
+
+    requestAnimationFrame(() => {
+      editor.focus();
+      editor.setSelectionRange(selectionStart, selectionEnd);
+    });
+  }
+
   function exportMarkdown() {
     if (!activeNote) return;
 
@@ -299,10 +385,7 @@ export default function MarkdownDiary({
       "# " + title,
       "",
       pages.left,
-      "",
-      "---",
-      "",
-      pages.right
+      ...(pages.right.trim() ? ["", "---", "", pages.right] : [])
     ].join("\n");
 
     const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
@@ -370,19 +453,31 @@ export default function MarkdownDiary({
 
         <div className="workspace-shell">
           <div className="workspace-canvas markdown-diary-canvas">
-            <PlannerSpread className="book-frame day-book-frame markdown-diary-spread">
-              <div className="book-spine" aria-hidden="true">
-                {Array.from({ length: 13 }, (_, index) => <span key={index}/>)}
-              </div>
-
-              <section className="paper-page left-page markdown-note-page" aria-label="왼쪽 자유 노트">
+            <div className="book-frame markdown-diary-single-page">
+              <section className="paper-page markdown-note-page markdown-single-note-page" aria-label="자유 노트">
                 <div className="paper-section key-section markdown-free-note-section">
                   <div className="section-heading"><span>FREE NOTE</span></div>
                   <div className="free-note-paper">
+                    <div className="markdown-toolbar" role="toolbar" aria-label="Markdown 도구 모음">
+                      {MARKDOWN_TOOLBAR.map(({ action, label, icon: Icon }) => (
+                        <button
+                          key={action}
+                          type="button"
+                          className="markdown-toolbar-button"
+                          aria-label={label}
+                          title={label}
+                          disabled={!activeNote || loading}
+                          onMouseDown={event => event.preventDefault()}
+                          onClick={() => applyMarkdown(action)}
+                        >
+                          <Icon size={16} strokeWidth={2}/>
+                        </button>
+                      ))}
+                    </div>
                     <textarea
                       ref={leftEditorRef}
                       className="free-note-input"
-                      aria-label="왼쪽 페이지 자유 노트"
+                      aria-label="자유 노트 내용"
                       value={pageContents.left}
                       disabled={!activeNote || loading}
                       onChange={event => updatePage("left", event.target.value)}
@@ -391,24 +486,7 @@ export default function MarkdownDiary({
                   </div>
                 </div>
               </section>
-
-              <section className="paper-page right-page markdown-note-page" aria-label="오른쪽 자유 노트">
-                <div className="paper-section key-section markdown-free-note-section">
-                  <div className="section-heading"><span>FREE NOTE</span></div>
-                  <div className="free-note-paper">
-                    <textarea
-                      ref={rightEditorRef}
-                      className="free-note-input"
-                      aria-label="오른쪽 페이지 자유 노트"
-                      value={pageContents.right}
-                      disabled={!activeNote || loading}
-                      onChange={event => updatePage("right", event.target.value)}
-                      spellCheck
-                    />
-                  </div>
-                </div>
-              </section>
-            </PlannerSpread>
+            </div>annerSpread>
           </div>
         </div>
       </main>
