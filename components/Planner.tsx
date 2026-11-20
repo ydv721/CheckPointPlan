@@ -1036,7 +1036,7 @@ export default function Planner() {
   }
 
   const deleteAccountModal=showDeleteAccount&&user?(
-    <div className="modal-backdrop" style={activeNotebookId?vars:libraryThemeStyle} onMouseDown={e=>{if(e.target===e.currentTarget&&!deletingAccount)setShowDeleteAccount(false)}} role="presentation">
+    <div className="modal-backdrop" style={activeNotebookId?vars:activeMarkdownNotebookId?(libraryDarkMode?libraryThemeStyle:vars):libraryThemeStyle} onMouseDown={e=>{if(e.target===e.currentTarget&&!deletingAccount)setShowDeleteAccount(false)}} role="presentation">
       <section className="delete-account-modal" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
         <div className="delete-account-icon"><Trash2 size={22}/></div>
         <div className="eyebrow">ACCOUNT DELETION</div>
