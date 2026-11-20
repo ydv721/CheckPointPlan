@@ -8570,3 +8570,47 @@ html,body{width:100%;overflow-x:clip}
   max-width:none !important;
   align-self:stretch !important;
 }
+
+
+/* Empty Markdown diary state: make the first note action visible on the writing sheet. */
+.markdown-empty-state{
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  width:100%;
+  min-height:0;
+  color:var(--ink);
+  font-size:13px;
+  opacity:.72;
+}
+.markdown-empty-state p{
+  margin:0;
+}
+.markdown-empty-create-button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  min-height:40px;
+  padding:0 17px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:var(--paper);
+  color:var(--accent);
+  font:inherit;
+  font-weight:800;
+  cursor:pointer;
+  transition:background .15s ease,border-color .15s ease,transform .15s ease;
+}
+.markdown-empty-create-button:hover:not(:disabled){
+  border-color:var(--accent);
+  background:var(--paper);
+  transform:translateY(-1px);
+}
+.markdown-empty-create-button:disabled{
+  opacity:.5;
+  cursor:wait;
+}
