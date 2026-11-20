@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { themes, type ThemeName } from "@/lib/types";
 
-type SidebarView = "library" | "planner" | "cover";
+type SidebarView = "library" | "planner" | "cover" | "markdown";
 
 type AppSidebarProps = {
   email: string;
@@ -46,7 +46,7 @@ export default function AppSidebar({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
 
-  const panelDarkMode = currentView === "library" && darkMode;
+  const panelDarkMode = (currentView === "library" || currentView === "markdown") && darkMode;
   const panelStyle = panelDarkMode ? {
     ...themeStyle,
     "--bg": "#171A21",
@@ -164,7 +164,7 @@ export default function AppSidebar({
                 </button>
               )}
 
-              {currentView === "library" ? (
+              {currentView === "library" || currentView === "markdown" ? (
                 <button
                   type="button"
                   className="app-sidebar-theme-toggle"
