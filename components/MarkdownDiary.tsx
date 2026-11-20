@@ -280,37 +280,40 @@ export default function MarkdownDiary({
     const run = async () => {
       setSaveState("saving");
       const updatedAt = new Date().toISOString();
-      const { error: saveError } = await client
-        .from("markdown_notes")
-        .update({
-          title: note.title,
-          content: note.content,
-          updated_at: updatedAt
-        })
-        .eq("id", note.id)
-        .eq("notebook_id", notebookId)
-        .eq("user_id", userId);
+      try {
+        const { error: saveError } = await client
+          .from("markdown_notes")
+          .update({
+            title: note.title,
+            content: note.content,
+            updated_at: updatedAt
+          })
+          .eq("id", note.id)
+          .eq("notebook_id", notebookId)
+          .eq("user_id", userId);
 
-      if (saveError) {
+        if (saveError) throw saveError;
+
+        savedSnapshotsRef.current[note.id] = snapshot;
+        setNotes(current =>
+          current
+            .map(item => item.id === note.id ? { ...item, updated_at: updatedAt } : item)
+            .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
+        );
+
+        const latest = currentNoteRef.current;
+        const latestSnapshot = latest
+          ? JSON.stringify({ title: latest.title, content: latest.content })
+          : "";
+        setSaveState(latest?.id === note.id && latestSnapshot === snapshot ? "saved" : "dirty");
+        setError("");
+        return true;
+      } catch (saveError) {
         setSaveState("error");
-        setError("글 저장에 실패했습니다: " + saveError.message);
+        const message = saveError instanceof Error ? saveError.message : "네트워크 연결을 확인해 주세요.";
+        setError("글 저장에 실패했습니다: " + message);
         return false;
       }
-
-      savedSnapshotsRef.current[note.id] = snapshot;
-      setNotes(current =>
-        current
-          .map(item => item.id === note.id ? { ...item, updated_at: updatedAt } : item)
-          .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
-      );
-
-      const latest = currentNoteRef.current;
-      const latestSnapshot = latest
-        ? JSON.stringify({ title: latest.title, content: latest.content })
-        : "";
-      setSaveState(latest?.id === note.id && latestSnapshot === snapshot ? "saved" : "dirty");
-      setError("");
-      return true;
     };
 
     const queued = saveQueueRef.current.then(run, run);
