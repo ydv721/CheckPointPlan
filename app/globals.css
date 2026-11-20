@@ -8366,6 +8366,16 @@ html,body{width:100%;overflow-x:clip}
 .markdown-note-editor > .page-date{
   flex:0 0 auto;
 }
+.markdown-save-dot{
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:#73bd9e;
+}
+.markdown-save-dirty{background:#d7a75f}
+.markdown-save-saving{background:#7395c7;animation:markdown-save-pulse 1s ease-in-out infinite}
+.markdown-save-error{background:#d46f78}
+@keyframes markdown-save-pulse{50%{opacity:.35}}
 .markdown-editor-header{
   min-height:58px;
   padding:11px 0;
