@@ -8,6 +8,7 @@ import {
   Pencil, Search, Trash2
 } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
+import PlannerSpread from "@/components/PlannerSpread";
 
 type MarkdownNote = {
   id: string;
@@ -499,8 +500,9 @@ export default function MarkdownDiary({
 
         {error ? <div className="markdown-diary-error" role="alert">{error}</div> : null}
 
-        <div className="markdown-diary-workspace">
-          <aside className="markdown-note-library" aria-label="작성한 글 목록">
+        <PlannerSpread className="book-frame markdown-book-frame">
+          <div className="book-spine" aria-hidden="true">{Array.from({ length: 13 }, (_, index) => <span key={index}/>)}</div>
+          <aside className="paper-page left-page markdown-note-library" aria-label="작성한 글 목록">
             <div className="markdown-note-library-heading">
               <div><strong>내 글</strong><span>{notes.length}개</span></div>
               <button type="button" className="markdown-new-note-button" onClick={() => { void createNote(); }} disabled={creating}>
@@ -538,7 +540,7 @@ export default function MarkdownDiary({
             </div>
           </aside>
 
-          <section className="markdown-note-editor" aria-label="Markdown 편집기">
+          <section className="paper-page right-page markdown-note-editor" aria-label="Markdown 편집기">
             {activeNote ? (
               <>
                 <div className="markdown-editor-header">
@@ -613,7 +615,7 @@ export default function MarkdownDiary({
               </div>
             )}
           </section>
-        </div>
+        </PlannerSpread>
       </main>
     </div>
   );
