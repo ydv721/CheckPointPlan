@@ -8226,325 +8226,196 @@ html,body{width:100%;overflow-x:clip}
   letter-spacing: 0 !important;
 }
 
-/* Markdown free diary: keep the planner shell and replace both page interiors with ruled pink note sheets. */
+/* Markdown diary uses the exact same open-book frame and page dimensions as DAY planner. */
 .markdown-diary-main{
   min-height:0;
 }
 .markdown-diary-canvas{
-  flex-direction:column !important;
-  justify-content:center !important;
   align-items:center !important;
-  gap:12px;
-  padding:14px 24px !important;
+  justify-content:center !important;
 }
-.markdown-diary-toolbar{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:18px;
-  width:min(1050px,calc(100% - 16px),calc(128dvh - 120px));
-  min-height:54px;
-  flex:0 0 auto;
-}
-.markdown-diary-heading{
-  min-width:0;
-}
-.markdown-diary-heading .eyebrow{
-  font-size:9px;
-  letter-spacing:.17em;
-}
-.markdown-diary-heading h1{
-  margin:3px 0 2px;
-  color:var(--ink);
-  font-size:20px;
-  font-weight:900;
-  letter-spacing:-.05em;
-  line-height:1.2;
-}
-.markdown-diary-heading p{
-  margin:0;
-  color:var(--ink);
-  opacity:.55;
-  font-size:10px;
-}
-.markdown-diary-controls{
-  display:flex;
-  align-items:center;
-  justify-content:flex-end;
-  flex-wrap:wrap;
-  gap:7px;
-}
-.markdown-diary-controls .save-indicator{
-  margin-right:5px;
-  white-space:nowrap;
-}
-.markdown-save-dot{
-  width:6px;
-  height:6px;
-  border-radius:50%;
-  background:#73bd9e;
-}
-.markdown-save-dirty{background:#d7a75f}
-.markdown-save-saving{background:#7395c7;animation:markdown-save-pulse 1s ease-in-out infinite}
-.markdown-save-error{background:#d46f78}
-@keyframes markdown-save-pulse{50%{opacity:.35}}
-.markdown-note-select{
-  max-width:190px;
-  min-width:120px;
-  height:36px;
-  padding:0 10px;
-  border:1px solid var(--line);
-  border-radius:9px;
-  outline:0;
-  color:var(--ink);
-  background:var(--paper);
-  font-family:inherit;
-  font-size:10px;
-  font-weight:700;
-}
-.markdown-note-select:focus-visible{
-  border-color:var(--accent);
-}
-.markdown-note-select:disabled{
-  opacity:.45;
-}
-.markdown-diary-controls .outline-btn{
-  min-height:36px;
-  padding:8px 11px;
-  font-size:10px;
-  gap:6px;
-}
-.markdown-diary-controls .outline-btn:disabled{
-  opacity:.4;
-  cursor:not-allowed;
-}
-.markdown-action-icon{
-  width:36px;
-  min-width:36px;
-  padding:0 !important;
-  justify-content:center;
-}
-.markdown-diary-error{
-  width:min(1050px,calc(100% - 32px));
-  margin:8px auto 0;
-  border-color:#e8b8bd;
-  background:#fff4f4;
-  color:#9b3d48;
-}
-
-.markdown-diary-canvas > .markdown-diary-spread{
-  width:min(1050px,calc(100% - 16px),calc(128dvh - 120px)) !important;
-  max-width:1050px !important;
-  height:auto !important;
-  min-height:0 !important;
-  aspect-ratio:210 / 148 !important;
-  flex:0 1 auto !important;
-  margin:0 !important;
+@media(min-width:781px){
+  .markdown-diary-canvas > .markdown-diary-spread{
+    width:var(--checkpoint-spread-width) !important;
+    min-width:0 !important;
+    max-width:var(--checkpoint-spread-max-width) !important;
+    height:auto !important;
+    min-height:0 !important;
+    max-height:none !important;
+    aspect-ratio:var(--checkpoint-spread-ratio) !important;
+    flex:0 1 var(--checkpoint-spread-width) !important;
+    align-self:center !important;
+    margin:auto !important;
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    grid-template-rows:minmax(0,1fr) !important;
+    box-sizing:border-box !important;
+  }
 }
 .markdown-diary-spread > .markdown-note-page{
-  display:flex;
-  flex-direction:column;
-  min-width:0;
-  min-height:0;
-  height:100%;
+  display:flex !important;
+  flex-direction:column !important;
+  min-width:0 !important;
+  min-height:0 !important;
 }
-.markdown-diary-spread > .markdown-note-page.left-page{
-  padding-right:50px;
+.markdown-free-note-section{
+  display:flex !important;
+  flex:1 1 0 !important;
+  flex-direction:column !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  margin:0 !important;
 }
-.markdown-diary-spread > .markdown-note-page.right-page{
-  padding-left:53px;
+.markdown-free-note-section > .section-heading{
+  flex:0 0 auto !important;
+  margin-bottom:18px !important;
 }
-.free-note-sheet{
-  display:flex;
-  flex:1 1 auto;
-  flex-direction:column;
-  width:100%;
-  min-width:0;
-  min-height:0;
+.markdown-free-note-section > .free-note-paper{
+  display:flex !important;
+  flex:1 1 0 !important;
+  width:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  overflow:hidden !important;
+  box-sizing:border-box !important;
+  padding:12px !important;
+  border:1px solid var(--line) !important;
+  border-radius:10px !important;
+  background:var(--soft) !important;
 }
-.free-note-heading{
-  flex:0 0 auto;
-  margin:0 0 17px;
-  color:var(--ink);
-  font-size:14px;
-  font-weight:900;
-  letter-spacing:.08em;
-  line-height:1.3;
-}
-.free-note-board{
-  position:relative;
-  display:flex;
-  flex:1 1 auto;
-  width:100%;
-  min-width:0;
-  min-height:0;
-  overflow:hidden;
-  box-sizing:border-box;
-  padding:27px 30px;
-  border:1px solid #efd8e1;
-  border-radius:16px;
-  background:#f8e7ed;
-}
-.free-note-textarea{
-  position:relative;
-  z-index:1;
-  display:block;
-  flex:1 1 auto;
-  width:100%;
-  height:100%;
-  min-width:0;
-  min-height:0;
-  padding:0 3px;
-  resize:none;
-  overflow:auto;
-  border:0;
-  border-radius:0;
-  outline:0;
-  color:#3c3d4a;
-  background-color:transparent;
+.markdown-free-note-section textarea.free-note-input{
+  display:block !important;
+  box-sizing:border-box !important;
+  flex:1 1 0 !important;
+  width:auto !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  margin:0 16px !important;
+  padding:14px 11px !important;
+  resize:none !important;
+  overflow-y:auto !important;
+  border:0 !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  outline:0 !important;
+  color:var(--ink) !important;
+  font-family:var(--font) !important;
+  font-size:14px !important;
+  font-weight:500 !important;
+  line-height:24px !important;
+  background-color:transparent !important;
   background-image:repeating-linear-gradient(
     to bottom,
     transparent 0,
-    transparent 44px,
-    #ead5dd 44px,
-    #ead5dd 45px
-  );
-  background-position:0 0;
-  background-size:100% 45px;
-  font-family:inherit;
-  font-size:13px;
-  font-weight:500;
-  line-height:45px;
-  tab-size:2;
+    transparent 23px,
+    var(--line) 23px,
+    var(--line) 24px
+  ) !important;
+  background-position:0 14px !important;
+  background-size:100% 24px !important;
   scrollbar-width:thin;
-  scrollbar-color:#dfc5cf transparent;
+  scrollbar-color:var(--line) transparent;
 }
-.free-note-textarea:focus,
-.free-note-textarea:focus-visible{
-  outline:0;
-  box-shadow:none;
+.markdown-free-note-section textarea.free-note-input:focus,
+.markdown-free-note-section textarea.free-note-input:focus-visible{
+  border:0 !important;
+  outline:0 !important;
+  box-shadow:none !important;
 }
-.free-note-textarea:disabled{
-  cursor:default;
-  opacity:1;
-}
-.markdown-diary-canvas .book-spine{
+.markdown-diary-spread > .book-spine{
   z-index:4;
 }
 
-@media(max-width:1180px){
-  .markdown-diary-toolbar{
-    width:min(100%,calc(128dvh - 120px));
-  }
-  .markdown-diary-canvas > .markdown-diary-spread{
-    width:min(100%,calc(128dvh - 120px)) !important;
-  }
-  .markdown-diary-spread > .markdown-note-page.left-page{
-    padding-right:39px;
-  }
-  .markdown-diary-spread > .markdown-note-page.right-page{
-    padding-left:42px;
-  }
-  .free-note-board{
-    padding:23px 24px;
-  }
-}
-@media(max-width:900px){
-  .markdown-diary-toolbar{
-    align-items:flex-start;
-    flex-direction:column;
-    gap:10px;
-    width:100%;
-  }
-  .markdown-diary-controls{
-    width:100%;
-    justify-content:flex-start;
-  }
-  .markdown-diary-canvas > .markdown-diary-spread{
-    width:100% !important;
-  }
-  .free-note-heading{font-size:12px}
-  .free-note-board{padding:19px 20px}
-}
 @media(max-width:780px){
-  .markdown-diary-canvas{
-    align-items:stretch !important;
-    justify-content:flex-start !important;
-    gap:14px;
-    padding:14px !important;
-  }
-  .markdown-diary-toolbar{
-    width:100%;
-    gap:10px;
-  }
-  .markdown-diary-heading h1{font-size:19px}
-  .markdown-diary-controls{
-    flex-wrap:wrap;
-    gap:6px;
-  }
-  .markdown-note-select{
-    flex:1 1 150px;
-    max-width:none;
-  }
-  .markdown-diary-canvas > .markdown-diary-spread{
-    display:flex !important;
-    flex-direction:column !important;
-    gap:12px;
-    width:100% !important;
-    max-width:none !important;
-    height:auto !important;
-    min-height:0 !important;
-    aspect-ratio:auto !important;
-    overflow:visible;
-  }
-  .markdown-diary-spread > .book-spine{display:none}
   .markdown-diary-spread > .markdown-note-page{
-    width:100% !important;
-    height:auto !important;
-    min-height:540px !important;
-    aspect-ratio:auto !important;
-    padding:24px !important;
-    border-radius:13px !important;
-    overflow:hidden;
+    min-height:600px !important;
   }
-  .markdown-diary-spread > .markdown-note-page.left-page{order:1}
-  .markdown-diary-spread > .markdown-note-page.right-page{order:2}
-  .markdown-diary-spread > .markdown-note-page:after{display:none}
-  .free-note-board{min-height:440px}
+  .markdown-free-note-section{
+    min-height:540px !important;
+  }
+  .markdown-free-note-section > .free-note-paper{
+    min-height:0 !important;
+  }
 }
 @media(max-width:560px){
-  .markdown-diary-canvas{padding:12px !important}
-  .markdown-diary-heading h1{font-size:18px}
-  .markdown-diary-heading p{font-size:9px}
-  .markdown-diary-controls .save-indicator{font-size:9px}
-  .markdown-diary-controls .outline-btn{
-    min-height:34px;
-    padding:7px 9px;
-  }
-  .markdown-action-icon{
-    width:34px;
-    min-width:34px;
-  }
   .markdown-diary-spread > .markdown-note-page{
-    min-height:490px !important;
-    padding:19px !important;
+    min-height:600px !important;
   }
-  .free-note-heading{margin-bottom:13px;font-size:12px}
-  .free-note-board{
-    min-height:400px;
-    padding:20px 18px;
-    border-radius:13px;
+  .markdown-free-note-section{
+    min-height:540px !important;
   }
-  .free-note-textarea{
-    font-size:12px;
-    line-height:40px;
-    background-size:100% 40px;
-    background-image:repeating-linear-gradient(
-      to bottom,
-      transparent 0,
-      transparent 39px,
-      #ead5dd 39px,
-      #ead5dd 40px
-    );
-  }
+}
+
+/* Markdown note management lives in the existing planner menu, not above the book. */
+.app-sidebar-note-tools{
+  width:100%;
+  margin-top:12px;
+  padding:15px 9px 0;
+  border-top:1px solid var(--line);
+}
+.app-sidebar-note-tools-title{
+  margin-bottom:13px;
+  color:var(--ink);
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.05em;
+}
+.app-sidebar-note-label{
+  display:block;
+  margin-bottom:6px;
+  color:var(--ink);
+  font-size:10px;
+  font-weight:750;
+  opacity:.68;
+}
+.app-sidebar-note-select{
+  display:block;
+  width:100%;
+  height:38px;
+  padding:0 9px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:inherit;
+  font-size:11px;
+  font-weight:700;
+}
+.app-sidebar-note-actions{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin-top:9px;
+}
+.app-sidebar-note-actions button{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  width:100%;
+  min-height:39px;
+  padding:0 9px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:inherit;
+  font-size:11px;
+  font-weight:750;
+  text-align:left;
+}
+.app-sidebar-note-actions button:hover:not(:disabled){
+  background:var(--soft);
+  color:var(--accent);
+}
+.app-sidebar-note-actions button:disabled,
+.app-sidebar-note-select:disabled{
+  opacity:.4;
+  cursor:not-allowed;
+}
+.app-sidebar-note-save{
+  margin-top:10px;
+  color:var(--ink);
+  font-size:10px;
+  opacity:.58;
 }
