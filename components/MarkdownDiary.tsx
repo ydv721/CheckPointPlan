@@ -364,7 +364,7 @@ export default function MarkdownDiary({
   async function deleteActiveNote() {
     if (!activeNote) return;
     const title = activeNote.title.trim() || "제목 없는 글";
-    if (!window.confirm("「" + title + "」 글을 삭제할까? 삭제한 글은 복구할 수 없어.")) return;
+    if (!window.confirm("「" + title + "」 글을 삭제하시겠습니까? 삭제한 글은 복구할 수 없습니다.")) return;
 
     const { error: deleteError } = await client
       .from("markdown_notes")
