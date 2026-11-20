@@ -8395,7 +8395,7 @@ html,body{width:100%;overflow-x:clip}
   opacity:.35;
   cursor:not-allowed;
 }
-.markdown-free-note-section textarea.free-note-input{
+.markdown-free-note-section .markdown-editor-grid{
   display:block !important;
   box-sizing:border-box !important;
   flex:1 1 auto !important;
@@ -8404,8 +8404,7 @@ html,body{width:100%;overflow-x:clip}
   min-width:0 !important;
   min-height:0 !important;
   margin:0 !important;
-  padding:15px 22px !important;
-  resize:none !important;
+  padding:18px 22px !important;
   overflow-y:auto !important;
   border:0 !important;
   border-radius:0 !important;
@@ -8415,25 +8414,101 @@ html,body{width:100%;overflow-x:clip}
   font-family:var(--font) !important;
   font-size:14px !important;
   font-weight:500 !important;
-  line-height:24px !important;
-  background-color:transparent !important;
-  background-image:repeating-linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent 23px,
-    var(--line) 23px,
-    var(--line) 24px
-  ) !important;
-  background-position:0 15px !important;
-  background-size:100% 24px !important;
+  line-height:1.75 !important;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  cursor:text;
+  background-color:var(--soft) !important;
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--line) 42%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--line) 42%, transparent) 1px, transparent 1px) !important;
+  background-position:-1px -1px !important;
+  background-size:24px 24px !important;
   scrollbar-width:thin;
   scrollbar-color:var(--line) transparent;
 }
-.markdown-free-note-section textarea.free-note-input:focus,
-.markdown-free-note-section textarea.free-note-input:focus-visible{
+.markdown-free-note-section .markdown-editor-grid:empty::before{
+  content:attr(data-placeholder);
+  color:var(--ink);
+  opacity:.38;
+  pointer-events:none;
+}
+.markdown-free-note-section .markdown-editor-grid:focus,
+.markdown-free-note-section .markdown-editor-grid:focus-visible{
   border:0 !important;
   outline:0 !important;
   box-shadow:none !important;
+}
+.markdown-editor-grid h1,
+.markdown-editor-grid h2,
+.markdown-editor-grid h3{
+  color:var(--ink);
+  font-weight:900;
+  letter-spacing:-.035em;
+  line-height:1.35;
+}
+.markdown-editor-grid h1{
+  margin:0 0 14px;
+  font-size:1.75em;
+}
+.markdown-editor-grid h2{
+  margin:18px 0 10px;
+  font-size:1.4em;
+}
+.markdown-editor-grid h3{
+  margin:15px 0 8px;
+  font-size:1.18em;
+}
+.markdown-editor-grid p{
+  margin:0 0 10px;
+}
+.markdown-editor-grid ul,
+.markdown-editor-grid ol{
+  margin:8px 0 14px;
+  padding-left:28px;
+}
+.markdown-editor-grid li{
+  padding-left:4px;
+  margin:4px 0;
+}
+.markdown-editor-grid blockquote{
+  margin:12px 0;
+  padding:7px 14px;
+  border-left:3px solid var(--accent);
+  border-radius:0 7px 7px 0;
+  background:color-mix(in srgb, var(--paper) 58%, transparent);
+}
+.markdown-editor-grid code{
+  padding:2px 5px;
+  border:1px solid var(--line);
+  border-radius:5px;
+  background:var(--paper);
+  font-family:ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size:.92em;
+}
+.markdown-editor-grid pre{
+  overflow-x:auto;
+  margin:12px 0;
+  padding:12px 14px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:var(--paper);
+  white-space:pre-wrap;
+}
+.markdown-editor-grid pre code{
+  padding:0;
+  border:0;
+  background:transparent;
+}
+.markdown-editor-grid a{
+  color:var(--accent);
+  text-decoration:underline;
+  text-underline-offset:2px;
+}
+.markdown-editor-grid hr{
+  margin:18px 0;
+  border:0;
+  border-top:1px solid var(--line);
 }
 .markdown-diary-error{
   width:min(700px,100%);
@@ -8480,7 +8555,7 @@ html,body{width:100%;overflow-x:clip}
     width:32px;
     height:32px;
   }
-  .markdown-free-note-section textarea.free-note-input{
+  .markdown-free-note-section .markdown-editor-grid{
     padding:13px 15px !important;
     font-size:13px !important;
   }
@@ -8519,7 +8594,7 @@ html,body{width:100%;overflow-x:clip}
 .markdown-diary-canvas > .markdown-diary-single-page .markdown-free-note-section,
 .markdown-diary-canvas > .markdown-diary-single-page .free-note-paper,
 .markdown-diary-canvas > .markdown-diary-single-page .markdown-toolbar,
-.markdown-diary-canvas > .markdown-diary-single-page textarea.free-note-input{
+.markdown-diary-canvas > .markdown-diary-single-page .markdown-editor-grid{
   width:100% !important;
   max-width:none !important;
   align-self:stretch !important;
