@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { Bold, Code2, FilePlus2, Heading1, Italic, Link2, List, ListOrdered, Minus, Quote, Strikethrough, Check } from "lucide-react";
+import { Bold, Code2, Heading1, Italic, Link2, List, ListOrdered, Minus, Quote, Share2, Strikethrough, Check } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import type { ThemeName } from "@/lib/types";
 
@@ -95,9 +95,11 @@ export default function MarkdownDiary({
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
   const [saveState, setSaveState] = useState<"saved" | "dirty" | "saving" | "error">("saved");
+  const [shareFeedback, setShareFeedback] = useState("");
   const leftEditorRef = useRef<HTMLTextAreaElement>(null);
   const currentNoteRef = useRef<MarkdownNote | null>(null);
   const savedSnapshotsRef = useRef<Record<string, string>>({});
+  const initialNotePromiseRef = useRef<{ key: string; promise: Promise<MarkdownNote> } | null>(null);
   const saveQueueRef = useRef<Promise<boolean>>(Promise.resolve(true));
 
   const activeNote = useMemo(
@@ -119,30 +121,63 @@ export default function MarkdownDiary({
     setLoading(true);
     setError("");
 
-    void client
-      .from("markdown_notes")
-      .select("id,notebook_id,user_id,title,content,created_at,updated_at")
-      .eq("notebook_id", notebookId)
-      .eq("user_id", userId)
-      .order("updated_at", { ascending: false })
-      .then(({ data, error: loadError }) => {
-        if (!active) return;
+    void (async () => {
+      try {
+        const { data, error: loadError } = await client
+          .from("markdown_notes")
+          .select("id,notebook_id,user_id,title,content,created_at,updated_at")
+          .eq("notebook_id", notebookId)
+          .eq("user_id", userId)
+          .order("updated_at", { ascending: false });
 
-        if (loadError) {
-          setError("노트를 불러오지 못했습니다: " + loadError.message);
-          setNotes([]);
-          setActiveNoteId(null);
-        } else {
-          const rows = (data ?? []) as MarkdownNote[];
-          savedSnapshotsRef.current = Object.fromEntries(
-            rows.map(note => [note.id, JSON.stringify({ title: note.title, content: note.content })])
-          );
-          setNotes(rows);
-          setActiveNoteId(rows[0]?.id ?? null);
+        if (!active) return;
+        if (loadError) throw loadError;
+
+        let rows = (data ?? []) as MarkdownNote[];
+        if (rows.length === 0) {
+          const key = userId + ":" + notebookId;
+          let pending = initialNotePromiseRef.current;
+
+          if (!pending || pending.key !== key) {
+            const promise = client
+              .from("markdown_notes")
+              .insert({
+                notebook_id: notebookId,
+                user_id: userId,
+                title: "새 노트",
+                content: encodeNotePages({ left: "", right: "" })
+              })
+              .select("id,notebook_id,user_id,title,content,created_at,updated_at")
+              .single()
+              .then(({ data: created, error: createError }) => {
+                if (createError) throw createError;
+                if (!created) throw new Error("새 노트를 만들지 못했습니다.");
+                return created as MarkdownNote;
+              });
+
+            pending = { key, promise };
+            initialNotePromiseRef.current = pending;
+          }
+
+          rows = [await pending.promise];
         }
 
-        setLoading(false);
-      });
+        if (!active) return;
+        savedSnapshotsRef.current = Object.fromEntries(
+          rows.map(note => [note.id, JSON.stringify({ title: note.title, content: note.content })])
+        );
+        setNotes(rows);
+        setActiveNoteId(rows[0]?.id ?? null);
+      } catch (loadError) {
+        if (!active) return;
+        const message = loadError instanceof Error ? loadError.message : "알 수 없는 오류";
+        setError("노트를 불러오지 못했습니다: " + message);
+        setNotes([]);
+        setActiveNoteId(null);
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
 
     return () => {
       active = false;
@@ -283,6 +318,11 @@ export default function MarkdownDiary({
     setNotes(remaining);
     setActiveNoteId(remaining[0]?.id ?? null);
     setSaveState("saved");
+
+    if (remaining.length === 0) {
+      currentNoteRef.current = null;
+      void createNote();
+    }
   }
 
   async function leaveDiary(action: () => Promise<void>) {
@@ -376,18 +416,17 @@ export default function MarkdownDiary({
     });
   }
 
-  function exportMarkdown() {
-    if (!activeNote) return;
-
-    const title = activeNote.title.trim() || "제목 없는 글";
-    const pages = decodeNotePages(activeNote.content);
-    const markdown = [
-      "# " + title,
+  function getMarkdownContent(note: MarkdownNote) {
+    const pages = decodeNotePages(note.content);
+    return [
+      "# " + (note.title.trim() || "제목 없는 글"),
       "",
       pages.left,
       ...(pages.right.trim() ? ["", "---", "", pages.right] : [])
     ].join("\n");
+  }
 
+  function downloadMarkdown(title: string, markdown: string) {
     const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
@@ -398,6 +437,33 @@ export default function MarkdownDiary({
     anchor.click();
     anchor.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  async function shareMarkdown() {
+    if (!activeNote) return;
+
+    const title = activeNote.title.trim() || "제목 없는 글";
+    const markdown = getMarkdownContent(activeNote);
+    setShareFeedback("");
+
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title, text: markdown });
+        setShareFeedback("공유 창을 열었어.");
+        return;
+      } catch (shareError) {
+        if (shareError instanceof Error && shareError.name === "AbortError") return;
+      }
+    }
+
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error("클립보드를 사용할 수 없습니다.");
+      await navigator.clipboard.writeText(markdown);
+      setShareFeedback("Markdown 내용을 복사했어.");
+    } catch {
+      downloadMarkdown(title, markdown);
+      setShareFeedback("공유를 지원하지 않아 Markdown 파일로 저장했어.");
+    }
   }
 
   const saveLabel = loading
@@ -424,11 +490,9 @@ export default function MarkdownDiary({
         activeNoteId={activeNoteId}
         noteSaveLabel={saveLabel}
         noteActionsDisabled={loading || creating}
-        noteCanExport={!!activeNote}
         noteCanDelete={!!activeNote}
         onNoteSelect={noteId => { void selectNote(noteId); }}
         onCreateNote={() => { void createNote(); }}
-        onExportNote={exportMarkdown}
         onDeleteNote={() => { void deleteActiveNote(); }}
         onOpenNotebookList={() => { void leaveDiary(onBack); }}
         onSignOut={() => { void leaveDiary(onSignOut); }}
@@ -476,6 +540,20 @@ export default function MarkdownDiary({
                               <Icon size={16} strokeWidth={2}/>
                             </button>
                           ))}
+                          <div className="markdown-toolbar-spacer" />
+                          {shareFeedback ? (
+                            <span className="markdown-share-feedback" aria-live="polite">{shareFeedback}</span>
+                          ) : null}
+                          <button
+                            type="button"
+                            className="markdown-toolbar-button markdown-toolbar-share"
+                            aria-label="공유"
+                            title="공유"
+                            onMouseDown={event => event.preventDefault()}
+                            onClick={() => { void shareMarkdown(); }}
+                          >
+                            <Share2 size={16} strokeWidth={2}/>
+                          </button>
                         </div>
                         <textarea
                           ref={leftEditorRef}
@@ -487,17 +565,8 @@ export default function MarkdownDiary({
                         />
                       </>
                     ) : (
-                      <div className="markdown-empty-state">
-                        <p>아직 작성한 노트가 없습니다.</p>
-                        <button
-                          type="button"
-                          className="markdown-empty-create-button"
-                          disabled={creating}
-                          onClick={() => { void createNote(); }}
-                        >
-                          <FilePlus2 size={16}/>
-                          <span>{creating ? "노트 만드는 중..." : "새 노트 만들기"}</span>
-                        </button>
+                      <div className="markdown-empty-state" role="status">
+                        노트를 준비하지 못했습니다. 잠시 후 다시 시도해 주세요.
                       </div>
                     )}
                   </div>
