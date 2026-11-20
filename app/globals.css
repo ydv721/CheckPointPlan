@@ -388,8 +388,8 @@ html,body{width:100%;overflow-x:clip}
 .date-main{display:flex;flex-direction:column;justify-content:space-between;min-width:0;gap:1px}
 .date-caption,.dday-caption{font-size:10px!important;font-weight:850!important;letter-spacing:.09em!important;text-transform:capitalize;opacity:.72}
 .date-main-row{display:flex;align-items:center;gap:4px;min-width:0}
-.date-step{flex:0 0 20px;width:20px;height:23px;padding:0;display:grid;place-items:center;color:var(--accent);border:0;border-radius:5px;background:transparent;opacity:.72}
-.date-step:hover,.date-today:hover{background:var(--soft);opacity:1}
+
+
 .date-display{position:relative;flex:1 1 auto;min-width:0;height:28px;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--accent);cursor:pointer}
 .date-display>span{font-size:clamp(16px,1.55vw,21px)!important;font-weight:900!important;letter-spacing:.18em!important;line-height:1.2;white-space:nowrap;color:var(--ink)}
 .date-display>svg{width:13px;height:13px;opacity:.48}
@@ -419,7 +419,7 @@ html,body{width:100%;overflow-x:clip}
 @media(max-width:900px){
   .page-date{grid-template-columns:minmax(0,1fr) 94px;min-height:58px;gap:10px}
   .date-display>span{font-size:17px!important;letter-spacing:.13em!important}
-  .date-step{flex-basis:18px;width:18px}
+
   .dday-field{padding-left:10px}
   .dday-field input{font-size:16px}
   .small-info-block{margin:8px 0 17px}
@@ -428,8 +428,8 @@ html,body{width:100%;overflow-x:clip}
   .page-date{grid-template-columns:minmax(0,1fr) 78px;gap:7px}
   .date-display>span{font-size:15px!important;letter-spacing:.09em!important}
   .date-display{gap:4px}
-  .date-step{flex-basis:16px;width:16px}
-  .date-step svg{width:13px;height:13px}
+
+
   .date-today{font-size:9px;padding:3px}
   .dday-field{padding-left:8px}
   .dday-field input{font-size:14px}
@@ -4923,6 +4923,31 @@ html,body{width:100%;overflow-x:clip}
 .month-today-button:hover {
   background: var(--soft);
   border-color: var(--accent);
+}
+
+/* Reuse the monthly navigation button style for daily date controls. */
+.date-main-row .daily-date-nav-button {
+  flex: 0 0 28px;
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0;
+}
+.date-main-row .daily-date-nav-button svg {
+  width: 16px;
+  height: 16px;
+}
+@media (max-width: 430px) {
+  .date-main-row .daily-date-nav-button {
+    flex-basis: 22px;
+    width: 22px;
+    min-width: 22px;
+    height: 24px;
+  }
+  .date-main-row .daily-date-nav-button svg {
+    width: 14px;
+    height: 14px;
+  }
 }
 
 .month-weekdays {
