@@ -8264,13 +8264,14 @@ html,body{width:100%;overflow-x:clip}
   flex-direction:column !important;
   grid-template-columns:none !important;
   position:relative !important;
-  width:min(700px, 58dvh, 100%) !important;
-  max-width:100% !important;
+  width:min(1120px, calc(100vw - 64px), calc(141.9dvh - 68px)) !important;
+  min-width:0 !important;
+  max-width:1120px !important;
   height:auto !important;
   min-height:0 !important;
   max-height:none !important;
-  aspect-ratio:105 / 148 !important;
-  flex:0 1 auto !important;
+  aspect-ratio:210 / 148 !important;
+  flex:0 1 min(1120px, calc(100vw - 64px), calc(141.9dvh - 68px)) !important;
   margin:auto !important;
   overflow:hidden !important;
   border-radius:15px !important;
