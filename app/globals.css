@@ -8206,3 +8206,7 @@ html,body{width:100%;overflow-x:clip}
   box-shadow: none !important;
 }
 
+/* Keep the daily date compact on every viewport so navigation controls stay clear. */
+.page-date .date-value {
+  letter-spacing: 0 !important;
+}
