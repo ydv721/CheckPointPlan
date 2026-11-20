@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
-  Bold, Code2, Download, Eye, FilePlus2, Heading1, Heading2,
+  Bold, Code, Code2, Download, Eye, FilePlus2, Heading1, Heading2, Heading3, Link2,
   Italic, List, ListOrdered, MessageSquareQuote, Minus,
   Pencil, Search, Trash2
 } from "lucide-react";
@@ -58,33 +58,45 @@ function formatTime(value: string) {
 function inlineMarkdown(value: string): ReactNode[] {
   const tick = String.fromCharCode(96);
   const pattern = new RegExp(
-    "(\\*\\*[^*]+\\*\\*|__[^_]+__|" + tick + "[^" + tick + "]+" + tick + "|\\*[^*\\n]+\\*|_[^_\\n]+_|~~[^~]+~~)",
+    "(\\*\\*[^*]+\\*\\*|__[^_]+__|" + tick + "[^" + tick + "]+" + tick + "|\\*[^*\\n]+\\*|_[^_\\n]+_|~~[^~]+~~|\\[([^\\]]+)\\]\\((https?:\\/\\/[^\\s)]+)\\))",
     "g"
   );
-  return value.split(pattern).filter(Boolean).map((part, index) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={index}>{part.slice(2, -2)}</strong>;
+  const nodes: ReactNode[] = [];
+  let cursor = 0;
+  let key = 0;
+
+  for (const match of value.matchAll(pattern)) {
+    const token = match[0];
+    const start = match.index ?? 0;
+    if (start > cursor) {
+      nodes.push(<span key={key++}>{value.slice(cursor, start)}</span>);
     }
-    if (part.startsWith("__") && part.endsWith("__")) {
-      return <strong key={index}>{part.slice(2, -2)}</strong>;
+
+    if (token.startsWith("**") && token.endsWith("**")) {
+      nodes.push(<strong key={key++}>{token.slice(2, -2)}</strong>);
+    } else if (token.startsWith("__") && token.endsWith("__")) {
+      nodes.push(<strong key={key++}>{token.slice(2, -2)}</strong>);
+    } else if (token.startsWith(tick) && token.endsWith(tick)) {
+      nodes.push(<code key={key++}>{token.slice(1, -1)}</code>);
+    } else if (token.startsWith("~~") && token.endsWith("~~")) {
+      nodes.push(<del key={key++}>{token.slice(2, -2)}</del>);
+    } else if (token.startsWith("[") && match[2] && match[3]) {
+      nodes.push(<a key={key++} href={match[3]} target="_blank" rel="noreferrer">{match[2]}</a>);
+    } else if ((token.startsWith("*") && token.endsWith("*")) || (token.startsWith("_") && token.endsWith("_"))) {
+      nodes.push(<em key={key++}>{token.slice(1, -1)}</em>);
     }
-    if (part.startsWith(tick) && part.endsWith(tick)) {
-      return <code key={index}>{part.slice(1, -1)}</code>;
-    }
-    if (part.startsWith("~~") && part.endsWith("~~")) {
-      return <del key={index}>{part.slice(2, -2)}</del>;
-    }
-    if ((part.startsWith("*") && part.endsWith("*")) || (part.startsWith("_") && part.endsWith("_"))) {
-      return <em key={index}>{part.slice(1, -1)}</em>;
-    }
-    return <span key={index}>{part}</span>;
-  });
+
+    cursor = start + token.length;
+  }
+
+  if (cursor < value.length) nodes.push(<span key={key++}>{value.slice(cursor)}</span>);
+  return nodes;
 }
 
 function isMarkdownBlockStart(line: string) {
   const trimmed = line.trim();
   const fence = String.fromCharCode(96).repeat(3);
-  return /^(#{1,3}\s|>\s?|[-*+]\s+|\d+\.\s+|---+$|___+$|\*\*\*+$)/.test(trimmed) ||
+  return /^(#{1,6}\s|>\s?|[-*+]\s+|\d+\.\s+|---+$|___+$|\*\*\*+$)/.test(trimmed) ||
     trimmed.startsWith(fence);
 }
 
@@ -126,13 +138,16 @@ function MarkdownPreview({ source }: { source: string }) {
       continue;
     }
 
-    const heading = trimmed.match(/^(#{1,3})\s+(.*)$/);
+    const heading = trimmed.match(/^(#{1,6})\s+(.*)$/);
     if (heading) {
       const level = heading[1].length;
       const text = inlineMarkdown(heading[2]);
       if (level === 1) blocks.push(<h1 key={"h-" + index}>{text}</h1>);
       else if (level === 2) blocks.push(<h2 key={"h-" + index}>{text}</h2>);
-      else blocks.push(<h3 key={"h-" + index}>{text}</h3>);
+      else if (level === 3) blocks.push(<h3 key={"h-" + index}>{text}</h3>);
+      else if (level === 4) blocks.push(<h4 key={"h-" + index}>{text}</h4>);
+      else if (level === 5) blocks.push(<h5 key={"h-" + index}>{text}</h5>);
+      else blocks.push(<h6 key={"h-" + index}>{text}</h6>);
       index += 1;
       continue;
     }
@@ -568,6 +583,7 @@ export default function MarkdownDiary({
                     <div className="markdown-format-toolbar" aria-label="Markdown 서식 도구">
                       <button type="button" title="제목 1" aria-label="제목 1" onClick={() => insertLinePrefix("# ")}><Heading1 size={17}/></button>
                       <button type="button" title="제목 2" aria-label="제목 2" onClick={() => insertLinePrefix("## ")}><Heading2 size={17}/></button>
+                      <button type="button" title="제목 3" aria-label="제목 3" onClick={() => insertLinePrefix("### ")}><Heading3 size={17}/></button>
                       <span className="markdown-toolbar-divider"/>
                       <button type="button" title="굵게" aria-label="굵게" onClick={() => insertWrapped("**", "**", "굵은 글씨")}><Bold size={17}/></button>
                       <button type="button" title="기울임" aria-label="기울임" onClick={() => insertWrapped("*", "*", "기울인 글씨")}><Italic size={17}/></button>
@@ -575,7 +591,9 @@ export default function MarkdownDiary({
                       <button type="button" title="글머리 기호 목록" aria-label="글머리 기호 목록" onClick={() => insertLinePrefix("- ")}><List size={17}/></button>
                       <button type="button" title="번호 목록" aria-label="번호 목록" onClick={() => insertLinePrefix("1. ")}><ListOrdered size={17}/></button>
                       <button type="button" title="인용" aria-label="인용" onClick={() => insertLinePrefix("> ")}><MessageSquareQuote size={17}/></button>
+                      <button type="button" title="인라인 코드" aria-label="인라인 코드" onClick={() => insertWrapped(String.fromCharCode(96), String.fromCharCode(96), "코드")}><Code size={17}/></button>
                       <button type="button" title="코드 블록" aria-label="코드 블록" onClick={() => insertWrapped(String.fromCharCode(96).repeat(3) + "\n", "\n" + String.fromCharCode(96).repeat(3), "코드를 입력하세요.")}><Code2 size={17}/></button>
+                      <button type="button" title="링크" aria-label="링크" onClick={() => insertWrapped("[", "](https://example.com)", "링크 텍스트")}><Link2 size={17}/></button>
                       <button type="button" title="구분선" aria-label="구분선" onClick={insertRule}><Minus size={17}/></button>
                     </div>
                   ) : <span className="markdown-preview-mode-label"><Eye size={15}/> 미리보기</span>}
