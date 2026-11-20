@@ -1052,6 +1052,35 @@ export default function MarkdownDiary({
                             highlightCodeBlocks(editor);
                             updatePage("left", htmlToMarkdown(editor.innerHTML));
                           }}
+                          onClick={event => {
+                            const editor = leftEditorRef.current;
+                            const target = event.target as HTMLElement;
+                            const link = target.closest<HTMLAnchorElement>("a[href]");
+                            if (!editor || !link || !editor.contains(link)) return;
+
+                            event.preventDefault();
+                            event.stopPropagation();
+
+                            const visibleText = (link.textContent ?? "").trim();
+                            const visibleUrl = visibleText.match(/^(?:https?:\/\/|www\.)\S+$/i)?.[0];
+                            if (visibleUrl) {
+                              const cleanUrl = visibleUrl.replace(/[.,!?;:)\]}]+$/, "");
+                              const displayHref = safeMarkdownHref(
+                                cleanUrl.startsWith("www.") ? "https://" + cleanUrl : cleanUrl
+                              );
+                              if (displayHref) {
+                                link.setAttribute("href", displayHref);
+                                link.setAttribute("target", "_blank");
+                                link.setAttribute("rel", "noopener noreferrer");
+                              }
+                            }
+
+                            const href = safeMarkdownHref(link.getAttribute("href") ?? "");
+                            if (!href) return;
+
+                            updatePage("left", htmlToMarkdown(editor.innerHTML));
+                            window.open(href, "_blank", "noopener,noreferrer");
+                          }}
                           onKeyDown={event => {
                             if (event.key !== " " && event.key !== "Enter") return;
                             const editor = leftEditorRef.current;
