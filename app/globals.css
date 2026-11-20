@@ -8548,3 +8548,25 @@ html,body{width:100%;overflow-x:clip}
 }
 
 
+
+
+/* Override the shared two-column book grid: Markdown uses one sheet across both halves. */
+.markdown-diary-canvas > .markdown-diary-single-page{
+  display:flex !important;
+  grid-template-columns:minmax(0,1fr) !important;
+  grid-template-rows:minmax(0,1fr) !important;
+  width:min(1120px, calc(100vw - 64px), calc(141.9dvh - 68px)) !important;
+}
+.markdown-diary-canvas > .markdown-diary-single-page > .markdown-single-note-page{
+  width:100% !important;
+  min-width:0 !important;
+  grid-column:1 / -1 !important;
+}
+.markdown-diary-canvas > .markdown-diary-single-page .markdown-free-note-section,
+.markdown-diary-canvas > .markdown-diary-single-page .free-note-paper,
+.markdown-diary-canvas > .markdown-diary-single-page .markdown-toolbar,
+.markdown-diary-canvas > .markdown-diary-single-page textarea.free-note-input{
+  width:100% !important;
+  max-width:none !important;
+  align-self:stretch !important;
+}
