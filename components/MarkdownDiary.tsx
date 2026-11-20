@@ -232,6 +232,7 @@ function htmlToMarkdown(html: string) {
     const children = Array.from(element.childNodes).map(inline).join("");
 
     if (tag === "BR") return "\n";
+    if (tag === "HR") return "\n---\n";
     if (tag === "B" || tag === "STRONG") return "**" + children + "**";
     if (tag === "I" || tag === "EM") return "*" + children + "*";
     if (tag === "S" || tag === "STRIKE" || tag === "DEL") return "~~" + children + "~~";
@@ -723,7 +724,7 @@ export default function MarkdownDiary({
                             while (block && block !== editor && !["P", "DIV", "H1", "H2", "H3", "LI"].includes(block.tagName)) {
                               block = block.parentElement;
                             }
-                            if (!block || block === editor) return;
+                            if (!block) return;
 
                             const beforeCaret = range.cloneRange();
                             beforeCaret.selectNodeContents(block);
