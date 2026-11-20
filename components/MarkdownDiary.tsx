@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { Check, Download, FilePlus2, Trash2 } from "lucide-react";
+import { Check } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import PlannerSpread from "@/components/PlannerSpread";
 import type { ThemeName } from "@/lib/types";
@@ -60,23 +60,12 @@ function encodeNotePages(pages: NotePages) {
   return PAGE_CONTENT_PREFIX + JSON.stringify(pages);
 }
 
-function formatTime(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return new Intl.DateTimeFormat("ko-KR", {
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit"
-  }).format(date);
-}
 
 export default function MarkdownDiary({
   client,
   userId,
   email,
   notebookId,
-  notebookTitle,
   themeStyle,
   theme,
   customColor,
@@ -348,6 +337,16 @@ export default function MarkdownDiary({
         customColor={customColor}
         onThemeChange={onThemeChange}
         onCustomColorChange={onCustomColorChange}
+        noteOptions={notes.map(note => ({ id: note.id, title: note.title }))}
+        activeNoteId={activeNoteId}
+        noteSaveLabel={saveLabel}
+        noteActionsDisabled={loading || creating}
+        noteCanExport={!!activeNote}
+        noteCanDelete={!!activeNote}
+        onNoteSelect={noteId => { void selectNote(noteId); }}
+        onCreateNote={() => { void createNote(); }}
+        onExportNote={exportMarkdown}
+        onDeleteNote={() => { void deleteActiveNote(); }}
         onOpenNotebookList={() => { void leaveDiary(onBack); }}
         onSignOut={() => { void leaveDiary(onSignOut); }}
         onDeleteAccount={onDeleteAccount}
@@ -371,58 +370,18 @@ export default function MarkdownDiary({
 
         <div className="workspace-shell">
           <div className="workspace-canvas markdown-diary-canvas">
-            <div className="markdown-diary-toolbar">
-              <div className="markdown-diary-heading">
-                <span className="eyebrow">FREE DIARY</span>
-                <h1>{notebookTitle}</h1>
-                <p>양쪽 페이지에 Markdown으로 자유롭게 기록해 보세요.</p>
-              </div>
-
-              <div className="markdown-diary-controls">
-                <div className="save-indicator" aria-live="polite">
-                  <span className={"indicator-dot markdown-save-dot markdown-save-" + saveState}/>
-                  {saveLabel}
-                </div>
-
-                <select
-                  className="markdown-note-select"
-                  aria-label="노트 선택"
-                  value={activeNoteId ?? ""}
-                  disabled={loading || notes.length === 0}
-                  onChange={event => { void selectNote(event.target.value); }}
-                >
-                  {notes.length === 0 ? <option value="">노트 없음</option> : null}
-                  {notes.map(note => (
-                    <option key={note.id} value={note.id}>
-                      {(note.title.trim() || "제목 없는 글") + " · " + formatTime(note.updated_at)}
-                    </option>
-                  ))}
-                </select>
-
-                <button type="button" className="outline-btn markdown-action-button" onClick={() => { void createNote(); }} disabled={creating || loading}>
-                  <FilePlus2 size={15}/><span>새 노트</span>
-                </button>
-                <button type="button" className="outline-btn markdown-action-icon" onClick={exportMarkdown} disabled={!activeNote} title="Markdown 파일 내보내기" aria-label="Markdown 파일 내보내기">
-                  <Download size={16}/>
-                </button>
-                <button type="button" className="outline-btn markdown-action-icon" onClick={() => { void deleteActiveNote(); }} disabled={!activeNote} title="현재 노트 삭제" aria-label="현재 노트 삭제">
-                  <Trash2 size={16}/>
-                </button>
-              </div>
-            </div>
-
             <PlannerSpread className="book-frame day-book-frame markdown-diary-spread">
               <div className="book-spine" aria-hidden="true">
                 {Array.from({ length: 13 }, (_, index) => <span key={index}/>)}
               </div>
 
               <section className="paper-page left-page markdown-note-page" aria-label="왼쪽 자유 노트">
-                <div className="free-note-sheet">
-                  <h2 className="free-note-heading">FREE NOTE</h2>
-                  <div className="free-note-board">
+                <div className="paper-section key-section markdown-free-note-section">
+                  <div className="section-heading"><span>FREE NOTE</span></div>
+                  <div className="free-note-paper">
                     <textarea
                       ref={leftEditorRef}
-                      className="free-note-textarea"
+                      className="free-note-input"
                       aria-label="왼쪽 페이지 자유 노트"
                       value={pageContents.left}
                       disabled={!activeNote || loading}
@@ -434,12 +393,12 @@ export default function MarkdownDiary({
               </section>
 
               <section className="paper-page right-page markdown-note-page" aria-label="오른쪽 자유 노트">
-                <div className="free-note-sheet">
-                  <h2 className="free-note-heading">FREE NOTE</h2>
-                  <div className="free-note-board">
+                <div className="paper-section key-section markdown-free-note-section">
+                  <div className="section-heading"><span>FREE NOTE</span></div>
+                  <div className="free-note-paper">
                     <textarea
                       ref={rightEditorRef}
-                      className="free-note-textarea"
+                      className="free-note-input"
                       aria-label="오른쪽 페이지 자유 노트"
                       value={pageContents.right}
                       disabled={!activeNote || loading}
