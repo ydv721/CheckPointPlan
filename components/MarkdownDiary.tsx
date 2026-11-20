@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { Bold, Code2, Heading1, Italic, Link2, List, ListOrdered, Minus, Palette, Quote, Share2, Strikethrough, Check } from "lucide-react";
+import { Bold, Code2, Heading1, Italic, List, ListOrdered, Minus, Palette, Quote, Share2, Strikethrough, Check } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import type { ThemeName } from "@/lib/types";
 
@@ -21,7 +21,7 @@ type NotePages = {
   right: string;
 };
 
-type MarkdownAction = "bold" | "italic" | "strike" | "heading" | "bullet" | "ordered" | "quote" | "code" | "link" | "divider";
+type MarkdownAction = "bold" | "italic" | "strike" | "heading" | "bullet" | "ordered" | "quote" | "code" | "divider";
 
 const MARKDOWN_TOOLBAR = [
   { action: "bold", label: "굵게", icon: Bold },
@@ -31,8 +31,7 @@ const MARKDOWN_TOOLBAR = [
   { action: "bullet", label: "글머리표", icon: List },
   { action: "ordered", label: "번호 목록", icon: ListOrdered },
   { action: "quote", label: "인용", icon: Quote },
-  { action: "code", label: "코드", icon: Code2 },
-  { action: "link", label: "링크", icon: Link2 },
+  { action: "code", label: "코드 블록", icon: Code2 },
   { action: "divider", label: "구분선", icon: Minus }
 ] as const;
 
@@ -52,6 +51,23 @@ type Props = {
   onSignOut: () => Promise<void>;
   onDeleteAccount: () => void;
 };
+
+const CODE_LANGUAGES = [
+  { value: "c", label: "C" },
+  { value: "cpp", label: "C++" },
+  { value: "java", label: "Java" },
+  { value: "python", label: "Python" },
+  { value: "javascript", label: "JavaScript" },
+  { value: "typescript", label: "TypeScript" },
+  { value: "html", label: "HTML" },
+  { value: "css", label: "CSS" },
+  { value: "sql", label: "SQL" },
+  { value: "bash", label: "Bash" },
+  { value: "json", label: "JSON" },
+  { value: "plaintext", label: "Plain text" }
+] as const;
+
+const DEFAULT_CODE_LANGUAGE = "c";
 
 const PAGE_CONTENT_PREFIX = "\u001eCHECKPOINT_FREE_NOTE_V1\u001e";
 
@@ -83,6 +99,94 @@ function escapeHtml(value: string) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 }
+
+function normalizeCodeLanguage(value: string) {
+  return CODE_LANGUAGES.some(language => language.value === value)
+    ? value
+    : "plaintext";
+}
+
+function highlightCodeHtml(source: string, language: string) {
+  const lang = normalizeCodeLanguage(language);
+  if (lang === "plaintext" || !source) return escapeHtml(source) || "<br>";
+
+  const keywordGroups: Record<string, string> = {
+    c: "auto break case char const continue default do double else enum extern float for goto if int long register restrict return short signed sizeof static struct switch typedef union unsigned void volatile while",
+    cpp: "alignas auto bool break case char class const constexpr continue default delete do double else enum explicit extern false float for friend goto if inline int long namespace new nullptr operator private protected public register return short signed sizeof static struct switch template this throw true try typedef typename union unsigned using virtual void volatile while",
+    java: "abstract assert boolean break byte case catch char class const continue default do double else enum extends final finally float for if implements import instanceof int interface long native new package private protected public return short static strictfp super switch synchronized this throw throws transient try void volatile while true false null",
+    python: "and as assert async await break class continue def del elif else except False finally for from global if import in is lambda None nonlocal not or pass raise return True try while with yield",
+    javascript: "async await break case catch class const continue debugger default delete do else export extends false finally for from function if import in instanceof let new null return super switch this throw true try typeof var void while yield",
+    typescript: "abstract any as async await boolean break case catch class const constructor continue debugger declare default delete do else enum export extends false finally for from function if implements import in instanceof interface keyof let namespace never new null number private protected public readonly return super switch this throw true try type typeof undefined var void while yield",
+    sql: "add all alter and as asc begin between by case cast check column commit constraint create cross current_date current_time database default delete desc distinct drop else end exists false fetch foreign from full group having in index inner insert into is join key left like limit not null offset on or order outer primary procedure references right rollback row select set table then true union unique update use values view when where with",
+    bash: "case do done elif else esac fi for function if in select then time until while"
+  };
+  const keywords = (keywordGroups[lang] ?? "").split(/\s+/).filter(Boolean).join("|");
+  const keywordPattern = keywords ? "\\b(?:" + keywords + ")\\b" : "(?!)";
+  const hashPattern = lang === "python" || lang === "bash"
+    ? "#[^\\n]*"
+    : "#[ \\t]*(?:include|define|if|ifdef|ifndef|endif|pragma)\\b";
+  const pattern = new RegExp(
+    "(" + hashPattern + "|//[^\\n]*|--[^\\n]*|/\\*[\\s\\S]*?\\*/|<[^>\\n]+>|\"(?:\\\\.|[^\"\\\\])*\"|'(?:\\\\.|[^'\\\\])*'|" + keywordPattern + "|\\b\\d+(?:\\.\\d+)?\\b|\\b[A-Za-z_]\\w*(?=\\s*\\())",
+    "g"
+  );
+
+  return source.replace(pattern, token => {
+    let tokenClass = "function";
+    if (/^(#|\\/\\/|--|\\/\\*)/.test(token)) tokenClass = "comment";
+    else if (/^<[^>]+>$/.test(token)) tokenClass = "include";
+    else if (/^["']/.test(token)) tokenClass = "string";
+    else if (/^\\d/.test(token)) tokenClass = "number";
+    else if (keywords && new RegExp("^(?:" + keywords + ")$").test(token)) tokenClass = "keyword";
+    return '<span class="code-token-' + tokenClass + '">' + escapeHtml(token) + "</span>";
+  });
+}
+
+function createMarkdownCodeBlockHtml(code: string, language: string, inserted = false) {
+  const safeLanguage = normalizeCodeLanguage(language);
+  const options = CODE_LANGUAGES.map(({ value, label }) =>
+    '<option value="' + value + '"' + (value === safeLanguage ? " selected" : "") + ">" + label + "</option>"
+  ).join("");
+  const codeHtml = code ? highlightCodeHtml(code, safeLanguage) : "<br>";
+  return (
+    '<div class="markdown-code-block" data-language="' + safeLanguage + '"' +
+      (inserted ? ' data-inserted="true"' : "") + ">" +
+      '<div class="markdown-code-header" contenteditable="false">' +
+        '<span class="markdown-code-label">CODE</span>' +
+        '<select class="markdown-code-language" aria-label="코드 언어">' + options + "</select>" +
+      "</div>" +
+      "<pre><code>" + codeHtml + "</code></pre>" +
+    "</div>"
+  );
+}
+
+function serializeCodeText(node: Node): string {
+  if (node.nodeType === 3) return node.textContent ?? "";
+  if (node.nodeType !== 1) return "";
+
+  const element = node as HTMLElement;
+  if (element.tagName === "BR") return "\n";
+
+  let result = "";
+  for (const child of Array.from(element.childNodes)) {
+    const childText = serializeCodeText(child);
+    const isBlockLine = child.nodeType === 1 && ["DIV", "P"].includes((child as HTMLElement).tagName);
+    if (isBlockLine && result && !result.endsWith("\n")) result += "\n";
+    result += childText;
+    if (isBlockLine && !result.endsWith("\n")) result += "\n";
+  }
+  return result;
+}
+
+function highlightCodeBlocks(editor: HTMLElement) {
+  editor.querySelectorAll<HTMLElement>(".markdown-code-block").forEach(block => {
+    const code = block.querySelector("pre code");
+    if (!code) return;
+    const language = normalizeCodeLanguage(block.dataset.language ?? "plaintext");
+    const source = serializeCodeText(code).replace(/\n+$/, "");
+    code.innerHTML = highlightCodeHtml(source, language);
+  });
+}
+
 function normalizeMarkdownColor(value: string) {
   const color = value.trim().toLowerCase();
   if (/^#[0-9a-f]{6}$/.test(color)) return color;
@@ -145,6 +249,14 @@ function renderInlineMarkdown(value: string) {
       ? stash('<a href="' + escapeHtml(href) + '" target="_blank" rel="noopener noreferrer">' + label + "</a>")
       : label;
   });
+  html = html.replace(/(^|[\s(])((?:https?:\/\/|www\.)[^\s<]+)/gi, (_match, prefix: string, rawUrl: string) => {
+    const trailing = rawUrl.match(/[.,!?;:)\]}]+$/)?.[0] ?? "";
+    const url = trailing ? rawUrl.slice(0, -trailing.length) : rawUrl;
+    const href = safeMarkdownHref(url.startsWith("www.") ? "https://" + url : url);
+    return href
+      ? prefix + stash('<a href="' + escapeHtml(href) + '" target="_blank" rel="noopener noreferrer">' + url + "</a>") + trailing
+      : prefix + rawUrl;
+  });
 
   let rendered = html;
   for (let pass = 0; pass <= tokens.length; pass += 1) {
@@ -185,7 +297,8 @@ function markdownToHtml(markdown: string) {
         index += 1;
       }
       if (index < lines.length) index += 1;
-      blocks.push("<pre><code>" + escapeHtml(codeLines.join("\n")) + "</code></pre>");
+      const language = normalizeCodeLanguage((codeFence[2].trim().split(/\s+/)[0] ?? "plaintext").toLowerCase());
+      blocks.push(createMarkdownCodeBlockHtml(codeLines.join("\n"), language));
       continue;
     }
 
@@ -257,7 +370,7 @@ function htmlToMarkdown(html: string) {
     if (tag === "B" || tag === "STRONG") return "**" + children + "**";
     if (tag === "I" || tag === "EM") return "*" + children + "*";
     if (tag === "S" || tag === "STRIKE" || tag === "DEL") return "~~" + children + "~~";
-    if (tag === "CODE") return String.fromCharCode(96) + children + String.fromCharCode(96);
+    if (tag === "CODE" && !element.closest(".markdown-code-block")) return String.fromCharCode(96) + children + String.fromCharCode(96);
     if (tag === "FONT" || tag === "SPAN") {
       const rawColor = tag === "FONT" ? (element.getAttribute("color") ?? element.style.color) : element.style.color;
       const color = normalizeMarkdownColor(rawColor);
@@ -302,6 +415,14 @@ function htmlToMarkdown(html: string) {
     const tag = element.tagName;
     const children = Array.from(element.childNodes);
 
+    if (tag === "DIV" && element.classList.contains("markdown-code-block")) {
+      const language = normalizeCodeLanguage(element.dataset.language ?? "plaintext");
+      const codeElement = element.querySelector("pre code") ?? element.querySelector("pre");
+      const code = codeElement ? serializeCodeText(codeElement).replace(/\n+$/, "") : "";
+      const fenceLanguage = language === "plaintext" ? "" : language;
+      const fence = String.fromCharCode(96).repeat(3);
+      return fence + fenceLanguage + "\n" + code + "\n" + fence + "\n\n";
+    }
     if (tag === "H1" || tag === "H2" || tag === "H3") {
       const level = Number(tag.slice(1));
       return "#".repeat(level) + " " + children.map(inline).join("") + "\n\n";
@@ -314,7 +435,7 @@ function htmlToMarkdown(html: string) {
     }
     if (tag === "PRE") {
       const fence = String.fromCharCode(96).repeat(3);
-      return fence + "\n" + (element.textContent ?? "").replace(/\n+$/, "") + "\n" + fence + "\n\n";
+      return fence + "\n" + serializeCodeText(element).replace(/\n+$/, "") + "\n" + fence + "\n\n";
     }
     if (tag === "HR") return "---\n\n";
     if (tag === "DIV") {
@@ -604,6 +725,42 @@ export default function MarkdownDiary({
     applyTextColor(normalizeMarkdownColor(rawColor) || "#34465e");
   }
 
+  function insertCodeBlock() {
+    const editor = leftEditorRef.current;
+    if (!editor || !activeNote || loading) return;
+
+    const selection = window.getSelection();
+    const hasEditorSelection = Boolean(
+      selection?.rangeCount &&
+      selection.anchorNode &&
+      editor.contains(selection.anchorNode)
+    );
+    const selectedCode = hasEditorSelection ? selection?.toString() ?? "" : "";
+
+    editor.focus();
+    document.execCommand(
+      "insertHTML",
+      false,
+      createMarkdownCodeBlockHtml(selectedCode, DEFAULT_CODE_LANGUAGE, true)
+    );
+
+    const inserted = editor.querySelector<HTMLElement>('.markdown-code-block[data-inserted="true"]');
+    if (inserted) {
+      inserted.removeAttribute("data-inserted");
+      const code = inserted.querySelector("pre code");
+      if (code && selection) {
+        const range = document.createRange();
+        range.selectNodeContents(code);
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+    }
+
+    updatePage("left", htmlToMarkdown(editor.innerHTML));
+    editor.focus();
+  }
+
   function applyMarkdown(action: MarkdownAction) {
     const editor = leftEditorRef.current;
     if (!editor || !activeNote || loading) return;
@@ -626,15 +783,8 @@ export default function MarkdownDiary({
     } else if (action === "quote") {
       document.execCommand("formatBlock", false, "BLOCKQUOTE");
     } else if (action === "code") {
-      const code = selected || "코드";
-      document.execCommand("insertHTML", false, "<code>" + escapeHtml(code) + "</code>");
-    } else if (action === "link") {
-      const label = selected || "링크 텍스트";
-      document.execCommand(
-        "insertHTML",
-        false,
-        '<a href="https://주소" target="_blank" rel="noopener noreferrer">' + escapeHtml(label) + "</a>"
-      );
+      insertCodeBlock();
+      return;
     } else if (action === "divider") {
       document.execCommand("insertHorizontalRule");
     }
@@ -866,20 +1016,86 @@ export default function MarkdownDiary({
                           onPaste={event => {
                             event.preventDefault();
                             const pasted = event.clipboardData.getData("text/plain");
-                            if (pasted) document.execCommand("insertHTML", false, markdownToHtml(pasted));
+                            const target = event.target as HTMLElement;
+                            if (!pasted) return;
+                            if (target.closest(".markdown-code-block")) {
+                              document.execCommand("insertText", false, pasted);
+                            } else {
+                              document.execCommand("insertHTML", false, markdownToHtml(pasted));
+                            }
                           }}
                           onDrop={event => {
                             event.preventDefault();
                             const dropped = event.dataTransfer.getData("text/plain");
-                            if (dropped) document.execCommand("insertHTML", false, markdownToHtml(dropped));
+                            const target = event.target as HTMLElement;
+                            if (!dropped) return;
+                            if (target.closest(".markdown-code-block")) {
+                              document.execCommand("insertText", false, dropped);
+                            } else {
+                              document.execCommand("insertHTML", false, markdownToHtml(dropped));
+                            }
+                          }}
+                          onChange={event => {
+                            const target = event.target as HTMLElement;
+                            if (!(target instanceof HTMLSelectElement) || !target.classList.contains("markdown-code-language")) return;
+                            const codeBlock = target.closest<HTMLElement>(".markdown-code-block");
+                            const editor = leftEditorRef.current;
+                            if (!codeBlock || !editor) return;
+                            codeBlock.dataset.language = normalizeCodeLanguage(target.value);
+                            updatePage("left", htmlToMarkdown(editor.innerHTML));
+                          }}
+                          onBlur={event => {
+                            const editor = leftEditorRef.current;
+                            const nextTarget = event.relatedTarget as Node | null;
+                            if (!editor || (nextTarget && editor.contains(nextTarget))) return;
+                            highlightCodeBlocks(editor);
+                            updatePage("left", htmlToMarkdown(editor.innerHTML));
                           }}
                           onKeyDown={event => {
-                            if (event.key !== " ") return;
+                            if (event.key !== " " && event.key !== "Enter") return;
                             const editor = leftEditorRef.current;
                             const selection = window.getSelection();
                             if (!editor || !selection?.rangeCount || !selection.isCollapsed) return;
                             const range = selection.getRangeAt(0);
                             if (!editor.contains(range.startContainer)) return;
+
+                            const currentElement = range.startContainer.nodeType === 1
+                              ? range.startContainer as HTMLElement
+                              : range.startContainer.parentElement;
+                            if (currentElement?.closest(".markdown-code-block")) return;
+
+                            if (range.startContainer.nodeType === 3) {
+                              const textNode = range.startContainer as Text;
+                              const beforeCaretText = (textNode.textContent ?? "").slice(0, range.startOffset);
+                              const urlMatch = beforeCaretText.match(/(?:https?:\/\/|www\.)[^\s<>]+$/i);
+                              if (urlMatch) {
+                                const rawUrl = urlMatch[0];
+                                const trailing = rawUrl.match(/[.,!?;:)\]}]+$/)?.[0] ?? "";
+                                const url = trailing ? rawUrl.slice(0, -trailing.length) : rawUrl;
+                                const href = safeMarkdownHref(url.startsWith("www.") ? "https://" + url : url);
+                                if (href && url) {
+                                  const linkRange = document.createRange();
+                                  linkRange.setStart(textNode, range.startOffset - url.length);
+                                  linkRange.setEnd(textNode, range.startOffset);
+                                  const anchor = document.createElement("a");
+                                  anchor.href = href;
+                                  anchor.target = "_blank";
+                                  anchor.rel = "noopener noreferrer";
+                                  anchor.appendChild(linkRange.extractContents());
+                                  linkRange.insertNode(anchor);
+
+                                  const afterLink = document.createRange();
+                                  afterLink.setStartAfter(anchor);
+                                  afterLink.collapse(true);
+                                  selection.removeAllRanges();
+                                  selection.addRange(afterLink);
+                                  updatePage("left", htmlToMarkdown(editor.innerHTML));
+                                  return;
+                                }
+                              }
+                            }
+
+                            if (event.key !== " ") return;
 
                             let block = range.startContainer.nodeType === 1
                               ? range.startContainer as HTMLElement
