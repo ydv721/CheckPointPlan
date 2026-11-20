@@ -132,10 +132,11 @@ function highlightCodeHtml(source: string, language: string) {
 
   return source.replace(pattern, token => {
     let tokenClass = "function";
-    if (/^(#|\\/\\/|--|\\/\\*)/.test(token)) tokenClass = "comment";
+    if (/^#/.test(token)) tokenClass = lang === "python" || lang === "bash" ? "comment" : "directive";
+    else if (/^(\/\/|--|\/\*)/.test(token)) tokenClass = "comment";
     else if (/^<[^>]+>$/.test(token)) tokenClass = "include";
     else if (/^["']/.test(token)) tokenClass = "string";
-    else if (/^\\d/.test(token)) tokenClass = "number";
+    else if (/^\d/.test(token)) tokenClass = "number";
     else if (keywords && new RegExp("^(?:" + keywords + ")$").test(token)) tokenClass = "keyword";
     return '<span class="code-token-' + tokenClass + '">' + escapeHtml(token) + "</span>";
   });
@@ -1062,7 +1063,7 @@ export default function MarkdownDiary({
                             const currentElement = range.startContainer.nodeType === 1
                               ? range.startContainer as HTMLElement
                               : range.startContainer.parentElement;
-                            if (currentElement?.closest(".markdown-code-block")) return;
+                            if (currentElement?.closest(".markdown-code-block, a")) return;
 
                             if (range.startContainer.nodeType === 3) {
                               const textNode = range.startContainer as Text;
@@ -1085,7 +1086,12 @@ export default function MarkdownDiary({
                                   linkRange.insertNode(anchor);
 
                                   const afterLink = document.createRange();
-                                  afterLink.setStartAfter(anchor);
+                                  const suffixNode = anchor.nextSibling;
+                                  if (trailing && suffixNode?.nodeType === 3) {
+                                    afterLink.setStart(suffixNode, Math.min(trailing.length, (suffixNode as Text).length));
+                                  } else {
+                                    afterLink.setStartAfter(anchor);
+                                  }
                                   afterLink.collapse(true);
                                   selection.removeAllRanges();
                                   selection.addRange(afterLink);
