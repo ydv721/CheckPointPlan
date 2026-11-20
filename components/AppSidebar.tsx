@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { themes, type ThemeName } from "@/lib/types";
 
-type SidebarView = "library" | "planner" | "cover" | "markdown";
+type SidebarView = "library" | "planner" | "cover" | "markdown" | "markdown-cover";
 
 type AppSidebarProps = {
   email: string;
@@ -148,7 +148,7 @@ export default function AppSidebar({
                 </button>
               )}
 
-              {currentView === "planner" && (
+              {(currentView === "planner" || currentView === "markdown") && (
                 <button type="button" onClick={() => runAction(() => onViewChange?.("cover"))}>
                   <Sparkles size={18} />
                   <span>표지 꾸미기</span>
@@ -156,10 +156,10 @@ export default function AppSidebar({
                 </button>
               )}
 
-              {currentView === "cover" && (
+              {(currentView === "cover" || currentView === "markdown-cover") && (
                 <button type="button" onClick={() => runAction(() => onViewChange?.("planner"))}>
                   <BookOpen size={18} />
-                  <span>플래너로 돌아가기</span>
+                  <span>{currentView === "markdown-cover" ? "다이어리로 돌아가기" : "플래너로 돌아가기"}</span>
                   <ArrowRight size={16} className="app-sidebar-arrow" />
                 </button>
               )}
