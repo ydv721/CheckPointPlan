@@ -486,7 +486,7 @@ export default function MarkdownDiary({
                   </div>
                 </div>
               </section>
-            </div>annerSpread>
+            </div>
           </div>
         </div>
       </main>
