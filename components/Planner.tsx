@@ -575,7 +575,7 @@ export default function Planner() {
   const vars={"--bg":palette.bg,"--paper":palette.paper,"--ink":palette.ink,"--accent":palette.accent,"--soft":palette.soft,"--line":palette.line,"--cover":palette.cover,"--cover-ink":palette.coverInk} as CSSProperties;
   const libraryPalette=libraryDarkMode?themes.black:themes.blue;
   const libraryThemeStyle={"--bg":libraryPalette.bg,"--paper":libraryPalette.paper,"--ink":libraryPalette.ink,"--accent":libraryPalette.accent,"--soft":libraryPalette.soft,"--line":libraryPalette.line,"--cover":libraryPalette.cover,"--cover-ink":libraryPalette.coverInk} as CSSProperties;
-  const activeSettingsNotebookId=activeNotebookId??activeMarkdownNotebookId;
+  const activeSettingsNotebookId=activeMarkdownNotebookId??activeNotebookId;
 
   useEffect(()=>{
     try {
@@ -822,9 +822,15 @@ export default function Planner() {
       .then(({data,error})=>{
         if(!active)return;
         if(error)setAlert(`설정을 불러오지 못했습니다: ${error.message}`);
+        const metadata=user.user_metadata??{};
+        const defaultTheme=metadata.checkpoint_default_theme;
+        const fallbackTheme:ThemeName=typeof defaultTheme==="string"&&Object.keys(themes).includes(defaultTheme)
+          ?defaultTheme as ThemeName:"blue";
+        const defaultColor=typeof metadata.checkpoint_default_custom_color==="string"
+          ?sanitizeHex(metadata.checkpoint_default_custom_color):"#8b9ec4";
         const t = data?.theme;
-        const nextTheme:ThemeName=t && Object.keys(themes).includes(t)?t as ThemeName:"blue";
-        const nextCustom=data?.custom_color||"#8b9ec4";
+        const nextTheme:ThemeName=t && Object.keys(themes).includes(t)?t as ThemeName:fallbackTheme;
+        const nextCustom=data?.custom_color||defaultColor;
         const savedCover:Partial<Cover>=data?.cover && typeof data.cover==="object"?data.cover as Partial<Cover>:{};
         let coverItems:CoverItem[]=Array.isArray(savedCover.items)?savedCover.items:defaultCover.items;
         const subtitleConverted=savedCover.subtitleConverted===true;
