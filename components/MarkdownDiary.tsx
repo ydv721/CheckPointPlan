@@ -767,7 +767,6 @@ export default function MarkdownDiary({
     if (!editor || !activeNote || loading) return;
 
     editor.focus();
-    const selected = window.getSelection()?.toString() ?? "";
 
     if (action === "bold") {
       document.execCommand("bold");
