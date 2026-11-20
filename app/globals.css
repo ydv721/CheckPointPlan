@@ -8795,3 +8795,60 @@ html,body{width:100%;overflow-x:clip}
   .markdown-note-preview{min-height:420px;padding:18px 16px}
   .markdown-editor-footer{align-items:flex-start;flex-direction:column;gap:4px;padding:8px 12px}
 }
+
+/* Keep the Markdown diary in the same two-page paper layout as the planner. */
+.markdown-book-frame{
+  flex:1;
+  height:calc(100dvh - 245px);
+  min-height:520px;
+  grid-template-columns:minmax(0,1fr) minmax(0,1.08fr);
+}
+.markdown-book-frame .paper-page{min-height:0;overflow:hidden}
+.markdown-note-library{
+  padding:20px 42px 20px 28px;
+  border-right:0;
+  background:var(--paper);
+}
+.markdown-note-editor{
+  padding:20px 28px 20px 42px;
+  overflow:hidden;
+  background:var(--paper);
+}
+.markdown-note-library-heading{padding:0 0 12px}
+.markdown-note-search{margin:13px 0 8px}
+.markdown-note-list{padding:4px 0 10px}
+.markdown-editor-header{padding:0 0 13px}
+.markdown-editor-toolbar-row{margin:0 -4px}
+.markdown-note-textarea,.markdown-note-preview{min-height:0}
+
+@media(max-width:900px){
+  .markdown-book-frame{
+    height:calc(100dvh - 235px);
+    min-height:500px;
+    grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr);
+  }
+  .markdown-note-library{padding:18px 30px 18px 20px}
+  .markdown-note-editor{padding:18px 20px 18px 30px}
+}
+@media(max-width:680px){
+  .markdown-book-frame{
+    height:auto;
+    min-height:0;
+    grid-template-columns:minmax(0,1fr);
+    overflow:visible;
+  }
+  .markdown-book-frame .book-spine{display:none}
+  .markdown-book-frame .paper-page{
+    min-height:0;
+    overflow:visible;
+    padding:17px 15px;
+    border-radius:12px;
+  }
+  .markdown-note-library{
+    max-height:250px;
+    min-height:180px;
+    border-bottom:1px solid var(--line);
+  }
+  .markdown-note-editor{min-height:600px}
+  .markdown-editor-header{padding:0 0 12px}
+}
