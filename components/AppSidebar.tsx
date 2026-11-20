@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import {
-  ArrowRight, BookOpen, Check, ChevronDown, Download, FilePlus2, House, LogOut, Menu,
+  ArrowRight, BookOpen, Check, ChevronDown, FilePlus2, House, LogOut, Menu,
   Moon, Palette, Sparkles, Trash2, X
 } from "lucide-react";
 import { themes, type ThemeName } from "@/lib/types";
@@ -26,11 +26,9 @@ type AppSidebarProps = {
   activeNoteId?: string | null;
   noteSaveLabel?: string;
   noteActionsDisabled?: boolean;
-  noteCanExport?: boolean;
   noteCanDelete?: boolean;
   onNoteSelect?: (noteId: string) => void;
   onCreateNote?: () => void;
-  onExportNote?: () => void;
   onDeleteNote?: () => void;
   onOpenNotebookList?: () => void;
   onViewChange?: (view: "planner" | "cover") => void;
@@ -52,11 +50,9 @@ export default function AppSidebar({
   activeNoteId = null,
   noteSaveLabel = "",
   noteActionsDisabled = false,
-  noteCanExport = false,
   noteCanDelete = false,
   onNoteSelect,
   onCreateNote,
-  onExportNote,
   onDeleteNote,
   onOpenNotebookList,
   onViewChange,
@@ -275,9 +271,6 @@ export default function AppSidebar({
                 <div className="app-sidebar-note-actions">
                   <button type="button" onClick={() => runAction(onCreateNote)} disabled={noteActionsDisabled}>
                     <FilePlus2 size={16}/><span>새 노트</span>
-                  </button>
-                  <button type="button" onClick={() => runAction(onExportNote)} disabled={!noteCanExport}>
-                    <Download size={16}/><span>Markdown 내보내기</span>
                   </button>
                   <button type="button" onClick={() => runAction(onDeleteNote)} disabled={!noteCanDelete}>
                     <Trash2 size={16}/><span>현재 노트 삭제</span>
