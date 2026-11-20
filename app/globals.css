@@ -8343,17 +8343,6 @@ html,body{width:100%;overflow-x:clip}
   color:#9b3d48;
   font-size:12px;
 }
-.markdown-diary-workspace{
-  flex:1;
-  min-height:540px;
-  display:grid;
-  grid-template-columns:290px minmax(0,1fr);
-  overflow:hidden;
-  border:1px solid var(--line);
-  border-radius:15px;
-  background:var(--paper);
-  box-shadow:0 12px 35px #172b440d;
-}
 .markdown-note-library{
   min-width:0;
   display:flex;
@@ -8763,7 +8752,6 @@ html,body{width:100%;overflow-x:clip}
 @media(max-width:900px){
   .markdown-diary-header{padding:0 22px}
   .markdown-diary-main{padding:24px 22px 30px}
-  .markdown-diary-workspace{grid-template-columns:245px minmax(0,1fr)}
   .markdown-editor-header{padding:12px 16px}
   .markdown-note-title{font-size:18px}
   .markdown-editor-actions button{padding:7px 8px}
@@ -8779,11 +8767,6 @@ html,body{width:100%;overflow-x:clip}
   .markdown-diary-heading h1{font-size:23px}
   .markdown-diary-heading p{font-size:11px}
   .markdown-diary-save-status{padding:7px 9px;font-size:9px}
-  .markdown-diary-workspace{
-    min-height:0;
-    grid-template-columns:minmax(0,1fr);
-    overflow:visible;
-  }
   .markdown-note-library{
     max-height:250px;
     min-height:180px;
