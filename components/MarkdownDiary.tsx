@@ -711,9 +711,11 @@ export default function MarkdownDiary({
     updatePage("left", htmlToMarkdown(editor.innerHTML));
 
     if (keepPickerOpen) {
-      const currentRange = selection.getRangeAt(0);
-      if (editor.contains(currentRange.commonAncestorContainer)) {
-        editorSelectionRef.current = currentRange.cloneRange();
+      if (selection.rangeCount > 0) {
+        const currentRange = selection.getRangeAt(0);
+        if (editor.contains(currentRange.commonAncestorContainer)) {
+          editorSelectionRef.current = currentRange.cloneRange();
+        }
       }
       return;
     }
