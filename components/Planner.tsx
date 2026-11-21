@@ -53,6 +53,43 @@ const today = () => {
 };
 const uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 const NOTEBOOK_LABELS:Record<NotebookType,string>={planner:"플래너","study-notes":"필기 다이어리",diary:"일기",checklist:"체크리스트","free-notes":"프리 노트"};
+
+type NotebookCoverSettings = {
+  notebook_id:string;
+  theme:string;
+  custom_color:string;
+  cover:unknown;
+  updated_at?:string;
+};
+type NotebookTypeRecord = {id:string;notebook_type:NotebookType};
+
+const isDecoratedCover=(value:unknown):boolean=>{
+  if(!value||typeof value!=="object"||Array.isArray(value))return false;
+  const candidate=value as Partial<Cover>;
+  return Boolean(
+    (Array.isArray(candidate.items)&&candidate.items.length>0)||
+    candidate.backgroundColor||
+    candidate.backgroundImage||
+    candidate.patternColor||
+    (candidate.backgroundPattern&&candidate.backgroundPattern!=="grid")||
+    (typeof candidate.patternThickness==="number"&&candidate.patternThickness!==2)||
+    (typeof candidate.subtitle==="string"&&candidate.subtitle.trim())
+  );
+};
+
+function getSharedCoverSettings(settingsRows:NotebookCoverSettings[],notebookRows:NotebookTypeRecord[]) {
+  const newestFirst=(a:NotebookCoverSettings,b:NotebookCoverSettings)=>
+    new Date(b.updated_at??0).getTime()-new Date(a.updated_at??0).getTime();
+  const plannerSettings=settingsRows
+    .filter(setting=>notebookRows.some(row=>row.id===setting.notebook_id&&row.notebook_type==="planner"))
+    .sort(newestFirst);
+  const sortedSettings=[...settingsRows].sort(newestFirst);
+  return plannerSettings.find(setting=>isDecoratedCover(setting.cover))||
+    sortedSettings.find(setting=>isDecoratedCover(setting.cover))||
+    plannerSettings[0]||
+    sortedSettings[0]||
+    null;
+}
 const dateView = (date: string) => {
   const [y,m,d] = date.split("-").map(Number);
   return `${y}년 ${m}월 ${d}일 ${DAYS[new Date(y,m-1,d).getDay()]}요일`;
@@ -748,30 +785,7 @@ export default function Planner() {
       }
 
       const settingsByNotebook=new Map(settingsRows.map(setting=>[setting.notebook_id,setting]));
-      const isDecoratedCover=(value:unknown)=>{
-        if(!value||typeof value!=="object"||Array.isArray(value))return false;
-        const candidate=value as Partial<Cover>;
-        return Boolean(
-          (Array.isArray(candidate.items)&&candidate.items.length>0)||
-          candidate.backgroundColor||
-          candidate.backgroundImage||
-          candidate.patternColor||
-          (candidate.backgroundPattern&&candidate.backgroundPattern!=="grid")||
-          (typeof candidate.patternThickness==="number"&&candidate.patternThickness!==2)||
-          (typeof candidate.subtitle==="string"&&candidate.subtitle.trim())
-        );
-      };
-      const newestFirst=(a:typeof settingsRows[number],b:typeof settingsRows[number])=>
-        new Date(b.updated_at??0).getTime()-new Date(a.updated_at??0).getTime();
-      const plannerSettings=settingsRows
-        .filter(setting=>rows.some(row=>row.id===setting.notebook_id&&row.notebook_type==="planner"))
-        .sort(newestFirst);
-      const sharedCoverSettings=
-        plannerSettings.find(setting=>isDecoratedCover(setting.cover))||
-        settingsRows.filter(setting=>isDecoratedCover(setting.cover)).sort(newestFirst)[0]||
-        plannerSettings[0]||
-        settingsRows.sort(newestFirst)[0]||
-        null;
+      const sharedCoverSettings=getSharedCoverSettings(settingsRows,rows);
 
       const nextNotebooks:NotebookRecord[]=rows.map(row=>{
         const ownSettings=settingsByNotebook.get(row.id);
@@ -846,51 +860,72 @@ export default function Planner() {
   useEffect(()=>{
     if(!client||!user||!activeSettingsNotebookId){setSettingsHydrated(false);return;}
     let active=true;setSettingsHydrated(false);
-    void client.from("planner_settings").select("theme,custom_color,cover").eq("user_id",user.id).eq("notebook_id",activeSettingsNotebookId).maybeSingle()
-      .then(({data,error})=>{
+    void (async()=>{
+      const {data,error}=await client.from("planner_settings").select("theme,custom_color,cover").eq("user_id",user.id).eq("notebook_id",activeSettingsNotebookId).maybeSingle();
+      if(!active)return;
+      if(error)setAlert(`설정을 불러오지 못했습니다: ${error.message}`);
+
+      let selectedSettings=data;
+      if(!isDecoratedCover(data?.cover)){
+        const [notebookResult,settingsResult]=await Promise.all([
+          client.from("notebooks").select("id,notebook_type").eq("user_id",user.id),
+          client.from("planner_settings").select("notebook_id,theme,custom_color,cover,updated_at").eq("user_id",user.id)
+        ]);
         if(!active)return;
-        if(error)setAlert(`설정을 불러오지 못했습니다: ${error.message}`);
-        const metadata=user.user_metadata??{};
-        const defaultTheme=metadata.checkpoint_default_theme;
-        const fallbackTheme:ThemeName=typeof defaultTheme==="string"&&Object.keys(themes).includes(defaultTheme)
-          ?defaultTheme as ThemeName:"blue";
-        const defaultColor=typeof metadata.checkpoint_default_custom_color==="string"
-          ?sanitizeHex(metadata.checkpoint_default_custom_color):"#8b9ec4";
-        const t = data?.theme;
-        const nextTheme:ThemeName=t && Object.keys(themes).includes(t)?t as ThemeName:fallbackTheme;
-        const nextCustom=data?.custom_color||defaultColor;
-        const savedCover:Partial<Cover>=data?.cover && typeof data.cover==="object"?data.cover as Partial<Cover>:{};
-        let coverItems:CoverItem[]=Array.isArray(savedCover.items)?savedCover.items:defaultCover.items;
-        const subtitleConverted=savedCover.subtitleConverted===true;
-        if(!subtitleConverted&&typeof savedCover.subtitle==="string"&&savedCover.subtitle.trim()&&!coverItems.some(item=>item.kind==="text")) {
-          coverItems=[...coverItems,{id:"migrated-cover-subtitle",kind:"text",value:savedCover.subtitle,x:50,y:69,size:11,rotation:0}];
+        if(notebookResult.error)setAlert(`다이어리 정보를 불러오지 못했습니다: ${notebookResult.error.message}`);
+        if(settingsResult.error){
+          setAlert(`공통 표지 정보를 불러오지 못했습니다: ${settingsResult.error.message}`);
+        }else{
+          const sharedSettings=getSharedCoverSettings(
+            (settingsResult.data??[]) as NotebookCoverSettings[],
+            (notebookResult.data??[]) as NotebookTypeRecord[]
+          );
+          selectedSettings=sharedSettings??data;
         }
-        const removedBrandSlogan=coverItems.some(isCoverBrandSlogan);
-        coverItems=coverItems.filter(item=>!isCoverBrandSlogan(item)).map(item=>({
-          ...item,
-          ...(typeof item.color==="string"?{color:sanitizeHex(item.color)}:{}),
-          ...(item.kind==="text"?{weight:typeof item.weight==="number"&&Number.isFinite(item.weight)?Math.min(900,Math.max(400,Math.round(item.weight/100)*100)):800}: {})
-        }));
-        const savedPattern=savedCover.backgroundPattern;
-        const validPatterns:CoverPattern[]=["none","grid","dots","stripes","polaroid"];
-        const nextCover:Cover={
-          subtitle:"",
-          subtitleConverted:true,
-          items:coverItems,
-          monthEntries:parseMonthEntries(savedCover.monthEntries),
-          monthMemos:parseMonthMemos(savedCover.monthMemos),
-          backgroundPattern:validPatterns.includes(savedPattern as CoverPattern)?savedPattern as CoverPattern:"grid",
-          ...(typeof savedCover.backgroundColor==="string"?{backgroundColor:savedCover.backgroundColor}:{}),
-          ...(typeof savedCover.backgroundImage==="string"?{backgroundImage:savedCover.backgroundImage}:{}),
-          ...(typeof savedCover.patternColor==="string"?{patternColor:sanitizeHex(savedCover.patternColor)}:{}),
-          patternThickness:typeof savedCover.patternThickness==="number"&&Number.isFinite(savedCover.patternThickness)?Math.min(8,Math.max(1,Math.round(savedCover.patternThickness))):2,
-          backgroundPositionX:typeof savedCover.backgroundPositionX==="number"&&Number.isFinite(savedCover.backgroundPositionX)?Math.min(100,Math.max(0,savedCover.backgroundPositionX)):50,
-          backgroundPositionY:typeof savedCover.backgroundPositionY==="number"&&Number.isFinite(savedCover.backgroundPositionY)?Math.min(100,Math.max(0,savedCover.backgroundPositionY)):50
-        };
-        setTheme(nextTheme);setCustomColor(nextCustom);setCover(nextCover);
-        lastSettings.current=removedBrandSlogan?"":JSON.stringify({theme:nextTheme,customColor:nextCustom,cover:nextCover});
-        setSettingsHydrated(true);
-      });
+      }
+
+      const metadata=user.user_metadata??{};
+      const defaultTheme=metadata.checkpoint_default_theme;
+      const fallbackTheme:ThemeName=typeof defaultTheme==="string"&&Object.keys(themes).includes(defaultTheme)
+        ?defaultTheme as ThemeName:"blue";
+      const defaultColor=typeof metadata.checkpoint_default_custom_color==="string"
+        ?sanitizeHex(metadata.checkpoint_default_custom_color):"#8b9ec4";
+      const t=selectedSettings?.theme;
+      const nextTheme:ThemeName=t&&Object.keys(themes).includes(t)?t as ThemeName:fallbackTheme;
+      const nextCustom=selectedSettings?.custom_color||defaultColor;
+      const savedCover:Partial<Cover>=selectedSettings?.cover&&typeof selectedSettings.cover==="object"
+        ?selectedSettings.cover as Partial<Cover>:{};
+      let coverItems:CoverItem[]=Array.isArray(savedCover.items)?savedCover.items:defaultCover.items;
+      const subtitleConverted=savedCover.subtitleConverted===true;
+      if(!subtitleConverted&&typeof savedCover.subtitle==="string"&&savedCover.subtitle.trim()&&!coverItems.some(item=>item.kind==="text")){
+        coverItems=[...coverItems,{id:"migrated-cover-subtitle",kind:"text",value:savedCover.subtitle,x:50,y:69,size:11,rotation:0}];
+      }
+      const removedBrandSlogan=coverItems.some(isCoverBrandSlogan);
+      coverItems=coverItems.filter(item=>!isCoverBrandSlogan(item)).map(item=>({
+        ...item,
+        ...(typeof item.color==="string"?{color:sanitizeHex(item.color)}:{}),
+        ...(item.kind==="text"?{weight:typeof item.weight==="number"&&Number.isFinite(item.weight)?Math.min(900,Math.max(400,Math.round(item.weight/100)*100)):800}: {})
+      }));
+      const savedPattern=savedCover.backgroundPattern;
+      const validPatterns:CoverPattern[]=["none","grid","dots","stripes","polaroid"];
+      const nextCover:Cover={
+        subtitle:"",
+        subtitleConverted:true,
+        items:coverItems,
+        monthEntries:parseMonthEntries(savedCover.monthEntries),
+        monthMemos:parseMonthMemos(savedCover.monthMemos),
+        backgroundPattern:validPatterns.includes(savedPattern as CoverPattern)?savedPattern as CoverPattern:"grid",
+        ...(typeof savedCover.backgroundColor==="string"?{backgroundColor:savedCover.backgroundColor}:{}),
+        ...(typeof savedCover.backgroundImage==="string"?{backgroundImage:savedCover.backgroundImage}:{}),
+        ...(typeof savedCover.patternColor==="string"?{patternColor:sanitizeHex(savedCover.patternColor)}:{}),
+        patternThickness:typeof savedCover.patternThickness==="number"&&Number.isFinite(savedCover.patternThickness)?Math.min(8,Math.max(1,Math.round(savedCover.patternThickness))):2,
+        backgroundPositionX:typeof savedCover.backgroundPositionX==="number"&&Number.isFinite(savedCover.backgroundPositionX)?Math.min(100,Math.max(0,savedCover.backgroundPositionX)):50,
+        backgroundPositionY:typeof savedCover.backgroundPositionY==="number"&&Number.isFinite(savedCover.backgroundPositionY)?Math.min(100,Math.max(0,savedCover.backgroundPositionY)):50
+      };
+      setTheme(nextTheme);setCustomColor(nextCustom);setCover(nextCover);
+      lastSettings.current=removedBrandSlogan?"":JSON.stringify({theme:nextTheme,customColor:nextCustom,cover:nextCover});
+      setSettingsHydrated(true);
+    })();
     return()=>{active=false;};
   },[user,client,activeSettingsNotebookId]);
 
