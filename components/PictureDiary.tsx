@@ -78,8 +78,8 @@ function dateLabel(value: string) {
   const parts = value.split("-").map(Number);
   if (parts.length !== 3 || parts.some(number => !number)) return value;
   const date = new Date(parts[0], parts[1] - 1, parts[2]);
-  const weekday = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"][date.getDay()];
-  return parts[0] + "년 " + parts[1] + "월 " + parts[2] + "일 " + weekday;
+  const weekday = ["일", "월", "화", "수", "목", "금", "토"][date.getDay()];
+  return parts[0] + " " + parts[1] + " " + parts[2] + " " + weekday;
 }
 
 function shiftDate(value: string, amount: number) {

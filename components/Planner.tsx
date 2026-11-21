@@ -66,7 +66,7 @@ type NotebookCoverSettings = {
 };
 const dateView = (date: string) => {
   const [y,m,d] = date.split("-").map(Number);
-  return `${y}년 ${m}월 ${d}일 ${DAYS[new Date(y,m-1,d).getDay()]}요일`;
+  return `${y} ${m} ${d} ${DAYS[new Date(y,m-1,d).getDay()]}`;
 };
 
 function parseMonthEntries(raw: unknown): Record<string, MonthEntry> {
@@ -1509,7 +1509,7 @@ export default function Planner() {
               <div className="date-main">
                 <div className="date-main-row">
                   <button type="button" className="month-nav-button daily-date-nav-button" aria-label="이전 날짜" title="이전 날짜" onClick={()=>shiftDate(-1)}><ChevronLeft size={15}/></button>
-                  <span className="date-value">{date.replace(/-/g," ")}</span>
+                  <span className="date-value">{dateView(date)}</span>
                   <button type="button" className="month-nav-button daily-date-nav-button" aria-label="다음 날짜" title="다음 날짜" onClick={()=>shiftDate(1)}><ChevronRight size={15}/></button>
                   <div className="date-picker-trigger">
                     <button
