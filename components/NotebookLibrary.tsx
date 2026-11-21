@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
-import { BookOpen, BookText, CalendarDays, CheckSquare, Plus, Clock3, Trash2 } from "lucide-react";
+import { BookOpen, BookText, CalendarDays, CheckSquare, Plus, Clock3, Trash2, Pencil, Check, X } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import type { NotebookType } from "@/components/NotebookTypeSelection";
 import { defaultCover, themes, type Cover, type ThemeName } from "@/lib/types";
@@ -29,6 +29,7 @@ type Props = {
   onCreate: () => void;
   onOpen: (notebook: NotebookRecord) => void;
   onDelete: (notebook: NotebookRecord) => Promise<boolean>;
+  onRename: (notebook: NotebookRecord, title: string) => Promise<boolean>;
   onSignOut: () => void;
   onDeleteAccount: () => void;
 };
@@ -105,9 +106,50 @@ function NotebookCoverPreview({notebook,photoUrls}:{notebook:NotebookRecord;phot
   </span>;
 }
 
-export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeChange,notebooks,coverPhotoUrls,loading,notice,onCreate,onOpen,onDelete,onSignOut,onDeleteAccount}:Props) {
+export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeChange,notebooks,coverPhotoUrls,loading,notice,onCreate,onOpen,onDelete,onRename,onSignOut,onDeleteAccount}:Props) {
   const [deleteTarget,setDeleteTarget]=useState<NotebookRecord|null>(null);
   const [deleting,setDeleting]=useState(false);
+  const [renameTargetId,setRenameTargetId]=useState<string|null>(null);
+  const [renameValue,setRenameValue]=useState("");
+  const [renaming,setRenaming]=useState(false);
+  const [renameError,setRenameError]=useState("");
+
+  function startRename(notebook:NotebookRecord){
+    setRenameTargetId(notebook.id);
+    setRenameValue(notebook.title);
+    setRenameError("");
+  }
+
+  function cancelRename(){
+    if(renaming)return;
+    setRenameTargetId(null);
+    setRenameValue("");
+    setRenameError("");
+  }
+
+  async function saveRename(notebook:NotebookRecord){
+    if(renaming)return;
+    const nextTitle=renameValue.trim();
+    if(!nextTitle){
+      setRenameError("이름을 입력해 줘.");
+      return;
+    }
+    if(nextTitle===notebook.title){
+      cancelRename();
+      return;
+    }
+    setRenaming(true);
+    setRenameError("");
+    try{
+      const saved=await onRename(notebook,nextTitle);
+      if(saved){
+        setRenameTargetId(null);
+        setRenameValue("");
+      }
+    }finally{
+      setRenaming(false);
+    }
+  }
 
   useEffect(()=>{
     if(!deleteTarget)return;
@@ -164,6 +206,7 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
               const meta=TYPES[notebook.notebook_type];
               const Icon=meta.icon;
               const hasSavedCover=Boolean(notebook.cover);
+              const isRenaming=renameTargetId===notebook.id;
               return <div key={notebook.id} className={"notebook-book-card notebook-book-"+notebook.notebook_type}>
                 <button type="button" className="notebook-book-open" onClick={()=>onOpen(notebook)}>
                   <span className={"notebook-book-cover"+(hasSavedCover?" has-saved-cover":"")}>
@@ -178,8 +221,57 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
                         </>}
                     {hasSavedCover?<span className="notebook-book-binding" aria-hidden="true"/>:null}
                   </span>
-                  <span className="notebook-book-info"><strong>{notebook.title}</strong><small>{meta.description}</small><small className="notebook-book-date"><Clock3 size={11}/> {dateLabel(notebook.updated_at)}</small></span>
                 </button>
+                <div className="notebook-book-info">
+                  {isRenaming?(
+                    <form
+                      className="notebook-book-rename"
+                      onSubmit={event=>{
+                        event.preventDefault();
+                        void saveRename(notebook);
+                      }}
+                    >
+                      <input
+                        type="text"
+                        value={renameValue}
+                        maxLength={60}
+                        autoFocus
+                        aria-label="다이어리 이름"
+                        disabled={renaming}
+                        onChange={event=>{
+                          setRenameValue(event.target.value);
+                          setRenameError("");
+                        }}
+                        onKeyDown={event=>{
+                          if(event.key==="Escape"){
+                            event.preventDefault();
+                            cancelRename();
+                          }
+                        }}
+                      />
+                      <button type="submit" aria-label="이름 저장" title="저장" disabled={renaming||!renameValue.trim()}>
+                        <Check size={15}/>
+                      </button>
+                      <button type="button" aria-label="이름 변경 취소" title="취소" disabled={renaming} onClick={cancelRename}>
+                        <X size={15}/>
+                      </button>
+                    </form>
+                  ):(
+                    <button
+                      type="button"
+                      className="notebook-book-title"
+                      title="클릭해서 이름 변경"
+                      aria-label={notebook.title+" 이름 변경"}
+                      onClick={()=>startRename(notebook)}
+                    >
+                      <span>{notebook.title}</span>
+                      <Pencil className="notebook-book-title-edit" size={13}/>
+                    </button>
+                  )}
+                  {renameError&&isRenaming?<span className="notebook-book-rename-error" role="alert">{renameError}</span>:null}
+                  <small>{meta.description}</small>
+                  <small className="notebook-book-date"><Clock3 size={11}/> {dateLabel(notebook.updated_at)}</small>
+                </div>
                 <button
                   type="button"
                   className="notebook-book-delete"
