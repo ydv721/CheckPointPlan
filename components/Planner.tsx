@@ -865,7 +865,7 @@ export default function Planner() {
       if(!active)return;
       if(error)setAlert(`설정을 불러오지 못했습니다: ${error.message}`);
 
-      let selectedSettings=data;
+      let selectedSettings:{theme:string|null;custom_color:string|null;cover:unknown}|null=data;
       if(!isDecoratedCover(data?.cover)){
         const [notebookResult,settingsResult]=await Promise.all([
           client.from("notebooks").select("id,notebook_type").eq("user_id",user.id),
