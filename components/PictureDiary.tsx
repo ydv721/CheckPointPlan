@@ -247,7 +247,6 @@ function DiaryTimePicker({ label, value, onChange }: {
                 onBlur={commitHour}
                 onKeyDown={event => {
                   if (event.key === "Enter") { event.preventDefault(); commitHour(); setActivePart(null); }
-                  if (event.key === "Escape") { setHourDraft(String(current.hour)); setActivePart(null); }
                 }}/>
             </label>
           </div>
@@ -270,7 +269,6 @@ function DiaryTimePicker({ label, value, onChange }: {
                 onBlur={commitMinute}
                 onKeyDown={event => {
                   if (event.key === "Enter") { event.preventDefault(); commitMinute(); setActivePart(null); }
-                  if (event.key === "Escape") { setMinuteDraft(String(current.minute).padStart(2, "0")); setActivePart(null); }
                 }}/>
             </label>
           </div>
