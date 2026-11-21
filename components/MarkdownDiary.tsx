@@ -682,11 +682,13 @@ export default function MarkdownDiary({
     }
   }
 
-  function applyTextColor(color: string) {
+  function applyTextColor(color: string, options: { keepPickerOpen?: boolean } = {}) {
     const editor = leftEditorRef.current;
+    const keepPickerOpen = options.keepPickerOpen ?? false;
     if (!editor || !activeNote || loading) return;
 
-    editor.focus();
+    if (!keepPickerOpen) editor.focus();
+
     const selection = window.getSelection();
     const savedRange = editorSelectionRef.current;
     if (selection && savedRange && editor.contains(savedRange.commonAncestorContainer)) {
@@ -707,6 +709,15 @@ export default function MarkdownDiary({
 
     document.execCommand("foreColor", false, color);
     updatePage("left", htmlToMarkdown(editor.innerHTML));
+
+    if (keepPickerOpen) {
+      const currentRange = selection.getRangeAt(0);
+      if (editor.contains(currentRange.commonAncestorContainer)) {
+        editorSelectionRef.current = currentRange.cloneRange();
+      }
+      return;
+    }
+
     editorSelectionRef.current = null;
     setColorPaletteOpen(false);
     editor.focus();
@@ -719,9 +730,7 @@ export default function MarkdownDiary({
   }
 
   function applyDefaultTextColor() {
-    const editor = leftEditorRef.current;
-    const rawColor = editor ? getComputedStyle(editor).getPropertyValue("--ink").trim() : "";
-    applyTextColor(normalizeMarkdownColor(rawColor) || "#34465e");
+    applyTextColor("#000000");
   }
 
   function insertCodeBlock() {
@@ -945,9 +954,7 @@ export default function MarkdownDiary({
                                     title="기본 글자색"
                                     onMouseDown={event => event.preventDefault()}
                                     onClick={applyDefaultTextColor}
-                                  >
-                                    A
-                                  </button>
+                                  />
                                   <button
                                     type="button"
                                     className="markdown-color-swatch markdown-color-theme"
@@ -976,7 +983,11 @@ export default function MarkdownDiary({
                                       onClick={() => applyTextColor(color)}
                                     />
                                   ))}
-                                  <label className="markdown-color-swatch markdown-color-custom-swatch" title="사용자 지정 글자색">
+                                  <label
+                                    className="markdown-color-swatch markdown-color-custom-swatch"
+                                    title="사용자 지정 글자색"
+                                    onMouseDown={rememberEditorSelection}
+                                  >
                                     <input
                                       type="color"
                                       aria-label="사용자 지정 글자색"
@@ -984,7 +995,7 @@ export default function MarkdownDiary({
                                       onChange={event => {
                                         const color = event.target.value;
                                         setCustomTextColor(color);
-                                        applyTextColor(color);
+                                        applyTextColor(color, { keepPickerOpen: true });
                                       }}
                                     />
                                   </label>
