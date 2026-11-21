@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { AlignCenter, AlignLeft, AlignRight, Bold, Code2, Heading1, Italic, List, ListOrdered, Minus, Palette, Quote, Share2, Strikethrough, Check } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, Bold, Code2, Heading1, Italic, List, ListOrdered, Minus, Palette, Quote, Share2, Strikethrough, Underline, Check } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import type { ThemeName } from "@/lib/types";
 
@@ -21,11 +21,12 @@ type NotePages = {
   right: string;
 };
 
-type MarkdownAction = "bold" | "italic" | "strike" | "heading" | "bullet" | "ordered" | "quote" | "code" | "divider";
+export type MarkdownAction = "bold" | "italic" | "underline" | "strike" | "heading" | "bullet" | "ordered" | "quote" | "code" | "divider";
 
-const MARKDOWN_TOOLBAR = [
+export const MARKDOWN_TOOLBAR = [
   { action: "bold", label: "굵게", icon: Bold },
   { action: "italic", label: "기울임", icon: Italic },
+  { action: "underline", label: "밑줄", icon: Underline },
   { action: "strike", label: "취소선", icon: Strikethrough },
   { action: "heading", label: "제목", icon: Heading1 },
   { action: "bullet", label: "글머리표", icon: List },
@@ -142,7 +143,7 @@ function highlightCodeHtml(source: string, language: string) {
   });
 }
 
-function createMarkdownCodeBlockHtml(code: string, language: string, inserted = false) {
+export function createMarkdownCodeBlockHtml(code: string, language: string, inserted = false) {
   const safeLanguage = normalizeCodeLanguage(language);
   const options = CODE_LANGUAGES.map(({ value, label }) =>
     '<option value="' + value + '"' + (value === safeLanguage ? " selected" : "") + ">" + label + "</option>"
@@ -178,7 +179,7 @@ function serializeCodeText(node: Node): string {
   return result;
 }
 
-function highlightCodeBlocks(editor: HTMLElement) {
+export function highlightCodeBlocks(editor: HTMLElement) {
   editor.querySelectorAll<HTMLElement>(".markdown-code-block").forEach(block => {
     const code = block.querySelector("pre code");
     if (!code) return;
@@ -214,15 +215,20 @@ function renderInlineMarkdown(value: string) {
     return "\u0000" + (tokens.length - 1) + "\u0000";
   };
 
-  const source = value.replace(
+  // Protect inline code first: literal <u> inside backticks must remain code.
+  let source = value.replace(/\x60([^\x60]+)\x60/g, (_match, code: string) =>
+    stash("<code>" + escapeHtml(code) + "</code>")
+  );
+  // Underline uses limited HTML syntax because standard Markdown has no underline marker.
+  source = source.replace(/<(u|ins)>([\s\S]*?)<\/\1>/gi, (_match, _tag: string, content: string) =>
+    stash("<u>" + renderInlineMarkdown(content) + "</u>")
+  );
+  source = source.replace(
     /<span\s+style=["']color:\s*(#[0-9a-f]{6})["']\s*>([\s\S]*?)<\/span>/gi,
     (_match, color: string, content: string) =>
       stash('<span style="color: ' + color.toLowerCase() + '">' + renderInlineMarkdown(content) + "</span>")
   );
   let html = escapeHtml(source);
-  html = html.replace(/\x60([^\x60]+)\x60/g, (_match, code: string) =>
-    stash("<code>" + code + "</code>")
-  );
   html = html.replace(/\*\*\*(.+?)\*\*\*/g, (_match, text: string) =>
     stash("<strong><em>" + text + "</em></strong>")
   );
@@ -269,7 +275,7 @@ function renderInlineMarkdown(value: string) {
   return rendered;
 }
 
-function markdownToHtml(markdown: string) {
+export function markdownToHtml(markdown: string) {
   const lines = markdown.replace(/\r\n?/g, "\n").split("\n");
   const blocks: string[] = [];
   let index = 0;
@@ -384,7 +390,7 @@ function markdownToHtml(markdown: string) {
   return blocks.join("");
 }
 
-function htmlToMarkdown(html: string) {
+export function htmlToMarkdown(html: string) {
   const parsed = new DOMParser().parseFromString("<div>" + html + "</div>", "text/html");
   const root = parsed.body.firstElementChild;
   if (!root) return "";
@@ -401,12 +407,15 @@ function htmlToMarkdown(html: string) {
     if (tag === "HR") return "\n---\n";
     if (tag === "B" || tag === "STRONG") return "**" + children + "**";
     if (tag === "I" || tag === "EM") return "*" + children + "*";
+    if (tag === "U" || tag === "INS") return "<u>" + children + "</u>";
     if (tag === "S" || tag === "STRIKE" || tag === "DEL") return "~~" + children + "~~";
     if (tag === "CODE" && !element.closest(".markdown-code-block")) return String.fromCharCode(96) + children + String.fromCharCode(96);
     if (tag === "FONT" || tag === "SPAN") {
       const rawColor = tag === "FONT" ? (element.getAttribute("color") ?? element.style.color) : element.style.color;
       const color = normalizeMarkdownColor(rawColor);
-      return color ? '<span style="color: ' + color + '">' + children + "</span>" : children;
+      const underlined = /\bunderline\b/i.test(element.style.textDecorationLine + " " + element.style.textDecoration)
+        ? "<u>" + children + "</u>" : children;
+      return color ? '<span style="color: ' + color + '">' + underlined + "</span>" : underlined;
     }
     if (tag === "A") {
       const href = safeMarkdownHref(element.getAttribute("href") ?? "");
@@ -826,6 +835,8 @@ export default function MarkdownDiary({
       document.execCommand("bold");
     } else if (action === "italic") {
       document.execCommand("italic");
+    } else if (action === "underline") {
+      document.execCommand("underline");
     } else if (action === "strike") {
       document.execCommand("strikeThrough");
     } else if (action === "heading") {
