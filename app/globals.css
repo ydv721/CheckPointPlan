@@ -9035,7 +9035,7 @@ html,body{width:100%;overflow-x:clip}
 }
 .diary-date-navigation strong {
   color:var(--ink);
-  font-size:clamp(14px,1.2vw,19px);
+  font-size:clamp(17px,1.45vw,22px);
   font-weight:900;
   letter-spacing:-.04em;
   white-space:nowrap;
@@ -9130,6 +9130,7 @@ html,body{width:100%;overflow-x:clip}
 }
 .diary-time-field input {
   display:block;
+  cursor:text;
   width:100%;
   min-width:0;
   max-width:100%;
@@ -9149,10 +9150,7 @@ html,body{width:100%;overflow-x:clip}
   padding:0;
 }
 .diary-time-field input::-webkit-calendar-picker-indicator {
-  width:12px;
-  height:12px;
-  margin:0 0 0 2px;
-  padding:0;
+  display:none;
 }
 .diary-drawing-heading {
   display:flex;
@@ -10114,7 +10112,7 @@ html,body{width:100%;overflow-x:clip}
     gap:5px;
   }
   .diary-date-navigation strong {
-    font-size:13px;
+    font-size:16px;
   }
   .diary-daily-info {
     grid-template-columns:1fr 1fr;
