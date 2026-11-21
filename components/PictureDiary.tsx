@@ -661,7 +661,6 @@ export default function PictureDiary({
                     <textarea aria-label="하루 돌아보기" value={entry.reflection} onChange={event => updateEntry({ reflection: event.target.value })}/>
                   </section>
                 </div>
-                <div className="diary-right-footer"><span>{status}</span></div>
               </section>
             </PlannerSpread>
           </div>
