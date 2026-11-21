@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   AlignCenter, AlignLeft, AlignRight, Brush, CalendarDays, Check, ChevronLeft, ChevronRight,
