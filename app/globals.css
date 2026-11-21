@@ -9005,22 +9005,6 @@ html,body{width:100%;overflow-x:clip}
   padding:16px 30px 16px 36px !important;
   gap:12px;
 }
-.picture-diary-header-status {
-  display:flex;
-  align-items:center;
-  gap:14px;
-  margin-left:auto;
-  min-width:0;
-  color:var(--ink);
-  font-size:12px;
-  font-weight:800;
-}
-.picture-diary-save-status {
-  color:var(--accent);
-  font-size:10px;
-  font-weight:650;
-  opacity:.8;
-}
 .diary-date-heading {
   flex:0 0 auto;
   padding:0 0 10px;
