@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
-import { BookOpen, BookText, CalendarDays, CheckSquare, Plus, Clock3, Trash2, Pencil, Check, X } from "lucide-react";
+import { BookOpen, BookText, CalendarDays, CheckSquare, Plus, Clock3, Trash2, Pencil, Check, X, CheckCircle2 } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import type { NotebookType } from "@/components/NotebookTypeSelection";
 import { defaultCover, themes, type Cover, type ThemeName } from "@/lib/types";
@@ -109,6 +109,7 @@ function NotebookCoverPreview({notebook,photoUrls}:{notebook:NotebookRecord;phot
 export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeChange,notebooks,coverPhotoUrls,loading,notice,onCreate,onOpen,onDelete,onRename,onSignOut,onDeleteAccount}:Props) {
   const [deleteTarget,setDeleteTarget]=useState<NotebookRecord|null>(null);
   const [deleting,setDeleting]=useState(false);
+  const [deleteToast,setDeleteToast]=useState<{message:string;id:number}|null>(null);
   const [renameTargetId,setRenameTargetId]=useState<string|null>(null);
   const [renameValue,setRenameValue]=useState("");
   const [renaming,setRenaming]=useState(false);
@@ -152,6 +153,12 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
   }
 
   useEffect(()=>{
+    if(!deleteToast)return;
+    const timeoutId=window.setTimeout(()=>setDeleteToast(null),3000);
+    return()=>window.clearTimeout(timeoutId);
+  },[deleteToast]);
+
+  useEffect(()=>{
     if(!deleteTarget)return;
     const closeOnEscape=(event:KeyboardEvent)=>{
       if(event.key==="Escape"&&!deleting)setDeleteTarget(null);
@@ -165,7 +172,10 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
     setDeleting(true);
     try{
       const deleted=await onDelete(deleteTarget);
-      if(deleted)setDeleteTarget(null);
+      if(deleted){
+        setDeleteToast({message:`'${deleteTarget.title}' 다이어리를 삭제했습니다.`,id:Date.now()});
+        setDeleteTarget(null);
+      }
     }finally{
       setDeleting(false);
     }
@@ -289,6 +299,12 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
           </div>
         )}
       </main>
+      {deleteToast?(
+        <div className="notebook-delete-toast" role="status" aria-live="polite">
+          <CheckCircle2 className="notebook-delete-toast-icon" size={19}/>
+          <span>{deleteToast.message}</span>
+        </div>
+      ):null}
       {deleteTarget?(
         <div
           className="modal-backdrop notebook-delete-backdrop"
