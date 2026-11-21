@@ -7,10 +7,8 @@ export type NotebookType = "planner" | "study-notes" | "diary" | "checklist" | "
 
 const NOTEBOOK_TYPES: { type: NotebookType; title: string; description: string }[] = [
   { type: "planner", title: "플래너", description: "월간 · 일간 · 일정 관리" },
-  { type: "study-notes", title: "필기 다이어리", description: "공부 · 강의 · 지식 정리" },
-  { type: "diary", title: "일기", description: "하루의 기록 · 일상" },
-  { type: "checklist", title: "체크리스트", description: "할 일 · 목표 · 점검" },
-  { type: "free-notes", title: "프리 다이어리", description: "Markdown · 자유로운 글쓰기" }
+  { type: "free-notes", title: "프리 노트", description: "Markdown · 자유로운 글쓰기" },
+  { type: "diary", title: "일기", description: "하루의 기록 · 일상" }
 ];
 
 type NotebookTypeSelectionProps = {
