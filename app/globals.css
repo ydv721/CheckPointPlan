@@ -8448,32 +8448,24 @@ html,body{width:100%;overflow-x:clip}
 .markdown-color-theme{
   background:var(--accent);
 }
-.markdown-color-custom{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  margin-top:12px;
-  padding-top:10px;
-  border-top:1px solid var(--line);
-  font-size:11px;
-  font-weight:700;
+.markdown-color-custom-swatch{
+  position:relative;
+  overflow:hidden;
+  background:conic-gradient(from 0deg,#ef4444,#f59e0b,#facc15,#22c55e,#06b6d4,#3b82f6,#8b5cf6,#ec4899,#ef4444);
 }
-.markdown-color-custom input{
-  width:36px;
-  height:28px;
-  padding:2px;
-  border:1px solid var(--line);
-  border-radius:6px;
-  background:var(--paper);
+.markdown-color-custom-swatch input{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  padding:0;
+  border:0;
+  opacity:0;
   cursor:pointer;
 }
-.markdown-color-hint{
-  display:block;
-  margin-top:8px;
-  color:var(--ink);
-  font-size:10px;
-  opacity:.62;
+.markdown-color-custom-swatch:focus-within{
+  outline:2px solid var(--accent);
+  outline-offset:2px;
 }
 .markdown-toolbar-button:hover:not(:disabled){
   border-color:var(--line);
