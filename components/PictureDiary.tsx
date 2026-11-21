@@ -134,7 +134,6 @@ export default function PictureDiary({
   userId,
   email,
   notebookId,
-  notebookTitle,
   themeStyle,
   theme,
   customColor,
@@ -148,7 +147,6 @@ export default function PictureDiary({
   const [date, setDate] = useState(localToday);
   const [entry, setEntry] = useState<DiaryEntry>(() => emptyEntry(notebookId, userId, localToday()));
   const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState("자동 저장을 준비하고 있어요.");
   const [error, setError] = useState("");
   const [drawingUrl, setDrawingUrl] = useState("");
   const [choiceOpen, setChoiceOpen] = useState(false);
@@ -227,7 +225,6 @@ export default function PictureDiary({
       } finally {
         if (active) {
           setLoading(false);
-          setStatus("자동 저장 대기 중이에요.");
         }
       }
     })();
@@ -247,7 +244,6 @@ export default function PictureDiary({
     const snapshot = entrySnapshot(current);
     if (snapshot === lastSavedRef.current) return Promise.resolve(true);
     const run = async () => {
-      setStatus("저장 중이에요.");
       const updatedAt = new Date().toISOString();
       try {
         const { error: saveError } = await client.from("picture_diary_entries").upsert({
@@ -267,13 +263,11 @@ export default function PictureDiary({
         }, { onConflict: "notebook_id,entry_date" });
         if (saveError) throw saveError;
         lastSavedRef.current = snapshot;
-        setStatus("저장되었어요.");
         setError("");
         await client.from("notebooks").update({ updated_at: updatedAt }).eq("id", notebookId).eq("user_id", userId);
         return true;
       } catch (saveError) {
         const message = saveError instanceof Error ? saveError.message : "네트워크 연결을 확인해 주세요.";
-        setStatus("저장하지 못했어요.");
         setError("그림일기 저장에 실패했습니다: " + message);
         return false;
       }
@@ -287,7 +281,6 @@ export default function PictureDiary({
     if (loading) return;
     const snapshot = entrySnapshot(entry);
     if (snapshot === lastSavedRef.current) return;
-    setStatus("변경 내용은 자동 저장 대기 중이에요.");
     const timer = window.setTimeout(() => { void persistEntry(entry); }, 900);
     return () => window.clearTimeout(timer);
   }, [entry, loading, persistEntry]);
