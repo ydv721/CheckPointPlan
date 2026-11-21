@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { Bold, Code2, Heading1, Italic, List, ListOrdered, Minus, Palette, Quote, Share2, Strikethrough, Check } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, Bold, Code2, Heading1, Italic, List, ListOrdered, Minus, Palette, Quote, Share2, Strikethrough, Check } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import type { ThemeName } from "@/lib/types";
 
@@ -277,6 +277,7 @@ function markdownToHtml(markdown: string) {
   const isBlockStart = (line: string) =>
     /^\s*\x60{3}/.test(line) ||
     /^\s*~~~/.test(line) ||
+    /^\s*:::align-(?:left|center|right)\s*$/.test(line) ||
     /^#{1,3}\s+/.test(line) ||
     /^\s*(?:---+|\*\*\*+|___+)\s*$/.test(line) ||
     /^\s*>/.test(line) ||
@@ -286,6 +287,32 @@ function markdownToHtml(markdown: string) {
     const line = lines[index];
     if (!line.trim()) {
       index += 1;
+      continue;
+    }
+
+    const alignmentBlock = line.match(/^\s*:::align-(left|center|right)\s*$/);
+    if (alignmentBlock) {
+      const alignment = alignmentBlock[1];
+      const contentLines: string[] = [];
+      let depth = 1;
+      index += 1;
+
+      while (index < lines.length && depth > 0) {
+        const currentLine = lines[index];
+        if (/^\s*:::align-(?:left|center|right)\s*$/.test(currentLine)) {
+          depth += 1;
+          contentLines.push(currentLine);
+        } else if (currentLine.trim() === ":::") {
+          depth -= 1;
+          if (depth > 0) contentLines.push(currentLine);
+        } else {
+          contentLines.push(currentLine);
+        }
+        index += 1;
+      }
+
+      const content = markdownToHtml(contentLines.join("\n"));
+      blocks.push('<div data-checkpoint-align="' + alignment + '" style="text-align:' + alignment + '">' + content + "</div>");
       continue;
     }
 
@@ -335,7 +362,10 @@ function markdownToHtml(markdown: string) {
       while (index < lines.length) {
         const item = lines[index].match(/^\s*(?:(\d+)[.)]|[-+*])\s+(.*)$/);
         if (!item || Boolean(item[1]) !== ordered) break;
-        items.push("<li>" + renderInlineMarkdown(item[2]) + "</li>");
+        const itemAlignment = item[2].match(/^\{align=(left|center|right)\}\s?(.*)$/);
+        const itemText = itemAlignment ? itemAlignment[2] : item[2];
+        const alignmentStyle = itemAlignment ? ' style="text-align:' + itemAlignment[1] + '"' : "";
+        items.push("<li" + alignmentStyle + ">" + renderInlineMarkdown(itemText) + "</li>");
         index += 1;
       }
       const tag = ordered ? "ol" : "ul";
@@ -404,7 +434,11 @@ function htmlToMarkdown(html: string) {
           .join("")
           .trimEnd();
         const prefix = ordered ? (number + ". ") : "- ";
-        return "  ".repeat(depth) + prefix + text + (nested ? "\n" + nested : "");
+        const itemAlignment = item.style.textAlign;
+        const alignmentPrefix = !element.style.textAlign && ["left", "center", "right"].includes(itemAlignment)
+          ? "{align=" + itemAlignment + "} "
+          : "";
+        return "  ".repeat(depth) + prefix + alignmentPrefix + text + (nested ? "\n" + nested : "");
       });
     return rows.join("\n") + "\n\n";
   };
@@ -425,30 +459,41 @@ function htmlToMarkdown(html: string) {
       const fence = String.fromCharCode(96).repeat(3);
       return fence + fenceLanguage + "\n" + code + "\n" + fence + "\n\n";
     }
+
+    let content = "";
     if (tag === "H1" || tag === "H2" || tag === "H3") {
       const level = Number(tag.slice(1));
-      return "#".repeat(level) + " " + children.map(inline).join("") + "\n\n";
-    }
-    if (tag === "P") return children.map(inline).join("") + "\n\n";
-    if (tag === "UL" || tag === "OL") return serializeList(element);
-    if (tag === "BLOCKQUOTE") {
-      const content = children.map(block).join("").trimEnd();
-      return content.split("\n").map(line => line ? "> " + line : ">").join("\n") + "\n\n";
-    }
-    if (tag === "PRE") {
+      content = "#".repeat(level) + " " + children.map(inline).join("") + "\n\n";
+    } else if (tag === "P") {
+      content = children.map(inline).join("") + "\n\n";
+    } else if (tag === "UL" || tag === "OL") {
+      content = serializeList(element);
+    } else if (tag === "BLOCKQUOTE") {
+      const quoteContent = children.map(block).join("").trimEnd();
+      content = quoteContent.split("\n").map(line => line ? "> " + line : ">").join("\n") + "\n\n";
+    } else if (tag === "PRE") {
       const fence = String.fromCharCode(96).repeat(3);
-      return fence + "\n" + serializeCodeText(element).replace(/\n+$/, "") + "\n" + fence + "\n\n";
-    }
-    if (tag === "HR") return "---\n\n";
-    if (tag === "DIV") {
+      content = fence + "\n" + serializeCodeText(element).replace(/\n+$/, "") + "\n" + fence + "\n\n";
+    } else if (tag === "HR") {
+      content = "---\n\n";
+    } else if (tag === "DIV") {
       const hasBlockChild = children.some(child =>
         child.nodeType === 1 &&
         ["DIV", "P", "UL", "OL", "BLOCKQUOTE", "PRE", "H1", "H2", "H3", "HR"].includes((child as HTMLElement).tagName)
       );
-      const content = hasBlockChild ? children.map(block).join("") : children.map(inline).join("");
-      return content + (content.endsWith("\n") ? "" : "\n");
+      content = hasBlockChild ? children.map(block).join("") : children.map(inline).join("");
+      content += content.endsWith("\n") ? "" : "\n";
+    } else {
+      content = inline(element);
     }
-    return inline(element);
+
+    const rawAlignment = element.dataset.checkpointAlign || element.style.textAlign;
+    const alignment = rawAlignment === "left" || rawAlignment === "center" || rawAlignment === "right"
+      ? rawAlignment
+      : "";
+    if (!alignment || !content.trim()) return content;
+
+    return ":::align-" + alignment + "\n" + content.trimEnd() + "\n:::\n\n";
   };
 
   return Array.from(root.childNodes)
@@ -802,6 +847,21 @@ export default function MarkdownDiary({
     editor.focus();
   }
 
+  function applyTextAlignment(alignment: "left" | "center" | "right") {
+    const editor = leftEditorRef.current;
+    if (!editor || !activeNote || loading) return;
+
+    editor.focus();
+    const command = alignment === "left"
+      ? "justifyLeft"
+      : alignment === "center"
+        ? "justifyCenter"
+        : "justifyRight";
+    document.execCommand(command);
+    updatePage("left", htmlToMarkdown(editor.innerHTML));
+    editor.focus();
+  }
+
   function getMarkdownContent(note: MarkdownNote) {
     const pages = decodeNotePages(note.content);
     return [
@@ -928,6 +988,38 @@ export default function MarkdownDiary({
                               <Icon size={16} strokeWidth={2}/>
                             </button>
                           ))}
+                          <div className="markdown-align-controls" role="group" aria-label="텍스트 정렬">
+                            <button
+                              type="button"
+                              className="markdown-toolbar-button"
+                              aria-label="왼쪽 정렬"
+                              title="왼쪽 정렬"
+                              onMouseDown={event => event.preventDefault()}
+                              onClick={() => applyTextAlignment("left")}
+                            >
+                              <AlignLeft size={16} strokeWidth={2}/>
+                            </button>
+                            <button
+                              type="button"
+                              className="markdown-toolbar-button"
+                              aria-label="가운데 정렬"
+                              title="가운데 정렬"
+                              onMouseDown={event => event.preventDefault()}
+                              onClick={() => applyTextAlignment("center")}
+                            >
+                              <AlignCenter size={16} strokeWidth={2}/>
+                            </button>
+                            <button
+                              type="button"
+                              className="markdown-toolbar-button"
+                              aria-label="오른쪽 정렬"
+                              title="오른쪽 정렬"
+                              onMouseDown={event => event.preventDefault()}
+                              onClick={() => applyTextAlignment("right")}
+                            >
+                              <AlignRight size={16} strokeWidth={2}/>
+                            </button>
+                          </div>
                           <div className="markdown-color-picker-wrap">
                             <button
                               type="button"
