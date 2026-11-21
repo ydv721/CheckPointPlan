@@ -63,35 +63,6 @@ type NotebookCoverSettings = {
   cover:unknown;
   updated_at?:string;
 };
-type NotebookTypeRecord = {id:string;notebook_type:NotebookType};
-
-const isDecoratedCover=(value:unknown):boolean=>{
-  if(!value||typeof value!=="object"||Array.isArray(value))return false;
-  const candidate=value as Partial<Cover>;
-  return Boolean(
-    (Array.isArray(candidate.items)&&candidate.items.length>0)||
-    candidate.backgroundColor||
-    candidate.backgroundImage||
-    candidate.patternColor||
-    (candidate.backgroundPattern&&candidate.backgroundPattern!=="grid")||
-    (typeof candidate.patternThickness==="number"&&candidate.patternThickness!==2)||
-    (typeof candidate.subtitle==="string"&&candidate.subtitle.trim())
-  );
-};
-
-function getSharedCoverSettings(settingsRows:NotebookCoverSettings[],notebookRows:NotebookTypeRecord[]) {
-  const newestFirst=(a:NotebookCoverSettings,b:NotebookCoverSettings)=>
-    new Date(b.updated_at??0).getTime()-new Date(a.updated_at??0).getTime();
-  const plannerSettings=settingsRows
-    .filter(setting=>notebookRows.some(row=>row.id===setting.notebook_id&&row.notebook_type==="planner"))
-    .sort(newestFirst);
-  const sortedSettings=[...settingsRows].sort(newestFirst);
-  return plannerSettings.find(setting=>isDecoratedCover(setting.cover))||
-    sortedSettings.find(setting=>isDecoratedCover(setting.cover))||
-    plannerSettings[0]||
-    sortedSettings[0]||
-    null;
-}
 const dateView = (date: string) => {
   const [y,m,d] = date.split("-").map(Number);
   return `${y}년 ${m}월 ${d}일 ${DAYS[new Date(y,m-1,d).getDay()]}요일`;
@@ -787,16 +758,12 @@ export default function Planner() {
       }
 
       const settingsByNotebook=new Map(settingsRows.map(setting=>[setting.notebook_id,setting]));
-      const sharedCoverSettings=getSharedCoverSettings(settingsRows,rows);
 
       const nextNotebooks:NotebookRecord[]=rows.map(row=>{
         const ownSettings=settingsByNotebook.get(row.id);
-        const coverSettings=ownSettings&&isDecoratedCover(ownSettings.cover)
-          ?ownSettings
-          :sharedCoverSettings??ownSettings;
-        if(!coverSettings)return row as NotebookRecord;
-        const rawCover:Partial<Cover>=coverSettings.cover&&typeof coverSettings.cover==="object"
-          ?coverSettings.cover as Partial<Cover>
+        if(!ownSettings)return row as NotebookRecord;
+        const rawCover:Partial<Cover>=ownSettings.cover&&typeof ownSettings.cover==="object"
+          ?ownSettings.cover as Partial<Cover>
           :{};
         let coverItems:CoverItem[]=Array.isArray(rawCover.items)?rawCover.items:defaultCover.items;
         const subtitleConverted=rawCover.subtitleConverted===true;
@@ -867,25 +834,6 @@ export default function Planner() {
       if(!active)return;
       if(error)setAlert(`설정을 불러오지 못했습니다: ${error.message}`);
 
-      let coverSource:unknown=data?.cover;
-      if(!isDecoratedCover(data?.cover)){
-        const [notebookResult,settingsResult]=await Promise.all([
-          client.from("notebooks").select("id,notebook_type").eq("user_id",user.id),
-          client.from("planner_settings").select("notebook_id,theme,custom_color,cover,updated_at").eq("user_id",user.id)
-        ]);
-        if(!active)return;
-        if(notebookResult.error)setAlert(`다이어리 정보를 불러오지 못했습니다: ${notebookResult.error.message}`);
-        if(settingsResult.error){
-          setAlert(`공통 표지 정보를 불러오지 못했습니다: ${settingsResult.error.message}`);
-        }else{
-          const sharedSettings=getSharedCoverSettings(
-            (settingsResult.data??[]) as NotebookCoverSettings[],
-            (notebookResult.data??[]) as NotebookTypeRecord[]
-          );
-          coverSource=sharedSettings?.cover??data?.cover;
-        }
-      }
-
       const metadata=user.user_metadata??{};
       const defaultTheme=metadata.checkpoint_default_theme;
       const fallbackTheme:ThemeName=typeof defaultTheme==="string"&&Object.keys(themes).includes(defaultTheme)
@@ -895,8 +843,8 @@ export default function Planner() {
       const t=data?.theme;
       const nextTheme:ThemeName=t&&Object.keys(themes).includes(t)?t as ThemeName:fallbackTheme;
       const nextCustom=data?.custom_color||defaultColor;
-      const savedCover:Partial<Cover>=coverSource&&typeof coverSource==="object"
-        ?coverSource as Partial<Cover>:{};
+      const savedCover:Partial<Cover>=data?.cover&&typeof data.cover==="object"
+        ?data.cover as Partial<Cover>:{};
       let coverItems:CoverItem[]=Array.isArray(savedCover.items)?savedCover.items:defaultCover.items;
       const subtitleConverted=savedCover.subtitleConverted===true;
       if(!subtitleConverted&&typeof savedCover.subtitle==="string"&&savedCover.subtitle.trim()&&!coverItems.some(item=>item.kind==="text")){
@@ -1235,9 +1183,6 @@ export default function Planner() {
       return;
     }
 
-    setTheme(DEFAULT_NOTEBOOK_THEME);
-    setCustomColor(DEFAULT_NOTEBOOK_CUSTOM_COLOR);
-    setCover(defaultCover);
     setNotebooks(current=>[{
       ...(data as NotebookRecord),
       theme:DEFAULT_NOTEBOOK_THEME,
