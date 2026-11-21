@@ -729,13 +729,13 @@ export default function Planner() {
       }
 
       const rows=data??[];
-      const plannerIds=rows.filter(row=>row.notebook_type==="planner").map(row=>row.id);
-      let settingsRows: {notebook_id:string;theme:string;custom_color:string;cover:unknown}[]=[];
-      if(plannerIds.length){
+      const notebookIds=rows.map(row=>row.id);
+      let settingsRows: {notebook_id:string;theme:string;custom_color:string;cover:unknown;updated_at?:string}[]=[];
+      if(notebookIds.length){
         const {data:settingsData,error:settingsError}=await activeClient.from("planner_settings")
-          .select("notebook_id,theme,custom_color,cover")
+          .select("notebook_id,theme,custom_color,cover,updated_at")
           .eq("user_id",activeUser.id)
-          .in("notebook_id",plannerIds);
+          .in("notebook_id",notebookIds);
         if(!active)return;
         if(settingsError){
           setNotebookTypeNotice("표지 정보를 불러오지 못했습니다: "+settingsError.message);
@@ -748,8 +748,36 @@ export default function Planner() {
       }
 
       const settingsByNotebook=new Map(settingsRows.map(setting=>[setting.notebook_id,setting]));
+      const isDecoratedCover=(value:unknown)=>{
+        if(!value||typeof value!=="object"||Array.isArray(value))return false;
+        const candidate=value as Partial<Cover>;
+        return Boolean(
+          (Array.isArray(candidate.items)&&candidate.items.length>0)||
+          candidate.backgroundColor||
+          candidate.backgroundImage||
+          candidate.patternColor||
+          (candidate.backgroundPattern&&candidate.backgroundPattern!=="grid")||
+          (typeof candidate.patternThickness==="number"&&candidate.patternThickness!==2)||
+          (typeof candidate.subtitle==="string"&&candidate.subtitle.trim())
+        );
+      };
+      const newestFirst=(a:typeof settingsRows[number],b:typeof settingsRows[number])=>
+        new Date(b.updated_at??0).getTime()-new Date(a.updated_at??0).getTime();
+      const plannerSettings=settingsRows
+        .filter(setting=>rows.some(row=>row.id===setting.notebook_id&&row.notebook_type==="planner"))
+        .sort(newestFirst);
+      const sharedCoverSettings=
+        plannerSettings.find(setting=>isDecoratedCover(setting.cover))||
+        settingsRows.filter(setting=>isDecoratedCover(setting.cover)).sort(newestFirst)[0]||
+        plannerSettings[0]||
+        settingsRows.sort(newestFirst)[0]||
+        null;
+
       const nextNotebooks:NotebookRecord[]=rows.map(row=>{
-        const settings=settingsByNotebook.get(row.id);
+        const ownSettings=settingsByNotebook.get(row.id);
+        const settings=ownSettings&&isDecoratedCover(ownSettings.cover)
+          ?ownSettings
+          :sharedCoverSettings??ownSettings;
         if(!settings)return row as NotebookRecord;
         const rawCover:Partial<Cover>=settings.cover&&typeof settings.cover==="object"
           ? settings.cover as Partial<Cover>
@@ -779,7 +807,7 @@ export default function Planner() {
 
       const imagePaths=new Set<string>();
       for(const notebook of nextNotebooks){
-        if(notebook.notebook_type!=="planner"||!notebook.cover)continue;
+        if(!notebook.cover)continue;
         if(typeof notebook.cover.backgroundImage==="string"&&notebook.cover.backgroundImage){
           imagePaths.add(notebook.cover.backgroundImage);
         }
@@ -1189,6 +1217,20 @@ export default function Planner() {
     setCreatingNotebook(false);
   }
 
+  async function deleteNotebook(notebook:NotebookRecord):Promise<boolean> {
+    if(!client||!user)return false;
+    const {error}=await client.from("notebooks").delete()
+      .eq("id",notebook.id)
+      .eq("user_id",user.id);
+    if(error){
+      setNotebookTypeNotice("다이어리를 삭제하지 못했습니다: "+error.message);
+      return false;
+    }
+    setNotebooks(current=>current.filter(item=>item.id!==notebook.id));
+    setNotebookTypeNotice("\\""+notebook.title+"\\" 다이어리를 삭제했습니다.");
+    return true;
+  }
+
   async function openNotebook(notebook: NotebookRecord) {
     if(notebook.notebook_type==="free-notes"){
       setNotebookTypeNotice("");
@@ -1280,6 +1322,7 @@ export default function Planner() {
       notice={notebookTypeNotice}
       onCreate={()=>{setNotebookTypeNotice("");setNotebookTypeChosen(true);}}
       onOpen={notebook=>{void openNotebook(notebook);}}
+      onDelete={deleteNotebook}
       onSignOut={()=>{void signOut();}}
       onDeleteAccount={()=>{setDeleteEmail("");setShowDeleteAccount(true);}}
 
