@@ -44,7 +44,9 @@ const TYPES: Record<NotebookType,{label:string;description:string;icon:typeof Bo
 
 function dateLabel(value:string) {
   const date=new Date(value);
-  return Number.isNaN(date.getTime())?"":new Intl.DateTimeFormat("ko-KR",{year:"numeric",month:"long",day:"numeric"}).format(date);
+  if(Number.isNaN(date.getTime()))return "";
+  const weekday=["일","월","화","수","목","금","토"][date.getDay()];
+  return `${date.getFullYear()} ${date.getMonth()+1} ${date.getDate()} ${weekday}`;
 }
 
 function NotebookCoverPreview({notebook,photoUrls}:{notebook:NotebookRecord;photoUrls:Record<string,string>}) {
