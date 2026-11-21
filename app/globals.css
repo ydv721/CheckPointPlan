@@ -9005,6 +9005,15 @@ html,body{width:100%;overflow-x:clip}
   padding:16px 30px 16px 36px !important;
   gap:12px;
 }
+.picture-diary-header-title {
+  display:flex;
+  align-items:center;
+  margin-left:auto;
+  min-width:0;
+  color:var(--ink);
+  font-size:12px;
+  font-weight:800;
+}
 .diary-date-heading {
   flex:0 0 auto;
   padding:0 0 10px;
@@ -10073,19 +10082,6 @@ html,body{width:100%;overflow-x:clip}
   }
 }
 @media(max-width:520px) {
-  .picture-diary-header-status {
-    flex-direction:column;
-    align-items:flex-end;
-    gap:3px;
-    font-size:10px;
-  }
-  .picture-diary-save-status {
-    max-width:160px;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-    font-size:9px;
-  }
   .diary-date-navigation {
     gap:5px;
   }
