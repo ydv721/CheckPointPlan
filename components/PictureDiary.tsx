@@ -311,11 +311,6 @@ export default function PictureDiary({
   const [colorPaletteOpen, setColorPaletteOpen] = useState(false);
   const [customTextColor, setCustomTextColor] = useState("#7868e8");
 
-  const weatherLabel = useMemo(
-    () => WEATHER_OPTIONS.find(option => option.id === entry.weather)?.label ?? "날씨 선택",
-    [entry.weather]
-  );
-
   useEffect(() => {
     entryRef.current = entry;
   }, [entry]);
@@ -694,7 +689,7 @@ export default function PictureDiary({
                     </span>
                   )}
                 </button>
-                <div className="diary-left-footer"><span>{weatherIcon(entry.weather)} {weatherLabel}</span></div>
+                <div className="diary-left-footer"><span>{weatherIcon(entry.weather)}</span></div>
               </section>
 
               <section className="paper-page right-page diary-right-page" aria-label="오늘의 일기">
