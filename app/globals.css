@@ -8998,11 +8998,11 @@ html,body{width:100%;overflow-x:clip}
 }
 .picture-diary-book-frame > .diary-left-page {
   border-radius:14px 1px 1px 14px !important;
-  padding:16px 34px !important;
+  padding:16px 34px 16px 30px !important;
 }
 .picture-diary-book-frame > .diary-right-page {
   border-radius:1px 14px 14px 1px !important;
-  padding:16px 36px !important;
+  padding:16px 30px 16px 36px !important;
   gap:12px;
 }
 .picture-diary-header-status {
