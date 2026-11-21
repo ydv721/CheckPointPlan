@@ -1227,7 +1227,7 @@ export default function Planner() {
       return false;
     }
     setNotebooks(current=>current.filter(item=>item.id!==notebook.id));
-    setNotebookTypeNotice("\\""+notebook.title+"\\" 다이어리를 삭제했습니다.");
+    setNotebookTypeNotice(`"${notebook.title}" 다이어리를 삭제했습니다.`);
     return true;
   }
 
