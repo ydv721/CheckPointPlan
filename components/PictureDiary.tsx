@@ -484,7 +484,7 @@ export default function PictureDiary({
         }}
         onOpenNotebookList={() => { void leaveDiary(onBack); }}
         onSignOut={() => { void leaveDiary(onSignOut); }}
-        onDeleteAccount={onDeleteAccount}
+        onDeleteAccount={() => { void leaveDiary(async () => { onDeleteAccount(); }); }}
       />
 
       <header className="site-header">

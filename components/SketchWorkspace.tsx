@@ -177,11 +177,13 @@ function drawDocument(canvas: HTMLCanvasElement, doc: SketchDocument) {
     context.strokeStyle = "#dce2ec";
     context.lineWidth = 1;
     const step = 40;
-    for (let x = step; x < doc.width; x += step) {
-      context.beginPath();
-      context.moveTo(x, 0);
-      context.lineTo(x, doc.height);
-      context.stroke();
+    if (doc.backgroundStyle === "grid") {
+      for (let x = step; x < doc.width; x += step) {
+        context.beginPath();
+        context.moveTo(x, 0);
+        context.lineTo(x, doc.height);
+        context.stroke();
+      }
     }
     for (let y = step; y < doc.height; y += step) {
       context.beginPath();
@@ -289,7 +291,7 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [dirty, setDirty] = useState(false);
-  const [layout, setLayout] = useState<LayoutPreset>("portrait");
+  const [layout, setLayout] = useState<LayoutPreset>(() => initial.width === initial.height ? "square" : initial.width > initial.height ? "landscape" : "portrait");
 
   const selectedLayer = doc.layers.find(layer => layer.id === selectedLayerId) ?? doc.layers[0];
 
