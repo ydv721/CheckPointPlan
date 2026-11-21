@@ -52,7 +52,7 @@ const today = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 const uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-const NOTEBOOK_LABELS:Record<NotebookType,string>={planner:"플래너","study-notes":"필기 다이어리",diary:"일기",checklist:"체크리스트","free-notes":"프리 다이어리"};
+const NOTEBOOK_LABELS:Record<NotebookType,string>={planner:"플래너","study-notes":"필기 다이어리",diary:"일기",checklist:"체크리스트","free-notes":"프리 노트"};
 const dateView = (date: string) => {
   const [y,m,d] = date.split("-").map(Number);
   return `${y}년 ${m}월 ${d}일 ${DAYS[new Date(y,m-1,d).getDay()]}요일`;
