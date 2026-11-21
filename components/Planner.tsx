@@ -1217,6 +1217,27 @@ export default function Planner() {
     setCreatingNotebook(false);
   }
 
+  async function renameNotebook(notebook:NotebookRecord,title:string):Promise<boolean> {
+    if(!client||!user)return false;
+    const nextTitle=title.trim();
+    if(!nextTitle){
+      setNotebookTypeNotice("다이어리 이름을 입력해 줘.");
+      return false;
+    }
+    const {data,error}=await client.from("notebooks").update({title:nextTitle})
+      .eq("id",notebook.id)
+      .eq("user_id",user.id)
+      .select("id")
+      .single();
+    if(error||!data){
+      setNotebookTypeNotice("다이어리 이름을 변경하지 못했습니다: "+(error?.message??"변경된 항목을 확인할 수 없습니다."));
+      return false;
+    }
+    setNotebooks(current=>current.map(item=>item.id===notebook.id?{...item,title:nextTitle}:item));
+    setNotebookTypeNotice("");
+    return true;
+  }
+
   async function deleteNotebook(notebook:NotebookRecord):Promise<boolean> {
     if(!client||!user)return false;
     const {error}=await client.from("notebooks").delete()
@@ -1323,6 +1344,7 @@ export default function Planner() {
       onCreate={()=>{setNotebookTypeNotice("");setNotebookTypeChosen(true);}}
       onOpen={notebook=>{void openNotebook(notebook);}}
       onDelete={deleteNotebook}
+      onRename={renameNotebook}
       onSignOut={()=>{void signOut();}}
       onDeleteAccount={()=>{setDeleteEmail("");setShowDeleteAccount(true);}}
 
