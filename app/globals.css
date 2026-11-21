@@ -8895,3 +8895,55 @@ html,body{width:100%;overflow-x:clip}
     height:32px;
   }
 }
+
+
+/* Temporary confirmation toast after deleting a diary. */
+.notebook-delete-toast {
+  position:fixed;
+  z-index:120;
+  right:24px;
+  bottom:24px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  width:max-content;
+  max-width:calc(100vw - 48px);
+  padding:13px 17px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--paper);
+  color:var(--ink);
+  box-shadow:0 12px 32px rgba(25,35,50,.18);
+  font-size:13px;
+  font-weight:650;
+  line-height:1.5;
+  pointer-events:none;
+  animation:notebook-delete-toast-in .2s ease-out both,notebook-delete-toast-out .2s ease-in 2.8s forwards;
+}
+.notebook-delete-toast-icon {
+  flex:0 0 auto;
+  color:var(--accent);
+}
+@keyframes notebook-delete-toast-in {
+  from { opacity:0; transform:translateY(10px); }
+  to { opacity:1; transform:translateY(0); }
+}
+@keyframes notebook-delete-toast-out {
+  from { opacity:1; transform:translateY(0); }
+  to { opacity:0; transform:translateY(6px); }
+}
+@media(max-width:780px) {
+  .notebook-delete-toast {
+    right:16px;
+    bottom:max(16px,env(safe-area-inset-bottom));
+    left:16px;
+    width:auto;
+    max-width:none;
+    justify-content:center;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  .notebook-delete-toast {
+    animation:none;
+  }
+}
