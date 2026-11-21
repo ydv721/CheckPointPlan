@@ -795,7 +795,7 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
                 <label className="sketch-layer-name-label">레이어 이름</label>
                 <input className="sketch-layer-name-input" value={selectedLayer.name} maxLength={32} onChange={event => updateLayer({ name: event.target.value })} onBlur={() => commitDocument(docRef.current)}/>
                 <label className="sketch-range-label"><span>레이어 불투명도</span><strong>{selectedLayer.opacity}%</strong></label>
-                <input className="sketch-range" type="range" min={0} max={100} value={selectedLayer.opacity} onChange={event => updateLayer({ opacity: Number(event.target.value) })} onPointerUp={() => commitDocument(docRef.current)}/>
+                <input className="sketch-range" type="range" min={0} max={100} value={selectedLayer.opacity} onChange={event => updateLayer({ opacity: Number(event.target.value) })} onPointerUp={() => commitDocument(docRef.current)} onKeyUp={() => commitDocument(docRef.current)}/>
                 <div className="sketch-layer-actions">
                   <button type="button" title="위로 이동" aria-label="레이어 위로 이동" onClick={() => reorderLayer(1)}><MoveUp size={15}/></button>
                   <button type="button" title="아래로 이동" aria-label="레이어 아래로 이동" onClick={() => reorderLayer(-1)}><MoveDown size={15}/></button>
