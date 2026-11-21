@@ -817,7 +817,7 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
             <select className="sketch-select" value={doc.backgroundStyle} onChange={event => changeBackgroundStyle(event.target.value as SketchDocument["backgroundStyle"])}>
               <option value="plain">흰 종이</option>
               <option value="grid">모눈 종이</option>
-              <option value="ruled">격자 종이</option>
+              <option value="ruled">줄 노트</option>
               <option value="transparent">투명 배경</option>
             </select>
             {doc.backgroundStyle !== "transparent" ? (

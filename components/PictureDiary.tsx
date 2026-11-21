@@ -303,7 +303,7 @@ export default function PictureDiary({
   }
 
   async function navigateDate(nextDate: string) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(nextDate) || nextDate === date) return;
+    if (uploading || !/^\d{4}-\d{2}-\d{2}$/.test(nextDate) || nextDate === date) return;
     if (!(await saveCurrentEntry())) return;
     setDate(nextDate);
   }
@@ -510,12 +510,12 @@ export default function PictureDiary({
               <section className="paper-page left-page diary-left-page" aria-label="오늘의 그림">
                 <div className="diary-date-heading">
                   <div className="diary-date-navigation">
-                    <button type="button" className="month-nav-button" aria-label="이전 날짜" title="이전 날짜" disabled={loading} onClick={() => void navigateDate(shiftDate(date, -1))}><ChevronLeft size={16}/></button>
+                    <button type="button" className="month-nav-button" aria-label="이전 날짜" title="이전 날짜" disabled={loading || uploading} onClick={() => void navigateDate(shiftDate(date, -1))}><ChevronLeft size={16}/></button>
                     <strong>{dateLabel(date)}</strong>
-                    <button type="button" className="month-nav-button" aria-label="다음 날짜" title="다음 날짜" disabled={loading} onClick={() => void navigateDate(shiftDate(date, 1))}><ChevronRight size={16}/></button>
+                    <button type="button" className="month-nav-button" aria-label="다음 날짜" title="다음 날짜" disabled={loading || uploading} onClick={() => void navigateDate(shiftDate(date, 1))}><ChevronRight size={16}/></button>
                     <label className="diary-date-picker" title="날짜 선택">
                       <CalendarDays size={16}/>
-                      <input type="date" aria-label="그림일기 날짜 선택" value={date} onChange={event => void navigateDate(event.target.value)}/>
+                      <input type="date" aria-label="그림일기 날짜 선택" value={date} disabled={loading || uploading} onChange={event => void navigateDate(event.target.value)}/>
                     </label>
                   </div>
                 </div>
