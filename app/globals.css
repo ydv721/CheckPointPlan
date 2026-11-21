@@ -8440,10 +8440,9 @@ html,body{width:100%;overflow-x:clip}
   box-shadow:0 0 0 2px var(--paper),0 0 0 3px var(--accent);
 }
 .markdown-color-default{
-  background:var(--paper);
-  color:var(--ink);
-  font-size:13px;
-  font-weight:900;
+  background:#000000;
+  border-color:#000000;
+  color:#ffffff;
 }
 .markdown-color-theme{
   background:var(--accent);
