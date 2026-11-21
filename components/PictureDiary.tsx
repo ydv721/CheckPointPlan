@@ -361,6 +361,7 @@ export default function PictureDiary({
     editor.focus();
     if (action === "bold") document.execCommand("bold");
     else if (action === "italic") document.execCommand("italic");
+    else if (action === "underline") document.execCommand("underline");
     else if (action === "strike") document.execCommand("strikeThrough");
     else if (action === "heading") document.execCommand("formatBlock", false, "H1");
     else if (action === "bullet") document.execCommand("insertUnorderedList");
