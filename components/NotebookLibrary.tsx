@@ -207,7 +207,6 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
         >
           <section className="delete-account-modal notebook-delete-modal" role="dialog" aria-modal="true" aria-labelledby="notebook-delete-title" aria-describedby="notebook-delete-description">
             <div className="delete-account-icon"><Trash2 size={22}/></div>
-            <div className="eyebrow">DELETE DIARY</div>
             <h2 id="notebook-delete-title">다이어리를 삭제할까요?</h2>
             <p id="notebook-delete-description"><strong>{deleteTarget.title}</strong> 다이어리와 저장된 기록이 함께 삭제됩니다. 삭제한 내용은 복구할 수 없습니다.</p>
             <div className="delete-account-actions">
