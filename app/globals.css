@@ -10436,15 +10436,27 @@ html,body{width:100%;overflow-x:clip}
 }
 
 
-/* Picture diary cards: extend the content area toward the outer edge of each page. */
+/* Picture diary cards: widen within each page without overflowing or being clipped. */
 @media (min-width:781px) {
-  .picture-diary-book-frame {
-    --picture-diary-card-extension: clamp(64px, 10vw, 120px);
+  .picture-diary-book-frame > .diary-left-page {
+    padding-right:18px !important;
+  }
+
+  .picture-diary-book-frame > .diary-right-page {
+    padding-right:12px !important;
   }
 
   .picture-diary-book-frame > .diary-left-page > *,
   .picture-diary-book-frame > .diary-right-page > * {
-    width:calc(100% + var(--picture-diary-card-extension)) !important;
-    max-width:none !important;
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+  }
+
+  .picture-diary-book-frame .diary-journal-paper,
+  .picture-diary-book-frame .diary-bottom-panels,
+  .picture-diary-book-frame .picture-diary-drawing-area {
+    box-sizing:border-box !important;
+    min-width:0 !important;
   }
 }
