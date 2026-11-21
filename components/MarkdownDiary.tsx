@@ -484,7 +484,6 @@ export default function MarkdownDiary({
   const [shareFeedback, setShareFeedback] = useState("");
   const [colorPaletteOpen, setColorPaletteOpen] = useState(false);
   const [customTextColor, setCustomTextColor] = useState("#7868e8");
-  const [colorSelectionHint, setColorSelectionHint] = useState("");
   const leftEditorRef = useRef<HTMLDivElement>(null);
   const editorSelectionRef = useRef<Range | null>(null);
   const currentNoteRef = useRef<MarkdownNote | null>(null);
@@ -703,14 +702,12 @@ export default function MarkdownDiary({
       !editor.contains(selection.anchorNode) ||
       !editor.contains(selection.focusNode)
     ) {
-      setColorSelectionHint("색상을 적용할 글자를 먼저 선택해 줘.");
       return;
     }
 
     document.execCommand("foreColor", false, color);
     updatePage("left", htmlToMarkdown(editor.innerHTML));
     editorSelectionRef.current = null;
-    setColorSelectionHint("");
     setColorPaletteOpen(false);
     editor.focus();
   }
@@ -932,7 +929,6 @@ export default function MarkdownDiary({
                                 rememberEditorSelection();
                               }}
                               onClick={() => {
-                                setColorSelectionHint("");
                                 setColorPaletteOpen(open => !open);
                               }}
                             >
@@ -980,23 +976,19 @@ export default function MarkdownDiary({
                                       onClick={() => applyTextColor(color)}
                                     />
                                   ))}
+                                  <label className="markdown-color-swatch markdown-color-custom-swatch" title="사용자 지정 글자색">
+                                    <input
+                                      type="color"
+                                      aria-label="사용자 지정 글자색"
+                                      value={customTextColor}
+                                      onChange={event => {
+                                        const color = event.target.value;
+                                        setCustomTextColor(color);
+                                        applyTextColor(color);
+                                      }}
+                                    />
+                                  </label>
                                 </div>
-                                <label className="markdown-color-custom">
-                                  <span>직접 선택</span>
-                                  <input
-                                    type="color"
-                                    aria-label="사용자 지정 글자색"
-                                    value={customTextColor}
-                                    onChange={event => {
-                                      const color = event.target.value;
-                                      setCustomTextColor(color);
-                                      applyTextColor(color);
-                                    }}
-                                  />
-                                </label>
-                                <span className="markdown-color-hint" aria-live="polite">
-                                  {colorSelectionHint || "글자를 선택한 뒤 색상을 눌러 줘."}
-                                </span>
                               </div>
                             )}
                           </div>
