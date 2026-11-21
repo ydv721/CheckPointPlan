@@ -8373,6 +8373,15 @@ html,body{width:100%;overflow-x:clip}
   border-bottom:0;
   background:var(--soft);
 }
+.markdown-align-controls{
+  display:inline-flex;
+  flex:0 0 auto;
+  align-items:center;
+  gap:2px;
+  margin-left:3px;
+  padding-left:6px;
+  border-left:1px solid var(--line);
+}
 .markdown-toolbar-button{
   display:inline-flex;
   flex:0 0 34px;
