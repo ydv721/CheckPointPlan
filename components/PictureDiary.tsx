@@ -493,10 +493,6 @@ export default function PictureDiary({
           <button type="button" className="brand" onClick={() => { void leaveDiary(onBack); }}>
             <span className="brand-lockup"><span className="brand-icon"><Check size={18} strokeWidth={3}/></span><span>CHECKPOINT</span></span>
           </button>
-          <div className="picture-diary-header-status">
-            <span>{notebookTitle}</span>
-            <span className="picture-diary-save-status" aria-live="polite">{loading ? "불러오는 중..." : status}</span>
-          </div>
         </div>
       </header>
 
