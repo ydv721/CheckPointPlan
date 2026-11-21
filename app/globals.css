@@ -7700,10 +7700,21 @@ html,body{width:100%;overflow-x:clip}
 .notebook-book-diary .notebook-book-cover { background:linear-gradient(145deg,#f4e1e8,#d8aebe); color:#704b5c; }
 .notebook-book-checklist .notebook-book-cover { background:linear-gradient(145deg,#f4ead3,#d8c28e); color:#655433; }
 .notebook-book-free-notes .notebook-book-cover { background:linear-gradient(145deg,#e5def2,#b8a9d3); color:#51436c; }
-.notebook-book-info { display:flex; flex-direction:column; gap:4px; padding:0 2px; }
-.notebook-book-info > strong { font-size:14px; font-weight:850; }
-.notebook-book-info > small { font-size:11px; color:var(--ink); opacity:.62; }
-.notebook-book-date { display:flex; align-items:center; gap:4px; margin-top:3px; }
+.notebook-book-info { display:flex; flex-direction:column; gap:5px; padding:0 2px; font-family:inherit; }
+.notebook-book-title { width:100%; min-width:0; display:flex; align-items:center; gap:6px; padding:1px 0; border:0; background:transparent; color:var(--ink); text-align:left; font-family:inherit; font-size:14px; font-weight:600; line-height:1.45; cursor:pointer; }
+.notebook-book-title > span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.notebook-book-title:hover { color:var(--accent); }
+.notebook-book-title-edit { flex:0 0 auto; opacity:0; transition:opacity .15s ease; }
+.notebook-book-title:hover .notebook-book-title-edit,
+.notebook-book-title:focus-visible .notebook-book-title-edit { opacity:.75; }
+.notebook-book-rename { width:100%; min-width:0; display:flex; align-items:center; gap:4px; }
+.notebook-book-rename input { flex:1 1 auto; width:0; min-width:0; height:32px; padding:0 8px; border:1px solid var(--accent); border-radius:7px; outline:none; background:var(--paper); color:var(--ink); font-family:inherit; font-size:13px; font-weight:500; }
+.notebook-book-rename button { flex:0 0 30px; width:30px; height:30px; display:grid; place-items:center; padding:0; border:1px solid var(--line); border-radius:7px; background:var(--paper); color:var(--ink); cursor:pointer; }
+.notebook-book-rename button[type="submit"] { border-color:var(--accent); background:var(--accent); color:#ffffff; }
+.notebook-book-rename button:disabled { opacity:.45; cursor:not-allowed; }
+.notebook-book-rename-error { color:#bd6874; font-size:11px; line-height:1.35; }
+.notebook-book-info > small { color:var(--ink); font-family:inherit; font-size:11px; font-weight:500; line-height:1.45; opacity:.66; }
+.notebook-book-date { display:flex; align-items:center; gap:4px; margin-top:2px; }
 .notebook-book-add { width:100%; min-height:0; aspect-ratio:.72; align-self:start; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:13px; border:1px dashed var(--line); border-radius:12px; background:rgba(255,255,255,.35); color:var(--ink); cursor:pointer; }
 .notebook-book-add > span { width:52px; height:52px; display:grid; place-items:center; border:1px solid var(--line); border-radius:50%; color:var(--accent); background:var(--paper); }
 .notebook-book-add > strong { font-size:13px; font-weight:800; }
@@ -7732,6 +7743,9 @@ html,body{width:100%;overflow-x:clip}
     opacity:1;
     pointer-events:auto;
     transform:none;
+  }
+  .notebook-book-title-edit {
+    opacity:.7;
   }
 }
 
