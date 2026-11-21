@@ -9121,29 +9121,138 @@ html,body{width:100%;overflow-x:clip}
   background:var(--paper);
   transform:translateY(-1px);
 }
-.diary-time-field input {
+.diary-time-picker {
+  position:relative;
   display:block;
-  cursor:text;
-  width:100%;
   min-width:0;
-  max-width:100%;
-  box-sizing:border-box;
-  padding:5px 0;
-  border:0;
-  outline:0;
+}
+.diary-time-picker.is-open {
+  z-index:30;
+}
+.diary-time-value {
+  display:flex;
+  align-items:center;
+  gap:2px;
+  min-width:0;
+  color:var(--ink);
+  font-size:clamp(12px,1.05vw,14px);
+  font-weight:850;
+  font-variant-numeric:tabular-nums;
+}
+.diary-time-value button {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:27px;
+  padding:2px 3px;
+  border:1px solid transparent;
+  border-radius:6px;
   background:transparent;
+  color:inherit;
+  font:inherit;
+  font-variant-numeric:tabular-nums;
+  cursor:pointer;
+  transition:background .14s,border-color .14s;
+}
+.diary-time-value button:hover,
+.diary-time-value button:focus-visible {
+  border-color:var(--accent);
+  background:var(--paper);
+  outline:0;
+}
+.diary-time-period {
+  min-width:31px;
+  color:var(--accent) !important;
+  font-weight:900 !important;
+}
+.diary-time-segment {
+  min-width:27px;
+}
+.diary-time-colon {
+  color:var(--ink);
+  opacity:.75;
+}
+.diary-time-popover {
+  position:absolute;
+  top:calc(100% + 7px);
+  left:0;
+  z-index:40;
+  width:174px;
+  box-sizing:border-box;
+  padding:9px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:var(--paper);
+  color:var(--ink);
+  box-shadow:0 8px 24px rgba(20,30,50,.16);
+}
+.diary-time-popover.is-minute {
+  right:0;
+  left:auto;
+}
+.diary-time-options {
+  display:grid;
+  gap:5px;
+}
+.diary-time-hour-options {
+  grid-template-columns:repeat(4,minmax(0,1fr));
+}
+.diary-time-minute-options {
+  grid-template-columns:repeat(3,minmax(0,1fr));
+}
+.diary-time-options button {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-width:0;
+  min-height:30px;
+  padding:4px;
+  border:1px solid var(--line);
+  border-radius:7px;
+  background:var(--soft);
   color:var(--ink);
   font:inherit;
-  font-size:clamp(9px,.95vw,11px);
-  font-weight:800;
-  white-space:nowrap;
+  font-size:12px;
+  font-weight:750;
+  font-variant-numeric:tabular-nums;
+  cursor:pointer;
 }
-.diary-time-field input::-webkit-datetime-edit,
-.diary-time-field input::-webkit-datetime-edit-fields-wrapper {
-  padding:0;
+.diary-time-options button:hover,
+.diary-time-options button.is-selected {
+  border-color:var(--accent);
+  background:color-mix(in srgb,var(--accent) 18%,var(--paper));
 }
-.diary-time-field input::-webkit-calendar-picker-indicator {
-  display:none;
+.diary-time-direct-input {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-top:9px;
+  padding-top:8px;
+  border-top:1px solid var(--line);
+  color:var(--ink);
+  font-size:10px;
+  font-weight:750;
+}
+.diary-time-direct-input input {
+  width:48px;
+  height:29px;
+  box-sizing:border-box;
+  padding:3px 5px;
+  border:1px solid var(--line);
+  border-radius:6px;
+  outline:0;
+  background:var(--soft);
+  color:var(--ink);
+  font:inherit;
+  font-size:12px;
+  font-weight:850;
+  text-align:center;
+  font-variant-numeric:tabular-nums;
+}
+.diary-time-direct-input input:focus {
+  border-color:var(--accent);
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 15%,transparent);
 }
 .diary-drawing-heading {
   display:flex;
