@@ -21,9 +21,9 @@ type NotePages = {
   right: string;
 };
 
-type MarkdownAction = "bold" | "italic" | "strike" | "heading" | "bullet" | "ordered" | "quote" | "code" | "divider";
+export type MarkdownAction = "bold" | "italic" | "strike" | "heading" | "bullet" | "ordered" | "quote" | "code" | "divider";
 
-const MARKDOWN_TOOLBAR = [
+export const MARKDOWN_TOOLBAR = [
   { action: "bold", label: "굵게", icon: Bold },
   { action: "italic", label: "기울임", icon: Italic },
   { action: "strike", label: "취소선", icon: Strikethrough },
@@ -142,7 +142,7 @@ function highlightCodeHtml(source: string, language: string) {
   });
 }
 
-function createMarkdownCodeBlockHtml(code: string, language: string, inserted = false) {
+export function createMarkdownCodeBlockHtml(code: string, language: string, inserted = false) {
   const safeLanguage = normalizeCodeLanguage(language);
   const options = CODE_LANGUAGES.map(({ value, label }) =>
     '<option value="' + value + '"' + (value === safeLanguage ? " selected" : "") + ">" + label + "</option>"
@@ -178,7 +178,7 @@ function serializeCodeText(node: Node): string {
   return result;
 }
 
-function highlightCodeBlocks(editor: HTMLElement) {
+export function highlightCodeBlocks(editor: HTMLElement) {
   editor.querySelectorAll<HTMLElement>(".markdown-code-block").forEach(block => {
     const code = block.querySelector("pre code");
     if (!code) return;
@@ -269,7 +269,7 @@ function renderInlineMarkdown(value: string) {
   return rendered;
 }
 
-function markdownToHtml(markdown: string) {
+export function markdownToHtml(markdown: string) {
   const lines = markdown.replace(/\r\n?/g, "\n").split("\n");
   const blocks: string[] = [];
   let index = 0;
@@ -384,7 +384,7 @@ function markdownToHtml(markdown: string) {
   return blocks.join("");
 }
 
-function htmlToMarkdown(html: string) {
+export function htmlToMarkdown(html: string) {
   const parsed = new DOMParser().parseFromString("<div>" + html + "</div>", "text/html");
   const root = parsed.body.firstElementChild;
   if (!root) return "";

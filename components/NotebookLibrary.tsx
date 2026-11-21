@@ -37,7 +37,7 @@ type Props = {
 const TYPES: Record<NotebookType,{label:string;description:string;icon:typeof BookOpen}> = {
   planner:{label:"플래너",description:"월간 · 일간 · 일정 관리",icon:CalendarDays},
   "study-notes":{label:"필기 다이어리",description:"공부 · 강의 · 지식 정리",icon:BookText},
-  diary:{label:"일기",description:"하루의 기록 · 일상",icon:BookOpen},
+  diary:{label:"그림일기",description:"날짜별 그림 · 하루 기록",icon:BookOpen},
   checklist:{label:"체크리스트",description:"할 일 · 목표 · 점검",icon:CheckSquare},
   "free-notes":{label:"프리 노트",description:"Markdown · 자유로운 글쓰기",icon:BookText}
 };
