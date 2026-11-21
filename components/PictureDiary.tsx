@@ -129,6 +129,157 @@ function weatherIcon(id: string) {
   return <Wind size={16}/>;
 }
 
+type Meridiem = "AM" | "PM";
+type TimePart = "hour" | "minute" | null;
+
+function parseDiaryTime(value: string) {
+  const match = /^(\d{2}):(\d{2})$/.exec(value);
+  if (!match) return { period: "AM" as Meridiem, hour: 12, minute: 0 };
+  const hour24 = Number(match[1]);
+  const minute = Number(match[2]);
+  if (hour24 > 23 || minute > 59) return { period: "AM" as Meridiem, hour: 12, minute: 0 };
+  return {
+    period: hour24 >= 12 ? "PM" as Meridiem : "AM" as Meridiem,
+    hour: hour24 % 12 || 12,
+    minute
+  };
+}
+
+function toStoredDiaryTime(period: Meridiem, hour: number, minute: number) {
+  const hour24 = period === "PM" ? (hour % 12) + 12 : hour % 12;
+  return String(hour24).padStart(2, "0") + ":" + String(minute).padStart(2, "0");
+}
+
+function DiaryTimePicker({ label, value, onChange }: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const current = parseDiaryTime(value);
+  const [activePart, setActivePart] = useState<TimePart>(null);
+  const [hourDraft, setHourDraft] = useState(String(current.hour));
+  const [minuteDraft, setMinuteDraft] = useState(String(current.minute).padStart(2, "0"));
+
+  useEffect(() => {
+    if (!activePart) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.target instanceof Node && rootRef.current?.contains(event.target)) return;
+      setActivePart(null);
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [activePart]);
+
+  function updateTime(period: Meridiem, hour: number, minute: number) {
+    onChange(toStoredDiaryTime(period, hour, minute));
+  }
+
+  function togglePart(part: Exclude<TimePart, null>) {
+    if (activePart === part) {
+      setActivePart(null);
+      return;
+    }
+    setHourDraft(String(current.hour));
+    setMinuteDraft(String(current.minute).padStart(2, "0"));
+    setActivePart(part);
+  }
+
+  function commitHour() {
+    const normalized = hourDraft.trim();
+    const parsed = /^\d{1,2}$/.test(normalized) ? Number(normalized) : NaN;
+    if (parsed >= 1 && parsed <= 12) {
+      updateTime(current.period, parsed, current.minute);
+      setHourDraft(String(parsed));
+    } else {
+      setHourDraft(String(current.hour));
+    }
+  }
+
+  function commitMinute() {
+    const normalized = minuteDraft.trim();
+    const parsed = /^\d{1,2}$/.test(normalized) ? Number(normalized) : NaN;
+    if (parsed >= 0 && parsed <= 59) {
+      updateTime(current.period, current.hour, parsed);
+      setMinuteDraft(String(parsed).padStart(2, "0"));
+    } else {
+      setMinuteDraft(String(current.minute).padStart(2, "0"));
+    }
+  }
+
+  return (
+    <div className="diary-time-field">
+      <span className="diary-field-label">{label}</span>
+      <div className="diary-time-picker" ref={rootRef}>
+        <div className="diary-time-value">
+          <button type="button" className="diary-time-period" aria-label={label + " 오전/오후 변경"}
+            onClick={() => {
+              setActivePart(null);
+              updateTime(current.period === "AM" ? "PM" : "AM", current.hour, current.minute);
+            }}>
+            {current.period}
+          </button>
+          <button type="button" className="diary-time-segment" aria-label={label + " 시 선택"}
+            aria-expanded={activePart === "hour"} onClick={() => togglePart("hour")}>
+            {String(current.hour).padStart(2, "0")}
+          </button>
+          <span className="diary-time-colon" aria-hidden="true">:</span>
+          <button type="button" className="diary-time-segment" aria-label={label + " 분 선택"}
+            aria-expanded={activePart === "minute"} onClick={() => togglePart("minute")}>
+            {String(current.minute).padStart(2, "0")}
+          </button>
+        </div>
+
+        {activePart === "hour" ? (
+          <div className="diary-time-popover" role="group" aria-label={label + " 시 선택"}>
+            <div className="diary-time-options diary-time-hour-options">
+              {Array.from({ length: 12 }, (_, index) => index + 1).map(hour => (
+                <button key={hour} type="button" className={current.hour === hour ? "is-selected" : ""}
+                  onClick={() => { updateTime(current.period, hour, current.minute); setHourDraft(String(hour)); setActivePart(null); }}>
+                  {hour}
+                </button>
+              ))}
+            </div>
+            <label className="diary-time-direct-input">
+              <span>직접 입력</span>
+              <input type="text" inputMode="numeric" pattern="[0-9]*" maxLength={2} aria-label={label + " 시 직접 입력"}
+                value={hourDraft} onChange={event => setHourDraft(event.target.value.replace(/\D/g, "").slice(0, 2))}
+                onBlur={commitHour}
+                onKeyDown={event => {
+                  if (event.key === "Enter") { event.preventDefault(); commitHour(); setActivePart(null); }
+                  if (event.key === "Escape") { setHourDraft(String(current.hour)); setActivePart(null); }
+                }}/>
+            </label>
+          </div>
+        ) : null}
+
+        {activePart === "minute" ? (
+          <div className="diary-time-popover is-minute" role="group" aria-label={label + " 분 선택"}>
+            <div className="diary-time-options diary-time-minute-options">
+              {[0, 10, 20, 30, 40, 50].map(minute => (
+                <button key={minute} type="button" className={current.minute === minute ? "is-selected" : ""}
+                  onClick={() => { updateTime(current.period, current.hour, minute); setMinuteDraft(String(minute).padStart(2, "0")); setActivePart(null); }}>
+                  {String(minute).padStart(2, "0")}
+                </button>
+              ))}
+            </div>
+            <label className="diary-time-direct-input">
+              <span>직접 입력</span>
+              <input type="text" inputMode="numeric" pattern="[0-9]*" maxLength={2} aria-label={label + " 분 직접 입력"}
+                value={minuteDraft} onChange={event => setMinuteDraft(event.target.value.replace(/\D/g, "").slice(0, 2))}
+                onBlur={commitMinute}
+                onKeyDown={event => {
+                  if (event.key === "Enter") { event.preventDefault(); commitMinute(); setActivePart(null); }
+                  if (event.key === "Escape") { setMinuteDraft(String(current.minute).padStart(2, "0")); setActivePart(null); }
+                }}/>
+            </label>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export default function PictureDiary({
   client,
   userId,
@@ -524,14 +675,8 @@ export default function PictureDiary({
                       ))}
                     </div>
                   </div>
-                  <label className="diary-time-field">
-                    <span className="diary-field-label">일어난 시간</span>
-                    <input type="time" aria-label="일어난 시간" value={entry.wake_time} onChange={event => updateEntry({ wake_time: event.target.value })}/>
-                  </label>
-                  <label className="diary-time-field">
-                    <span className="diary-field-label">잠잘 시간</span>
-                    <input type="time" aria-label="잠잘 시간" value={entry.sleep_time} onChange={event => updateEntry({ sleep_time: event.target.value })}/>
-                  </label>
+                  <DiaryTimePicker label="일어난 시간" value={entry.wake_time} onChange={wake_time => updateEntry({ wake_time })}/>
+                  <DiaryTimePicker label="잠잘 시간" value={entry.sleep_time} onChange={sleep_time => updateEntry({ sleep_time })}/>
                 </div>
 
                 <div className="diary-drawing-heading">
