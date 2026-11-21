@@ -10277,3 +10277,160 @@ html,body{width:100%;overflow-x:clip}
     transition:none;
   }
 }
+
+
+/* Picture diary: restore a continuous centered spread and prevent time-field overflow. */
+.picture-diary-main {
+  width:100% !important;
+  box-sizing:border-box !important;
+}
+
+@media (min-width:781px) {
+  .picture-diary-main > .workspace-shell {
+    display:flex !important;
+    flex:1 1 auto !important;
+    flex-direction:row !important;
+    align-items:stretch !important;
+    justify-content:center !important;
+    width:100% !important;
+    max-width:none !important;
+    min-width:0 !important;
+    height:100% !important;
+    margin:0 !important;
+    padding:0 !important;
+    gap:0 !important;
+    box-sizing:border-box !important;
+  }
+
+  .picture-diary-main > .workspace-shell > .picture-diary-canvas {
+    display:flex !important;
+    flex:1 1 100% !important;
+    align-items:stretch !important;
+    justify-content:center !important;
+    width:100% !important;
+    max-width:none !important;
+    min-width:0 !important;
+    height:100% !important;
+    min-height:0 !important;
+    padding:0 !important;
+    overflow:visible !important;
+    box-sizing:border-box !important;
+  }
+
+  .picture-diary-canvas > .picture-diary-book-frame {
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    grid-template-rows:minmax(0,1fr) !important;
+    column-gap:0 !important;
+    row-gap:0 !important;
+    width:min(1120px,100%) !important;
+    max-width:1120px !important;
+    min-width:0 !important;
+    height:100% !important;
+    margin:0 auto !important;
+    box-sizing:border-box !important;
+    background:var(--paper) !important;
+  }
+
+  .picture-diary-book-frame > .paper-page {
+    position:relative !important;
+    display:flex !important;
+    width:100% !important;
+    min-width:0 !important;
+    margin:0 !important;
+    box-sizing:border-box !important;
+    background:var(--paper) !important;
+  }
+
+  .picture-diary-book-frame > .diary-left-page {
+    border-radius:14px 0 0 14px !important;
+    padding:16px 34px 16px 30px !important;
+  }
+
+  .picture-diary-book-frame > .diary-right-page {
+    border-radius:0 14px 14px 0 !important;
+    padding:16px 30px 16px 36px !important;
+  }
+
+  .picture-diary-book-frame > .diary-left-page::after,
+  .picture-diary-book-frame > .diary-right-page::after {
+    content:none !important;
+    display:none !important;
+  }
+
+  .picture-diary-book-frame > .book-spine {
+    position:absolute !important;
+    top:0 !important;
+    right:auto !important;
+    bottom:0 !important;
+    left:50% !important;
+    z-index:5 !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:space-around !important;
+    width:24px !important;
+    padding:17px 0 !important;
+    transform:translateX(-50%) !important;
+  }
+
+  .picture-diary-book-frame > .book-spine span {
+    width:18px !important;
+    height:2px !important;
+    border:0 !important;
+    border-radius:2px !important;
+    background:#b8b2a8 !important;
+    transform:none !important;
+    box-shadow:none !important;
+  }
+
+  .picture-diary-book-frame > .book-spine::before {
+    display:none !important;
+  }
+}
+
+@media (min-width:521px) {
+  .diary-daily-info {
+    grid-template-columns:minmax(0,1.45fr) repeat(2,minmax(96px,1fr)) !important;
+  }
+}
+
+.diary-time-field {
+  min-width:0 !important;
+  overflow:visible !important;
+}
+
+.diary-time-picker {
+  width:100% !important;
+  min-width:0 !important;
+}
+
+.diary-time-value {
+  display:grid !important;
+  grid-template-columns:minmax(25px,auto) minmax(0,1fr) 4px minmax(0,1fr) !important;
+  gap:0 !important;
+  width:100% !important;
+  min-width:0 !important;
+  font-size:clamp(11px,.95vw,13px) !important;
+}
+
+.diary-time-value button {
+  width:100% !important;
+  min-width:0 !important;
+  padding:2px 0 !important;
+  box-sizing:border-box !important;
+  font-size:inherit !important;
+  white-space:nowrap !important;
+}
+
+.diary-time-period {
+  min-width:25px !important;
+}
+
+.diary-time-segment {
+  min-width:0 !important;
+}
+
+.diary-time-colon {
+  text-align:center !important;
+}
