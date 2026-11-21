@@ -3427,6 +3427,13 @@ html,body{width:100%;overflow-x:clip}
 .notebook-delete-modal .delete-account-actions {
   margin-top: 25px;
 }
+.notebook-delete-modal #notebook-delete-description {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.85;
+  color: var(--ink);
+  opacity: .72;
+}
 
 .delete-account-modal {
   width: min(100%, 440px);
