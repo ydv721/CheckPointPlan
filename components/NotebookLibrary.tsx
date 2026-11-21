@@ -1,7 +1,7 @@
 "use client";
 
-import type { CSSProperties } from "react";
-import { BookOpen, BookText, CalendarDays, CheckSquare, Plus, Clock3 } from "lucide-react";
+import { useEffect, useState, type CSSProperties } from "react";
+import { BookOpen, BookText, CalendarDays, CheckSquare, Plus, Clock3, Trash2 } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import type { NotebookType } from "@/components/NotebookTypeSelection";
 import { defaultCover, themes, type Cover, type ThemeName } from "@/lib/types";
@@ -28,6 +28,7 @@ type Props = {
   notice: string;
   onCreate: () => void;
   onOpen: (notebook: NotebookRecord) => void;
+  onDelete: (notebook: NotebookRecord) => Promise<boolean>;
   onSignOut: () => void;
   onDeleteAccount: () => void;
 };
@@ -104,7 +105,30 @@ function NotebookCoverPreview({notebook,photoUrls}:{notebook:NotebookRecord;phot
   </span>;
 }
 
-export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeChange,notebooks,coverPhotoUrls,loading,notice,onCreate,onOpen,onSignOut,onDeleteAccount}:Props) {
+export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeChange,notebooks,coverPhotoUrls,loading,notice,onCreate,onOpen,onDelete,onSignOut,onDeleteAccount}:Props) {
+  const [deleteTarget,setDeleteTarget]=useState<NotebookRecord|null>(null);
+  const [deleting,setDeleting]=useState(false);
+
+  useEffect(()=>{
+    if(!deleteTarget)return;
+    const closeOnEscape=(event:KeyboardEvent)=>{
+      if(event.key==="Escape"&&!deleting)setDeleteTarget(null);
+    };
+    document.addEventListener("keydown",closeOnEscape);
+    return()=>document.removeEventListener("keydown",closeOnEscape);
+  },[deleteTarget,deleting]);
+
+  async function confirmDelete(){
+    if(!deleteTarget||deleting)return;
+    setDeleting(true);
+    try{
+      const deleted=await onDelete(deleteTarget);
+      if(deleted)setDeleteTarget(null);
+    }finally{
+      setDeleting(false);
+    }
+  }
+
   return (
     <div className="notebook-library-shell" data-theme={darkMode ? "dark" : "light"} style={themeStyle}>
       <header className="notebook-library-header">
@@ -139,22 +163,33 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
             {notebooks.map(notebook=>{
               const meta=TYPES[notebook.notebook_type];
               const Icon=meta.icon;
-              const hasSavedCover=notebook.notebook_type==="planner"&&Boolean(notebook.cover);
-              return <button type="button" key={notebook.id} className={"notebook-book-card notebook-book-"+notebook.notebook_type} onClick={()=>onOpen(notebook)}>
-                <span className={"notebook-book-cover"+(hasSavedCover?" has-saved-cover":"")}>
-                  {hasSavedCover
-                    ? <NotebookCoverPreview notebook={notebook} photoUrls={coverPhotoUrls}/>
-                    : <>
-                        <span className="notebook-book-binding" aria-hidden="true"/>
-                        <span className="notebook-book-mark"><Icon size={27}/></span>
-                        <strong>{notebook.title}</strong>
-                        <small>{meta.label.toUpperCase()}</small>
-                        <span className="notebook-book-lines" aria-hidden="true"><i/><i/><i/></span>
-                      </>}
-                  {hasSavedCover?<span className="notebook-book-binding" aria-hidden="true"/>:null}
-                </span>
-                <span className="notebook-book-info"><strong>{notebook.title}</strong><small>{meta.description}</small><small className="notebook-book-date"><Clock3 size={11}/> {dateLabel(notebook.updated_at)}</small></span>
-              </button>;
+              const hasSavedCover=Boolean(notebook.cover);
+              return <div key={notebook.id} className={"notebook-book-card notebook-book-"+notebook.notebook_type}>
+                <button type="button" className="notebook-book-open" onClick={()=>onOpen(notebook)}>
+                  <span className={"notebook-book-cover"+(hasSavedCover?" has-saved-cover":"")}>
+                    {hasSavedCover
+                      ? <NotebookCoverPreview notebook={notebook} photoUrls={coverPhotoUrls}/>
+                      : <>
+                          <span className="notebook-book-binding" aria-hidden="true"/>
+                          <span className="notebook-book-mark"><Icon size={27}/></span>
+                          <strong>{notebook.title}</strong>
+                          <small>{meta.label.toUpperCase()}</small>
+                          <span className="notebook-book-lines" aria-hidden="true"><i/><i/><i/></span>
+                        </>}
+                    {hasSavedCover?<span className="notebook-book-binding" aria-hidden="true"/>:null}
+                  </span>
+                  <span className="notebook-book-info"><strong>{notebook.title}</strong><small>{meta.description}</small><small className="notebook-book-date"><Clock3 size={11}/> {dateLabel(notebook.updated_at)}</small></span>
+                </button>
+                <button
+                  type="button"
+                  className="notebook-book-delete"
+                  aria-label={notebook.title+" 다이어리 삭제"}
+                  title="다이어리 삭제"
+                  onClick={()=>setDeleteTarget(notebook)}
+                >
+                  <Trash2 size={16}/>
+                </button>
+              </div>;
             })}
             <button type="button" className="notebook-book-add" onClick={onCreate}>
               <span><Plus size={27}/></span><strong>새 다이어리</strong>
@@ -162,6 +197,28 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
           </div>
         )}
       </main>
+      {deleteTarget?(
+        <div
+          className="modal-backdrop notebook-delete-backdrop"
+          role="presentation"
+          onMouseDown={event=>{
+            if(event.target===event.currentTarget&&!deleting)setDeleteTarget(null);
+          }}
+        >
+          <section className="delete-account-modal notebook-delete-modal" role="dialog" aria-modal="true" aria-labelledby="notebook-delete-title" aria-describedby="notebook-delete-description">
+            <div className="delete-account-icon"><Trash2 size={22}/></div>
+            <div className="eyebrow">DELETE DIARY</div>
+            <h2 id="notebook-delete-title">다이어리를 삭제할까요?</h2>
+            <p id="notebook-delete-description"><strong>{deleteTarget.title}</strong> 다이어리와 저장된 기록이 함께 삭제됩니다. 삭제한 내용은 복구할 수 없습니다.</p>
+            <div className="delete-account-actions">
+              <button type="button" className="outline-btn" disabled={deleting} onClick={()=>setDeleteTarget(null)}>취소</button>
+              <button type="button" className="delete-confirm-btn" disabled={deleting} onClick={()=>void confirmDelete()}>
+                {deleting?"삭제 중...":"다이어리 삭제"}
+              </button>
+            </div>
+          </section>
+        </div>
+      ):null}
     </div>
   );
 }
