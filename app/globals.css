@@ -10434,3 +10434,17 @@ html,body{width:100%;overflow-x:clip}
 .diary-time-colon {
   text-align:center !important;
 }
+
+
+/* Picture diary cards: extend the content area toward the outer edge of each page. */
+@media (min-width:781px) {
+  .picture-diary-book-frame {
+    --picture-diary-card-extension: clamp(64px, 10vw, 120px);
+  }
+
+  .picture-diary-book-frame > .diary-left-page > *,
+  .picture-diary-book-frame > .diary-right-page > * {
+    width:calc(100% + var(--picture-diary-card-extension)) !important;
+    max-width:none !important;
+  }
+}
