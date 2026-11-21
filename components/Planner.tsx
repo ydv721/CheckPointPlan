@@ -53,6 +53,8 @@ const today = () => {
 };
 const uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 const NOTEBOOK_LABELS:Record<NotebookType,string>={planner:"플래너","study-notes":"필기 다이어리",diary:"일기",checklist:"체크리스트","free-notes":"프리 노트"};
+const DEFAULT_NOTEBOOK_THEME:ThemeName="blue";
+const DEFAULT_NOTEBOOK_CUSTOM_COLOR="#8b9ec4";
 
 type NotebookCoverSettings = {
   notebook_id:string;
@@ -789,13 +791,13 @@ export default function Planner() {
 
       const nextNotebooks:NotebookRecord[]=rows.map(row=>{
         const ownSettings=settingsByNotebook.get(row.id);
-        const settings=ownSettings&&isDecoratedCover(ownSettings.cover)
+        const coverSettings=ownSettings&&isDecoratedCover(ownSettings.cover)
           ?ownSettings
           :sharedCoverSettings??ownSettings;
-        if(!settings)return row as NotebookRecord;
-        const rawCover:Partial<Cover>=settings.cover&&typeof settings.cover==="object"
-          ? settings.cover as Partial<Cover>
-          : {};
+        if(!coverSettings)return row as NotebookRecord;
+        const rawCover:Partial<Cover>=coverSettings.cover&&typeof coverSettings.cover==="object"
+          ?coverSettings.cover as Partial<Cover>
+          :{};
         let coverItems:CoverItem[]=Array.isArray(rawCover.items)?rawCover.items:defaultCover.items;
         const subtitleConverted=rawCover.subtitleConverted===true;
         if(!subtitleConverted&&typeof rawCover.subtitle==="string"&&rawCover.subtitle.trim()&&!coverItems.some(item=>item.kind==="text")){
@@ -807,14 +809,14 @@ export default function Planner() {
           ...(item.kind==="text"?{weight:typeof item.weight==="number"&&Number.isFinite(item.weight)?Math.min(900,Math.max(400,Math.round(item.weight/100)*100)):800}:{})
         }));
         const savedCover:Cover={...defaultCover,...rawCover,subtitle:"",subtitleConverted:true,items:coverItems};
-        const themeValue=settings.theme;
+        const themeValue=ownSettings?.theme;
         const safeTheme=themeValue&&Object.prototype.hasOwnProperty.call(themes,themeValue)
-          ? themeValue as ThemeName
-          : "blue";
+          ?themeValue as ThemeName
+          :DEFAULT_NOTEBOOK_THEME;
         return {
           ...row,
           theme:safeTheme,
-          custom_color:settings.custom_color||"#8b9ec4",
+          custom_color:ownSettings?.custom_color||DEFAULT_NOTEBOOK_CUSTOM_COLOR,
           cover:savedCover
         } as NotebookRecord;
       });
@@ -865,7 +867,7 @@ export default function Planner() {
       if(!active)return;
       if(error)setAlert(`설정을 불러오지 못했습니다: ${error.message}`);
 
-      let selectedSettings:{theme:string|null;custom_color:string|null;cover:unknown}|null=data;
+      let coverSource:unknown=data?.cover;
       if(!isDecoratedCover(data?.cover)){
         const [notebookResult,settingsResult]=await Promise.all([
           client.from("notebooks").select("id,notebook_type").eq("user_id",user.id),
@@ -880,21 +882,21 @@ export default function Planner() {
             (settingsResult.data??[]) as NotebookCoverSettings[],
             (notebookResult.data??[]) as NotebookTypeRecord[]
           );
-          selectedSettings=sharedSettings??data;
+          coverSource=sharedSettings?.cover??data?.cover;
         }
       }
 
       const metadata=user.user_metadata??{};
       const defaultTheme=metadata.checkpoint_default_theme;
       const fallbackTheme:ThemeName=typeof defaultTheme==="string"&&Object.keys(themes).includes(defaultTheme)
-        ?defaultTheme as ThemeName:"blue";
+        ?defaultTheme as ThemeName:DEFAULT_NOTEBOOK_THEME;
       const defaultColor=typeof metadata.checkpoint_default_custom_color==="string"
-        ?sanitizeHex(metadata.checkpoint_default_custom_color):"#8b9ec4";
-      const t=selectedSettings?.theme;
+        ?sanitizeHex(metadata.checkpoint_default_custom_color):DEFAULT_NOTEBOOK_CUSTOM_COLOR;
+      const t=data?.theme;
       const nextTheme:ThemeName=t&&Object.keys(themes).includes(t)?t as ThemeName:fallbackTheme;
-      const nextCustom=selectedSettings?.custom_color||defaultColor;
-      const savedCover:Partial<Cover>=selectedSettings?.cover&&typeof selectedSettings.cover==="object"
-        ?selectedSettings.cover as Partial<Cover>:{};
+      const nextCustom=data?.custom_color||defaultColor;
+      const savedCover:Partial<Cover>=coverSource&&typeof coverSource==="object"
+        ?coverSource as Partial<Cover>:{};
       let coverItems:CoverItem[]=Array.isArray(savedCover.items)?savedCover.items:defaultCover.items;
       const subtitleConverted=savedCover.subtitleConverted===true;
       if(!subtitleConverted&&typeof savedCover.subtitle==="string"&&savedCover.subtitle.trim()&&!coverItems.some(item=>item.kind==="text")){
@@ -1219,20 +1221,28 @@ export default function Planner() {
       setCreatingNotebook(false);
       return;
     }
-    if(type==="planner"){
-      const {error:settingsError}=await client.from("planner_settings").insert({
-        user_id:user.id,notebook_id:data.id,theme,custom_color:customColor,cover:defaultCover
-      });
-      if(settingsError){
-        await client.from("notebooks").delete().eq("id",data.id).eq("user_id",user.id);
-        setNotebookTypeNotice("플래너 설정을 만들지 못했습니다: "+settingsError.message);
-        setCreatingNotebook(false);
-        return;
-      }
+    const {error:settingsError}=await client.from("planner_settings").insert({
+      user_id:user.id,
+      notebook_id:data.id,
+      theme:DEFAULT_NOTEBOOK_THEME,
+      custom_color:DEFAULT_NOTEBOOK_CUSTOM_COLOR,
+      cover:defaultCover
+    });
+    if(settingsError){
+      await client.from("notebooks").delete().eq("id",data.id).eq("user_id",user.id);
+      setNotebookTypeNotice("다이어리 설정을 만들지 못했습니다: "+settingsError.message);
+      setCreatingNotebook(false);
+      return;
     }
+
+    setTheme(DEFAULT_NOTEBOOK_THEME);
+    setCustomColor(DEFAULT_NOTEBOOK_CUSTOM_COLOR);
+    setCover(defaultCover);
     setNotebooks(current=>[{
       ...(data as NotebookRecord),
-      ...(type==="planner"?{theme,custom_color:customColor,cover:defaultCover}:{})
+      theme:DEFAULT_NOTEBOOK_THEME,
+      custom_color:DEFAULT_NOTEBOOK_CUSTOM_COLOR,
+      cover:defaultCover
     },...current]);
     setNotebookTypeChosen(false);
     
