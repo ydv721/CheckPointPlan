@@ -9068,8 +9068,8 @@ html,body{width:100%;overflow-x:clip}
 }
 .diary-daily-info {
   display:grid;
-  grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr);
-  gap:9px;
+  grid-template-columns:minmax(0,1.8fr) minmax(0,.75fr) minmax(0,.75fr);
+  gap:8px;
   min-width:0;
   align-items:stretch;
   margin:13px 0 17px;
@@ -9098,7 +9098,7 @@ html,body{width:100%;overflow-x:clip}
 }
 .diary-weather-options {
   display:grid;
-  grid-template-columns:repeat(5,minmax(0,1fr));
+  grid-template-columns:repeat(6,minmax(0,1fr));
   align-items:center;
   width:100%;
   min-width:0;
@@ -9140,7 +9140,7 @@ html,body{width:100%;overflow-x:clip}
   background:transparent;
   color:var(--ink);
   font:inherit;
-  font-size:clamp(10px,1.05vw,12px);
+  font-size:clamp(9px,.95vw,11px);
   font-weight:800;
   white-space:nowrap;
 }
@@ -9976,7 +9976,7 @@ html,body{width:100%;overflow-x:clip}
     padding-right:21px !important;
   }
   .diary-daily-info {
-    grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr);
+    grid-template-columns:minmax(0,1.8fr) minmax(0,.75fr) minmax(0,.75fr);
     gap:6px;
   }
   .diary-weather-group,
