@@ -134,6 +134,7 @@ export default function PictureDiary({
   userId,
   email,
   notebookId,
+  notebookTitle,
   themeStyle,
   theme,
   customColor,
@@ -486,6 +487,7 @@ export default function PictureDiary({
           <button type="button" className="brand" onClick={() => { void leaveDiary(onBack); }}>
             <span className="brand-lockup"><span className="brand-icon"><Check size={18} strokeWidth={3}/></span><span>CHECKPOINT</span></span>
           </button>
+          <div className="picture-diary-header-title"><span>{notebookTitle}</span></div>
         </div>
       </header>
 
