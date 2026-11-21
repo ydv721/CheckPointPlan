@@ -9052,10 +9052,10 @@ html,body{width:100%;overflow-x:clip}
   justify-content:center;
   width:30px;
   height:30px;
-  border:1px solid var(--line);
-  border-radius:8px;
+  border:0;
+  border-radius:0;
   color:var(--accent);
-  background:var(--paper);
+  background:transparent;
   cursor:pointer;
 }
 .diary-date-picker input {
@@ -9068,8 +9068,9 @@ html,body{width:100%;overflow-x:clip}
 }
 .diary-daily-info {
   display:grid;
-  grid-template-columns:minmax(0,1.4fr) minmax(88px,1fr) minmax(88px,1fr);
+  grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr);
   gap:9px;
+  min-width:0;
   align-items:stretch;
   margin:13px 0 17px;
 }
@@ -9080,7 +9081,9 @@ html,body{width:100%;overflow-x:clip}
   justify-content:center;
   min-width:0;
   min-height:68px;
-  padding:8px 10px;
+  min-width:0;
+  box-sizing:border-box;
+  padding:8px clamp(5px,.8vw,10px);
   border:1px solid var(--line);
   border-radius:10px;
   background:var(--soft);
@@ -9094,18 +9097,22 @@ html,body{width:100%;overflow-x:clip}
   opacity:.72;
 }
 .diary-weather-options {
-  display:flex;
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
   align-items:center;
-  justify-content:space-between;
-  gap:3px;
+  width:100%;
+  min-width:0;
+  gap:clamp(0px,.35vw,3px);
 }
 .diary-weather-option {
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  flex:0 0 28px;
-  width:28px;
+  flex:1 1 0;
+  width:100%;
+  min-width:0;
   height:28px;
+  box-sizing:border-box;
   padding:0;
   border:1px solid transparent;
   border-radius:8px;
@@ -9122,16 +9129,30 @@ html,body{width:100%;overflow-x:clip}
   transform:translateY(-1px);
 }
 .diary-time-field input {
+  display:block;
   width:100%;
   min-width:0;
-  padding:5px 4px;
+  max-width:100%;
+  box-sizing:border-box;
+  padding:5px 0;
   border:0;
   outline:0;
   background:transparent;
   color:var(--ink);
   font:inherit;
-  font-size:13px;
+  font-size:clamp(10px,1.05vw,12px);
   font-weight:800;
+  white-space:nowrap;
+}
+.diary-time-field input::-webkit-datetime-edit,
+.diary-time-field input::-webkit-datetime-edit-fields-wrapper {
+  padding:0;
+}
+.diary-time-field input::-webkit-calendar-picker-indicator {
+  width:12px;
+  height:12px;
+  margin:0 0 0 2px;
+  padding:0;
 }
 .diary-drawing-heading {
   display:flex;
@@ -9144,11 +9165,6 @@ html,body{width:100%;overflow-x:clip}
   color:var(--ink);
   font-size:13px;
   font-weight:900;
-}
-.diary-drawing-heading span {
-  color:var(--ink);
-  font-size:10px;
-  opacity:.52;
 }
 .picture-diary-drawing-area {
   position:relative;
@@ -9206,11 +9222,6 @@ html,body{width:100%;overflow-x:clip}
   color:var(--ink);
   font-size:13px;
   font-weight:800;
-}
-.picture-diary-drawing-empty small {
-  color:var(--ink);
-  font-size:10px;
-  opacity:.5;
 }
 .picture-diary-drawing-edit {
   position:absolute;
@@ -9475,18 +9486,6 @@ html,body{width:100%;overflow-x:clip}
 .picture-diary-choice-options strong {
   font-size:14px;
   font-weight:900;
-}
-.picture-diary-choice-options small {
-  color:var(--ink);
-  font-size:10px;
-  line-height:1.5;
-  opacity:.58;
-}
-.picture-diary-choice-modal>p {
-  margin:14px 0 0;
-  color:var(--ink);
-  font-size:10px;
-  opacity:.55;
 }
 
 /* Full-screen drawing workspace with layer-based canvas rendering. */
@@ -9977,7 +9976,7 @@ html,body{width:100%;overflow-x:clip}
     padding-right:21px !important;
   }
   .diary-daily-info {
-    grid-template-columns:minmax(0,1.2fr) minmax(78px,1fr) minmax(78px,1fr);
+    grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr);
     gap:6px;
   }
   .diary-weather-group,
@@ -9985,8 +9984,10 @@ html,body{width:100%;overflow-x:clip}
     padding:7px;
   }
   .diary-weather-option {
-    flex-basis:24px;
-    width:24px;
+    flex:1 1 0;
+    min-width:0;
+    width:100%;
+    font-size:clamp(12px,1.35vw,15px);
   }
 }
 @media(max-width:780px) {
@@ -10122,12 +10123,13 @@ html,body{width:100%;overflow-x:clip}
     grid-column:1 / -1;
   }
   .diary-weather-options {
-    justify-content:flex-start;
-    gap:10px;
+    gap:clamp(6px,2vw,10px);
   }
   .diary-weather-option {
-    width:31px;
-    flex-basis:31px;
+    flex:1 1 0;
+    width:100%;
+    min-width:0;
+    height:31px;
   }
   .picture-diary-book-frame > .paper-page {
     padding:19px 15px !important;

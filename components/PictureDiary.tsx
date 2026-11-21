@@ -492,7 +492,6 @@ export default function PictureDiary({
         <div className="header-inner">
           <button type="button" className="brand" onClick={() => { void leaveDiary(onBack); }}>
             <span className="brand-lockup"><span className="brand-icon"><Check size={18} strokeWidth={3}/></span><span>CHECKPOINT</span></span>
-            <small>YOUR PACE, YOUR CHECKPOINT</small>
           </button>
           <div className="picture-diary-header-status">
             <span>{notebookTitle}</span>
@@ -546,7 +545,6 @@ export default function PictureDiary({
 
                 <div className="diary-drawing-heading">
                   <strong>오늘의 그림</strong>
-                  <span>{drawingUrl ? "그림을 눌러 수정할 수 있어." : "오늘을 그림으로 남겨 봐."}</span>
                 </div>
                 <button type="button" className={drawingUrl ? "picture-diary-drawing-area has-image" : "picture-diary-drawing-area"}
                   disabled={loading || uploading} onClick={() => setChoiceOpen(true)} aria-label="그림 추가 또는 변경">
@@ -559,17 +557,16 @@ export default function PictureDiary({
                     <span className="picture-diary-drawing-empty">
                       <ImagePlus size={31}/>
                       <strong>{uploading ? "그림을 저장하고 있어..." : "그림을 그리거나 사진을 추가해 봐"}</strong>
-                      <small>눌러서 스케치 또는 이미지 업로드 선택</small>
                     </span>
                   )}
                 </button>
-                <div className="diary-left-footer"><span>DRAW YOUR DAY</span><span>{weatherIcon(entry.weather)} {weatherLabel}</span></div>
+                <div className="diary-left-footer"><span>{weatherIcon(entry.weather)} {weatherLabel}</span></div>
               </section>
 
               <section className="paper-page right-page diary-right-page" aria-label="오늘의 일기">
                 <div className="diary-title-field">
                   <label htmlFor="picture-diary-title">제목</label>
-                  <input id="picture-diary-title" type="text" maxLength={100} placeholder="오늘 하루를 한 문장으로 표현해 봐." value={entry.title} onChange={event => updateEntry({ title: event.target.value })}/>
+                  <input id="picture-diary-title" type="text" maxLength={100} value={entry.title} onChange={event => updateEntry({ title: event.target.value })}/>
                 </div>
 
                 <section className="paper-section key-section diary-journal-section">
@@ -614,7 +611,6 @@ export default function PictureDiary({
                         </div>
                         <div ref={editorRef} className="free-note-input markdown-editor-grid picture-diary-rich-editor"
                           role="textbox" aria-label="오늘의 일기 내용" aria-multiline="true" contentEditable suppressContentEditableWarning
-                          data-placeholder="오늘 있었던 일을 자유롭게 기록해 봐."
                           onInput={updateJournalContent}
                           onPaste={event => {
                             event.preventDefault();
@@ -658,14 +654,14 @@ export default function PictureDiary({
                 <div className="diary-bottom-panels">
                   <section className="diary-small-writing-panel">
                     <div className="section-heading"><span>메모</span><small>MEMO</small></div>
-                    <textarea aria-label="오늘의 메모" placeholder="기억해 둘 내용을 적어 봐." value={entry.memo} onChange={event => updateEntry({ memo: event.target.value })}/>
+                    <textarea aria-label="오늘의 메모" value={entry.memo} onChange={event => updateEntry({ memo: event.target.value })}/>
                   </section>
                   <section className="diary-small-writing-panel">
                     <div className="section-heading"><span>하루 돌아보기</span><small>REFLECTION</small></div>
-                    <textarea aria-label="하루 돌아보기" placeholder="오늘 하루는 어땠어?" value={entry.reflection} onChange={event => updateEntry({ reflection: event.target.value })}/>
+                    <textarea aria-label="하루 돌아보기" value={entry.reflection} onChange={event => updateEntry({ reflection: event.target.value })}/>
                   </section>
                 </div>
-                <div className="diary-right-footer"><span>ONE DAY, ONE PAGE OF MEMORIES</span><span>{status}</span></div>
+                <div className="diary-right-footer"><span>{status}</span></div>
               </section>
             </PlannerSpread>
           </div>
@@ -684,14 +680,11 @@ export default function PictureDiary({
             <div className="picture-diary-choice-options">
               <button type="button" onClick={requestSketch}>
                 <span className="picture-diary-choice-icon"><Brush size={23}/></span>
-                <strong>스케치</strong><small>그림 작업실에서 직접 그리기</small>
               </button>
               <button type="button" onClick={() => { setChoiceOpen(false); imageInputRef.current?.click(); }}>
                 <span className="picture-diary-choice-icon"><ImagePlus size={23}/></span>
-                <strong>이미지 업로드</strong><small>기기에 저장된 사진이나 그림 추가</small>
               </button>
             </div>
-            <p>스케치는 저장하면 왼쪽 그림 영역에 맞춰 표시돼.</p>
           </section>
         </div>
       ) : null}
