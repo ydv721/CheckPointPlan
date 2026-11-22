@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type TouchEvent as ReactTouchEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type TouchEvent as ReactTouchEvent, type WheelEvent as ReactWheelEvent } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronLeft, ChevronRight, Code2, Eraser, FileDown, Heading1, Highlighter, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, Share2, StickyNote as StickyNoteIcon, Strikethrough, Type, Underline, Check, X } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
@@ -1143,7 +1143,7 @@ export default function MarkdownDiary({
     setCurrentStroke(null);
   }
 
-  function handleDrawingWheel(event: React.WheelEvent<SVGSVGElement>) {
+  function handleDrawingWheel(event: ReactWheelEvent<SVGSVGElement>) {
     const editor = leftEditorRef.current;
     if (!drawingMode || !editor) return;
     event.preventDefault();
