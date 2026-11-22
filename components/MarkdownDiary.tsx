@@ -1810,7 +1810,7 @@ export default function MarkdownDiary({
                       <div className="markdown-empty-state" role="status">노트를 불러오는 중...</div>
                     ) : activeNote ? (
                       <>
-                        <div className="markdown-toolbar" role="toolbar" aria-label="Markdown 도구 모음">
+                        <div className={drawingMode ? "markdown-toolbar is-hidden" : "markdown-toolbar"} role="toolbar" aria-label="Markdown 도구 모음">
                           {MARKDOWN_TOOLBAR.map(({ action, label, icon: Icon }) => (
                             <button
                               key={action}
@@ -1933,20 +1933,71 @@ export default function MarkdownDiary({
                               </div>
                             )}
                           </div>
+                          <button
+                            type="button"
+                            className="markdown-toolbar-button free-note-drawing-mode-button"
+                            aria-label="필기 모드"
+                            title="필기 모드"
+                            onMouseDown={event => event.preventDefault()}
+                            onClick={enterDrawingMode}
+                          >
+                            <PenLine size={16} strokeWidth={2}/>
+                            <span>필기</span>
+                          </button>
                         </div>
+                        {drawingMode ? (
+                          <div className="markdown-toolbar free-note-drawing-toolbar" role="toolbar" aria-label="필기 도구 모음">
+                            <div className="free-note-drawing-tool-group">
+                              <button type="button" className={"free-note-drawing-tool-button" + (drawingTool === "highlighter" ? " is-active" : "")} aria-pressed={drawingTool === "highlighter"} onClick={() => setDrawingTool("highlighter")}>
+                                <Highlighter size={16}/><span>형광펜</span>
+                              </button>
+                              <button type="button" className={"free-note-drawing-tool-button" + (drawingTool === "pen" ? " is-active" : "")} aria-pressed={drawingTool === "pen"} onClick={() => setDrawingTool("pen")}>
+                                <PenLine size={16}/><span>펜</span>
+                              </button>
+                              <button type="button" className={"free-note-drawing-tool-button" + (drawingTool === "sticky" ? " is-active" : "")} aria-pressed={drawingTool === "sticky"} onClick={() => setDrawingTool("sticky")}>
+                                <StickyNoteIcon size={16}/><span>메모지</span>
+                              </button>
+                              <button type="button" className={"free-note-drawing-tool-button" + (drawingTool === "eraser" ? " is-active" : "")} aria-pressed={drawingTool === "eraser"} onClick={() => setDrawingTool("eraser")}>
+                                <Eraser size={16}/><span>지우개</span>
+                              </button>
+                            </div>
+                            <div className="free-note-drawing-colors" role="group" aria-label="필기 색상">
+                              {DRAWING_COLORS.map(({ label, color }) => (
+                                <button
+                                  key={color}
+                                  type="button"
+                                  className={"free-note-drawing-color" + (drawingColor === color ? " is-active" : "")}
+                                  aria-label={label}
+                                  title={label}
+                                  aria-pressed={drawingColor === color}
+                                  style={{ backgroundColor: color }}
+                                  onClick={() => setDrawingColor(color)}
+                                />
+                              ))}
+                            </div>
+                            <button type="button" className="free-note-drawing-exit" onClick={exitDrawingMode}>
+                              <Type size={15}/><span>텍스트 편집</span>
+                            </button>
+                          </div>
+                        ) : null}
+                        <div className="free-note-editor-viewport">
                         <div
                           ref={leftEditorRef}
-                          className="free-note-input markdown-editor-grid"
+                          className={"free-note-input markdown-editor-grid" + (drawingMode ? " is-readonly" : "")}
                           role="textbox"
                           aria-label="자유 노트 내용"
                           aria-multiline="true"
-                          contentEditable
+                          aria-readonly={drawingMode}
+                          tabIndex={drawingMode ? -1 : 0}
+                          contentEditable={!drawingMode}
                           suppressContentEditableWarning
                           data-placeholder="여기에 내용을 자유롭게 작성해 보세요."
                           onInput={() => {
                             const editor = leftEditorRef.current;
                             if (editor) updateCurrentPage(htmlToMarkdown(editor.innerHTML));
+                            syncDrawingCanvasMetrics();
                           }}
+                          onScroll={syncDrawingCanvasMetrics}
                           onPaste={event => {
                             event.preventDefault();
                             const pasted = event.clipboardData.getData("text/plain");
@@ -2106,6 +2157,78 @@ export default function MarkdownDiary({
                           }}
                           spellCheck
                         />
+                        <svg
+                          className={drawingMode ? "free-note-drawing-layer is-active" : "free-note-drawing-layer"}
+                          viewBox={"0 0 1000 " + Math.max(1, drawingCanvasHeight)}
+                          preserveAspectRatio="none"
+                          aria-label="필기 레이어"
+                          style={{ height: drawingCanvasHeight + "px", transform: "translateY(-" + drawingScrollTop + "px)" }}
+                          onPointerDown={handleDrawingPointerDown}
+                          onPointerMove={handleDrawingPointerMove}
+                          onPointerUp={finishDrawingPointer}
+                          onPointerCancel={finishDrawingPointer}
+                        >
+                          {(currentStroke ? [...currentPageAnnotations.strokes, currentStroke] : currentPageAnnotations.strokes).map(stroke => {
+                            const pathData = stroke.points.map((point, pointIndex) =>
+                              (pointIndex === 0 ? "M " : "L ") + point.x + " " + point.y
+                            ).join(" ");
+                            return (
+                              <path
+                                key={stroke.id}
+                                d={stroke.points.length === 1 ? pathData + " l 0.1 0" : pathData}
+                                fill="none"
+                                stroke={stroke.color}
+                                strokeWidth={stroke.tool === "highlighter" ? 18 : 3.2}
+                                strokeOpacity={stroke.tool === "highlighter" ? 0.42 : 0.95}
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                vectorEffect="non-scaling-stroke"
+                              />
+                            );
+                          })}
+                        </svg>
+                        <div
+                          className={drawingMode ? "free-note-sticky-layer is-active" : "free-note-sticky-layer"}
+                          style={{ height: drawingCanvasHeight + "px", transform: "translateY(-" + drawingScrollTop + "px)" }}
+                        >
+                          {currentPageAnnotations.notes.map(note => (
+                            <div
+                              key={note.id}
+                              className="free-note-sticky-note"
+                              style={{ left: (note.x / 10) + "%", top: note.y + "px", backgroundColor: note.color }}
+                            >
+                              <div
+                                className="free-note-sticky-note-header"
+                                onPointerDown={event => beginStickyNoteDrag(event, note)}
+                                onPointerMove={event => moveStickyNoteDrag(event, note.id)}
+                                onPointerUp={event => finishStickyNoteDrag(event, note.id)}
+                                onPointerCancel={event => finishStickyNoteDrag(event, note.id)}
+                              >
+                                <span>MEMO</span>
+                                {drawingMode ? (
+                                  <button
+                                    type="button"
+                                    aria-label="메모지 삭제"
+                                    title="메모지 삭제"
+                                    onPointerDown={event => event.stopPropagation()}
+                                    onClick={() => deleteStickyNote(note.id)}
+                                  >
+                                    <X size={13}/>
+                                  </button>
+                                ) : null}
+                              </div>
+                              <textarea
+                                value={note.text}
+                                readOnly={!drawingMode}
+                                placeholder="메모를 입력하세요."
+                                aria-label="메모지 내용"
+                                onPointerDown={event => event.stopPropagation()}
+                                onChange={event => updateStickyNote(note.id, { text: event.target.value })}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                        </div>
                         <div className="markdown-page-navigation">
                           <div className="markdown-page-controls">
                             <button
