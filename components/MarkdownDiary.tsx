@@ -122,18 +122,119 @@ const DEFAULT_CODE_LANGUAGE = "c";
 const PAGE_CONTENT_PREFIX_V1 = "\u001eCHECKPOINT_FREE_NOTE_V1\u001e";
 const PAGE_CONTENT_PREFIX = "\u001eCHECKPOINT_FREE_NOTE_V2\u001e";
 
-function decodeNotePages(content: string): string[] {
+type DrawingTool = "pen" | "highlighter" | "sticky" | "eraser";
+type DrawingPoint = { x: number; y: number };
+type DrawingStroke = {
+  id: string;
+  tool: "pen" | "highlighter";
+  color: string;
+  points: DrawingPoint[];
+};
+type StickyNote = {
+  id: string;
+  x: number;
+  y: number;
+  text: string;
+  color: string;
+};
+type FreeNotePageAnnotations = {
+  height: number;
+  strokes: DrawingStroke[];
+  notes: StickyNote[];
+};
+
+const DRAWING_COLORS = [
+  { label: "노랑", color: "#F4D35E" },
+  { label: "분홍", color: "#F2A7C6" },
+  { label: "연두", color: "#A8DDB5" },
+  { label: "하늘", color: "#9CCFF0" },
+  { label: "보라", color: "#C4B2EB" },
+  { label: "검정", color: "#34343B" }
+] as const;
+
+function createEmptyPageAnnotations(height = 1): FreeNotePageAnnotations {
+  return { height: Math.max(1, height), strokes: [], notes: [] };
+}
+
+function createDrawingId() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
+  return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+}
+
+function normalizePageAnnotations(value: unknown, pageCount: number): FreeNotePageAnnotations[] {
+  const source = Array.isArray(value) ? value : [];
+  return Array.from({ length: pageCount }, (_, index) => {
+    const raw = source[index] && typeof source[index] === "object"
+      ? source[index] as Partial<FreeNotePageAnnotations>
+      : {};
+    const strokes = Array.isArray(raw.strokes)
+      ? raw.strokes.slice(0, 500).flatMap((item): DrawingStroke[] => {
+          if (!item || typeof item !== "object") return [];
+          const stroke = item as Partial<DrawingStroke>;
+          if (stroke.tool !== "pen" && stroke.tool !== "highlighter") return [];
+          if (!Array.isArray(stroke.points)) return [];
+          const points = stroke.points.slice(0, 5000).flatMap((point): DrawingPoint[] => {
+            if (!point || typeof point !== "object") return [];
+            const candidate = point as Partial<DrawingPoint>;
+            if (!Number.isFinite(candidate.x) || !Number.isFinite(candidate.y)) return [];
+            return [{
+              x: Math.max(0, Math.min(1000, Number(candidate.x))),
+              y: Math.max(0, Math.min(100000, Number(candidate.y)))
+            }];
+          });
+          if (points.length === 0) return [];
+          const color = typeof stroke.color === "string" && /^#[0-9a-f]{6}$/i.test(stroke.color)
+            ? stroke.color
+            : stroke.tool === "highlighter" ? "#F4D35E" : "#34343B";
+          return [{
+            id: typeof stroke.id === "string" ? stroke.id : createDrawingId(),
+            tool: stroke.tool,
+            color,
+            points
+          }];
+        })
+      : [];
+    const notes = Array.isArray(raw.notes)
+      ? raw.notes.slice(0, 100).flatMap((item): StickyNote[] => {
+          if (!item || typeof item !== "object") return [];
+          const note = item as Partial<StickyNote>;
+          if (!Number.isFinite(note.x) || !Number.isFinite(note.y)) return [];
+          const color = typeof note.color === "string" && /^#[0-9a-f]{6}$/i.test(note.color)
+            ? note.color
+            : "#FFF2B8";
+          return [{
+            id: typeof note.id === "string" ? note.id : createDrawingId(),
+            x: Math.max(0, Math.min(1000, Number(note.x))),
+            y: Math.max(0, Math.min(100000, Number(note.y))),
+            text: typeof note.text === "string" ? note.text.slice(0, 5000) : "",
+            color
+          }];
+        })
+      : [];
+    return {
+      height: Number.isFinite(raw.height) ? Math.max(1, Math.min(100000, Number(raw.height))) : 1,
+      strokes,
+      notes
+    };
+  });
+}
+
+function decodeNoteDocument(content: string): { pages: string[]; annotations: FreeNotePageAnnotations[] } {
   if (content.startsWith(PAGE_CONTENT_PREFIX)) {
     try {
-      const parsed = JSON.parse(content.slice(PAGE_CONTENT_PREFIX.length)) as { pages?: unknown };
+      const parsed = JSON.parse(content.slice(PAGE_CONTENT_PREFIX.length)) as { pages?: unknown; annotations?: unknown };
       if (Array.isArray(parsed.pages)) {
         const pages = parsed.pages.map((page): string => typeof page === "string" ? page : "");
-        return pages.length > 0 ? pages : [""];
+        const safePages = pages.length > 0 ? pages : [""];
+        return {
+          pages: safePages,
+          annotations: normalizePageAnnotations(parsed.annotations, safePages.length)
+        };
       }
     } catch {
-      return [content];
+      return { pages: [content], annotations: [createEmptyPageAnnotations()] };
     }
-    return [content];
+    return { pages: [content], annotations: [createEmptyPageAnnotations()] };
   }
 
   if (content.startsWith(PAGE_CONTENT_PREFIX_V1)) {
@@ -141,17 +242,29 @@ function decodeNotePages(content: string): string[] {
       const parsed = JSON.parse(content.slice(PAGE_CONTENT_PREFIX_V1.length)) as Partial<NotePages>;
       const pages = [typeof parsed.left === "string" ? parsed.left : ""];
       if (typeof parsed.right === "string" && parsed.right.trim()) pages.push(parsed.right);
-      return pages;
+      return { pages, annotations: normalizePageAnnotations([], pages.length) };
     } catch {
-      return [content];
+      return { pages: [content], annotations: [createEmptyPageAnnotations()] };
     }
   }
 
-  return [content];
+  return { pages: [content], annotations: [createEmptyPageAnnotations()] };
 }
 
-function encodeNotePages(pages: string[]) {
-  return PAGE_CONTENT_PREFIX + JSON.stringify({ pages: pages.length > 0 ? pages : [""] });
+function decodeNotePages(content: string): string[] {
+  return decodeNoteDocument(content).pages;
+}
+
+function decodeNoteAnnotations(content: string): FreeNotePageAnnotations[] {
+  return decodeNoteDocument(content).annotations;
+}
+
+function encodeNotePages(pages: string[], annotations: FreeNotePageAnnotations[] = []) {
+  const safePages = pages.length > 0 ? pages : [""];
+  return PAGE_CONTENT_PREFIX + JSON.stringify({
+    pages: safePages,
+    annotations: normalizePageAnnotations(annotations, safePages.length)
+  });
 }
 
 function escapeHtml(value: string) {
