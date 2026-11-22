@@ -10374,30 +10374,21 @@ html,body{width:100%;overflow-x:clip}
     position:absolute !important;
     top:0 !important;
     bottom:0 !important;
-    width:28px !important;
+    width:30px !important;
     display:block !important;
     pointer-events:none !important;
     z-index:2 !important;
   }
 
+  /* Match the DAY planner's page-fold gradients exactly. */
   .picture-diary-book-frame > .diary-left-page::after {
     right:0 !important;
-    background:linear-gradient(
-      to left,
-      rgba(36,42,56,.13) 0%,
-      rgba(36,42,56,.07) 35%,
-      rgba(36,42,56,0) 100%
-    ) !important;
+    background:linear-gradient(90deg,transparent,#000) !important;
   }
 
   .picture-diary-book-frame > .diary-right-page::after {
     left:0 !important;
-    background:linear-gradient(
-      to right,
-      rgba(36,42,56,.13) 0%,
-      rgba(36,42,56,.07) 35%,
-      rgba(36,42,56,0) 100%
-    ) !important;
+    background:linear-gradient(90deg,#000,transparent) !important;
   }
 
 
