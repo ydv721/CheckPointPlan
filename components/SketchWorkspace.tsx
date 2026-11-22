@@ -564,7 +564,7 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
 
   function deleteLayer() {
     if (!selectedLayer || docRef.current.layers.length <= 1) return;
-    if (!window.confirm("선택한 레이어와 그 안의 그림을 삭제할까?")) return;
+    if (!window.confirm("선택한 레이어와 그 안의 그림을 삭제할까요?")) return;
     const layers = docRef.current.layers.filter(layer => layer.id !== selectedLayer.id);
     commitDocument({ ...docRef.current, layers });
     setSelectedLayerId(layers[layers.length - 1].id);
@@ -632,7 +632,7 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
   }
 
   function requestClose() {
-    if (dirty && !window.confirm("저장하지 않은 그림이 있어. 저장하지 않고 나갈까?")) return;
+    if (dirty && !window.confirm("저장하지 않은 그림이 있습니다. 저장하지 않고 나가시겠습니까?")) return;
     onClose();
   }
 
@@ -647,7 +647,7 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
         setDirty(false);
         onClose();
       } else {
-        setMessage("저장하지 못했어. 연결 상태를 확인하고 다시 시도해 줘.");
+        setMessage("저장하지 못했습니다. 연결 상태를 확인한 후 다시 시도해 주세요.");
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "그림을 저장하지 못했습니다.");
@@ -687,7 +687,7 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
             <Download size={19}/>
           </button>
           <button type="button" className="sketch-save-action" disabled={saving} onClick={() => void saveSketch()}>
-            <Save size={17}/><span>{saving ? "저장 중..." : "저장"}</span>
+            <Save size={17}/><span>{saving ? "저장 중입니다..." : "저장"}</span>
           </button>
         </div>
       </header>
@@ -719,7 +719,7 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
             </div>
             <span className="sketch-canvas-size">{doc.width} × {doc.height}px</span>
             <button type="button" className="sketch-clear-button" onClick={() => {
-              if (!selectedLayer || !window.confirm("현재 레이어의 그림을 모두 지울까?")) return;
+              if (!selectedLayer || !window.confirm("현재 레이어의 그림을 모두 삭제할까요?")) return;
               commitDocument({ ...docRef.current, layers: docRef.current.layers.map(layer => layer.id === selectedLayer.id ? { ...layer, strokes: [] } : layer) });
               setSelectedKeys([]);
             }}><Trash2 size={14}/> 현재 레이어 비우기</button>
