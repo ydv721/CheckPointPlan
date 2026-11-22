@@ -6365,72 +6365,6 @@ html,body{width:100%;overflow-x:clip}
   }
 }
 
-/* DAY + MONTH planner bindings: match the unified Picture Diary spine. */
-@media (min-width: 781px) {
-  .workspace-canvas > .book-frame.day-book-frame > .book-spine,
-  .workspace-canvas > .book-frame.month-book-frame > .book-spine {
-    position:absolute !important;
-    z-index:4 !important;
-    top:0 !important;
-    bottom:0 !important;
-    left:50% !important;
-    width:30px !important;
-    padding:17px 0 !important;
-    transform:translateX(-50%) !important;
-    display:flex !important;
-    flex-direction:column !important;
-    align-items:center !important;
-    justify-content:space-around !important;
-    pointer-events:none !important;
-  }
-
-  .workspace-canvas > .book-frame.day-book-frame > .book-spine span,
-  .workspace-canvas > .book-frame.month-book-frame > .book-spine span {
-    display:none !important;
-  }
-
-  .workspace-canvas > .book-frame.day-book-frame > .book-spine::before,
-  .workspace-canvas > .book-frame.month-book-frame > .book-spine::before {
-    content:"" !important;
-    position:absolute !important;
-    top:0 !important;
-    bottom:0 !important;
-    left:50% !important;
-    width:6px !important;
-    transform:translateX(-50%) !important;
-    border-radius:999px !important;
-    background:rgba(120,112,102,.22) !important;
-    box-shadow:
-      0 0 12px rgba(35,40,52,.10),
-      inset 0 0 0 1px rgba(255,255,255,.16) !important;
-    display:block !important;
-    z-index:0 !important;
-  }
-
-  .workspace-canvas > .book-frame.day-book-frame > .book-spine::after,
-  .workspace-canvas > .book-frame.month-book-frame > .book-spine::after {
-    content:"" !important;
-    position:absolute !important;
-    top:17px !important;
-    bottom:17px !important;
-    left:50% !important;
-    width:18px !important;
-    transform:translateX(-50%) !important;
-    background:repeating-linear-gradient(
-      to bottom,
-      #b8b2a8 0px,
-      #b8b2a8 2px,
-      transparent 2px,
-      transparent calc(100% / 13)
-    ) !important;
-    display:block !important;
-    z-index:1 !important;
-    pointer-events:none !important;
-  }
-}
-
-
-
 /* MONTH memo controls sit above the memo paper, with the MEMO label vertically centered. */
 .month-memo-column {
   display: flex;
@@ -10495,64 +10429,7 @@ html,body{width:100%;overflow-x:clip}
     ) !important;
   }
 
-  .picture-diary-book-frame > .book-spine {
-    position:absolute !important;
-    top:0 !important;
-    right:auto !important;
-    bottom:0 !important;
-    left:50% !important;
-    z-index:5 !important;
-    display:flex !important;
-    flex-direction:column !important;
-    align-items:center !important;
-    justify-content:space-around !important;
-    width:24px !important;
-    padding:17px 0 !important;
-    transform:translateX(-50%) !important;
-    pointer-events:none !important;
-  }
 
-  /* Use one repeating stripe pattern so every binding mark has identical thickness. */
-  .picture-diary-book-frame > .book-spine span {
-    display:none !important;
-  }
-
-  .picture-diary-book-frame > .book-spine::before {
-    content:"" !important;
-    position:absolute !important;
-    top:0 !important;
-    bottom:0 !important;
-    left:50% !important;
-    width:6px !important;
-    transform:translateX(-50%) !important;
-    border-radius:999px !important;
-    background:rgba(120,112,102,.22) !important;
-    box-shadow:
-      0 0 12px rgba(35,40,52,.10),
-      inset 0 0 0 1px rgba(255,255,255,.16) !important;
-    display:block !important;
-    z-index:0 !important;
-  }
-
-  .picture-diary-book-frame > .book-spine::after {
-    content:"" !important;
-    position:absolute !important;
-    top:17px !important;
-    bottom:17px !important;
-    left:50% !important;
-    width:18px !important;
-    transform:translateX(-50%) !important;
-    background:repeating-linear-gradient(
-      to bottom,
-      #b8b2a8 0px,
-      #b8b2a8 2px,
-      transparent 2px,
-      transparent calc(100% / 13)
-    ) !important;
-    display:block !important;
-    z-index:1 !important;
-    pointer-events:none !important;
-  }
 }
 @media (min-width:521px) {
   .diary-daily-info {
@@ -10602,3 +10479,72 @@ html,body{width:100%;overflow-x:clip}
 
 
 
+
+
+/* Shared binding style for DAY, MONTH, and Picture Diary. */
+@media (min-width: 781px) {
+  .workspace-canvas > .book-frame.day-book-frame > .book-spine,
+  .workspace-canvas > .book-frame.month-book-frame > .book-spine,
+  .picture-diary-book-frame > .book-spine {
+    position:absolute !important;
+    z-index:5 !important;
+    top:0 !important;
+    bottom:0 !important;
+    left:50% !important;
+    width:30px !important;
+    padding:17px 0 !important;
+    transform:translateX(-50%) !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:space-around !important;
+    pointer-events:none !important;
+  }
+
+  .workspace-canvas > .book-frame.day-book-frame > .book-spine span,
+  .workspace-canvas > .book-frame.month-book-frame > .book-spine span,
+  .picture-diary-book-frame > .book-spine span {
+    display:none !important;
+  }
+
+  /* Slim center seam: 3px core with a restrained 6px blur. */
+  .workspace-canvas > .book-frame.day-book-frame > .book-spine::before,
+  .workspace-canvas > .book-frame.month-book-frame > .book-spine::before,
+  .picture-diary-book-frame > .book-spine::before {
+    content:"" !important;
+    position:absolute !important;
+    top:0 !important;
+    bottom:0 !important;
+    left:50% !important;
+    width:3px !important;
+    transform:translateX(-50%) !important;
+    border-radius:999px !important;
+    background:rgba(120,112,102,.20) !important;
+    box-shadow:0 0 6px rgba(35,40,52,.08) !important;
+    display:block !important;
+    z-index:0 !important;
+  }
+
+  /* Thirteen identical binding marks: each mark is exactly 2px thick. */
+  .workspace-canvas > .book-frame.day-book-frame > .book-spine::after,
+  .workspace-canvas > .book-frame.month-book-frame > .book-spine::after,
+  .picture-diary-book-frame > .book-spine::after {
+    content:"" !important;
+    position:absolute !important;
+    top:17px !important;
+    bottom:17px !important;
+    left:50% !important;
+    width:18px !important;
+    transform:translateX(-50%) !important;
+    background:repeating-linear-gradient(
+      to bottom,
+      #b8b2a8 0px,
+      #b8b2a8 2px,
+      transparent 2px,
+      transparent calc(100% / 13)
+    ) !important;
+    display:block !important;
+    z-index:1 !important;
+    pointer-events:none !important;
+  }
+}
