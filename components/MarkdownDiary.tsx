@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type TouchEvent as ReactTouchEvent, type WheelEvent as ReactWheelEvent } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronLeft, ChevronRight, Code2, Eraser, FileDown, Heading1, Highlighter, Image as ImageIcon, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, Share2, StickyNote as StickyNoteIcon, Strikethrough, Type, Underline, Check, Trash2, X } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronLeft, ChevronRight, Code2, Eraser, FileDown, Heading1, Highlighter, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, Share2, StickyNote as StickyNoteIcon, Strikethrough, Type, Underline, Check, Trash2, X } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import PlannerSpread from "@/components/PlannerSpread";
 import type { ThemeName } from "@/lib/types";
@@ -25,8 +25,6 @@ type NotePages = {
 type Html2PdfWorker = {
   set: (options: Record<string, unknown>) => Html2PdfWorker;
   from: (element: HTMLElement) => Html2PdfWorker;
-  toCanvas: () => Html2PdfWorker;
-  get: (key: "canvas") => PromiseLike<HTMLCanvasElement>;
   save: () => PromiseLike<unknown>;
 };
 
@@ -716,7 +714,6 @@ export default function MarkdownDiary({
   const [, setSaveState] = useState<"saved" | "dirty" | "saving" | "error">("saved");
   const [shareFeedback, setShareFeedback] = useState("");
   const [pdfExporting, setPdfExporting] = useState(false);
-  const [imageExporting, setImageExporting] = useState(false);
   const [pageDeleteOpen, setPageDeleteOpen] = useState(false);
   const [colorPaletteOpen, setColorPaletteOpen] = useState(false);
   const [customTextColor, setCustomTextColor] = useState("#7868e8");
@@ -1484,245 +1481,9 @@ export default function MarkdownDiary({
     }
   }
 
-  async function downloadImage() {
-    const editor = leftEditorRef.current;
-    const viewport = editor?.parentElement;
-    if (!activeNote || !editor || !viewport || loading || imageExporting || pdfExporting) return;
-
-    setImageExporting(true);
-    setShareFeedback("이미지를 생성하고 있습니다.");
-    let exportRoot: HTMLDivElement | null = null;
-
-    try {
-      await loadHtml2Pdf();
-      const html2pdf = window.html2pdf;
-      if (!html2pdf) throw new Error("이미지 변환 도구를 사용할 수 없습니다.");
-
-      const now = new Date();
-      const dateStamp = [
-        now.getFullYear(),
-        String(now.getMonth() + 1).padStart(2, "0"),
-        String(now.getDate()).padStart(2, "0")
-      ].join("-");
-      const safeTitle = (notebookTitle.trim() || "프리노트")
-        .replace(/[\\/:*?"<>|]+/g, "-")
-        .replace(/\s+/g, " ")
-        .trim();
-
-      const editorStyles = window.getComputedStyle(editor);
-      const captureWidth = Math.max(1, Math.ceil(editor.getBoundingClientRect().width || editor.clientWidth));
-      const captureHeight = Math.max(
-        1,
-        Math.ceil(editor.scrollHeight),
-        Math.ceil(editor.clientHeight),
-        Math.ceil(drawingCanvasHeight)
-      );
-
-      exportRoot = document.createElement("div");
-      exportRoot.className = "markdown-free-note-section markdown-image-export-root";
-      exportRoot.style.cssText = [
-        "position:fixed",
-        "top:0",
-        "left:0",
-        "width:" + captureWidth + "px",
-        "height:auto",
-        "margin:0",
-        "padding:0",
-        "overflow:visible",
-        "box-sizing:border-box",
-        "background:#ffffff",
-        "color:" + editorStyles.color,
-        "font-family:" + editorStyles.fontFamily,
-        "z-index:999999",
-        "visibility:hidden",
-        "pointer-events:none"
-      ].join(";");
-
-      const header = document.createElement("header");
-      header.style.cssText = [
-        "display:flex",
-        "align-items:flex-end",
-        "justify-content:space-between",
-        "gap:16px",
-        "width:100%",
-        "box-sizing:border-box",
-        "padding:0 0 14px",
-        "margin:0 0 18px",
-        "border-bottom:1px solid #dce2ec",
-        "background:#ffffff"
-      ].join(";");
-
-      const heading = document.createElement("h1");
-      heading.textContent = notebookTitle.trim() || "프리노트";
-      heading.style.cssText = "margin:0;color:#24252b;font-size:22px;line-height:1.3;font-weight:750;";
-
-      const date = document.createElement("time");
-      date.textContent = now.toLocaleDateString("ko-KR", {
-        year: "numeric",
-        month: "long",
-        day: "numeric"
-      });
-      date.style.cssText = "flex:0 0 auto;color:#7b8494;font-size:10px;";
-
-      header.append(heading, date);
-
-      const clonedViewport = viewport.cloneNode(true) as HTMLDivElement;
-      clonedViewport.style.setProperty("display", "block", "important");
-      clonedViewport.style.setProperty("position", "relative", "important");
-      clonedViewport.style.setProperty("flex", "none", "important");
-      clonedViewport.style.setProperty("width", captureWidth + "px", "important");
-      clonedViewport.style.setProperty("height", captureHeight + "px", "important");
-      clonedViewport.style.setProperty("min-height", captureHeight + "px", "important");
-      clonedViewport.style.setProperty("max-height", "none", "important");
-      clonedViewport.style.setProperty("overflow", "visible", "important");
-      clonedViewport.style.setProperty("background", "#ffffff", "important");
-
-      const clonedEditor = clonedViewport.querySelector<HTMLElement>(".markdown-editor-grid");
-      if (!clonedEditor) throw new Error("노트 내용을 찾을 수 없습니다.");
-
-      clonedEditor.style.setProperty("display", "block", "important");
-      clonedEditor.style.setProperty("position", "relative", "important");
-      clonedEditor.style.setProperty("flex", "none", "important");
-      clonedEditor.style.setProperty("width", "100%", "important");
-      clonedEditor.style.setProperty("height", captureHeight + "px", "important");
-      clonedEditor.style.setProperty("min-height", captureHeight + "px", "important");
-      clonedEditor.style.setProperty("max-height", "none", "important");
-      clonedEditor.style.setProperty("overflow", "visible", "important");
-      clonedEditor.style.setProperty("box-sizing", "border-box", "important");
-      clonedEditor.setAttribute("contenteditable", "false");
-      clonedEditor.scrollTop = 0;
-
-      const clonedDrawingLayer = clonedViewport.querySelector<SVGSVGElement>(".free-note-drawing-layer");
-      if (clonedDrawingLayer) {
-        clonedDrawingLayer.style.setProperty("transform", "none", "important");
-        clonedDrawingLayer.style.setProperty("height", captureHeight + "px", "important");
-        clonedDrawingLayer.setAttribute("viewBox", "0 0 1000 " + captureHeight);
-      }
-
-      const clonedStickyLayer = clonedViewport.querySelector<HTMLElement>(".free-note-sticky-layer");
-      if (clonedStickyLayer) {
-        clonedStickyLayer.style.setProperty("transform", "none", "important");
-        clonedStickyLayer.style.setProperty("height", captureHeight + "px", "important");
-      }
-
-      const sourceStickyTextareas = viewport.querySelectorAll<HTMLTextAreaElement>(".free-note-sticky-note textarea");
-      clonedViewport.querySelectorAll<HTMLTextAreaElement>(".free-note-sticky-note textarea").forEach((textarea, index) => {
-        const noteText = document.createElement("div");
-        noteText.className = "markdown-image-sticky-note-text";
-        noteText.textContent = sourceStickyTextareas[index]?.value ?? textarea.value;
-        noteText.style.cssText = [
-          "display:block",
-          "flex:1 1 auto",
-          "width:100%",
-          "min-height:84px",
-          "box-sizing:border-box",
-          "padding:8px 9px",
-          "color:#38332a",
-          "font-family:inherit",
-          "font-size:12px",
-          "line-height:1.5",
-          "white-space:pre-wrap",
-          "overflow-wrap:anywhere"
-        ].join(";");
-        textarea.replaceWith(noteText);
-      });
-
-      const sourceCodeLanguageSelects = editor.querySelectorAll<HTMLSelectElement>(".markdown-code-language");
-      clonedViewport.querySelectorAll<HTMLSelectElement>(".markdown-code-language").forEach((select, index) => {
-        const sourceSelect = sourceCodeLanguageSelects[index];
-        const language = document.createElement("span");
-        language.className = "markdown-code-language-label";
-        language.textContent = sourceSelect?.selectedOptions[0]?.textContent?.trim()
-          || sourceSelect?.value.toUpperCase()
-          || select.selectedOptions[0]?.textContent?.trim()
-          || select.value.toUpperCase();
-        select.replaceWith(language);
-      });
-
-      clonedViewport.querySelectorAll("button, input, script, iframe, object, embed").forEach(element => element.remove());
-      clonedViewport.querySelectorAll<HTMLElement>("[contenteditable]").forEach(element => {
-        element.setAttribute("contenteditable", "false");
-        element.removeAttribute("data-placeholder");
-      });
-
-      exportRoot.append(header, clonedViewport);
-      document.body.appendChild(exportRoot);
-
-      if (document.fonts?.ready) await document.fonts.ready;
-      await new Promise<void>(resolve => {
-        window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve()));
-      });
-
-      const totalHeight = Math.max(1, exportRoot.scrollHeight);
-      const scale = Math.min(
-        2,
-        30000 / totalHeight,
-        Math.sqrt(80000000 / (captureWidth * totalHeight))
-      );
-      if (!Number.isFinite(scale) || scale < 0.5) {
-        throw new Error("내용이 너무 길어 한 장 이미지로 저장하기 어렵습니다. 페이지를 나누어 저장해 주세요.");
-      }
-
-      const canvas = await html2pdf().set({
-        html2canvas: {
-          scale,
-          useCORS: true,
-          backgroundColor: "#ffffff",
-          width: captureWidth,
-          height: totalHeight,
-          windowWidth: captureWidth,
-          windowHeight: totalHeight,
-          scrollX: 0,
-          scrollY: 0,
-          logging: false,
-          onclone: (clonedDocument: Document) => {
-            const clonedRoot = clonedDocument.querySelector<HTMLElement>(".markdown-image-export-root");
-            if (!clonedRoot) return;
-            clonedRoot.style.setProperty("position", "static", "important");
-            clonedRoot.style.setProperty("left", "auto", "important");
-            clonedRoot.style.setProperty("top", "auto", "important");
-            clonedRoot.style.setProperty("z-index", "auto", "important");
-            clonedRoot.style.setProperty("visibility", "visible", "important");
-            clonedRoot.style.setProperty("pointer-events", "none", "important");
-          }
-        }
-      }).from(exportRoot).toCanvas().get("canvas");
-
-      if (!(canvas instanceof HTMLCanvasElement) || canvas.width <= 0 || canvas.height <= 0) {
-        throw new Error("이미지 캡처 결과가 비어 있습니다.");
-      }
-
-      const imageBlob = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob(blob => {
-          if (blob) resolve(blob);
-          else reject(new Error("PNG 이미지 파일을 만들지 못했습니다."));
-        }, "image/png");
-      });
-
-      const imageUrl = URL.createObjectURL(imageBlob);
-      const link = document.createElement("a");
-      link.href = imageUrl;
-      link.download = safeTitle + "_페이지" + (activePageIndex + 1) + "_" + dateStamp + ".png";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(imageUrl), 1500);
-
-      setShareFeedback("이미지 저장이 완료되었습니다.");
-    } catch (imageError) {
-      console.error("Image export failed:", imageError);
-      setShareFeedback(imageError instanceof Error
-        ? "이미지 저장 실패: " + imageError.message
-        : "이미지 저장에 실패했습니다. 다시 시도해 주세요.");
-    } finally {
-      exportRoot?.remove();
-      setImageExporting(false);
-    }
-  }
-
   async function downloadPdf() {
     const editor = leftEditorRef.current;
-    if (!activeNote || !editor || loading || pdfExporting || imageExporting) return;
+    if (!activeNote || !editor || loading || pdfExporting) return;
     const pagesForPdf = getCurrentPages();
     const annotationsForPdf = decodeNoteAnnotations(activeNote.content);
 
@@ -2140,22 +1901,10 @@ export default function MarkdownDiary({
                       </button>
                       <button
                         type="button"
-                        className="markdown-share-top-button markdown-image-top-button"
-                        aria-label={imageExporting ? "이미지 저장 중" : "이미지 저장"}
-                        title={imageExporting ? "이미지 저장 중" : "이미지 저장"}
-                        disabled={imageExporting || pdfExporting || loading || !activeNote}
-                        aria-busy={imageExporting}
-                        onMouseDown={event => event.preventDefault()}
-                        onClick={() => { void downloadImage(); }}
-                      >
-                        <ImageIcon size={16} strokeWidth={2}/>
-                      </button>
-                      <button
-                        type="button"
                         className="markdown-share-top-button markdown-pdf-top-button"
                         aria-label={pdfExporting ? "PDF 저장 중" : "PDF 다운로드"}
                         title={pdfExporting ? "PDF 저장 중" : "PDF 다운로드"}
-                        disabled={pdfExporting || imageExporting || loading || !activeNote}
+                        disabled={pdfExporting || loading || !activeNote}
                         aria-busy={pdfExporting}
                         onMouseDown={event => event.preventDefault()}
                         onClick={() => { void downloadPdf(); }}
