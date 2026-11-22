@@ -1526,7 +1526,7 @@ export default function MarkdownDiary({
         "box-sizing:border-box"
       ].join(";");
 
-      pagesForPdf.forEach(markdown => {
+      pagesForPdf.forEach((markdown, index) => {
         const page = document.createElement("section");
         page.className = "markdown-pdf-page";
         const pageContent = document.createElement("div");
