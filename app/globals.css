@@ -10353,7 +10353,7 @@ html,body{width:100%;overflow-x:clip}
     gap:0 !important;
     border-radius:14px !important;
     background:var(--paper) !important;
-    transform:translateX(-16px) !important;
+    transform:translateX(-24px) !important;
   }
 
   .picture-diary-canvas > .picture-diary-book-frame > .paper-page {
@@ -10373,14 +10373,14 @@ html,body{width:100%;overflow-x:clip}
   .picture-diary-book-frame > .diary-left-page {
     grid-column:1 !important;
     grid-row:1 !important;
-    padding:16px 10px 16px 30px !important;
+    padding:16px 22px !important;
     border-radius:14px 0 0 14px !important;
   }
 
   .picture-diary-book-frame > .diary-right-page {
     grid-column:2 !important;
     grid-row:1 !important;
-    padding:16px 6px 16px 36px !important;
+    padding:16px 22px !important;
     border-radius:0 14px 14px 0 !important;
   }
 
