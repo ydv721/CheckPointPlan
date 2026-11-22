@@ -6364,6 +6364,72 @@ html,body{width:100%;overflow-x:clip}
     display: none !important;
   }
 }
+}
+
+/* DAY + MONTH planner bindings: match the unified Picture Diary spine. */
+@media (min-width: 781px) {
+  .workspace-canvas > .book-frame.day-book-frame > .book-spine,
+  .workspace-canvas > .book-frame.month-book-frame > .book-spine {
+    position:absolute !important;
+    z-index:4 !important;
+    top:0 !important;
+    bottom:0 !important;
+    left:50% !important;
+    width:30px !important;
+    padding:17px 0 !important;
+    transform:translateX(-50%) !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:space-around !important;
+    pointer-events:none !important;
+  }
+
+  .workspace-canvas > .book-frame.day-book-frame > .book-spine span,
+  .workspace-canvas > .book-frame.month-book-frame > .book-spine span {
+    display:none !important;
+  }
+
+  .workspace-canvas > .book-frame.day-book-frame > .book-spine::before,
+  .workspace-canvas > .book-frame.month-book-frame > .book-spine::before {
+    content:"" !important;
+    position:absolute !important;
+    top:0 !important;
+    bottom:0 !important;
+    left:50% !important;
+    width:6px !important;
+    transform:translateX(-50%) !important;
+    border-radius:999px !important;
+    background:rgba(120,112,102,.22) !important;
+    box-shadow:
+      0 0 12px rgba(35,40,52,.10),
+      inset 0 0 0 1px rgba(255,255,255,.16) !important;
+    display:block !important;
+    z-index:0 !important;
+  }
+
+  .workspace-canvas > .book-frame.day-book-frame > .book-spine::after,
+  .workspace-canvas > .book-frame.month-book-frame > .book-spine::after {
+    content:"" !important;
+    position:absolute !important;
+    top:17px !important;
+    bottom:17px !important;
+    left:50% !important;
+    width:18px !important;
+    transform:translateX(-50%) !important;
+    background:repeating-linear-gradient(
+      to bottom,
+      #b8b2a8 0px,
+      #b8b2a8 2px,
+      transparent 2px,
+      transparent calc(100% / 13)
+    ) !important;
+    display:block !important;
+    z-index:1 !important;
+    pointer-events:none !important;
+  }
+}
+
 
 
 /* MONTH memo controls sit above the memo paper, with the MEMO label vertically centered. */
