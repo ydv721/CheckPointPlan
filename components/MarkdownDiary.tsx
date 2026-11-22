@@ -582,6 +582,7 @@ export default function MarkdownDiary({
   userId,
   email,
   notebookId,
+  notebookTitle,
   themeStyle,
   theme,
   customColor,
