@@ -64,7 +64,7 @@ function loadHtml2Pdf(): Promise<void> {
     };
     script.onerror = () => {
       script.remove();
-      reject(new Error("PDF 변환 도구를 불러오지 못했습니다. 네트워크 연결을 확인해 줘."));
+      reject(new Error("PDF 변환 도구를 불러오지 못했습니다. 네트워크 연결을 확인해 주세요."));
     };
     document.head.appendChild(script);
   });
