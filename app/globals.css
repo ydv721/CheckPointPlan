@@ -10868,51 +10868,23 @@ html,body{width:100%;overflow-x:clip}
   }
 }
 
-/* Matching edge actions for handwriting and page deletion. */
-.free-note-edge-action-button {
-  display:inline-flex;
-  flex:0 0 auto;
-  align-items:center;
-  justify-content:center;
-  width:auto;
-  min-width:0;
-  gap:4px;
-  min-height:32px;
-  height:32px;
-  padding:0 6px;
-  border:1px solid var(--line);
-  border-radius:7px;
-  background:var(--paper);
-  color:var(--accent);
-  font-family:inherit;
-  font-size:11px;
-  font-weight:700;
-  line-height:1;
-  white-space:nowrap;
-  opacity:1;
-}
-.free-note-edge-action-delete {
-  margin-left:auto;
+.markdown-delete-page-top-button {
   color:#bd6874;
 }
-.free-note-edge-action-delete:hover:not(:disabled) {
+.markdown-delete-page-top-button:hover:not(:disabled) {
   border-color:#bd6874;
   background:#fbecef;
   color:#a43e4d;
 }
-.free-note-edge-action-button:disabled {
+.markdown-add-page-top-button:disabled,
+.markdown-delete-page-top-button:disabled {
   cursor:not-allowed;
   opacity:.4;
+  transform:none;
 }
 @media(max-width:430px) {
-  .free-note-edge-action-button {
-    width:auto;
-    min-width:0;
-    min-height:30px;
-    height:30px;
-    padding:0 5px;
-    gap:3px;
-    font-size:10px;
+  .markdown-note-heading-actions {
+    gap:6px;
   }
 }
 
