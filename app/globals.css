@@ -10537,3 +10537,98 @@ html,body{width:100%;overflow-x:clip}
     line-height:.95 !important;
   }
 }
+
+/* Free Note: page navigation and adding sheets inside the same notebook. */
+.markdown-page-navigation {
+  display:flex;
+  flex:0 0 auto;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  min-height:48px;
+  padding:7px 14px;
+  border-top:1px solid var(--line);
+  background:var(--soft);
+  color:var(--ink);
+  box-sizing:border-box;
+}
+.markdown-page-controls {
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+}
+.markdown-page-nav-button {
+  display:inline-flex;
+  flex:0 0 30px;
+  align-items:center;
+  justify-content:center;
+  width:30px;
+  height:30px;
+  padding:0;
+  border:1px solid var(--line);
+  border-radius:7px;
+  background:var(--paper);
+  color:var(--ink);
+  transition:background .15s ease,border-color .15s ease,color .15s ease;
+}
+.markdown-page-nav-button:hover:not(:disabled) {
+  border-color:var(--accent);
+  color:var(--accent);
+}
+.markdown-page-nav-button:disabled {
+  cursor:not-allowed;
+  opacity:.35;
+}
+.markdown-page-indicator {
+  min-width:88px;
+  color:var(--ink);
+  font-size:12px;
+  font-weight:750;
+  text-align:center;
+  white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+.markdown-add-page-button {
+  display:inline-flex;
+  flex:0 0 auto;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  min-height:34px;
+  padding:0 12px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:var(--paper);
+  color:var(--accent);
+  font-family:inherit;
+  font-size:12px;
+  font-weight:800;
+  white-space:nowrap;
+  transition:background .15s ease,border-color .15s ease,transform .15s ease;
+}
+.markdown-add-page-button:hover {
+  border-color:var(--accent);
+  background:var(--paper);
+  transform:translateY(-1px);
+}
+@media(max-width:430px) {
+  .markdown-page-navigation {
+    min-height:46px;
+    padding:6px 9px;
+    gap:8px;
+  }
+  .markdown-page-controls {
+    gap:5px;
+  }
+  .markdown-page-indicator {
+    min-width:76px;
+    font-size:11px;
+  }
+  .markdown-add-page-button {
+    min-height:32px;
+    padding:0 9px;
+    gap:5px;
+    font-size:11px;
+  }
+}
