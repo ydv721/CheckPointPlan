@@ -575,7 +575,7 @@ export default function Planner() {
   const [loading,setLoading]=useState(false);
   const [hydrated,setHydrated]=useState(false);
   const [settingsHydrated,setSettingsHydrated]=useState(false);
-  const [status,setStatus]=useState("5분마다 자동 저장돼요.");
+  const [status,setStatus]=useState("5분마다 자동 저장됩니다.");
   const [alert,setAlert]=useState("");
   const lastSaved=useRef("");
   const entryRef=useRef(entry);
@@ -900,7 +900,7 @@ export default function Planner() {
           })(),
           memo:data.memo||"",timetable:data.timetable&&typeof data.timetable==="object"?data.timetable:{}
         }:emptyEntry(date);
-        lastSaved.current=JSON.stringify(next);setEntry(next);setHydrated(true);setLoading(false);setStatus("5분마다 자동 저장돼요.");
+        lastSaved.current=JSON.stringify(next);setEntry(next);setHydrated(true);setLoading(false);setStatus("5분마다 자동 저장됩니다.");
       });
     return()=>{active=false;};
   },[client,user,activeNotebookId,date]);
@@ -911,19 +911,19 @@ export default function Planner() {
     if(currentJson===lastSaved.current)return;
     const version=++saveVersion.current;
     const updatedAt=new Date().toISOString();
-    setStatus("자동 저장 중이에요.");
+    setStatus("자동 저장 중입니다.");
     const {error}=await client.from("planner_entries").upsert({
       user_id:user.id,notebook_id:activeNotebookId,entry_date:current.date,date_label:dateView(current.date),dday:current.dday,header_label:current.headerLabel,
       header_value:current.headerValue,focus:JSON.stringify(current.focusItems),keypoint:current.freeNote,
       todos:current.todos,memo:current.memo,timetable:current.timetable,color_labels:current.colorLabels,updated_at:updatedAt
     },{onConflict:"notebook_id,entry_date"});
     if(version!==saveVersion.current)return;
-    if(error){setStatus("저장하지 못했어요. 다시 시도해 주세요.");setAlert(`기록 저장에 실패했습니다: ${error.message}`);}
+    if(error){setStatus("저장하지 못했습니다. 다시 시도해 주세요.");setAlert(`기록 저장에 실패했습니다: ${error.message}`);}
     else{
       await client.from("notebooks").update({updated_at:updatedAt}).eq("id",activeNotebookId).eq("user_id",user.id);
       setNotebooks(currentNotebooks=>currentNotebooks.map(notebook=>notebook.id===activeNotebookId?{...notebook,updated_at:updatedAt}:notebook));
       lastSaved.current=currentJson;
-      setStatus(JSON.stringify(entryRef.current)===currentJson?"자동 저장되었어요.":"변경 내용은 5분마다 자동 저장돼요.");
+      setStatus(JSON.stringify(entryRef.current)===currentJson?"자동 저장되었습니다.":"변경 내용은 5분마다 자동 저장됩니다.");
     }
   },[client,user,activeNotebookId,hydrated]);
 
@@ -942,7 +942,7 @@ export default function Planner() {
 
   useEffect(()=>{
     if(!hydrated||JSON.stringify(entry)===lastSaved.current)return;
-    setStatus("변경 내용은 5분마다 자동 저장돼요.");
+    setStatus("변경 내용은 5분마다 자동 저장됩니다.");
   },[entry,hydrated]);
 
   useEffect(()=>{
@@ -1069,7 +1069,7 @@ export default function Planner() {
         <div className="delete-account-actions">
           <button type="button" className="outline-btn" disabled={deletingAccount} onClick={()=>{setShowDeleteAccount(false);setDeleteEmail("");}}>취소</button>
           <button type="button" className="delete-confirm-btn" disabled={deletingAccount||deleteEmail.trim().toLowerCase()!==user.email?.toLowerCase()} onClick={()=>void deleteAccount()}>
-            {deletingAccount?"삭제 처리 중...":"계정 영구 삭제"}
+            {deletingAccount?"삭제 처리 중입니다...":"계정 영구 삭제"}
           </button>
         </div>
       </section>
@@ -1203,7 +1203,7 @@ export default function Planner() {
       setActiveNotebookId(null);
       setActiveMarkdownNotebookId(data.id);
     }else{
-      setNotebookTypeNotice(title+"은 책장에 추가했어. 전용 편집 화면은 다음 단계에서 연결할게.");
+      setNotebookTypeNotice(title+" 항목을 책장에 추가했습니다. 전용 편집 화면은 추후 제공될 예정입니다.");
     }
     setCreatingNotebook(false);
   }
@@ -1212,7 +1212,7 @@ export default function Planner() {
     if(!client||!user)return false;
     const nextTitle=title.trim();
     if(!nextTitle){
-      setNotebookTypeNotice("다이어리 이름을 입력해 줘.");
+      setNotebookTypeNotice("다이어리 이름을 입력해 주세요.");
       return false;
     }
     const {data,error}=await client.from("notebooks").update({title:nextTitle})
