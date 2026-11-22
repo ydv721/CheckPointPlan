@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { AlignCenter, AlignLeft, AlignRight, Bold, Code2, Heading1, Italic, List, ListOrdered, Minus, Palette, Quote, Share2, Strikethrough, Check } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronLeft, ChevronRight, Code2, FileDown, Heading1, Italic, List, ListOrdered, Minus, Palette, Plus, Quote, Share2, Strikethrough, Underline, Check } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
+import PlannerSpread from "@/components/PlannerSpread";
 import type { ThemeName } from "@/lib/types";
 
 type MarkdownNote = {
@@ -21,11 +22,60 @@ type NotePages = {
   right: string;
 };
 
-type MarkdownAction = "bold" | "italic" | "strike" | "heading" | "bullet" | "ordered" | "quote" | "code" | "divider";
+type Html2PdfWorker = {
+  set: (options: Record<string, unknown>) => Html2PdfWorker;
+  from: (element: HTMLElement) => Html2PdfWorker;
+  save: () => PromiseLike<unknown>;
+};
 
-const MARKDOWN_TOOLBAR = [
+declare global {
+  interface Window {
+    html2pdf?: () => Html2PdfWorker;
+  }
+}
+
+const HTML2PDF_SCRIPT_URL = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+
+function loadHtml2Pdf(): Promise<void> {
+  if (typeof window === "undefined") return Promise.reject(new Error("브라우저에서만 PDF를 만들 수 있어."));
+  if (window.html2pdf) return Promise.resolve();
+
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>('script[data-html2pdf-loader="true"]');
+    if (existing) {
+      if (existing.dataset.loaded === "true") {
+        if (window.html2pdf) resolve();
+        else reject(new Error("PDF 변환 도구를 초기화하지 못했어."));
+        return;
+      }
+      existing.addEventListener("load", () => resolve(), { once: true });
+      existing.addEventListener("error", () => reject(new Error("PDF 변환 도구를 불러오지 못했어.")), { once: true });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = HTML2PDF_SCRIPT_URL;
+    script.async = true;
+    script.dataset.html2pdfLoader = "true";
+    script.onload = () => {
+      script.dataset.loaded = "true";
+      if (window.html2pdf) resolve();
+      else reject(new Error("PDF 변환 도구를 초기화하지 못했어."));
+    };
+    script.onerror = () => {
+      script.remove();
+      reject(new Error("PDF 변환 도구를 불러오지 못했어. 네트워크 연결을 확인해 줘."));
+    };
+    document.head.appendChild(script);
+  });
+}
+
+export type MarkdownAction = "bold" | "italic" | "underline" | "strike" | "heading" | "bullet" | "ordered" | "quote" | "code" | "divider";
+
+export const MARKDOWN_TOOLBAR = [
   { action: "bold", label: "굵게", icon: Bold },
   { action: "italic", label: "기울임", icon: Italic },
+  { action: "underline", label: "밑줄", icon: Underline },
   { action: "strike", label: "취소선", icon: Strikethrough },
   { action: "heading", label: "제목", icon: Heading1 },
   { action: "bullet", label: "글머리표", icon: List },
@@ -69,26 +119,39 @@ const CODE_LANGUAGES = [
 
 const DEFAULT_CODE_LANGUAGE = "c";
 
-const PAGE_CONTENT_PREFIX = "\u001eCHECKPOINT_FREE_NOTE_V1\u001e";
+const PAGE_CONTENT_PREFIX_V1 = "\u001eCHECKPOINT_FREE_NOTE_V1\u001e";
+const PAGE_CONTENT_PREFIX = "\u001eCHECKPOINT_FREE_NOTE_V2\u001e";
 
-function decodeNotePages(content: string): NotePages {
-  if (!content.startsWith(PAGE_CONTENT_PREFIX)) {
-    return { left: content, right: "" };
+function decodeNotePages(content: string): string[] {
+  if (content.startsWith(PAGE_CONTENT_PREFIX)) {
+    try {
+      const parsed = JSON.parse(content.slice(PAGE_CONTENT_PREFIX.length)) as { pages?: unknown };
+      if (Array.isArray(parsed.pages)) {
+        const pages = parsed.pages.map((page): string => typeof page === "string" ? page : "");
+        return pages.length > 0 ? pages : [""];
+      }
+    } catch {
+      return [content];
+    }
+    return [content];
   }
 
-  try {
-    const parsed = JSON.parse(content.slice(PAGE_CONTENT_PREFIX.length)) as Partial<NotePages>;
-    return {
-      left: typeof parsed.left === "string" ? parsed.left : "",
-      right: typeof parsed.right === "string" ? parsed.right : ""
-    };
-  } catch {
-    return { left: content, right: "" };
+  if (content.startsWith(PAGE_CONTENT_PREFIX_V1)) {
+    try {
+      const parsed = JSON.parse(content.slice(PAGE_CONTENT_PREFIX_V1.length)) as Partial<NotePages>;
+      const pages = [typeof parsed.left === "string" ? parsed.left : ""];
+      if (typeof parsed.right === "string" && parsed.right.trim()) pages.push(parsed.right);
+      return pages;
+    } catch {
+      return [content];
+    }
   }
+
+  return [content];
 }
 
-function encodeNotePages(pages: NotePages) {
-  return PAGE_CONTENT_PREFIX + JSON.stringify(pages);
+function encodeNotePages(pages: string[]) {
+  return PAGE_CONTENT_PREFIX + JSON.stringify({ pages: pages.length > 0 ? pages : [""] });
 }
 
 function escapeHtml(value: string) {
@@ -142,7 +205,7 @@ function highlightCodeHtml(source: string, language: string) {
   });
 }
 
-function createMarkdownCodeBlockHtml(code: string, language: string, inserted = false) {
+export function createMarkdownCodeBlockHtml(code: string, language: string, inserted = false) {
   const safeLanguage = normalizeCodeLanguage(language);
   const options = CODE_LANGUAGES.map(({ value, label }) =>
     '<option value="' + value + '"' + (value === safeLanguage ? " selected" : "") + ">" + label + "</option>"
@@ -178,7 +241,7 @@ function serializeCodeText(node: Node): string {
   return result;
 }
 
-function highlightCodeBlocks(editor: HTMLElement) {
+export function highlightCodeBlocks(editor: HTMLElement) {
   editor.querySelectorAll<HTMLElement>(".markdown-code-block").forEach(block => {
     const code = block.querySelector("pre code");
     if (!code) return;
@@ -214,15 +277,20 @@ function renderInlineMarkdown(value: string) {
     return "\u0000" + (tokens.length - 1) + "\u0000";
   };
 
-  const source = value.replace(
+  // Protect inline code first: literal <u> inside backticks must remain code.
+  let source = value.replace(/\x60([^\x60]+)\x60/g, (_match, code: string) =>
+    stash("<code>" + escapeHtml(code) + "</code>")
+  );
+  // Underline uses limited HTML syntax because standard Markdown has no underline marker.
+  source = source.replace(/<(u|ins)>([\s\S]*?)<\/\1>/gi, (_match, _tag: string, content: string) =>
+    stash("<u>" + renderInlineMarkdown(content) + "</u>")
+  );
+  source = source.replace(
     /<span\s+style=["']color:\s*(#[0-9a-f]{6})["']\s*>([\s\S]*?)<\/span>/gi,
     (_match, color: string, content: string) =>
       stash('<span style="color: ' + color.toLowerCase() + '">' + renderInlineMarkdown(content) + "</span>")
   );
   let html = escapeHtml(source);
-  html = html.replace(/\x60([^\x60]+)\x60/g, (_match, code: string) =>
-    stash("<code>" + code + "</code>")
-  );
   html = html.replace(/\*\*\*(.+?)\*\*\*/g, (_match, text: string) =>
     stash("<strong><em>" + text + "</em></strong>")
   );
@@ -269,7 +337,7 @@ function renderInlineMarkdown(value: string) {
   return rendered;
 }
 
-function markdownToHtml(markdown: string) {
+export function markdownToHtml(markdown: string) {
   const lines = markdown.replace(/\r\n?/g, "\n").split("\n");
   const blocks: string[] = [];
   let index = 0;
@@ -384,7 +452,7 @@ function markdownToHtml(markdown: string) {
   return blocks.join("");
 }
 
-function htmlToMarkdown(html: string) {
+export function htmlToMarkdown(html: string) {
   const parsed = new DOMParser().parseFromString("<div>" + html + "</div>", "text/html");
   const root = parsed.body.firstElementChild;
   if (!root) return "";
@@ -401,12 +469,15 @@ function htmlToMarkdown(html: string) {
     if (tag === "HR") return "\n---\n";
     if (tag === "B" || tag === "STRONG") return "**" + children + "**";
     if (tag === "I" || tag === "EM") return "*" + children + "*";
+    if (tag === "U" || tag === "INS") return "<u>" + children + "</u>";
     if (tag === "S" || tag === "STRIKE" || tag === "DEL") return "~~" + children + "~~";
     if (tag === "CODE" && !element.closest(".markdown-code-block")) return String.fromCharCode(96) + children + String.fromCharCode(96);
     if (tag === "FONT" || tag === "SPAN") {
       const rawColor = tag === "FONT" ? (element.getAttribute("color") ?? element.style.color) : element.style.color;
       const color = normalizeMarkdownColor(rawColor);
-      return color ? '<span style="color: ' + color + '">' + children + "</span>" : children;
+      const underlined = /\bunderline\b/i.test(element.style.textDecorationLine + " " + element.style.textDecoration)
+        ? "<u>" + children + "</u>" : children;
+      return color ? '<span style="color: ' + color + '">' + underlined + "</span>" : underlined;
     }
     if (tag === "A") {
       const href = safeMarkdownHref(element.getAttribute("href") ?? "");
@@ -511,6 +582,7 @@ export default function MarkdownDiary({
   userId,
   email,
   notebookId,
+  notebookTitle,
   themeStyle,
   theme,
   customColor,
@@ -523,10 +595,12 @@ export default function MarkdownDiary({
 }: Props) {
   const [notes, setNotes] = useState<MarkdownNote[]>([]);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
+  const [activePageIndex, setActivePageIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [, setSaveState] = useState<"saved" | "dirty" | "saving" | "error">("saved");
   const [shareFeedback, setShareFeedback] = useState("");
+  const [pdfExporting, setPdfExporting] = useState(false);
   const [colorPaletteOpen, setColorPaletteOpen] = useState(false);
   const [customTextColor, setCustomTextColor] = useState("#7868e8");
   const leftEditorRef = useRef<HTMLDivElement>(null);
@@ -547,13 +621,20 @@ export default function MarkdownDiary({
   );
 
   useEffect(() => {
+    setActivePageIndex(0);
+    editorSelectionRef.current = null;
+    setColorPaletteOpen(false);
+  }, [activeNoteId]);
+
+  useEffect(() => {
     const editor = leftEditorRef.current;
     if (!editor || !activeNote || loading) return;
-    if (editor.dataset.noteId !== activeNote.id) {
-      editor.innerHTML = markdownToHtml(pageContents.left);
-      editor.dataset.noteId = activeNote.id;
+    const pageKey = activeNote.id + ":" + activePageIndex;
+    if (editor.dataset.pageKey !== pageKey) {
+      editor.innerHTML = markdownToHtml(pageContents[activePageIndex] ?? "");
+      editor.dataset.pageKey = pageKey;
     }
-  }, [activeNote, loading, pageContents.left]);
+  }, [activeNote, activePageIndex, loading, pageContents]);
 
   useEffect(() => {
     currentNoteRef.current = activeNote;
@@ -588,7 +669,7 @@ export default function MarkdownDiary({
                 notebook_id: notebookId,
                 user_id: userId,
                 title: "새 노트",
-                content: encodeNotePages({ left: "", right: "" })
+                content: encodeNotePages([""])
               })
               .select("id,notebook_id,user_id,title,content,created_at,updated_at")
               .single()
@@ -712,10 +793,60 @@ export default function MarkdownDiary({
     ));
   }
 
-  function updatePage(side: "left" | "right", value: string) {
+  function updateCurrentPage(value: string) {
     if (!activeNote) return;
-    const nextPages = { ...pageContents, [side]: value };
+    const nextPages = [...pageContents];
+    nextPages[activePageIndex] = value;
     updateActiveNote({ content: encodeNotePages(nextPages) });
+  }
+
+  function getCurrentPages() {
+    const nextPages = [...pageContents];
+    const editor = leftEditorRef.current;
+    if (activeNote && editor) {
+      while (nextPages.length <= activePageIndex) nextPages.push("");
+      nextPages[activePageIndex] = htmlToMarkdown(editor.innerHTML);
+    }
+    return nextPages.length > 0 ? nextPages : [""];
+  }
+
+  function focusEditorAtEnd() {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        const editor = leftEditorRef.current;
+        if (!editor) return;
+        editor.focus();
+        const selection = window.getSelection();
+        if (!selection) return;
+        const range = document.createRange();
+        range.selectNodeContents(editor);
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      });
+    });
+  }
+
+  function goToPage(index: number) {
+    if (!activeNote || loading || index < 0 || index >= pageContents.length || index === activePageIndex) return;
+    updateActiveNote({ content: encodeNotePages(getCurrentPages()) });
+    setActivePageIndex(index);
+    setColorPaletteOpen(false);
+    editorSelectionRef.current = null;
+    window.getSelection()?.removeAllRanges();
+    focusEditorAtEnd();
+  }
+
+  function addPage() {
+    if (!activeNote || loading) return;
+    const nextPages = getCurrentPages();
+    nextPages.push("");
+    updateActiveNote({ content: encodeNotePages(nextPages) });
+    setActivePageIndex(nextPages.length - 1);
+    setColorPaletteOpen(false);
+    editorSelectionRef.current = null;
+    window.getSelection()?.removeAllRanges();
+    focusEditorAtEnd();
   }
 
   function rememberEditorSelection() {
@@ -753,7 +884,7 @@ export default function MarkdownDiary({
     }
 
     document.execCommand("foreColor", false, color);
-    updatePage("left", htmlToMarkdown(editor.innerHTML));
+    updateCurrentPage(htmlToMarkdown(editor.innerHTML));
 
     if (keepPickerOpen) {
       if (selection.rangeCount > 0) {
@@ -812,7 +943,7 @@ export default function MarkdownDiary({
       }
     }
 
-    updatePage("left", htmlToMarkdown(editor.innerHTML));
+    updateCurrentPage(htmlToMarkdown(editor.innerHTML));
     editor.focus();
   }
 
@@ -826,6 +957,8 @@ export default function MarkdownDiary({
       document.execCommand("bold");
     } else if (action === "italic") {
       document.execCommand("italic");
+    } else if (action === "underline") {
+      document.execCommand("underline");
     } else if (action === "strike") {
       document.execCommand("strikeThrough");
     } else if (action === "heading") {
@@ -843,7 +976,7 @@ export default function MarkdownDiary({
       document.execCommand("insertHorizontalRule");
     }
 
-    updatePage("left", htmlToMarkdown(editor.innerHTML));
+    updateCurrentPage(htmlToMarkdown(editor.innerHTML));
     editor.focus();
   }
 
@@ -858,17 +991,15 @@ export default function MarkdownDiary({
         ? "justifyCenter"
         : "justifyRight";
     document.execCommand(command);
-    updatePage("left", htmlToMarkdown(editor.innerHTML));
+    updateCurrentPage(htmlToMarkdown(editor.innerHTML));
     editor.focus();
   }
 
-  function getMarkdownContent(note: MarkdownNote) {
-    const pages = decodeNotePages(note.content);
+  function getMarkdownContent(note: MarkdownNote, pages = decodeNotePages(note.content)) {
     return [
       "# " + (note.title.trim() || "제목 없는 글"),
       "",
-      pages.left,
-      ...(pages.right.trim() ? ["", "---", "", pages.right] : [])
+      pages.map((page, index) => index === 0 ? page : "---\n\n" + page).join("\n\n")
     ].join("\n");
   }
 
@@ -889,7 +1020,7 @@ export default function MarkdownDiary({
     if (!activeNote) return;
 
     const title = activeNote.title.trim() || "제목 없는 글";
-    const markdown = getMarkdownContent(activeNote);
+    const markdown = getMarkdownContent(activeNote, getCurrentPages());
     setShareFeedback("");
 
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
@@ -909,6 +1040,256 @@ export default function MarkdownDiary({
     } catch {
       downloadMarkdown(title, markdown);
       setShareFeedback("공유를 지원하지 않아 Markdown 파일로 저장했어.");
+    }
+  }
+
+  async function downloadPdf() {
+    const editor = leftEditorRef.current;
+    if (!activeNote || !editor || loading || pdfExporting) return;
+    const pagesForPdf = getCurrentPages();
+
+    setPdfExporting(true);
+    setShareFeedback("PDF를 만들고 있어.");
+    let exportRoot: HTMLDivElement | null = null;
+    let exportStyle: HTMLStyleElement | null = null;
+
+    try {
+      await loadHtml2Pdf();
+      const html2pdf = window.html2pdf;
+      if (!html2pdf) throw new Error("PDF 변환 도구를 사용할 수 없어.");
+
+      const now = new Date();
+      const dateStamp = [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, "0"),
+        String(now.getDate()).padStart(2, "0")
+      ].join("-");
+      const safeTitle = (notebookTitle.trim() || "프리노트")
+        .replace(/[\\/:*?"<>|]+/g, "-")
+        .replace(/\s+/g, " ")
+        .trim();
+      const fileName = `${safeTitle}_${dateStamp}.pdf`;
+
+      const editorStyles = window.getComputedStyle(editor);
+      exportRoot = document.createElement("div");
+      exportRoot.className = "markdown-pdf-export-root";
+      exportRoot.style.cssText = [
+        "position:absolute",
+        "left:-10000px",
+        "top:0",
+        "width:704px",
+        "margin:0",
+        "padding:0",
+        "background:#ffffff",
+        "color:#24252b",
+        "box-sizing:border-box",
+        "z-index:-1"
+      ].join(";");
+
+      ["--accent", "--line", "--paper", "--ink", "--soft"].forEach(variable => {
+        const value = editorStyles.getPropertyValue(variable).trim();
+        if (value) exportRoot?.style.setProperty(variable, value);
+      });
+
+      const header = document.createElement("header");
+      header.className = "markdown-pdf-export-header";
+      const heading = document.createElement("h1");
+      heading.textContent = notebookTitle.trim() || "프리노트";
+      const date = document.createElement("time");
+      date.textContent = now.toLocaleDateString("ko-KR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+      });
+      header.append(heading, date);
+
+      const content = document.createElement("div");
+      content.className = "pdf-export-content";
+      content.style.cssText = [
+        "display:block",
+        "width:100%",
+        "height:auto",
+        "min-height:0",
+        "max-height:none",
+        "overflow:visible",
+        "margin:0",
+        "padding:0",
+        "border:0",
+        "border-radius:0",
+        "outline:0",
+        "background:#ffffff",
+        "background-image:none",
+        "color:" + editorStyles.color,
+        "font-family:" + editorStyles.fontFamily,
+        "font-size:11pt",
+        "line-height:1.7",
+        "box-sizing:border-box"
+      ].join(";");
+
+      pagesForPdf.forEach(markdown => {
+        const page = document.createElement("section");
+        page.className = "markdown-pdf-page";
+        const pageContent = document.createElement("div");
+        pageContent.className = "markdown-pdf-page-content";
+        pageContent.innerHTML = markdownToHtml(markdown);
+        page.appendChild(pageContent);
+        content.appendChild(page);
+      });
+
+      content.querySelectorAll<HTMLSelectElement>(".markdown-code-language").forEach(select => {
+        const language = document.createElement("span");
+        language.className = "markdown-code-language-label";
+        language.textContent = select.selectedOptions[0]?.textContent?.trim() || select.value.toUpperCase();
+        select.replaceWith(language);
+      });
+      content.querySelectorAll("button, input, textarea, script, iframe, object, embed").forEach(element => element.remove());
+      content.querySelectorAll<HTMLElement>("*").forEach(element => {
+        element.removeAttribute("contenteditable");
+        Array.from(element.attributes).forEach(attribute => {
+          if (attribute.name.toLowerCase().startsWith("on")) element.removeAttribute(attribute.name);
+          if (
+            ["href", "src"].includes(attribute.name.toLowerCase()) &&
+            /^\s*javascript:/i.test(attribute.value)
+          ) element.removeAttribute(attribute.name);
+        });
+      });
+
+      exportStyle = document.createElement("style");
+      exportStyle.textContent = `
+        .markdown-pdf-export-root {
+          font-family: ${editorStyles.fontFamily};
+          color: ${editorStyles.color};
+          background: #fff;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        .markdown-pdf-export-header {
+          display:flex;
+          align-items:flex-end;
+          justify-content:space-between;
+          gap:20px;
+          padding:0 0 16px;
+          margin:0 0 22px;
+          border-bottom:1px solid #dce2ec;
+        }
+        .markdown-pdf-export-header h1 {
+          margin:0;
+          color:#24252b;
+          font-size:22px;
+          line-height:1.3;
+          font-weight:750;
+        }
+        .markdown-pdf-export-header time {
+          flex:0 0 auto;
+          color:#7b8494;
+          font-size:10px;
+        }
+        .markdown-pdf-export-root .pdf-export-content {
+          display:block !important;
+          width:100% !important;
+          height:auto !important;
+          min-height:0 !important;
+          max-height:none !important;
+          overflow:visible !important;
+          padding:0 !important;
+          margin:0 !important;
+          border:0 !important;
+          background:#fff !important;
+          background-image:none !important;
+          box-sizing:border-box !important;
+          font-size:11pt !important;
+          line-height:1.7 !important;
+        }
+        .markdown-pdf-export-root .pdf-export-content h1,
+        .markdown-pdf-export-root .pdf-export-content h2,
+        .markdown-pdf-export-root .pdf-export-content h3,
+        .markdown-pdf-export-root .pdf-export-content blockquote,
+        .markdown-pdf-export-root .pdf-export-content pre,
+        .markdown-pdf-export-root .pdf-export-content .markdown-code-block,
+        .markdown-pdf-export-root .pdf-export-content li {
+          break-inside:avoid;
+          page-break-inside:avoid;
+        }
+        .markdown-pdf-export-root .pdf-export-content pre {
+          white-space:pre-wrap;
+          overflow-wrap:anywhere;
+        }
+        .markdown-pdf-export-root .markdown-code-header {
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          padding:7px 10px;
+          border:1px solid #e1e5ed;
+          border-bottom:0;
+          border-radius:7px 7px 0 0;
+          background:#f5f6fa;
+          color:#68748a;
+          font-size:9px;
+          letter-spacing:.08em;
+        }
+        .markdown-pdf-export-root .markdown-pdf-page + .markdown-pdf-page {
+          break-before:page;
+          page-break-before:always;
+        }
+        .markdown-pdf-export-root .markdown-pdf-page-content {
+          display:block;
+          width:100%;
+          min-width:0;
+        }
+        .markdown-pdf-export-root .markdown-code-language-label {
+          color:#68748a;
+          font-size:9px;
+        }
+        .markdown-pdf-export-root .markdown-code-block pre {
+          margin:0;
+          border-radius:0 0 7px 7px;
+        }
+        .markdown-pdf-export-root a {
+          color:#526da8;
+          text-decoration:underline;
+          overflow-wrap:anywhere;
+        }
+      `;
+      document.head.appendChild(exportStyle);
+      exportRoot.append(header, content);
+      document.body.appendChild(exportRoot);
+
+      if (document.fonts?.ready) await document.fonts.ready;
+      await new Promise<void>(resolve => {
+        window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve()));
+      });
+
+      await html2pdf().set({
+        margin: [12, 12, 14, 12],
+        filename: fileName,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+          windowWidth: 794,
+          scrollX: 0,
+          scrollY: 0,
+          logging: false
+        },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait", compress: true },
+        pagebreak: {
+          mode: ["css", "legacy"],
+          avoid: ["blockquote", "pre", ".markdown-code-block", "h1", "h2", "h3"]
+        },
+        enableLinks: true
+      }).from(exportRoot).save();
+
+      setShareFeedback("PDF 다운로드가 완료됐어.");
+    } catch (pdfError) {
+      console.error("PDF export failed:", pdfError);
+      setShareFeedback(pdfError instanceof Error
+        ? `PDF 저장 실패: ${pdfError.message}`
+        : "PDF 저장에 실패했어. 다시 시도해 줘.");
+    } finally {
+      exportRoot?.remove();
+      exportStyle?.remove();
+      setPdfExporting(false);
     }
   }
 
@@ -948,7 +1329,7 @@ export default function MarkdownDiary({
 
         <div className="workspace-shell">
           <div className="workspace-canvas markdown-diary-canvas">
-            <div className="book-frame markdown-diary-single-page">
+            <PlannerSpread className="book-frame markdown-diary-single-page">
               <section className="paper-page markdown-note-page markdown-single-note-page" aria-label="자유 노트">
                 <div className="paper-section key-section markdown-free-note-section">
                   <div className="section-heading markdown-note-heading">
@@ -966,6 +1347,18 @@ export default function MarkdownDiary({
                         onClick={() => { void shareMarkdown(); }}
                       >
                         <Share2 size={16} strokeWidth={2}/>
+                      </button>
+                      <button
+                        type="button"
+                        className="markdown-share-top-button markdown-pdf-top-button"
+                        aria-label={pdfExporting ? "PDF 저장 중" : "PDF 다운로드"}
+                        title={pdfExporting ? "PDF 저장 중" : "PDF 다운로드"}
+                        disabled={pdfExporting || loading || !activeNote}
+                        aria-busy={pdfExporting}
+                        onMouseDown={event => event.preventDefault()}
+                        onClick={() => { void downloadPdf(); }}
+                      >
+                        <FileDown size={16} strokeWidth={2}/>
                       </button>
                     </div>
                   </div>
@@ -1109,7 +1502,7 @@ export default function MarkdownDiary({
                           data-placeholder="여기에 내용을 자유롭게 작성해 보세요."
                           onInput={() => {
                             const editor = leftEditorRef.current;
-                            if (editor) updatePage("left", htmlToMarkdown(editor.innerHTML));
+                            if (editor) updateCurrentPage(htmlToMarkdown(editor.innerHTML));
                           }}
                           onPaste={event => {
                             event.preventDefault();
@@ -1140,14 +1533,14 @@ export default function MarkdownDiary({
                             const editor = leftEditorRef.current;
                             if (!codeBlock || !editor) return;
                             codeBlock.dataset.language = normalizeCodeLanguage(target.value);
-                            updatePage("left", htmlToMarkdown(editor.innerHTML));
+                            updateCurrentPage(htmlToMarkdown(editor.innerHTML));
                           }}
                           onBlur={event => {
                             const editor = leftEditorRef.current;
                             const nextTarget = event.relatedTarget as Node | null;
                             if (!editor || (nextTarget && editor.contains(nextTarget))) return;
                             highlightCodeBlocks(editor);
-                            updatePage("left", htmlToMarkdown(editor.innerHTML));
+                            updateCurrentPage(htmlToMarkdown(editor.innerHTML));
                           }}
                           onClick={event => {
                             const editor = leftEditorRef.current;
@@ -1175,7 +1568,7 @@ export default function MarkdownDiary({
                             const href = safeMarkdownHref(link.getAttribute("href") ?? "");
                             if (!href) return;
 
-                            updatePage("left", htmlToMarkdown(editor.innerHTML));
+                            updateCurrentPage(htmlToMarkdown(editor.innerHTML));
                             window.open(href, "_blank", "noopener,noreferrer");
                           }}
                           onKeyDown={event => {
@@ -1221,7 +1614,7 @@ export default function MarkdownDiary({
                                   afterLink.collapse(true);
                                   selection.removeAllRanges();
                                   selection.addRange(afterLink);
-                                  updatePage("left", htmlToMarkdown(editor.innerHTML));
+                                  updateCurrentPage(htmlToMarkdown(editor.innerHTML));
                                   return;
                                 }
                               }
@@ -1270,6 +1663,46 @@ export default function MarkdownDiary({
                           }}
                           spellCheck
                         />
+                        <div className="markdown-page-navigation">
+                          <div className="markdown-page-controls">
+                            <button
+                              type="button"
+                              className="markdown-page-nav-button"
+                              aria-label="이전 페이지"
+                              title="이전 페이지"
+                              disabled={activePageIndex === 0}
+                              onMouseDown={event => event.preventDefault()}
+                              onClick={() => goToPage(activePageIndex - 1)}
+                            >
+                              <ChevronLeft size={16} strokeWidth={2}/>
+                            </button>
+                            <span className="markdown-page-indicator" aria-live="polite">
+                              {activePageIndex + 1} / {pageContents.length} 페이지
+                            </span>
+                            <button
+                              type="button"
+                              className="markdown-page-nav-button"
+                              aria-label="다음 페이지"
+                              title="다음 페이지"
+                              disabled={activePageIndex >= pageContents.length - 1}
+                              onMouseDown={event => event.preventDefault()}
+                              onClick={() => goToPage(activePageIndex + 1)}
+                            >
+                              <ChevronRight size={16} strokeWidth={2}/>
+                            </button>
+                          </div>
+                          <button
+                            type="button"
+                            className="markdown-add-page-button"
+                            aria-label="새 페이지 추가"
+                            title="새 페이지 추가"
+                            onMouseDown={event => event.preventDefault()}
+                            onClick={addPage}
+                          >
+                            <Plus size={15} strokeWidth={2.2}/>
+                            <span>새 페이지</span>
+                          </button>
+                        </div>
                       </>
                     ) : (
                       <div className="markdown-empty-state" role="status">
@@ -1279,7 +1712,7 @@ export default function MarkdownDiary({
                   </div>
                 </div>
               </section>
-            </div>
+            </PlannerSpread>
           </div>
         </div>
       </main>

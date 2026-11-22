@@ -7,6 +7,7 @@ import PlannerSpread from "@/components/PlannerSpread";
 import NotebookTypeSelection, { type NotebookType } from "@/components/NotebookTypeSelection";
 import NotebookLibrary, { type NotebookRecord } from "@/components/NotebookLibrary";
 import MarkdownDiary from "@/components/MarkdownDiary";
+import PictureDiary from "@/components/PictureDiary";
 import {
   CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight,
   Expand, ImagePlus, Plus, RotateCw, Star,
@@ -52,7 +53,7 @@ const today = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 const uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-const NOTEBOOK_LABELS:Record<NotebookType,string>={planner:"플래너","study-notes":"필기 다이어리",diary:"일기",checklist:"체크리스트","free-notes":"프리 노트"};
+const NOTEBOOK_LABELS:Record<NotebookType,string>={planner:"플래너","study-notes":"필기 다이어리",diary:"그림일기",checklist:"체크리스트","free-notes":"프리 노트"};
 const DEFAULT_NOTEBOOK_THEME:ThemeName="blue";
 const DEFAULT_NOTEBOOK_CUSTOM_COLOR="#8b9ec4";
 
@@ -65,7 +66,7 @@ type NotebookCoverSettings = {
 };
 const dateView = (date: string) => {
   const [y,m,d] = date.split("-").map(Number);
-  return `${y}년 ${m}월 ${d}일 ${DAYS[new Date(y,m-1,d).getDay()]}요일`;
+  return `${y} ${m} ${d} ${DAYS[new Date(y,m-1,d).getDay()]}`;
 };
 
 function parseMonthEntries(raw: unknown): Record<string, MonthEntry> {
@@ -1197,7 +1198,7 @@ export default function Planner() {
       setView("planner");
       setPlannerPage("day");
       setDate(today());
-    }else if(type==="free-notes"){
+    }else if(type==="free-notes"||type==="diary"){
       setView("planner");
       setActiveNotebookId(null);
       setActiveMarkdownNotebookId(data.id);
@@ -1243,7 +1244,7 @@ export default function Planner() {
   }
 
   async function openNotebook(notebook: NotebookRecord) {
-    if(notebook.notebook_type==="free-notes"){
+    if(notebook.notebook_type==="free-notes"||notebook.notebook_type==="diary"){
       setNotebookTypeNotice("");
       setView("planner");
       setActiveNotebookId(null);
@@ -1300,8 +1301,9 @@ export default function Planner() {
       {deleteAccountModal}
     </>;
 
+    const DiaryEditor = markdownNotebook.notebook_type === "diary" ? PictureDiary : MarkdownDiary;
     return <>
-      <MarkdownDiary
+      <DiaryEditor
         key={activeMarkdownNotebookId}
         client={client}
         userId={user.id}
@@ -1507,7 +1509,7 @@ export default function Planner() {
               <div className="date-main">
                 <div className="date-main-row">
                   <button type="button" className="month-nav-button daily-date-nav-button" aria-label="이전 날짜" title="이전 날짜" onClick={()=>shiftDate(-1)}><ChevronLeft size={15}/></button>
-                  <span className="date-value">{date.replace(/-/g," ")}</span>
+                  <span className="date-value">{dateView(date)}</span>
                   <button type="button" className="month-nav-button daily-date-nav-button" aria-label="다음 날짜" title="다음 날짜" onClick={()=>shiftDate(1)}><ChevronRight size={15}/></button>
                   <div className="date-picker-trigger">
                     <button
