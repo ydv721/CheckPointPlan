@@ -37,7 +37,7 @@ declare global {
 const HTML2PDF_SCRIPT_URL = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
 
 function loadHtml2Pdf(): Promise<void> {
-  if (typeof window === "undefined") return Promise.reject(new Error("브라우저에서만 PDF를 만들 수 있어."));
+  if (typeof window === "undefined") return Promise.reject(new Error("브라우저에서만 PDF를 만들 수 있습니다."));
   if (window.html2pdf) return Promise.resolve();
 
   return new Promise((resolve, reject) => {
@@ -45,11 +45,11 @@ function loadHtml2Pdf(): Promise<void> {
     if (existing) {
       if (existing.dataset.loaded === "true") {
         if (window.html2pdf) resolve();
-        else reject(new Error("PDF 변환 도구를 초기화하지 못했어."));
+        else reject(new Error("PDF 변환 도구를 초기화하지 못했습니다."));
         return;
       }
       existing.addEventListener("load", () => resolve(), { once: true });
-      existing.addEventListener("error", () => reject(new Error("PDF 변환 도구를 불러오지 못했어.")), { once: true });
+      existing.addEventListener("error", () => reject(new Error("PDF 변환 도구를 불러오지 못했습니다.")), { once: true });
       return;
     }
 
@@ -60,11 +60,11 @@ function loadHtml2Pdf(): Promise<void> {
     script.onload = () => {
       script.dataset.loaded = "true";
       if (window.html2pdf) resolve();
-      else reject(new Error("PDF 변환 도구를 초기화하지 못했어."));
+      else reject(new Error("PDF 변환 도구를 초기화하지 못했습니다."));
     };
     script.onerror = () => {
       script.remove();
-      reject(new Error("PDF 변환 도구를 불러오지 못했어. 네트워크 연결을 확인해 줘."));
+      reject(new Error("PDF 변환 도구를 불러오지 못했습니다. 네트워크 연결을 확인해 줘."));
     };
     document.head.appendChild(script);
   });
@@ -1425,7 +1425,7 @@ export default function MarkdownDiary({
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
       try {
         await navigator.share({ title, text: markdown });
-        setShareFeedback("공유 창을 열었어.");
+        setShareFeedback("공유 창을 열었습니다.");
         return;
       } catch (shareError) {
         if (shareError instanceof Error && shareError.name === "AbortError") return;
@@ -1435,10 +1435,10 @@ export default function MarkdownDiary({
     try {
       if (!navigator.clipboard?.writeText) throw new Error("클립보드를 사용할 수 없습니다.");
       await navigator.clipboard.writeText(markdown);
-      setShareFeedback("Markdown 내용을 복사했어.");
+      setShareFeedback("Markdown 내용을 복사했습니다.");
     } catch {
       downloadMarkdown(title, markdown);
-      setShareFeedback("공유를 지원하지 않아 Markdown 파일로 저장했어.");
+      setShareFeedback("공유 기능을 지원하지 않아 Markdown 파일로 저장했습니다.");
     }
   }
 
@@ -1456,7 +1456,7 @@ export default function MarkdownDiary({
     try {
       await loadHtml2Pdf();
       const html2pdf = window.html2pdf;
-      if (!html2pdf) throw new Error("PDF 변환 도구를 사용할 수 없어.");
+      if (!html2pdf) throw new Error("PDF 변환 도구를 사용할 수 없습니다.");
 
       const now = new Date();
       const dateStamp = [
@@ -1760,7 +1760,7 @@ export default function MarkdownDiary({
       console.error("PDF export failed:", pdfError);
       setShareFeedback(pdfError instanceof Error
         ? `PDF 저장 실패: ${pdfError.message}`
-        : "PDF 저장에 실패했어. 다시 시도해 줘.");
+        : "PDF 저장에 실패했습니다. 다시 시도해 주세요.");
     } finally {
       exportRoot?.remove();
       exportStyle?.remove();
@@ -1851,7 +1851,7 @@ export default function MarkdownDiary({
                   </div>
                   <div className="free-note-paper">
                     {loading ? (
-                      <div className="markdown-empty-state" role="status">노트를 불러오는 중...</div>
+                      <div className="markdown-empty-state" role="status">노트를 불러오는 중입니다...</div>
                     ) : activeNote ? (
                       <>
                         <div className={drawingMode ? "markdown-toolbar is-hidden" : "markdown-toolbar"} role="toolbar" aria-label="Markdown 도구 모음">
