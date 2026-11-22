@@ -10890,3 +10890,8 @@ html,body{width:100%;overflow-x:clip}
     font-size:11px;
   }
 }
+
+/* Keep the Free Note page counter centered between the page edges. */
+.markdown-page-navigation {
+  justify-content:center !important;
+}
