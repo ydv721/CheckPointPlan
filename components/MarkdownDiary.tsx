@@ -1045,6 +1045,7 @@ export default function MarkdownDiary({
   async function downloadPdf() {
     const editor = leftEditorRef.current;
     if (!activeNote || !editor || loading || pdfExporting) return;
+    const pagesForPdf = getCurrentPages();
 
     setPdfExporting(true);
     setShareFeedback("PDF를 만들고 있어.");
@@ -1124,7 +1125,7 @@ export default function MarkdownDiary({
         "box-sizing:border-box"
       ].join(";");
 
-      getCurrentPages().forEach(markdown => {
+      pagesForPdf.forEach(markdown => {
         const page = document.createElement("section");
         page.className = "markdown-pdf-page";
         const pageContent = document.createElement("div");
