@@ -530,11 +530,11 @@ export default function PictureDiary({
   async function replaceDrawing(file: File, drawingState: SketchDocument | null) {
     if (uploading || !file) return false;
     if (!["image/png", "image/jpeg", "image/webp", "image/gif"].includes(file.type)) {
-      setError("PNG, JPG, WEBP, GIF 형식의 이미지만 업로드할 수 있어.");
+      setError("PNG, JPG, WEBP, GIF 형식의 이미지만 업로드할 수 있습니다.");
       return false;
     }
     if (file.size > 10 * 1024 * 1024) {
-      setError("그림 파일은 10MB 이하만 업로드할 수 있어.");
+      setError("그림 파일은 10MB 이하만 업로드할 수 있습니다.");
       return false;
     }
     setUploading(true);
@@ -676,7 +676,7 @@ export default function PictureDiary({
                   ) : (
                     <span className="picture-diary-drawing-empty">
                       <ImagePlus size={31}/>
-                      <strong>{uploading ? "그림을 저장하고 있어..." : "그림을 그리거나 사진을 추가해 봐"}</strong>
+                      <strong>{uploading ? "그림을 저장하고 있습니다..." : "그림을 그리거나 사진을 추가해 보세요."}</strong>
                     </span>
                   )}
                 </button>
@@ -691,7 +691,7 @@ export default function PictureDiary({
                 <section className="paper-section key-section diary-journal-section">
                   <div className="section-heading diary-journal-heading"><span>오늘의 일기</span><small>JOURNAL</small></div>
                   <div className="free-note-paper diary-journal-paper">
-                    {loading ? <div className="markdown-empty-state">일기를 불러오는 중...</div> : (
+                    {loading ? <div className="markdown-empty-state">일기를 불러오는 중입니다...</div> : (
                       <>
                         <div className="markdown-toolbar" role="toolbar" aria-label="Markdown 도구 모음">
                           {MARKDOWN_TOOLBAR.map(({ action, label, icon: Icon }) => (
@@ -792,7 +792,7 @@ export default function PictureDiary({
         <div className="modal-backdrop picture-diary-choice-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setChoiceOpen(false); }}>
           <section className="picture-diary-choice-modal" role="dialog" aria-modal="true" aria-labelledby="picture-diary-choice-title">
             <div className="picture-diary-choice-header">
-              <div><span className="eyebrow">ADD YOUR ART</span><h2 id="picture-diary-choice-title">그림을 어떻게 추가할까?</h2></div>
+              <div><span className="eyebrow">ADD YOUR ART</span><h2 id="picture-diary-choice-title">그림을 어떻게 추가할까요?</h2></div>
               <button type="button" className="icon-btn" aria-label="닫기" onClick={() => setChoiceOpen(false)}><X size={19}/></button>
             </div>
             <div className="picture-diary-choice-options">
