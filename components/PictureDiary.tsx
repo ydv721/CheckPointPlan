@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   AlignCenter, AlignLeft, AlignRight, Brush, CalendarDays, Check, ChevronLeft, ChevronRight,
-  Cloud, CloudRain, CloudSnow, CloudSun, ImagePlus, Palette, Sun, Wind, X
+  ImagePlus, Palette, X
 } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import PlannerSpread from "@/components/PlannerSpread";
@@ -118,15 +118,6 @@ function entrySnapshot(entry: DiaryEntry) {
     memo: entry.memo,
     reflection: entry.reflection
   });
-}
-
-function weatherIcon(id: string) {
-  if (id === "sunny") return <Sun size={16}/>;
-  if (id === "partly-cloudy") return <CloudSun size={16}/>;
-  if (id === "cloudy") return <Cloud size={16}/>;
-  if (id === "rainy") return <CloudRain size={16}/>;
-  if (id === "snowy") return <CloudSnow size={16}/>;
-  return <Wind size={16}/>;
 }
 
 type Meridiem = "AM" | "PM";
@@ -689,7 +680,6 @@ export default function PictureDiary({
                     </span>
                   )}
                 </button>
-                <div className="diary-left-footer"><span>{weatherIcon(entry.weather)}</span></div>
               </section>
 
               <section className="paper-page right-page diary-right-page" aria-label="오늘의 일기">
