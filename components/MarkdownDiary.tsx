@@ -1506,7 +1506,7 @@ export default function MarkdownDiary({
       ].join("-");
       const safeTitle = (notebookTitle.trim() || "프리노트")
         .replace(/[\\/:*?"<>|]+/g, "-")
-        .replace(/\\s+/g, " ")
+        .replace(/\s+/g, " ")
         .trim();
 
       const editorStyles = window.getComputedStyle(editor);
@@ -1605,10 +1605,11 @@ export default function MarkdownDiary({
         clonedStickyLayer.style.setProperty("height", captureHeight + "px", "important");
       }
 
-      clonedViewport.querySelectorAll<HTMLTextAreaElement>(".free-note-sticky-note textarea").forEach(textarea => {
+      const sourceStickyTextareas = viewport.querySelectorAll<HTMLTextAreaElement>(".free-note-sticky-note textarea");
+      clonedViewport.querySelectorAll<HTMLTextAreaElement>(".free-note-sticky-note textarea").forEach((textarea, index) => {
         const noteText = document.createElement("div");
         noteText.className = "markdown-image-sticky-note-text";
-        noteText.textContent = textarea.value;
+        noteText.textContent = sourceStickyTextareas[index]?.value ?? textarea.value;
         noteText.style.cssText = [
           "display:block",
           "flex:1 1 auto",
@@ -1626,10 +1627,15 @@ export default function MarkdownDiary({
         textarea.replaceWith(noteText);
       });
 
-      clonedViewport.querySelectorAll<HTMLSelectElement>(".markdown-code-language").forEach(select => {
+      const sourceCodeLanguageSelects = editor.querySelectorAll<HTMLSelectElement>(".markdown-code-language");
+      clonedViewport.querySelectorAll<HTMLSelectElement>(".markdown-code-language").forEach((select, index) => {
+        const sourceSelect = sourceCodeLanguageSelects[index];
         const language = document.createElement("span");
         language.className = "markdown-code-language-label";
-        language.textContent = select.selectedOptions[0]?.textContent?.trim() || select.value.toUpperCase();
+        language.textContent = sourceSelect?.selectedOptions[0]?.textContent?.trim()
+          || sourceSelect?.value.toUpperCase()
+          || select.selectedOptions[0]?.textContent?.trim()
+          || select.value.toUpperCase();
         select.replaceWith(language);
       });
 
@@ -1716,7 +1722,7 @@ export default function MarkdownDiary({
 
   async function downloadPdf() {
     const editor = leftEditorRef.current;
-    if (!activeNote || !editor || loading || pdfExporting) return;
+    if (!activeNote || !editor || loading || pdfExporting || imageExporting) return;
     const pagesForPdf = getCurrentPages();
     const annotationsForPdf = decodeNoteAnnotations(activeNote.content);
 
@@ -2149,7 +2155,7 @@ export default function MarkdownDiary({
                         className="markdown-share-top-button markdown-pdf-top-button"
                         aria-label={pdfExporting ? "PDF 저장 중" : "PDF 다운로드"}
                         title={pdfExporting ? "PDF 저장 중" : "PDF 다운로드"}
-                        disabled={pdfExporting || loading || !activeNote}
+                        disabled={pdfExporting || imageExporting || loading || !activeNote}
                         aria-busy={pdfExporting}
                         onMouseDown={event => event.preventDefault()}
                         onClick={() => { void downloadPdf(); }}
