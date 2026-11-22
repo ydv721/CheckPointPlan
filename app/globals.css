@@ -10400,8 +10400,34 @@ html,body{width:100%;overflow-x:clip}
 
   .picture-diary-book-frame > .diary-left-page::after,
   .picture-diary-book-frame > .diary-right-page::after {
-    content:none !important;
-    display:none !important;
+    content:"" !important;
+    position:absolute !important;
+    top:0 !important;
+    bottom:0 !important;
+    width:28px !important;
+    display:block !important;
+    pointer-events:none !important;
+    z-index:2 !important;
+  }
+
+  .picture-diary-book-frame > .diary-left-page::after {
+    right:0 !important;
+    background:linear-gradient(
+      to left,
+      rgba(36,42,56,.13) 0%,
+      rgba(36,42,56,.07) 35%,
+      rgba(36,42,56,0) 100%
+    ) !important;
+  }
+
+  .picture-diary-book-frame > .diary-right-page::after {
+    left:0 !important;
+    background:linear-gradient(
+      to right,
+      rgba(36,42,56,.13) 0%,
+      rgba(36,42,56,.07) 35%,
+      rgba(36,42,56,0) 100%
+    ) !important;
   }
 
   .picture-diary-book-frame > .book-spine {
@@ -10418,20 +10444,49 @@ html,body{width:100%;overflow-x:clip}
     width:24px !important;
     padding:17px 0 !important;
     transform:translateX(-50%) !important;
+    pointer-events:none !important;
   }
 
+  /* Use one repeating stripe pattern so every binding mark has identical thickness. */
   .picture-diary-book-frame > .book-spine span {
-    width:18px !important;
-    height:2px !important;
-    border:0 !important;
-    border-radius:2px !important;
-    background:#b8b2a8 !important;
-    transform:none !important;
-    box-shadow:none !important;
+    display:none !important;
   }
 
   .picture-diary-book-frame > .book-spine::before {
-    display:none !important;
+    content:"" !important;
+    position:absolute !important;
+    top:0 !important;
+    bottom:0 !important;
+    left:50% !important;
+    width:6px !important;
+    transform:translateX(-50%) !important;
+    border-radius:999px !important;
+    background:rgba(120,112,102,.22) !important;
+    box-shadow:
+      0 0 12px rgba(35,40,52,.10),
+      inset 0 0 0 1px rgba(255,255,255,.16) !important;
+    display:block !important;
+    z-index:0 !important;
+  }
+
+  .picture-diary-book-frame > .book-spine::after {
+    content:"" !important;
+    position:absolute !important;
+    top:17px !important;
+    bottom:17px !important;
+    left:50% !important;
+    width:18px !important;
+    transform:translateX(-50%) !important;
+    background:repeating-linear-gradient(
+      to bottom,
+      #b8b2a8 0px,
+      #b8b2a8 2px,
+      transparent 2px,
+      transparent calc(100% / 13)
+    ) !important;
+    display:block !important;
+    z-index:1 !important;
+    pointer-events:none !important;
   }
 }
 @media (min-width:521px) {
