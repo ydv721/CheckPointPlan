@@ -1001,7 +1001,7 @@ export default function MarkdownDiary({
     setColorPaletteOpen(false);
     editorSelectionRef.current = null;
     window.getSelection()?.removeAllRanges();
-    focusEditorAtEnd();
+    if (!drawingMode) focusEditorAtEnd();
   }
 
   function addPage() {
