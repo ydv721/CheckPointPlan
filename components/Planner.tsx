@@ -183,7 +183,7 @@ function AuthScreen({ onUser }: { onUser: (u: User) => void }) {
         if(data.user) onUser(data.user);
       }
     } catch(err) {
-      setMessage(err instanceof Error ? err.message : "로그인 중 문제가 발생했습니다.");
+      setMessage(err instanceof Error ? "로그인 중 문제가 발생했습니다: " + err.message : "로그인 중 문제가 발생했습니다.");
     } finally {setBusy(false);}
   }
   return <div className="auth-wrap">
@@ -1050,7 +1050,7 @@ export default function Planner() {
       setPhotoUrls({});
       setAlert("");
     } catch(error) {
-      setAlert(error instanceof Error?error.message:"계정 삭제 중 오류가 발생했습니다.");
+      setAlert(error instanceof Error?"계정 삭제 중 오류가 발생했습니다: "+error.message:"계정 삭제 중 오류가 발생했습니다.");
     } finally {
       setDeletingAccount(false);
     }
