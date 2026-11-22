@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { AlignCenter, AlignLeft, AlignRight, Bold, Code2, Heading1, Italic, List, ListOrdered, Minus, Palette, Quote, Share2, Strikethrough, Underline, Check } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, Bold, Code2, FileDown, Heading1, Italic, List, ListOrdered, Minus, Palette, Quote, Share2, Strikethrough, Underline, Check } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import PlannerSpread from "@/components/PlannerSpread";
 import type { ThemeName } from "@/lib/types";
@@ -21,6 +21,53 @@ type NotePages = {
   left: string;
   right: string;
 };
+
+type Html2PdfWorker = {
+  set: (options: Record<string, unknown>) => Html2PdfWorker;
+  from: (element: HTMLElement) => Html2PdfWorker;
+  save: () => PromiseLike<unknown>;
+};
+
+declare global {
+  interface Window {
+    html2pdf?: () => Html2PdfWorker;
+  }
+}
+
+const HTML2PDF_SCRIPT_URL = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+
+function loadHtml2Pdf(): Promise<void> {
+  if (typeof window === "undefined") return Promise.reject(new Error("브라우저에서만 PDF를 만들 수 있어."));
+  if (window.html2pdf) return Promise.resolve();
+
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>('script[data-html2pdf-loader="true"]');
+    if (existing) {
+      if (existing.dataset.loaded === "true" && window.html2pdf) {
+        resolve();
+        return;
+      }
+      existing.addEventListener("load", () => resolve(), { once: true });
+      existing.addEventListener("error", () => reject(new Error("PDF 변환 도구를 불러오지 못했어.")), { once: true });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = HTML2PDF_SCRIPT_URL;
+    script.async = true;
+    script.dataset.html2pdfLoader = "true";
+    script.onload = () => {
+      script.dataset.loaded = "true";
+      if (window.html2pdf) resolve();
+      else reject(new Error("PDF 변환 도구를 초기화하지 못했어."));
+    };
+    script.onerror = () => {
+      script.remove();
+      reject(new Error("PDF 변환 도구를 불러오지 못했어. 네트워크 연결을 확인해 줘."));
+    };
+    document.head.appendChild(script);
+  });
+}
 
 export type MarkdownAction = "bold" | "italic" | "underline" | "strike" | "heading" | "bullet" | "ordered" | "quote" | "code" | "divider";
 
@@ -537,6 +584,7 @@ export default function MarkdownDiary({
   const [error, setError] = useState("");
   const [, setSaveState] = useState<"saved" | "dirty" | "saving" | "error">("saved");
   const [shareFeedback, setShareFeedback] = useState("");
+  const [pdfExporting, setPdfExporting] = useState(false);
   const [colorPaletteOpen, setColorPaletteOpen] = useState(false);
   const [customTextColor, setCustomTextColor] = useState("#7868e8");
   const leftEditorRef = useRef<HTMLDivElement>(null);
@@ -921,6 +969,242 @@ export default function MarkdownDiary({
     } catch {
       downloadMarkdown(title, markdown);
       setShareFeedback("공유를 지원하지 않아 Markdown 파일로 저장했어.");
+    }
+  }
+
+  async function downloadPdf() {
+    const editor = leftEditorRef.current;
+    if (!activeNote || !editor || loading || pdfExporting) return;
+
+    setPdfExporting(true);
+    setShareFeedback("PDF를 만들고 있어.");
+    let exportRoot: HTMLDivElement | null = null;
+    let exportStyle: HTMLStyleElement | null = null;
+
+    try {
+      await loadHtml2Pdf();
+      if (!window.html2pdf) throw new Error("PDF 변환 도구를 사용할 수 없어.");
+
+      const now = new Date();
+      const dateStamp = [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, "0"),
+        String(now.getDate()).padStart(2, "0")
+      ].join("-");
+      const safeTitle = (notebookTitle.trim() || "프리노트")
+        .replace(/[\\/:*?"<>|]+/g, "-")
+        .replace(/\\s+/g, " ")
+        .trim();
+      const fileName = `${safeTitle}_${dateStamp}.pdf`;
+
+      const editorStyles = window.getComputedStyle(editor);
+      exportRoot = document.createElement("div");
+      exportRoot.className = "markdown-pdf-export-root";
+      exportRoot.style.cssText = [
+        "position:absolute",
+        "left:-10000px",
+        "top:0",
+        "width:704px",
+        "margin:0",
+        "padding:0",
+        "background:#ffffff",
+        "color:#24252b",
+        "box-sizing:border-box",
+        "z-index:-1"
+      ].join(";");
+
+      ["--accent", "--line", "--paper", "--ink", "--soft"].forEach(variable => {
+        const value = editorStyles.getPropertyValue(variable).trim();
+        if (value) exportRoot?.style.setProperty(variable, value);
+      });
+
+      const header = document.createElement("header");
+      header.className = "markdown-pdf-export-header";
+      const heading = document.createElement("h1");
+      heading.textContent = notebookTitle.trim() || "프리노트";
+      const date = document.createElement("time");
+      date.textContent = now.toLocaleDateString("ko-KR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+      });
+      header.append(heading, date);
+
+      const content = editor.cloneNode(true) as HTMLDivElement;
+      content.classList.remove("free-note-input");
+      content.classList.add("pdf-export-content");
+      content.removeAttribute("contenteditable");
+      content.removeAttribute("role");
+      content.removeAttribute("aria-label");
+      content.removeAttribute("aria-multiline");
+      content.removeAttribute("data-placeholder");
+      content.removeAttribute("data-note-id");
+      content.style.cssText = [
+        "display:block",
+        "width:100%",
+        "height:auto",
+        "min-height:0",
+        "max-height:none",
+        "overflow:visible",
+        "margin:0",
+        "padding:0",
+        "border:0",
+        "border-radius:0",
+        "outline:0",
+        "background:#ffffff",
+        "background-image:none",
+        "color:" + editorStyles.color,
+        "font-family:" + editorStyles.fontFamily,
+        "font-size:11pt",
+        "line-height:1.7",
+        "box-sizing:border-box"
+      ].join(";");
+
+      content.querySelectorAll<HTMLSelectElement>(".markdown-code-language").forEach(select => {
+        const language = document.createElement("span");
+        language.className = "markdown-code-language-label";
+        language.textContent = select.selectedOptions[0]?.textContent?.trim() || select.value.toUpperCase();
+        select.replaceWith(language);
+      });
+      content.querySelectorAll("button, input, textarea, script, iframe, object, embed").forEach(element => element.remove());
+      content.querySelectorAll<HTMLElement>("*").forEach(element => {
+        element.removeAttribute("contenteditable");
+        Array.from(element.attributes).forEach(attribute => {
+          if (attribute.name.toLowerCase().startsWith("on")) element.removeAttribute(attribute.name);
+          if (
+            ["href", "src"].includes(attribute.name.toLowerCase()) &&
+            /^\\s*javascript:/i.test(attribute.value)
+          ) element.removeAttribute(attribute.name);
+        });
+      });
+
+      exportStyle = document.createElement("style");
+      exportStyle.textContent = `
+        .markdown-pdf-export-root {
+          font-family: ${editorStyles.fontFamily};
+          color: ${editorStyles.color};
+          background: #fff;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        .markdown-pdf-export-header {
+          display:flex;
+          align-items:flex-end;
+          justify-content:space-between;
+          gap:20px;
+          padding:0 0 16px;
+          margin:0 0 22px;
+          border-bottom:1px solid #dce2ec;
+        }
+        .markdown-pdf-export-header h1 {
+          margin:0;
+          color:#24252b;
+          font-size:22px;
+          line-height:1.3;
+          font-weight:750;
+        }
+        .markdown-pdf-export-header time {
+          flex:0 0 auto;
+          color:#7b8494;
+          font-size:10px;
+        }
+        .markdown-pdf-export-root .pdf-export-content {
+          display:block !important;
+          width:100% !important;
+          height:auto !important;
+          min-height:0 !important;
+          max-height:none !important;
+          overflow:visible !important;
+          padding:0 !important;
+          margin:0 !important;
+          border:0 !important;
+          background:#fff !important;
+          background-image:none !important;
+          box-sizing:border-box !important;
+          font-size:11pt !important;
+          line-height:1.7 !important;
+        }
+        .markdown-pdf-export-root .pdf-export-content h1,
+        .markdown-pdf-export-root .pdf-export-content h2,
+        .markdown-pdf-export-root .pdf-export-content h3,
+        .markdown-pdf-export-root .pdf-export-content blockquote,
+        .markdown-pdf-export-root .pdf-export-content pre,
+        .markdown-pdf-export-root .pdf-export-content .markdown-code-block,
+        .markdown-pdf-export-root .pdf-export-content li {
+          break-inside:avoid;
+          page-break-inside:avoid;
+        }
+        .markdown-pdf-export-root .pdf-export-content pre {
+          white-space:pre-wrap;
+          overflow-wrap:anywhere;
+        }
+        .markdown-pdf-export-root .markdown-code-header {
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          padding:7px 10px;
+          border:1px solid #e1e5ed;
+          border-bottom:0;
+          border-radius:7px 7px 0 0;
+          background:#f5f6fa;
+          color:#68748a;
+          font-size:9px;
+          letter-spacing:.08em;
+        }
+        .markdown-pdf-export-root .markdown-code-language-label {
+          color:#68748a;
+          font-size:9px;
+        }
+        .markdown-pdf-export-root .markdown-code-block pre {
+          margin:0;
+          border-radius:0 0 7px 7px;
+        }
+        .markdown-pdf-export-root a {
+          color:#526da8;
+          text-decoration:underline;
+          overflow-wrap:anywhere;
+        }
+      `;
+      document.head.appendChild(exportStyle);
+      exportRoot.append(header, content);
+      document.body.appendChild(exportRoot);
+
+      if (document.fonts?.ready) await document.fonts.ready;
+      await new Promise<void>(resolve => {
+        window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve()));
+      });
+
+      await window.html2pdf().set({
+        margin: [12, 12, 14, 12],
+        filename: fileName,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+          windowWidth: 794,
+          scrollX: 0,
+          scrollY: 0,
+          logging: false
+        },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait", compress: true },
+        pagebreak: {
+          mode: ["css", "legacy"],
+          avoid: ["blockquote", "pre", ".markdown-code-block", "h1", "h2", "h3"]
+        },
+        enableLinks: true
+      }).from(exportRoot).save();
+
+      setShareFeedback("PDF 다운로드가 완료됐어.");
+    } catch (pdfError) {
+      console.error("PDF export failed:", pdfError);
+      setShareFeedback(pdfError instanceof Error
+        ? `PDF 저장 실패: ${pdfError.message}`
+        : "PDF 저장에 실패했어. 다시 시도해 줘.");
+    } finally {
+      exportRoot?.remove();
+      exportStyle?.remove();
+      setPdfExporting(false);
     }
   }
 
