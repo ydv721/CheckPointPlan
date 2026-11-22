@@ -1263,6 +1263,18 @@ export default function MarkdownDiary({
                       >
                         <Share2 size={16} strokeWidth={2}/>
                       </button>
+                      <button
+                        type="button"
+                        className="markdown-share-top-button markdown-pdf-top-button"
+                        aria-label={pdfExporting ? "PDF 저장 중" : "PDF 다운로드"}
+                        title={pdfExporting ? "PDF 저장 중" : "PDF 다운로드"}
+                        disabled={pdfExporting || loading || !activeNote}
+                        aria-busy={pdfExporting}
+                        onMouseDown={event => event.preventDefault()}
+                        onClick={() => { void downloadPdf(); }}
+                      >
+                        <FileDown size={16} strokeWidth={2}/>
+                      </button>
                     </div>
                   </div>
                   <div className="free-note-paper">
