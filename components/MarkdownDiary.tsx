@@ -1784,7 +1784,20 @@ export default function MarkdownDiary({
           windowWidth: 794,
           scrollX: 0,
           scrollY: 0,
-          logging: false
+          logging: false,
+          onclone: (clonedDocument: Document) => {
+            const clonedExportRoot = clonedDocument.querySelector<HTMLElement>(".markdown-pdf-export-root");
+            if (!clonedExportRoot) return;
+
+            // The live export root stays off-screen so it does not flash over the editor.
+            // Move only the html2canvas clone into the capture viewport before rendering.
+            clonedExportRoot.style.setProperty("position", "static", "important");
+            clonedExportRoot.style.setProperty("left", "auto", "important");
+            clonedExportRoot.style.setProperty("top", "auto", "important");
+            clonedExportRoot.style.setProperty("z-index", "auto", "important");
+            clonedExportRoot.style.setProperty("transform", "none", "important");
+            clonedExportRoot.style.setProperty("visibility", "visible", "important");
+          }
         },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait", compress: true },
         pagebreak: {
