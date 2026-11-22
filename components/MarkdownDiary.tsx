@@ -1852,18 +1852,39 @@ export default function MarkdownDiary({
                       {shareFeedback ? (
                         <span className="markdown-share-feedback" aria-live="polite">{shareFeedback}</span>
                       ) : null}
-                      <button
+                                            <button
                         type="button"
-                        className="markdown-add-page-button"
+                        className="markdown-share-top-button markdown-add-page-top-button"
                         aria-label="새 페이지 추가"
                         title="새 페이지 추가"
                         disabled={loading || !activeNote}
                         onMouseDown={event => event.preventDefault()}
                         onClick={addPage}
                       >
-                        <Plus size={15} strokeWidth={2.2}/>
-                        <span>새 페이지</span>
+                        <Plus size={16} strokeWidth={2.2}/>
                       </button>
+                      <button
+                        type="button"
+                        className="markdown-share-top-button markdown-delete-page-top-button"
+                        aria-label="현재 페이지 삭제"
+                        title="현재 페이지 삭제"
+                        disabled={loading || !activeNote || pageContents.length <= 1}
+                        onMouseDown={event => event.preventDefault()}
+                        onClick={() => setPageDeleteOpen(true)}
+                      >
+                        <Trash2 size={16} strokeWidth={2}/>
+                      </button>
+                      <button
+                        type="button"
+                        className="markdown-share-top-button markdown-pen-top-button"
+                        aria-label={drawingMode ? "텍스트 편집" : "필기 모드"}
+                        title={drawingMode ? "텍스트 편집" : "필기 모드"}
+                        onMouseDown={event => event.preventDefault()}
+                        onClick={() => drawingMode ? exitDrawingMode() : enterDrawingMode()}
+                      >
+                        {drawingMode ? <Type size={16} strokeWidth={2}/> : <PenLine size={16} strokeWidth={2}/>}
+                      </button>
+
                       <button
                         type="button"
                         className="markdown-share-top-button"
@@ -1894,17 +1915,7 @@ export default function MarkdownDiary({
                     ) : activeNote ? (
                       <>
                         <div className={drawingMode ? "markdown-toolbar is-hidden" : "markdown-toolbar"} role="toolbar" aria-label="Markdown 도구 모음">
-                          <button
-                            type="button"
-                            className="markdown-toolbar-button free-note-edge-action-button free-note-edge-action-pen"
-                            aria-label="필기 모드"
-                            title="필기 모드"
-                            onMouseDown={event => event.preventDefault()}
-                            onClick={enterDrawingMode}
-                          >
-                            <PenLine size={16} strokeWidth={2}/>
-                            <span>필기</span>
-                          </button>
+                          
                           {MARKDOWN_TOOLBAR.map(({ action, label, icon: Icon }) => (
                             <button
                               key={action}
@@ -2027,18 +2038,7 @@ export default function MarkdownDiary({
                               </div>
                             )}
                           </div>
-                                                    <button
-                            type="button"
-                            className="markdown-toolbar-button free-note-edge-action-button free-note-edge-action-delete"
-                            aria-label="현재 페이지 삭제"
-                            title={pageContents.length <= 1 ? "페이지가 1개일 때는 삭제할 수 없습니다." : "현재 페이지 삭제"}
-                            disabled={loading || pageContents.length <= 1}
-                            onMouseDown={event => event.preventDefault()}
-                            onClick={() => setPageDeleteOpen(true)}
-                          >
-                            <Trash2 size={16} strokeWidth={2}/>
-                            <span>삭제</span>
-                          </button>
+                                                    
 
                         </div>
                         {drawingMode ? (
@@ -2071,20 +2071,8 @@ export default function MarkdownDiary({
                                 />
                               ))}
                             </div>
-                            <button type="button" className="free-note-drawing-exit" onClick={exitDrawingMode}>
-                              <Type size={15}/><span>텍스트 편집</span>
-                            </button>
-                            <button
-                              type="button"
-                              className="free-note-edge-action-button free-note-edge-action-delete"
-                              aria-label="현재 페이지 삭제"
-                              title={pageContents.length <= 1 ? "페이지가 1개일 때는 삭제할 수 없습니다." : "현재 페이지 삭제"}
-                              disabled={loading || pageContents.length <= 1}
-                              onClick={() => setPageDeleteOpen(true)}
-                            >
-                              <Trash2 size={16} strokeWidth={2}/>
-                              <span>삭제</span>
-                            </button>
+                            
+                            
                           </div>
                         ) : null}
                         <div className="free-note-editor-viewport">
