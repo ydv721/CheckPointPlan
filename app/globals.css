@@ -10571,6 +10571,14 @@ html,body{width:100%;overflow-x:clip}
   cursor:not-allowed;
   opacity:.35;
 }
+.markdown-page-delete-button {
+  color:#bd6874;
+}
+.markdown-page-delete-button:hover:not(:disabled) {
+  border-color:#bd6874;
+  background:#fbecef;
+  color:#a43e4d;
+}
 .markdown-page-indicator {
   min-width:88px;
   color:var(--ink);
