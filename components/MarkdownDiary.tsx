@@ -1340,8 +1340,6 @@ export default function MarkdownDiary({
                       ) : null}
                       <button
                         type="button"
-                      <button
-                        type="button"
                         className="markdown-add-page-button"
                         aria-label="새 페이지 추가"
                         title="새 페이지 추가"
@@ -1352,6 +1350,8 @@ export default function MarkdownDiary({
                         <Plus size={15} strokeWidth={2.2}/>
                         <span>새 페이지</span>
                       </button>
+                      <button
+                        type="button"
                         className="markdown-share-top-button"
                         aria-label="공유"
                         title="공유"
@@ -1703,7 +1703,6 @@ export default function MarkdownDiary({
                               <ChevronRight size={16} strokeWidth={2}/>
                             </button>
                           </div>
-                          <button
                         </div>
                       </>
                     ) : (
