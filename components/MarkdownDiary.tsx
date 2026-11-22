@@ -1403,6 +1403,7 @@ export default function MarkdownDiary({
     const editor = leftEditorRef.current;
     if (!activeNote || !editor || loading || pdfExporting) return;
     const pagesForPdf = getCurrentPages();
+    const annotationsForPdf = decodeNoteAnnotations(activeNote.content);
 
     setPdfExporting(true);
     setShareFeedback("pdf를 생성 중입니다.");
@@ -1487,7 +1488,51 @@ export default function MarkdownDiary({
         page.className = "markdown-pdf-page";
         const pageContent = document.createElement("div");
         pageContent.className = "markdown-pdf-page-content";
+        pageContent.style.position = "relative";
         pageContent.innerHTML = markdownToHtml(markdown);
+
+        const annotations = annotationsForPdf[index] ?? createEmptyPageAnnotations();
+        if (annotations.strokes.length > 0 || annotations.notes.length > 0) {
+          const annotationLayer = document.createElement("div");
+          annotationLayer.className = "markdown-pdf-annotation-layer";
+
+          const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+          svg.setAttribute("viewBox", "0 0 1000 " + Math.max(1, annotations.height));
+          svg.setAttribute("preserveAspectRatio", "none");
+          svg.setAttribute("aria-hidden", "true");
+
+          annotations.strokes.forEach(stroke => {
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            const pathData = stroke.points.map((point, pointIndex) =>
+              (pointIndex === 0 ? "M " : "L ") + point.x + " " + point.y
+            ).join(" ");
+            path.setAttribute("d", stroke.points.length === 1
+              ? pathData + " l 0.1 0"
+              : pathData);
+            path.setAttribute("fill", "none");
+            path.setAttribute("stroke", stroke.color);
+            path.setAttribute("stroke-width", stroke.tool === "highlighter" ? "18" : "3.2");
+            path.setAttribute("stroke-linecap", "round");
+            path.setAttribute("stroke-linejoin", "round");
+            path.setAttribute("stroke-opacity", stroke.tool === "highlighter" ? "0.42" : "0.95");
+            path.setAttribute("vector-effect", "non-scaling-stroke");
+            svg.appendChild(path);
+          });
+          annotationLayer.appendChild(svg);
+
+          annotations.notes.forEach(note => {
+            const sticky = document.createElement("div");
+            sticky.className = "markdown-pdf-sticky-note";
+            sticky.textContent = note.text;
+            sticky.style.left = (note.x / 10) + "%";
+            sticky.style.top = (note.y / Math.max(1, annotations.height) * 100) + "%";
+            sticky.style.backgroundColor = note.color;
+            annotationLayer.appendChild(sticky);
+          });
+
+          pageContent.appendChild(annotationLayer);
+        }
+
         page.appendChild(pageContent);
         content.appendChild(page);
       });
@@ -1588,9 +1633,39 @@ export default function MarkdownDiary({
           page-break-before:always;
         }
         .markdown-pdf-export-root .markdown-pdf-page-content {
+          position:relative;
           display:block;
           width:100%;
           min-width:0;
+        }
+        .markdown-pdf-export-root .markdown-pdf-annotation-layer {
+          position:absolute;
+          inset:0;
+          z-index:10;
+          pointer-events:none;
+        }
+        .markdown-pdf-export-root .markdown-pdf-annotation-layer svg {
+          display:block;
+          width:100%;
+          height:100%;
+          overflow:visible;
+        }
+        .markdown-pdf-export-root .markdown-pdf-sticky-note {
+          position:absolute;
+          z-index:11;
+          width:180px;
+          min-height:72px;
+          padding:9px 10px;
+          border:1px solid rgba(117,91,28,.22);
+          border-radius:5px;
+          box-shadow:0 3px 8px rgba(34,38,48,.13);
+          color:#38332a;
+          font-family:inherit;
+          font-size:9pt;
+          line-height:1.45;
+          white-space:pre-wrap;
+          overflow-wrap:anywhere;
+          transform:translateX(-50%);
         }
         .markdown-pdf-export-root .markdown-code-language-label {
           color:#68748a;
