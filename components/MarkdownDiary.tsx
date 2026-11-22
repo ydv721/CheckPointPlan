@@ -1894,6 +1894,17 @@ export default function MarkdownDiary({
                     ) : activeNote ? (
                       <>
                         <div className={drawingMode ? "markdown-toolbar is-hidden" : "markdown-toolbar"} role="toolbar" aria-label="Markdown 도구 모음">
+                          <button
+                            type="button"
+                            className="markdown-toolbar-button free-note-edge-action-button free-note-edge-action-pen"
+                            aria-label="필기 모드"
+                            title="필기 모드"
+                            onMouseDown={event => event.preventDefault()}
+                            onClick={enterDrawingMode}
+                          >
+                            <PenLine size={16} strokeWidth={2}/>
+                            <span>필기</span>
+                          </button>
                           {MARKDOWN_TOOLBAR.map(({ action, label, icon: Icon }) => (
                             <button
                               key={action}
@@ -2016,17 +2027,19 @@ export default function MarkdownDiary({
                               </div>
                             )}
                           </div>
-                          <button
+                                                    <button
                             type="button"
-                            className="markdown-toolbar-button free-note-drawing-mode-button"
-                            aria-label="필기 모드"
-                            title="필기 모드"
+                            className="markdown-toolbar-button free-note-edge-action-button free-note-edge-action-delete"
+                            aria-label="현재 페이지 삭제"
+                            title={pageContents.length <= 1 ? "페이지가 1개일 때는 삭제할 수 없습니다." : "현재 페이지 삭제"}
+                            disabled={loading || pageContents.length <= 1}
                             onMouseDown={event => event.preventDefault()}
-                            onClick={enterDrawingMode}
+                            onClick={() => setPageDeleteOpen(true)}
                           >
-                            <PenLine size={16} strokeWidth={2}/>
-                            <span>필기</span>
+                            <Trash2 size={16} strokeWidth={2}/>
+                            <span>삭제</span>
                           </button>
+
                         </div>
                         {drawingMode ? (
                           <div className="markdown-toolbar free-note-drawing-toolbar" role="toolbar" aria-label="필기 도구 모음">
@@ -2060,6 +2073,17 @@ export default function MarkdownDiary({
                             </div>
                             <button type="button" className="free-note-drawing-exit" onClick={exitDrawingMode}>
                               <Type size={15}/><span>텍스트 편집</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="free-note-edge-action-button free-note-edge-action-delete"
+                              aria-label="현재 페이지 삭제"
+                              title={pageContents.length <= 1 ? "페이지가 1개일 때는 삭제할 수 없습니다." : "현재 페이지 삭제"}
+                              disabled={loading || pageContents.length <= 1}
+                              onClick={() => setPageDeleteOpen(true)}
+                            >
+                              <Trash2 size={16} strokeWidth={2}/>
+                              <span>삭제</span>
                             </button>
                           </div>
                         ) : null}
@@ -2344,17 +2368,7 @@ export default function MarkdownDiary({
                               <ChevronRight size={16} strokeWidth={2}/>
                             </button>
                           </div>
-                          <button
-                            type="button"
-                            className="markdown-page-nav-button markdown-page-delete-button"
-                            aria-label="현재 페이지 삭제"
-                            title={pageContents.length <= 1 ? "페이지가 1개일 때는 삭제할 수 없습니다." : "현재 페이지 삭제"}
-                            disabled={loading || pageContents.length <= 1}
-                            onMouseDown={event => event.preventDefault()}
-                            onClick={() => setPageDeleteOpen(true)}
-                          >
-                            <Trash2 size={15} strokeWidth={2}/>
-                          </button>
+                          
                         </div>
                       </>
                     ) : (
