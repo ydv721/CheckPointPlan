@@ -127,7 +127,7 @@ function decodeNotePages(content: string): string[] {
     try {
       const parsed = JSON.parse(content.slice(PAGE_CONTENT_PREFIX.length)) as { pages?: unknown };
       if (Array.isArray(parsed.pages)) {
-        const pages = parsed.pages.filter((page): page is string => typeof page === "string");
+        const pages = parsed.pages.map((page): string => typeof page === "string" ? page : "");
         return pages.length > 0 ? pages : [""];
       }
     } catch {
@@ -811,16 +811,18 @@ export default function MarkdownDiary({
 
   function focusEditorAtEnd() {
     window.requestAnimationFrame(() => {
-      const editor = leftEditorRef.current;
-      if (!editor) return;
-      editor.focus();
-      const selection = window.getSelection();
-      if (!selection) return;
-      const range = document.createRange();
-      range.selectNodeContents(editor);
-      range.collapse(false);
-      selection.removeAllRanges();
-      selection.addRange(range);
+      window.requestAnimationFrame(() => {
+        const editor = leftEditorRef.current;
+        if (!editor) return;
+        editor.focus();
+        const selection = window.getSelection();
+        if (!selection) return;
+        const range = document.createRange();
+        range.selectNodeContents(editor);
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      });
     });
   }
 
@@ -996,7 +998,7 @@ export default function MarkdownDiary({
     return [
       "# " + (note.title.trim() || "제목 없는 글"),
       "",
-      pages.map((page, index) => index === 0 ? page : "---\\n\\n" + page).join("\\n\\n")
+      pages.map((page, index) => index === 0 ? page : "---\n\n" + page).join("\n\n")
     ].join("\\n");
   }
 
