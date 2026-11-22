@@ -8355,6 +8355,11 @@ html,body{width:100%;overflow-x:clip}
   background:var(--paper);
   transform:translateY(-1px);
 }
+.markdown-pdf-top-button:disabled{
+  cursor:wait;
+  opacity:.45;
+  transform:none;
+}
 .markdown-free-note-section > .free-note-paper{
   display:flex !important;
   flex:1 1 auto !important;
