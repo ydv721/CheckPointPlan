@@ -43,8 +43,9 @@ function loadHtml2Pdf(): Promise<void> {
   return new Promise((resolve, reject) => {
     const existing = document.querySelector<HTMLScriptElement>('script[data-html2pdf-loader="true"]');
     if (existing) {
-      if (existing.dataset.loaded === "true" && window.html2pdf) {
-        resolve();
+      if (existing.dataset.loaded === "true") {
+        if (window.html2pdf) resolve();
+        else reject(new Error("PDF 변환 도구를 초기화하지 못했어."));
         return;
       }
       existing.addEventListener("load", () => resolve(), { once: true });
@@ -983,7 +984,8 @@ export default function MarkdownDiary({
 
     try {
       await loadHtml2Pdf();
-      if (!window.html2pdf) throw new Error("PDF 변환 도구를 사용할 수 없어.");
+      const html2pdf = window.html2pdf;
+      if (!html2pdf) throw new Error("PDF 변환 도구를 사용할 수 없어.");
 
       const now = new Date();
       const dateStamp = [
@@ -993,7 +995,7 @@ export default function MarkdownDiary({
       ].join("-");
       const safeTitle = (notebookTitle.trim() || "프리노트")
         .replace(/[\\/:*?"<>|]+/g, "-")
-        .replace(/\\s+/g, " ")
+        .replace(/\s+/g, " ")
         .trim();
       const fileName = `${safeTitle}_${dateStamp}.pdf`;
 
@@ -1073,7 +1075,7 @@ export default function MarkdownDiary({
           if (attribute.name.toLowerCase().startsWith("on")) element.removeAttribute(attribute.name);
           if (
             ["href", "src"].includes(attribute.name.toLowerCase()) &&
-            /^\\s*javascript:/i.test(attribute.value)
+            /^\s*javascript:/i.test(attribute.value)
           ) element.removeAttribute(attribute.name);
         });
       });
@@ -1174,7 +1176,7 @@ export default function MarkdownDiary({
         window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve()));
       });
 
-      await window.html2pdf().set({
+      await html2pdf().set({
         margin: [12, 12, 14, 12],
         filename: fileName,
         image: { type: "jpeg", quality: 0.98 },
