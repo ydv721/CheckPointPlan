@@ -10514,3 +10514,21 @@ html,body{width:100%;overflow-x:clip}
     pointer-events:none !important;
   }
 }
+
+/* DAY planner: balance the inner margins around the center binding. */
+@media (min-width: 781px) {
+  .workspace-canvas > .planner-spread.book-frame.day-book-frame > .paper-page.left-page {
+    padding-right:31px !important;
+  }
+
+  .workspace-canvas > .planner-spread.book-frame.day-book-frame > .paper-page.right-page {
+    padding-left:31px !important;
+  }
+
+  /* Slightly smaller date with tighter character spacing. */
+  .workspace-canvas > .planner-spread.book-frame.day-book-frame .page-date .date-value {
+    font-size:30px !important;
+    letter-spacing:-.03em !important;
+    line-height:.95 !important;
+  }
+}
