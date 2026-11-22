@@ -8804,18 +8804,7 @@ html,body{width:100%;overflow-x:clip}
 }
 
 
-/* Override the shared two-column book grid: Markdown uses one sheet across both halves. */
-.markdown-diary-canvas > .markdown-diary-single-page{
-  display:flex !important;
-  grid-template-columns:minmax(0,1fr) !important;
-  grid-template-rows:minmax(0,1fr) !important;
-  width:min(1120px, calc(100vw - 64px), calc(141.9dvh - 68px)) !important;
-}
-.markdown-diary-canvas > .markdown-diary-single-page > .markdown-single-note-page{
-  width:100% !important;
-  min-width:0 !important;
-  grid-column:1 / -1 !important;
-}
+/* Free Note remains one full-width writing sheet inside the shared spread. */
 .markdown-diary-canvas > .markdown-diary-single-page .markdown-free-note-section,
 .markdown-diary-canvas > .markdown-diary-single-page .free-note-paper,
 .markdown-diary-canvas > .markdown-diary-single-page .markdown-toolbar,
@@ -10279,32 +10268,28 @@ html,body{width:100%;overflow-x:clip}
 }
 
 
-/* Picture diary: restore a continuous centered spread and prevent time-field overflow. */
-.picture-diary-main {
-  width:100% !important;
-  box-sizing:border-box !important;
-}
-
+/* FREE NOTE + PICTURE DIARY: use the exact DAY/MONTH spread dimensions.
+   Both inherit --checkpoint-spread-width, --checkpoint-spread-max-width,
+   and --checkpoint-spread-ratio from the common planner layout. */
 @media (min-width:781px) {
-  .picture-diary-main > .workspace-shell {
+  .app-shell.planner-view > .main-area.markdown-diary-main,
+  .app-shell.planner-view > .main-area.picture-diary-main {
     display:flex !important;
     flex:1 1 auto !important;
-    flex-direction:row !important;
-    align-items:stretch !important;
-    justify-content:center !important;
+    flex-direction:column !important;
     width:100% !important;
-    max-width:none !important;
-    min-width:0 !important;
     height:100% !important;
+    min-height:0 !important;
     margin:0 !important;
     padding:0 !important;
-    gap:0 !important;
+    overflow:hidden !important;
     box-sizing:border-box !important;
   }
 
-  .picture-diary-main > .workspace-shell > .picture-diary-canvas {
+  .markdown-diary-main > .workspace-shell,
+  .picture-diary-main > .workspace-shell {
     display:flex !important;
-    flex:1 1 100% !important;
+    flex:1 1 auto !important;
     align-items:stretch !important;
     justify-content:center !important;
     width:100% !important;
@@ -10312,44 +10297,111 @@ html,body{width:100%;overflow-x:clip}
     min-width:0 !important;
     height:100% !important;
     min-height:0 !important;
+    margin:0 !important;
     padding:0 !important;
-    overflow:visible !important;
+    gap:0 !important;
+  }
+
+  .markdown-diary-main > .workspace-shell > .markdown-diary-canvas,
+  .picture-diary-main > .workspace-shell > .picture-diary-canvas {
+    display:flex !important;
+    flex:1 1 auto !important;
+    align-items:center !important;
+    justify-content:center !important;
+    width:100% !important;
+    max-width:none !important;
+    min-width:0 !important;
+    height:100% !important;
+    min-height:0 !important;
+    padding:20px 32px !important;
+    overflow:hidden !important;
     box-sizing:border-box !important;
   }
 
-  .picture-diary-canvas > .picture-diary-book-frame {
+  .markdown-diary-canvas > .planner-spread.markdown-diary-single-page,
+  .picture-diary-canvas > .planner-spread.picture-diary-book-frame {
+    width:var(--checkpoint-spread-width) !important;
+    min-width:0 !important;
+    max-width:var(--checkpoint-spread-max-width) !important;
+    height:auto !important;
+    min-height:0 !important;
+    max-height:none !important;
+    aspect-ratio:var(--checkpoint-spread-ratio) !important;
+    flex:0 1 var(--checkpoint-spread-width) !important;
+    align-self:center !important;
+    margin:auto !important;
+    overflow:hidden !important;
+    box-sizing:border-box !important;
+  }
+
+  /* Free Note uses the whole spread as one uninterrupted writing area. */
+  .markdown-diary-canvas > .planner-spread.markdown-diary-single-page {
+    display:flex !important;
+    flex-direction:column !important;
+  }
+
+  .markdown-diary-canvas > .markdown-diary-single-page > .markdown-single-note-page {
+    display:flex !important;
+    flex:1 1 auto !important;
+    flex-direction:column !important;
+    width:100% !important;
+    height:100% !important;
+    min-width:0 !important;
+    min-height:0 !important;
+    aspect-ratio:auto !important;
+    box-sizing:border-box !important;
+  }
+
+  /* Picture Diary uses two equal pages with the binder at their shared edge. */
+  .picture-diary-canvas > .planner-spread.picture-diary-book-frame {
     display:grid !important;
     grid-template-columns:repeat(2,minmax(0,1fr)) !important;
     grid-template-rows:minmax(0,1fr) !important;
-    column-gap:0 !important;
-    row-gap:0 !important;
-    width:min(1120px,100%) !important;
-    max-width:1120px !important;
-    min-width:0 !important;
-    height:100% !important;
-    margin:0 auto !important;
-    box-sizing:border-box !important;
+    gap:0 !important;
+    border-radius:14px !important;
     background:var(--paper) !important;
   }
 
-  .picture-diary-book-frame > .paper-page {
+  .picture-diary-canvas > .picture-diary-book-frame > .paper-page {
     position:relative !important;
     display:flex !important;
+    flex-direction:column !important;
     width:100% !important;
+    height:100% !important;
     min-width:0 !important;
-    margin:0 !important;
+    min-height:0 !important;
+    aspect-ratio:auto !important;
+    overflow:hidden !important;
     box-sizing:border-box !important;
     background:var(--paper) !important;
   }
 
   .picture-diary-book-frame > .diary-left-page {
+    grid-column:1 !important;
+    grid-row:1 !important;
+    padding:16px 10px 16px 30px !important;
     border-radius:14px 0 0 14px !important;
-    padding:16px 34px 16px 30px !important;
   }
 
   .picture-diary-book-frame > .diary-right-page {
+    grid-column:2 !important;
+    grid-row:1 !important;
+    padding:16px 6px 16px 36px !important;
     border-radius:0 14px 14px 0 !important;
-    padding:16px 30px 16px 36px !important;
+  }
+
+  .picture-diary-book-frame > .diary-left-page > *,
+  .picture-diary-book-frame > .diary-right-page > * {
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+  }
+
+  .picture-diary-book-frame .diary-journal-paper,
+  .picture-diary-book-frame .diary-bottom-panels,
+  .picture-diary-book-frame .picture-diary-drawing-area {
+    box-sizing:border-box !important;
+    min-width:0 !important;
   }
 
   .picture-diary-book-frame > .diary-left-page::after,
@@ -10388,7 +10440,6 @@ html,body{width:100%;overflow-x:clip}
     display:none !important;
   }
 }
-
 @media (min-width:521px) {
   .diary-daily-info {
     grid-template-columns:minmax(0,1.45fr) repeat(2,minmax(96px,1fr)) !important;
@@ -10436,27 +10487,4 @@ html,body{width:100%;overflow-x:clip}
 }
 
 
-/* Picture diary cards: widen within each page without overflowing or being clipped. */
-@media (min-width:781px) {
-  .picture-diary-book-frame > .diary-left-page {
-    padding-right:10px !important;
-  }
 
-  .picture-diary-book-frame > .diary-right-page {
-    padding-right:6px !important;
-  }
-
-  .picture-diary-book-frame > .diary-left-page > *,
-  .picture-diary-book-frame > .diary-right-page > * {
-    width:100% !important;
-    max-width:100% !important;
-    min-width:0 !important;
-  }
-
-  .picture-diary-book-frame .diary-journal-paper,
-  .picture-diary-book-frame .diary-bottom-panels,
-  .picture-diary-book-frame .picture-diary-drawing-area {
-    box-sizing:border-box !important;
-    min-width:0 !important;
-  }
-}
