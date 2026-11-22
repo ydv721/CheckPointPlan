@@ -999,7 +999,7 @@ export default function MarkdownDiary({
       "# " + (note.title.trim() || "제목 없는 글"),
       "",
       pages.map((page, index) => index === 0 ? page : "---\n\n" + page).join("\n\n")
-    ].join("\\n");
+    ].join("\n");
   }
 
   function downloadMarkdown(title: string, markdown: string) {
