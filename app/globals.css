@@ -10353,6 +10353,7 @@ html,body{width:100%;overflow-x:clip}
     gap:0 !important;
     border-radius:14px !important;
     background:var(--paper) !important;
+    transform:translateX(-16px) !important;
   }
 
   .picture-diary-canvas > .picture-diary-book-frame > .paper-page {
