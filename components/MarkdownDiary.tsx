@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { AlignCenter, AlignLeft, AlignRight, Bold, Code2, FileDown, Heading1, Italic, List, ListOrdered, Minus, Palette, Quote, Share2, Strikethrough, Underline, Check } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronLeft, ChevronRight, Code2, FileDown, Heading1, Italic, List, ListOrdered, Minus, Palette, Plus, Quote, Share2, Strikethrough, Underline, Check } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import PlannerSpread from "@/components/PlannerSpread";
 import type { ThemeName } from "@/lib/types";
@@ -119,26 +119,39 @@ const CODE_LANGUAGES = [
 
 const DEFAULT_CODE_LANGUAGE = "c";
 
-const PAGE_CONTENT_PREFIX = "\u001eCHECKPOINT_FREE_NOTE_V1\u001e";
+const PAGE_CONTENT_PREFIX_V1 = "\u001eCHECKPOINT_FREE_NOTE_V1\u001e";
+const PAGE_CONTENT_PREFIX = "\u001eCHECKPOINT_FREE_NOTE_V2\u001e";
 
-function decodeNotePages(content: string): NotePages {
-  if (!content.startsWith(PAGE_CONTENT_PREFIX)) {
-    return { left: content, right: "" };
+function decodeNotePages(content: string): string[] {
+  if (content.startsWith(PAGE_CONTENT_PREFIX)) {
+    try {
+      const parsed = JSON.parse(content.slice(PAGE_CONTENT_PREFIX.length)) as { pages?: unknown };
+      if (Array.isArray(parsed.pages)) {
+        const pages = parsed.pages.filter((page): page is string => typeof page === "string");
+        return pages.length > 0 ? pages : [""];
+      }
+    } catch {
+      return [content];
+    }
+    return [content];
   }
 
-  try {
-    const parsed = JSON.parse(content.slice(PAGE_CONTENT_PREFIX.length)) as Partial<NotePages>;
-    return {
-      left: typeof parsed.left === "string" ? parsed.left : "",
-      right: typeof parsed.right === "string" ? parsed.right : ""
-    };
-  } catch {
-    return { left: content, right: "" };
+  if (content.startsWith(PAGE_CONTENT_PREFIX_V1)) {
+    try {
+      const parsed = JSON.parse(content.slice(PAGE_CONTENT_PREFIX_V1.length)) as Partial<NotePages>;
+      const pages = [typeof parsed.left === "string" ? parsed.left : ""];
+      if (typeof parsed.right === "string" && parsed.right.trim()) pages.push(parsed.right);
+      return pages;
+    } catch {
+      return [content];
+    }
   }
+
+  return [content];
 }
 
-function encodeNotePages(pages: NotePages) {
-  return PAGE_CONTENT_PREFIX + JSON.stringify(pages);
+function encodeNotePages(pages: string[]) {
+  return PAGE_CONTENT_PREFIX + JSON.stringify({ pages: pages.length > 0 ? pages : [""] });
 }
 
 function escapeHtml(value: string) {
@@ -581,6 +594,7 @@ export default function MarkdownDiary({
 }: Props) {
   const [notes, setNotes] = useState<MarkdownNote[]>([]);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
+  const [activePageIndex, setActivePageIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [, setSaveState] = useState<"saved" | "dirty" | "saving" | "error">("saved");
@@ -606,13 +620,20 @@ export default function MarkdownDiary({
   );
 
   useEffect(() => {
+    setActivePageIndex(0);
+    editorSelectionRef.current = null;
+    setColorPaletteOpen(false);
+  }, [activeNoteId]);
+
+  useEffect(() => {
     const editor = leftEditorRef.current;
     if (!editor || !activeNote || loading) return;
-    if (editor.dataset.noteId !== activeNote.id) {
-      editor.innerHTML = markdownToHtml(pageContents.left);
-      editor.dataset.noteId = activeNote.id;
+    const pageKey = activeNote.id + ":" + activePageIndex;
+    if (editor.dataset.pageKey !== pageKey) {
+      editor.innerHTML = markdownToHtml(pageContents[activePageIndex] ?? "");
+      editor.dataset.pageKey = pageKey;
     }
-  }, [activeNote, loading, pageContents.left]);
+  }, [activeNote, activePageIndex, loading, pageContents]);
 
   useEffect(() => {
     currentNoteRef.current = activeNote;
@@ -647,7 +668,7 @@ export default function MarkdownDiary({
                 notebook_id: notebookId,
                 user_id: userId,
                 title: "새 노트",
-                content: encodeNotePages({ left: "", right: "" })
+                content: encodeNotePages([""])
               })
               .select("id,notebook_id,user_id,title,content,created_at,updated_at")
               .single()
@@ -771,10 +792,58 @@ export default function MarkdownDiary({
     ));
   }
 
-  function updatePage(side: "left" | "right", value: string) {
+  function updateCurrentPage(value: string) {
     if (!activeNote) return;
-    const nextPages = { ...pageContents, [side]: value };
+    const nextPages = [...pageContents];
+    nextPages[activePageIndex] = value;
     updateActiveNote({ content: encodeNotePages(nextPages) });
+  }
+
+  function getCurrentPages() {
+    const nextPages = [...pageContents];
+    const editor = leftEditorRef.current;
+    if (activeNote && editor) {
+      while (nextPages.length <= activePageIndex) nextPages.push("");
+      nextPages[activePageIndex] = htmlToMarkdown(editor.innerHTML);
+    }
+    return nextPages.length > 0 ? nextPages : [""];
+  }
+
+  function focusEditorAtEnd() {
+    window.requestAnimationFrame(() => {
+      const editor = leftEditorRef.current;
+      if (!editor) return;
+      editor.focus();
+      const selection = window.getSelection();
+      if (!selection) return;
+      const range = document.createRange();
+      range.selectNodeContents(editor);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    });
+  }
+
+  function goToPage(index: number) {
+    if (!activeNote || loading || index < 0 || index >= pageContents.length || index === activePageIndex) return;
+    updateActiveNote({ content: encodeNotePages(getCurrentPages()) });
+    setActivePageIndex(index);
+    setColorPaletteOpen(false);
+    editorSelectionRef.current = null;
+    window.getSelection()?.removeAllRanges();
+    focusEditorAtEnd();
+  }
+
+  function addPage() {
+    if (!activeNote || loading) return;
+    const nextPages = getCurrentPages();
+    nextPages.push("");
+    updateActiveNote({ content: encodeNotePages(nextPages) });
+    setActivePageIndex(nextPages.length - 1);
+    setColorPaletteOpen(false);
+    editorSelectionRef.current = null;
+    window.getSelection()?.removeAllRanges();
+    focusEditorAtEnd();
   }
 
   function rememberEditorSelection() {
@@ -812,7 +881,7 @@ export default function MarkdownDiary({
     }
 
     document.execCommand("foreColor", false, color);
-    updatePage("left", htmlToMarkdown(editor.innerHTML));
+    updateCurrentPage(htmlToMarkdown(editor.innerHTML));
 
     if (keepPickerOpen) {
       if (selection.rangeCount > 0) {
@@ -871,7 +940,7 @@ export default function MarkdownDiary({
       }
     }
 
-    updatePage("left", htmlToMarkdown(editor.innerHTML));
+    updateCurrentPage(htmlToMarkdown(editor.innerHTML));
     editor.focus();
   }
 
@@ -904,7 +973,7 @@ export default function MarkdownDiary({
       document.execCommand("insertHorizontalRule");
     }
 
-    updatePage("left", htmlToMarkdown(editor.innerHTML));
+    updateCurrentPage(htmlToMarkdown(editor.innerHTML));
     editor.focus();
   }
 
@@ -919,18 +988,16 @@ export default function MarkdownDiary({
         ? "justifyCenter"
         : "justifyRight";
     document.execCommand(command);
-    updatePage("left", htmlToMarkdown(editor.innerHTML));
+    updateCurrentPage(htmlToMarkdown(editor.innerHTML));
     editor.focus();
   }
 
-  function getMarkdownContent(note: MarkdownNote) {
-    const pages = decodeNotePages(note.content);
+  function getMarkdownContent(note: MarkdownNote, pages = decodeNotePages(note.content)) {
     return [
       "# " + (note.title.trim() || "제목 없는 글"),
       "",
-      pages.left,
-      ...(pages.right.trim() ? ["", "---", "", pages.right] : [])
-    ].join("\n");
+      pages.map((page, index) => index === 0 ? page : "---\\n\\n" + page).join("\\n\\n")
+    ].join("\\n");
   }
 
   function downloadMarkdown(title: string, markdown: string) {
@@ -950,7 +1017,7 @@ export default function MarkdownDiary({
     if (!activeNote) return;
 
     const title = activeNote.title.trim() || "제목 없는 글";
-    const markdown = getMarkdownContent(activeNote);
+    const markdown = getMarkdownContent(activeNote, getCurrentPages());
     setShareFeedback("");
 
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
@@ -1032,15 +1099,8 @@ export default function MarkdownDiary({
       });
       header.append(heading, date);
 
-      const content = editor.cloneNode(true) as HTMLDivElement;
-      content.classList.remove("free-note-input");
-      content.classList.add("pdf-export-content");
-      content.removeAttribute("contenteditable");
-      content.removeAttribute("role");
-      content.removeAttribute("aria-label");
-      content.removeAttribute("aria-multiline");
-      content.removeAttribute("data-placeholder");
-      content.removeAttribute("data-note-id");
+      const content = document.createElement("div");
+      content.className = "pdf-export-content";
       content.style.cssText = [
         "display:block",
         "width:100%",
@@ -1061,6 +1121,16 @@ export default function MarkdownDiary({
         "line-height:1.7",
         "box-sizing:border-box"
       ].join(";");
+
+      getCurrentPages().forEach(markdown => {
+        const page = document.createElement("section");
+        page.className = "markdown-pdf-page";
+        const pageContent = document.createElement("div");
+        pageContent.className = "markdown-pdf-page-content";
+        pageContent.innerHTML = markdownToHtml(markdown);
+        page.appendChild(pageContent);
+        content.appendChild(page);
+      });
 
       content.querySelectorAll<HTMLSelectElement>(".markdown-code-language").forEach(select => {
         const language = document.createElement("span");
@@ -1152,6 +1222,15 @@ export default function MarkdownDiary({
           color:#68748a;
           font-size:9px;
           letter-spacing:.08em;
+        }
+        .markdown-pdf-export-root .markdown-pdf-page + .markdown-pdf-page {
+          break-before:page;
+          page-break-before:always;
+        }
+        .markdown-pdf-export-root .markdown-pdf-page-content {
+          display:block;
+          width:100%;
+          min-width:0;
         }
         .markdown-pdf-export-root .markdown-code-language-label {
           color:#68748a;
@@ -1419,7 +1498,7 @@ export default function MarkdownDiary({
                           data-placeholder="여기에 내용을 자유롭게 작성해 보세요."
                           onInput={() => {
                             const editor = leftEditorRef.current;
-                            if (editor) updatePage("left", htmlToMarkdown(editor.innerHTML));
+                            if (editor) updateCurrentPage(htmlToMarkdown(editor.innerHTML));
                           }}
                           onPaste={event => {
                             event.preventDefault();
@@ -1450,14 +1529,14 @@ export default function MarkdownDiary({
                             const editor = leftEditorRef.current;
                             if (!codeBlock || !editor) return;
                             codeBlock.dataset.language = normalizeCodeLanguage(target.value);
-                            updatePage("left", htmlToMarkdown(editor.innerHTML));
+                            updateCurrentPage(htmlToMarkdown(editor.innerHTML));
                           }}
                           onBlur={event => {
                             const editor = leftEditorRef.current;
                             const nextTarget = event.relatedTarget as Node | null;
                             if (!editor || (nextTarget && editor.contains(nextTarget))) return;
                             highlightCodeBlocks(editor);
-                            updatePage("left", htmlToMarkdown(editor.innerHTML));
+                            updateCurrentPage(htmlToMarkdown(editor.innerHTML));
                           }}
                           onClick={event => {
                             const editor = leftEditorRef.current;
@@ -1485,7 +1564,7 @@ export default function MarkdownDiary({
                             const href = safeMarkdownHref(link.getAttribute("href") ?? "");
                             if (!href) return;
 
-                            updatePage("left", htmlToMarkdown(editor.innerHTML));
+                            updateCurrentPage(htmlToMarkdown(editor.innerHTML));
                             window.open(href, "_blank", "noopener,noreferrer");
                           }}
                           onKeyDown={event => {
@@ -1531,7 +1610,7 @@ export default function MarkdownDiary({
                                   afterLink.collapse(true);
                                   selection.removeAllRanges();
                                   selection.addRange(afterLink);
-                                  updatePage("left", htmlToMarkdown(editor.innerHTML));
+                                  updateCurrentPage(htmlToMarkdown(editor.innerHTML));
                                   return;
                                 }
                               }
@@ -1580,6 +1659,46 @@ export default function MarkdownDiary({
                           }}
                           spellCheck
                         />
+                        <div className="markdown-page-navigation">
+                          <div className="markdown-page-controls">
+                            <button
+                              type="button"
+                              className="markdown-page-nav-button"
+                              aria-label="이전 페이지"
+                              title="이전 페이지"
+                              disabled={activePageIndex === 0}
+                              onMouseDown={event => event.preventDefault()}
+                              onClick={() => goToPage(activePageIndex - 1)}
+                            >
+                              <ChevronLeft size={16} strokeWidth={2}/>
+                            </button>
+                            <span className="markdown-page-indicator" aria-live="polite">
+                              {activePageIndex + 1} / {pageContents.length} 페이지
+                            </span>
+                            <button
+                              type="button"
+                              className="markdown-page-nav-button"
+                              aria-label="다음 페이지"
+                              title="다음 페이지"
+                              disabled={activePageIndex >= pageContents.length - 1}
+                              onMouseDown={event => event.preventDefault()}
+                              onClick={() => goToPage(activePageIndex + 1)}
+                            >
+                              <ChevronRight size={16} strokeWidth={2}/>
+                            </button>
+                          </div>
+                          <button
+                            type="button"
+                            className="markdown-add-page-button"
+                            aria-label="새 페이지 추가"
+                            title="새 페이지 추가"
+                            onMouseDown={event => event.preventDefault()}
+                            onClick={addPage}
+                          >
+                            <Plus size={15} strokeWidth={2.2}/>
+                            <span>새 페이지</span>
+                          </button>
+                        </div>
                       </>
                     ) : (
                       <div className="markdown-empty-state" role="status">
