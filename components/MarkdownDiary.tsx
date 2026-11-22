@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronLeft, ChevronRight, Code2, FileDown, Heading1, Italic, List, ListOrdered, Minus, Palette, Plus, Quote, Share2, Strikethrough, Underline, Check } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronLeft, ChevronRight, Code2, Eraser, FileDown, Heading1, Highlighter, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, Share2, StickyNote as StickyNoteIcon, Strikethrough, Type, Underline, Check, X } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import PlannerSpread from "@/components/PlannerSpread";
 import type { ThemeName } from "@/lib/types";
@@ -716,7 +716,16 @@ export default function MarkdownDiary({
   const [pdfExporting, setPdfExporting] = useState(false);
   const [colorPaletteOpen, setColorPaletteOpen] = useState(false);
   const [customTextColor, setCustomTextColor] = useState("#7868e8");
+  const [drawingMode, setDrawingMode] = useState(false);
+  const [drawingTool, setDrawingTool] = useState<DrawingTool>("highlighter");
+  const [drawingColor, setDrawingColor] = useState("#F4D35E");
+  const [currentStroke, setCurrentStroke] = useState<DrawingStroke | null>(null);
+  const [drawingCanvasHeight, setDrawingCanvasHeight] = useState(1);
+  const [drawingScrollTop, setDrawingScrollTop] = useState(0);
   const leftEditorRef = useRef<HTMLDivElement>(null);
+  const currentStrokeRef = useRef<DrawingStroke | null>(null);
+  const drawingPointerIdRef = useRef<number | null>(null);
+  const stickyDragRef = useRef<{ id: string; pointerId: number; startClientX: number; startClientY: number; startX: number; startY: number } | null>(null);
   const editorSelectionRef = useRef<Range | null>(null);
   const currentNoteRef = useRef<MarkdownNote | null>(null);
   const savedSnapshotsRef = useRef<Record<string, string>>({});
@@ -732,11 +741,29 @@ export default function MarkdownDiary({
     () => decodeNotePages(activeNote?.content ?? ""),
     [activeNote?.content]
   );
+  const pageAnnotations = useMemo(
+    () => decodeNoteAnnotations(activeNote?.content ?? ""),
+    [activeNote?.content]
+  );
+  const currentPageAnnotations = pageAnnotations[activePageIndex] ?? createEmptyPageAnnotations(drawingCanvasHeight);
+
+  const syncDrawingCanvasMetrics = useCallback(() => {
+    const editor = leftEditorRef.current;
+    if (!editor) return;
+    const nextHeight = Math.max(1, editor.scrollHeight, editor.clientHeight);
+    setDrawingCanvasHeight(current => current === nextHeight ? current : nextHeight);
+    setDrawingScrollTop(current => current === editor.scrollTop ? current : editor.scrollTop);
+  }, []);
 
   useEffect(() => {
     setActivePageIndex(0);
     editorSelectionRef.current = null;
     setColorPaletteOpen(false);
+    setDrawingMode(false);
+    setDrawingTool("highlighter");
+    setCurrentStroke(null);
+    currentStrokeRef.current = null;
+    drawingPointerIdRef.current = null;
   }, [activeNoteId]);
 
   useEffect(() => {
@@ -747,7 +774,24 @@ export default function MarkdownDiary({
       editor.innerHTML = markdownToHtml(pageContents[activePageIndex] ?? "");
       editor.dataset.pageKey = pageKey;
     }
-  }, [activeNote, activePageIndex, loading, pageContents]);
+    syncDrawingCanvasMetrics();
+  }, [activeNote, activePageIndex, loading, pageContents, syncDrawingCanvasMetrics]);
+
+  useEffect(() => {
+    const editor = leftEditorRef.current;
+    if (!editor) return;
+    syncDrawingCanvasMetrics();
+    const resizeObserver = typeof ResizeObserver !== "undefined" ? new ResizeObserver(syncDrawingCanvasMetrics) : null;
+    const mutationObserver = typeof MutationObserver !== "undefined" ? new MutationObserver(syncDrawingCanvasMetrics) : null;
+    resizeObserver?.observe(editor);
+    mutationObserver?.observe(editor, { childList: true, subtree: true, characterData: true });
+    editor.addEventListener("scroll", syncDrawingCanvasMetrics, { passive: true });
+    return () => {
+      resizeObserver?.disconnect();
+      mutationObserver?.disconnect();
+      editor.removeEventListener("scroll", syncDrawingCanvasMetrics);
+    };
+  }, [activeNoteId, activePageIndex, loading, syncDrawingCanvasMetrics]);
 
   useEffect(() => {
     currentNoteRef.current = activeNote;
