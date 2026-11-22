@@ -954,7 +954,17 @@ export default function MarkdownDiary({
     if (!activeNote) return;
     const nextPages = [...pageContents];
     nextPages[activePageIndex] = value;
-    updateActiveNote({ content: encodeNotePages(nextPages) });
+    updateActiveNote({ content: encodeNotePages(nextPages, pageAnnotations) });
+  }
+
+  function updateCurrentPageAnnotations(nextAnnotations: FreeNotePageAnnotations[]) {
+    if (!activeNote) return;
+    const safeAnnotations = normalizePageAnnotations(nextAnnotations, pageContents.length);
+    safeAnnotations[activePageIndex] = {
+      ...safeAnnotations[activePageIndex],
+      height: Math.max(1, drawingCanvasHeight)
+    };
+    updateActiveNote({ content: encodeNotePages(pageContents, safeAnnotations) });
   }
 
   function getCurrentPages() {
@@ -986,7 +996,7 @@ export default function MarkdownDiary({
 
   function goToPage(index: number) {
     if (!activeNote || loading || index < 0 || index >= pageContents.length || index === activePageIndex) return;
-    updateActiveNote({ content: encodeNotePages(getCurrentPages()) });
+    updateActiveNote({ content: encodeNotePages(getCurrentPages(), pageAnnotations) });
     setActivePageIndex(index);
     setColorPaletteOpen(false);
     editorSelectionRef.current = null;
@@ -998,12 +1008,201 @@ export default function MarkdownDiary({
     if (!activeNote || loading) return;
     const nextPages = getCurrentPages();
     nextPages.push("");
-    updateActiveNote({ content: encodeNotePages(nextPages) });
+    const nextAnnotations = [...pageAnnotations, createEmptyPageAnnotations()];
+    updateActiveNote({ content: encodeNotePages(nextPages, nextAnnotations) });
+    setDrawingMode(false);
+    setCurrentStroke(null);
+    currentStrokeRef.current = null;
     setActivePageIndex(nextPages.length - 1);
     setColorPaletteOpen(false);
     editorSelectionRef.current = null;
     window.getSelection()?.removeAllRanges();
     focusEditorAtEnd();
+  }
+
+  function getDrawingPoint(clientX: number, clientY: number): DrawingPoint | null {
+    const editor = leftEditorRef.current;
+    if (!editor) return null;
+    const rect = editor.getBoundingClientRect();
+    if (!rect.width) return null;
+    return {
+      x: Math.max(0, Math.min(1000, ((clientX - rect.left) / rect.width) * 1000)),
+      y: Math.max(0, clientY - rect.top + editor.scrollTop)
+    };
+  }
+
+  function addStickyNote(point: DrawingPoint) {
+    const nextAnnotations = [...pageAnnotations];
+    const current = nextAnnotations[activePageIndex] ?? createEmptyPageAnnotations(drawingCanvasHeight);
+    nextAnnotations[activePageIndex] = {
+      ...current,
+      height: Math.max(1, drawingCanvasHeight),
+      notes: [...current.notes, {
+        id: createDrawingId(),
+        x: point.x,
+        y: point.y,
+        text: "",
+        color: "#FFF2B8"
+      }]
+    };
+    updateCurrentPageAnnotations(nextAnnotations);
+  }
+
+  function updateStickyNote(noteId: string, patch: Partial<StickyNote>) {
+    const nextAnnotations = [...pageAnnotations];
+    const current = nextAnnotations[activePageIndex] ?? createEmptyPageAnnotations(drawingCanvasHeight);
+    nextAnnotations[activePageIndex] = {
+      ...current,
+      notes: current.notes.map(note => note.id === noteId ? { ...note, ...patch } : note)
+    };
+    updateCurrentPageAnnotations(nextAnnotations);
+  }
+
+  function deleteStickyNote(noteId: string) {
+    const nextAnnotations = [...pageAnnotations];
+    const current = nextAnnotations[activePageIndex] ?? createEmptyPageAnnotations(drawingCanvasHeight);
+    nextAnnotations[activePageIndex] = {
+      ...current,
+      notes: current.notes.filter(note => note.id !== noteId)
+    };
+    updateCurrentPageAnnotations(nextAnnotations);
+  }
+
+  function eraseDrawingAt(point: DrawingPoint) {
+    const editor = leftEditorRef.current;
+    if (!editor) return;
+    const rect = editor.getBoundingClientRect();
+    const xTolerance = rect.width ? 24 / rect.width * 1000 : 24;
+    const current = pageAnnotations[activePageIndex] ?? createEmptyPageAnnotations(drawingCanvasHeight);
+    const strokes = current.strokes.filter(stroke => !stroke.points.some(candidate => {
+      const dx = (candidate.x - point.x) / 1000 * rect.width;
+      const dy = candidate.y - point.y;
+      return Math.hypot(dx, dy) <= 24 || (Math.abs(candidate.x - point.x) <= xTolerance && Math.abs(dy) <= 24);
+    }));
+    const notes = current.notes.filter(note => {
+      const dx = Math.abs(note.x - point.x) / 1000 * rect.width;
+      const dy = point.y - note.y;
+      return !(dx <= 100 && dy >= -12 && dy <= 132);
+    });
+    if (strokes.length === current.strokes.length && notes.length === current.notes.length) return;
+    const nextAnnotations = [...pageAnnotations];
+    nextAnnotations[activePageIndex] = { ...current, strokes, notes };
+    updateCurrentPageAnnotations(nextAnnotations);
+  }
+
+  function handleDrawingPointerDown(event: ReactPointerEvent<SVGSVGElement>) {
+    if (!drawingMode || !activeNote || loading) return;
+    const point = getDrawingPoint(event.clientX, event.clientY);
+    if (!point) return;
+    if (drawingTool === "sticky") {
+      event.preventDefault();
+      addStickyNote(point);
+      return;
+    }
+
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    drawingPointerIdRef.current = event.pointerId;
+    if (drawingTool === "eraser") {
+      eraseDrawingAt(point);
+      return;
+    }
+
+    const stroke: DrawingStroke = {
+      id: createDrawingId(),
+      tool: drawingTool,
+      color: drawingColor,
+      points: [point]
+    };
+    currentStrokeRef.current = stroke;
+    setCurrentStroke(stroke);
+  }
+
+  function handleDrawingPointerMove(event: ReactPointerEvent<SVGSVGElement>) {
+    if (!drawingMode || drawingPointerIdRef.current !== event.pointerId) return;
+    const point = getDrawingPoint(event.clientX, event.clientY);
+    if (!point) return;
+    if (drawingTool === "eraser") {
+      eraseDrawingAt(point);
+      return;
+    }
+    const current = currentStrokeRef.current;
+    if (!current) return;
+    const previous = current.points[current.points.length - 1];
+    if (previous && Math.hypot((point.x - previous.x) / 1000 * (leftEditorRef.current?.clientWidth ?? 1), point.y - previous.y) < 1.5) return;
+    const nextStroke = { ...current, points: [...current.points, point] };
+    currentStrokeRef.current = nextStroke;
+    setCurrentStroke(nextStroke);
+  }
+
+  function finishDrawingPointer(event: ReactPointerEvent<SVGSVGElement>) {
+    if (drawingPointerIdRef.current !== event.pointerId) return;
+    drawingPointerIdRef.current = null;
+    const stroke = currentStrokeRef.current;
+    currentStrokeRef.current = null;
+    setCurrentStroke(null);
+    if (!stroke || stroke.points.length === 0) return;
+    const nextAnnotations = [...pageAnnotations];
+    const current = nextAnnotations[activePageIndex] ?? createEmptyPageAnnotations(drawingCanvasHeight);
+    nextAnnotations[activePageIndex] = {
+      ...current,
+      height: Math.max(1, drawingCanvasHeight),
+      strokes: [...current.strokes, stroke]
+    };
+    updateCurrentPageAnnotations(nextAnnotations);
+  }
+
+  function enterDrawingMode() {
+    const editor = leftEditorRef.current;
+    if (editor) updateCurrentPage(htmlToMarkdown(editor.innerHTML));
+    setColorPaletteOpen(false);
+    editorSelectionRef.current = null;
+    window.getSelection()?.removeAllRanges();
+    setDrawingTool("highlighter");
+    setDrawingMode(true);
+    syncDrawingCanvasMetrics();
+  }
+
+  function exitDrawingMode() {
+    setDrawingMode(false);
+    setCurrentStroke(null);
+    currentStrokeRef.current = null;
+    drawingPointerIdRef.current = null;
+    window.getSelection()?.removeAllRanges();
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => leftEditorRef.current?.focus());
+    });
+  }
+
+  function beginStickyNoteDrag(event: ReactPointerEvent<HTMLDivElement>, note: StickyNote) {
+    if (!drawingMode) return;
+    event.preventDefault();
+    event.stopPropagation();
+    stickyDragRef.current = {
+      id: note.id,
+      pointerId: event.pointerId,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      startX: note.x,
+      startY: note.y
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function moveStickyNoteDrag(event: ReactPointerEvent<HTMLDivElement>, noteId: string) {
+    const drag = stickyDragRef.current;
+    if (!drawingMode || !drag || drag.id !== noteId || drag.pointerId !== event.pointerId) return;
+    const editor = leftEditorRef.current;
+    if (!editor) return;
+    const rect = editor.getBoundingClientRect();
+    const nextX = Math.max(90, Math.min(910, drag.startX + (event.clientX - drag.startClientX) / Math.max(1, rect.width) * 1000));
+    const nextY = Math.max(0, drag.startY + event.clientY - drag.startClientY);
+    updateStickyNote(noteId, { x: nextX, y: nextY });
+  }
+
+  function finishStickyNoteDrag(event: ReactPointerEvent<HTMLDivElement>, noteId: string) {
+    const drag = stickyDragRef.current;
+    if (drag?.id === noteId && drag.pointerId === event.pointerId) stickyDragRef.current = null;
   }
 
   function rememberEditorSelection() {
