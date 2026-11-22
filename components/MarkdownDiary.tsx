@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type TouchEvent as ReactTouchEvent, type WheelEvent as ReactWheelEvent } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronLeft, ChevronRight, Code2, Eraser, FileDown, Heading1, Highlighter, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, Share2, StickyNote as StickyNoteIcon, Strikethrough, Type, Underline, Check, X } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronLeft, ChevronRight, Code2, Eraser, FileDown, Heading1, Highlighter, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, Share2, StickyNote as StickyNoteIcon, Strikethrough, Type, Underline, Check, Trash2, X } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import PlannerSpread from "@/components/PlannerSpread";
 import type { ThemeName } from "@/lib/types";
@@ -714,6 +714,7 @@ export default function MarkdownDiary({
   const [, setSaveState] = useState<"saved" | "dirty" | "saving" | "error">("saved");
   const [shareFeedback, setShareFeedback] = useState("");
   const [pdfExporting, setPdfExporting] = useState(false);
+  const [pageDeleteOpen, setPageDeleteOpen] = useState(false);
   const [colorPaletteOpen, setColorPaletteOpen] = useState(false);
   const [customTextColor, setCustomTextColor] = useState("#7868e8");
   const [drawingMode, setDrawingMode] = useState(false);
@@ -758,6 +759,7 @@ export default function MarkdownDiary({
 
   useEffect(() => {
     setActivePageIndex(0);
+    setPageDeleteOpen(false);
     editorSelectionRef.current = null;
     setColorPaletteOpen(false);
     setDrawingMode(false);
@@ -766,6 +768,15 @@ export default function MarkdownDiary({
     currentStrokeRef.current = null;
     drawingPointerIdRef.current = null;
   }, [activeNoteId]);
+
+  useEffect(() => {
+    if (!pageDeleteOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPageDeleteOpen(false);
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [pageDeleteOpen]);
 
   useEffect(() => {
     const editor = leftEditorRef.current;
@@ -1015,6 +1026,34 @@ export default function MarkdownDiary({
     setCurrentStroke(null);
     currentStrokeRef.current = null;
     setActivePageIndex(nextPages.length - 1);
+    setColorPaletteOpen(false);
+    editorSelectionRef.current = null;
+    window.getSelection()?.removeAllRanges();
+    focusEditorAtEnd();
+  }
+
+  function deleteCurrentPage() {
+    if (!activeNote || loading || pageContents.length <= 1) {
+      setPageDeleteOpen(false);
+      return;
+    }
+
+    const deletedPageIndex = activePageIndex;
+    const nextPages = getCurrentPages();
+    nextPages.splice(deletedPageIndex, 1);
+    const nextAnnotations = [...pageAnnotations];
+    nextAnnotations.splice(deletedPageIndex, 1);
+
+    const editor = leftEditorRef.current;
+    if (editor) editor.dataset.pageKey = "";
+
+    updateActiveNote({ content: encodeNotePages(nextPages, nextAnnotations) });
+    setActivePageIndex(Math.min(deletedPageIndex, nextPages.length - 1));
+    setPageDeleteOpen(false);
+    setDrawingMode(false);
+    setCurrentStroke(null);
+    currentStrokeRef.current = null;
+    drawingPointerIdRef.current = null;
     setColorPaletteOpen(false);
     editorSelectionRef.current = null;
     window.getSelection()?.removeAllRanges();
@@ -2305,6 +2344,17 @@ export default function MarkdownDiary({
                               <ChevronRight size={16} strokeWidth={2}/>
                             </button>
                           </div>
+                          <button
+                            type="button"
+                            className="markdown-page-nav-button markdown-page-delete-button"
+                            aria-label="현재 페이지 삭제"
+                            title={pageContents.length <= 1 ? "페이지가 1개일 때는 삭제할 수 없습니다." : "현재 페이지 삭제"}
+                            disabled={loading || pageContents.length <= 1}
+                            onMouseDown={event => event.preventDefault()}
+                            onClick={() => setPageDeleteOpen(true)}
+                          >
+                            <Trash2 size={15} strokeWidth={2}/>
+                          </button>
                         </div>
                       </>
                     ) : (
@@ -2319,6 +2369,37 @@ export default function MarkdownDiary({
           </div>
         </div>
       </main>
+      {pageDeleteOpen ? (
+        <div
+          className="modal-backdrop notebook-delete-backdrop"
+          role="presentation"
+          onMouseDown={event => {
+            if (event.target === event.currentTarget) setPageDeleteOpen(false);
+          }}
+        >
+          <section
+            className="delete-account-modal notebook-delete-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="notebook-delete-title"
+            aria-describedby="notebook-delete-description"
+          >
+            <div className="delete-account-icon"><Trash2 size={22}/></div>
+            <h2 id="notebook-delete-title">페이지를 삭제할까요?</h2>
+            <p id="notebook-delete-description">
+              현재 {activePageIndex + 1}페이지를 삭제합니다. 이 페이지에 작성한 글과 필기, 메모지가 함께 삭제됩니다.
+            </p>
+            <div className="delete-account-actions">
+              <button type="button" className="outline-btn" onClick={() => setPageDeleteOpen(false)}>
+                취소
+              </button>
+              <button type="button" className="delete-confirm-btn" onClick={deleteCurrentPage}>
+                페이지 삭제
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }
