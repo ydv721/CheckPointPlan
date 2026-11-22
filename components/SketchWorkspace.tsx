@@ -650,7 +650,7 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
         setMessage("저장하지 못했습니다. 연결 상태를 확인한 후 다시 시도해 주세요.");
       }
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "그림을 저장하지 못했습니다.");
+      setMessage(error instanceof Error ? "그림을 저장하지 못했습니다: " + error.message : "그림을 저장하지 못했습니다.");
     } finally {
       setSaving(false);
     }
@@ -668,7 +668,7 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
       anchor.remove();
       URL.revokeObjectURL(url);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "다운로드할 그림을 만들지 못했습니다.");
+      setMessage(error instanceof Error ? "그림을 다운로드하지 못했습니다: " + error.message : "그림을 다운로드하지 못했습니다.");
     }
   }
 
