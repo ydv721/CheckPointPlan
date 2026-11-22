@@ -176,7 +176,7 @@ function normalizePageAnnotations(value: unknown, pageCount: number): FreeNotePa
           const points = stroke.points.slice(0, 5000).flatMap((point): DrawingPoint[] => {
             if (!point || typeof point !== "object") return [];
             const candidate = point as Partial<DrawingPoint>;
-            if (!Number.isFinite(candidate.x) || !Number.isFinite(candidate.y)) return [];
+            if (typeof candidate.x !== "number" || !Number.isFinite(candidate.x) || typeof candidate.y !== "number" || !Number.isFinite(candidate.y)) return [];
             return [{
               x: Math.max(0, Math.min(1000, Number(candidate.x))),
               y: Math.max(0, Math.min(100000, Number(candidate.y)))
@@ -198,7 +198,7 @@ function normalizePageAnnotations(value: unknown, pageCount: number): FreeNotePa
       ? raw.notes.slice(0, 100).flatMap((item): StickyNote[] => {
           if (!item || typeof item !== "object") return [];
           const note = item as Partial<StickyNote>;
-          if (!Number.isFinite(note.x) || !Number.isFinite(note.y)) return [];
+          if (typeof note.x !== "number" || !Number.isFinite(note.x) || typeof note.y !== "number" || !Number.isFinite(note.y)) return [];
           const color = typeof note.color === "string" && /^#[0-9a-f]{6}$/i.test(note.color)
             ? note.color
             : "#FFF2B8";
@@ -212,7 +212,7 @@ function normalizePageAnnotations(value: unknown, pageCount: number): FreeNotePa
         })
       : [];
     return {
-      height: Number.isFinite(raw.height) ? Math.max(1, Math.min(100000, Number(raw.height))) : 1,
+      height: typeof raw.height === "number" && Number.isFinite(raw.height) ? Math.max(1, Math.min(100000, raw.height)) : 1,
       strokes,
       notes
     };
@@ -1536,6 +1536,7 @@ export default function MarkdownDiary({
 
         const annotations = annotationsForPdf[index] ?? createEmptyPageAnnotations();
         if (annotations.strokes.length > 0 || annotations.notes.length > 0) {
+          pageContent.style.minHeight = Math.max(320, annotations.height) + "px";
           const annotationLayer = document.createElement("div");
           annotationLayer.className = "markdown-pdf-annotation-layer";
 
