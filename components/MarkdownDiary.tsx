@@ -1874,16 +1874,7 @@ export default function MarkdownDiary({
                       >
                         <Trash2 size={16} strokeWidth={2}/>
                       </button>
-                      <button
-                        type="button"
-                        className="markdown-share-top-button markdown-pen-top-button"
-                        aria-label={drawingMode ? "텍스트 편집" : "필기 모드"}
-                        title={drawingMode ? "텍스트 편집" : "필기 모드"}
-                        onMouseDown={event => event.preventDefault()}
-                        onClick={() => drawingMode ? exitDrawingMode() : enterDrawingMode()}
-                      >
-                        {drawingMode ? <Type size={16} strokeWidth={2}/> : <PenLine size={16} strokeWidth={2}/>}
-                      </button>
+                      
 
                       <button
                         type="button"
@@ -2038,8 +2029,17 @@ export default function MarkdownDiary({
                               </div>
                             )}
                           </div>
-                                                    
 
+                          <button
+                            type="button"
+                            className="markdown-toolbar-button markdown-toolbar-drawing-toggle"
+                            aria-label="필기 모드"
+                            title="필기 모드"
+                            onMouseDown={event => event.preventDefault()}
+                            onClick={enterDrawingMode}
+                          >
+                            필기 모드
+                          </button>
                         </div>
                         {drawingMode ? (
                           <div className="markdown-toolbar free-note-drawing-toolbar" role="toolbar" aria-label="필기 도구 모음">
@@ -2073,7 +2073,10 @@ export default function MarkdownDiary({
                             </div>
                             
                             
-                          </div>
+                          <button type="button" className="free-note-drawing-exit" onClick={exitDrawingMode} title="텍스트 편집" aria-label="텍스트 편집">
+                              <Type size={15}/><span>텍스트 편집</span>
+                            </button>
+                            </div>
                         ) : null}
                         <div className="free-note-editor-viewport">
                         <div
