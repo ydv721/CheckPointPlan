@@ -1049,7 +1049,7 @@ export default function MarkdownDiary({
     const pagesForPdf = getCurrentPages();
 
     setPdfExporting(true);
-    setShareFeedback("PDF를 만들고 있어.");
+    setShareFeedback("pdf를 생성 중입니다.");
     let exportRoot: HTMLDivElement | null = null;
     let exportStyle: HTMLStyleElement | null = null;
 
@@ -1280,7 +1280,7 @@ export default function MarkdownDiary({
         enableLinks: true
       }).from(exportRoot).save();
 
-      setShareFeedback("PDF 다운로드가 완료됐어.");
+      setShareFeedback("pdf 다운로드가 완료되었습니다.");
     } catch (pdfError) {
       console.error("PDF export failed:", pdfError);
       setShareFeedback(pdfError instanceof Error
@@ -1340,6 +1340,18 @@ export default function MarkdownDiary({
                       ) : null}
                       <button
                         type="button"
+                      <button
+                        type="button"
+                        className="markdown-add-page-button"
+                        aria-label="새 페이지 추가"
+                        title="새 페이지 추가"
+                        disabled={loading || !activeNote}
+                        onMouseDown={event => event.preventDefault()}
+                        onClick={addPage}
+                      >
+                        <Plus size={15} strokeWidth={2.2}/>
+                        <span>새 페이지</span>
+                      </button>
                         className="markdown-share-top-button"
                         aria-label="공유"
                         title="공유"
@@ -1692,16 +1704,6 @@ export default function MarkdownDiary({
                             </button>
                           </div>
                           <button
-                            type="button"
-                            className="markdown-add-page-button"
-                            aria-label="새 페이지 추가"
-                            title="새 페이지 추가"
-                            onMouseDown={event => event.preventDefault()}
-                            onClick={addPage}
-                          >
-                            <Plus size={15} strokeWidth={2.2}/>
-                            <span>새 페이지</span>
-                          </button>
                         </div>
                       </>
                     ) : (
