@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { AlignCenter, AlignLeft, AlignRight, Bold, Code2, Heading1, Italic, List, ListOrdered, Minus, Palette, Quote, Share2, Strikethrough, Underline, Check } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
+import PlannerSpread from "@/components/PlannerSpread";
 import type { ThemeName } from "@/lib/types";
 
 type MarkdownNote = {
@@ -959,7 +960,7 @@ export default function MarkdownDiary({
 
         <div className="workspace-shell">
           <div className="workspace-canvas markdown-diary-canvas">
-            <div className="book-frame markdown-diary-single-page">
+            <PlannerSpread className="book-frame markdown-diary-single-page">
               <section className="paper-page markdown-note-page markdown-single-note-page" aria-label="자유 노트">
                 <div className="paper-section key-section markdown-free-note-section">
                   <div className="section-heading markdown-note-heading">
@@ -1290,7 +1291,7 @@ export default function MarkdownDiary({
                   </div>
                 </div>
               </section>
-            </div>
+            </PlannerSpread>
           </div>
         </div>
       </main>
