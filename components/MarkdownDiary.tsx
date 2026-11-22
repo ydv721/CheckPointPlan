@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type TouchEvent as ReactTouchEvent } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronLeft, ChevronRight, Code2, Eraser, FileDown, Heading1, Highlighter, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, Share2, StickyNote as StickyNoteIcon, Strikethrough, Type, Underline, Check, X } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
@@ -725,6 +725,7 @@ export default function MarkdownDiary({
   const leftEditorRef = useRef<HTMLDivElement>(null);
   const currentStrokeRef = useRef<DrawingStroke | null>(null);
   const drawingPointerIdRef = useRef<number | null>(null);
+  const touchScrollYRef = useRef<number | null>(null);
   const stickyDragRef = useRef<{ id: string; pointerId: number; startClientX: number; startClientY: number; startX: number; startY: number } | null>(null);
   const editorSelectionRef = useRef<Range | null>(null);
   const currentNoteRef = useRef<MarkdownNote | null>(null);
@@ -1133,6 +1134,48 @@ export default function MarkdownDiary({
     const nextStroke = { ...current, points: [...current.points, point] };
     currentStrokeRef.current = nextStroke;
     setCurrentStroke(nextStroke);
+  }
+
+  function cancelDrawingPointer(event: ReactPointerEvent<SVGSVGElement>) {
+    if (drawingPointerIdRef.current !== event.pointerId) return;
+    drawingPointerIdRef.current = null;
+    currentStrokeRef.current = null;
+    setCurrentStroke(null);
+  }
+
+  function handleDrawingWheel(event: React.WheelEvent<SVGSVGElement>) {
+    const editor = leftEditorRef.current;
+    if (!drawingMode || !editor) return;
+    event.preventDefault();
+    editor.scrollTop += event.deltaY;
+    editor.scrollLeft += event.deltaX;
+    syncDrawingCanvasMetrics();
+  }
+
+  function handleDrawingTouchStart(event: ReactTouchEvent<SVGSVGElement>) {
+    if (event.touches.length < 2) return;
+    const averageY = Array.from(event.touches).reduce((total, touch) => total + touch.clientY, 0) / event.touches.length;
+    touchScrollYRef.current = averageY;
+    drawingPointerIdRef.current = null;
+    currentStrokeRef.current = null;
+    setCurrentStroke(null);
+  }
+
+  function handleDrawingTouchMove(event: ReactTouchEvent<SVGSVGElement>) {
+    if (event.touches.length < 2) return;
+    const editor = leftEditorRef.current;
+    if (!editor) return;
+    const averageY = Array.from(event.touches).reduce((total, touch) => total + touch.clientY, 0) / event.touches.length;
+    if (touchScrollYRef.current !== null) {
+      editor.scrollTop += touchScrollYRef.current - averageY;
+      syncDrawingCanvasMetrics();
+    }
+    touchScrollYRef.current = averageY;
+    event.preventDefault();
+  }
+
+  function handleDrawingTouchEnd(event: ReactTouchEvent<SVGSVGElement>) {
+    if (event.touches.length < 2) touchScrollYRef.current = null;
   }
 
   function finishDrawingPointer(event: ReactPointerEvent<SVGSVGElement>) {
@@ -2166,7 +2209,11 @@ export default function MarkdownDiary({
                           onPointerDown={handleDrawingPointerDown}
                           onPointerMove={handleDrawingPointerMove}
                           onPointerUp={finishDrawingPointer}
-                          onPointerCancel={finishDrawingPointer}
+                          onPointerCancel={cancelDrawingPointer}
+                          onWheel={handleDrawingWheel}
+                          onTouchStart={handleDrawingTouchStart}
+                          onTouchMove={handleDrawingTouchMove}
+                          onTouchEnd={handleDrawingTouchEnd}
                         >
                           {(currentStroke ? [...currentPageAnnotations.strokes, currentStroke] : currentPageAnnotations.strokes).map(stroke => {
                             const pathData = stroke.points.map((point, pointIndex) =>
