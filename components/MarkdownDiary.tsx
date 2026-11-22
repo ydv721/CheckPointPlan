@@ -2038,7 +2038,8 @@ export default function MarkdownDiary({
                             onMouseDown={event => event.preventDefault()}
                             onClick={enterDrawingMode}
                           >
-                            필기 모드
+                            <PenLine size={15} strokeWidth={2}/>
+                            <span>필기 모드</span>
                           </button>
                         </div>
                         {drawingMode ? (
