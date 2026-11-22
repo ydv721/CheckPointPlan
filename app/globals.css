@@ -9328,7 +9328,6 @@ html,body{width:100%;overflow-x:clip}
   font-size:11px;
   font-weight:800;
 }
-.diary-left-footer,
 .diary-right-footer {
   display:flex;
   align-items:center;
@@ -9340,12 +9339,6 @@ html,body{width:100%;overflow-x:clip}
   font-weight:850;
   letter-spacing:.08em;
   opacity:.45;
-}
-.diary-left-footer span:last-child {
-  display:inline-flex;
-  align-items:center;
-  gap:5px;
-  letter-spacing:0;
 }
 .diary-title-field {
   display:grid;
