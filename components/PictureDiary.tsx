@@ -690,11 +690,13 @@ export default function PictureDiary({
               <button type="button" className="icon-btn" aria-label="닫기" onClick={() => setChoiceOpen(false)}><X size={19}/></button>
             </div>
             <div className="picture-diary-choice-options">
-              <button type="button" onClick={requestSketch}>
+              <button type="button" onClick={requestSketch} aria-label="스케치">
                 <span className="picture-diary-choice-icon"><Brush size={23}/></span>
+                <strong>스케치</strong>
               </button>
-              <button type="button" onClick={() => { setChoiceOpen(false); imageInputRef.current?.click(); }}>
+              <button type="button" onClick={() => { setChoiceOpen(false); imageInputRef.current?.click(); }} aria-label="이미지 업로드">
                 <span className="picture-diary-choice-icon"><ImagePlus size={23}/></span>
+                <strong>이미지 업로드</strong>
               </button>
             </div>
           </section>
