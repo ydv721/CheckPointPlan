@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type TouchEvent as ReactTouchEvent, type WheelEvent as ReactWheelEvent } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronLeft, ChevronRight, Code2, Eraser, FileDown, Heading1, Highlighter, Image as ImageIcon, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, StickyNote as StickyNoteIcon, Strikethrough, Type, Underline, Check, Trash2, X } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronLeft, ChevronRight, Code2, Eraser, FileDown, Heading1, Highlighter, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, StickyNote as StickyNoteIcon, Strikethrough, Type, Underline, Check, Trash2, X } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import PlannerSpread from "@/components/PlannerSpread";
 import type { ThemeName } from "@/lib/types";
@@ -789,7 +789,6 @@ export default function MarkdownDiary({
   const [error, setError] = useState("");
   const [, setSaveState] = useState<"saved" | "dirty" | "saving" | "error">("saved");
   const [exportFeedback, setExportFeedback] = useState("");
-  const [imageExporting, setImageExporting] = useState(false);
   const [pdfExporting, setPdfExporting] = useState(false);
   const [pageDeleteOpen, setPageDeleteOpen] = useState(false);
   const [colorPaletteOpen, setColorPaletteOpen] = useState(false);
@@ -1891,60 +1890,8 @@ export default function MarkdownDiary({
   }
 
 
-  async function downloadImage() {
-    if (!activeNote || !leftEditorRef.current || loading || imageExporting || pdfExporting) return;
-
-    const pageCount = getCurrentPages().length;
-    setImageExporting(true);
-    setExportFeedback(pageCount + "개 페이지를 하나의 긴 PNG로 만들고 있습니다.");
-
-    try {
-      const { canvas, pageCount: renderedPageCount, outputScale } = await renderFullNotebookCanvas();
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob(result => {
-          if (result) resolve(result);
-          else reject(new Error("PNG 이미지 데이터를 생성하지 못했습니다."));
-        }, "image/png");
-      });
-      if (blob.size === 0) throw new Error("저장할 이미지 데이터가 비어 있습니다.");
-
-      const now = new Date();
-      const dateStamp = [
-        now.getFullYear(),
-        String(now.getMonth() + 1).padStart(2, "0"),
-        String(now.getDate()).padStart(2, "0")
-      ].join("-");
-      const safeTitle = (notebookTitle.trim() || "프리노트")
-        .replace(/[\\/:*?"<>|]+/g, "-")
-        .replace(/\s+/g, " ")
-        .trim();
-      const fileName = safeTitle + "_전체_" + dateStamp + ".png";
-
-      const imageUrl = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = imageUrl;
-      anchor.download = fileName;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      window.setTimeout(() => URL.revokeObjectURL(imageUrl), 1000);
-
-      const scaledMessage = outputScale < 1 ? " (이미지 크기에 맞춰 해상도를 조정했습니다.)" : "";
-      setExportFeedback(
-        renderedPageCount + "개 페이지를 이어 붙인 PNG 저장 완료. (" +
-        canvas.width + " × " + canvas.height + "px)" + scaledMessage
-      );
-    } catch (imageError) {
-      console.error("Full notebook PNG export failed:", imageError);
-      setExportFeedback(imageError instanceof Error
-        ? "이미지 저장에 실패했습니다: " + imageError.message
-        : "이미지 저장에 실패했습니다. 다시 시도해 주세요.");
-    } finally {
-      setImageExporting(false);
-    }
-  }
   async function downloadPdf() {
-    if (!activeNote || !leftEditorRef.current || loading || pdfExporting || imageExporting) return;
+    if (!activeNote || !leftEditorRef.current || loading || pdfExporting) return;
 
     const pageCount = getCurrentPages().length;
     setPdfExporting(true);
@@ -2083,22 +2030,10 @@ export default function MarkdownDiary({
 
                       <button
                         type="button"
-                        className="markdown-share-top-button markdown-image-top-button"
-                        aria-label={imageExporting ? "전체 노트 이미지 저장 중" : "전체 노트 PNG 다운로드"}
-                        title={imageExporting ? "전체 노트 이미지 저장 중" : "전체 노트 PNG 다운로드"}
-                        disabled={imageExporting || pdfExporting || loading || !activeNote}
-                        aria-busy={imageExporting}
-                        onMouseDown={event => event.preventDefault()}
-                        onClick={() => { void downloadImage(); }}
-                      >
-                        <ImageIcon size={16} strokeWidth={2}/>
-                      </button>
-                      <button
-                        type="button"
                         className="markdown-share-top-button markdown-pdf-top-button"
                         aria-label={pdfExporting ? "PDF 저장 중" : "PDF 다운로드"}
                         title={pdfExporting ? "PDF 저장 중" : "PDF 다운로드"}
-                        disabled={pdfExporting || imageExporting || loading || !activeNote}
+                        disabled={pdfExporting || loading || !activeNote}
                         aria-busy={pdfExporting}
                         onMouseDown={event => event.preventDefault()}
                         onClick={() => { void downloadPdf(); }}
