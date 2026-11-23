@@ -11123,3 +11123,17 @@ html,body{width:100%;overflow-x:clip}
 .picture-diary-book-frame .diary-small-writing-panel .section-heading > small {
   font-weight: 700 !important;
 }
+
+
+/* Picture Diary: balance the drawing and writing area start heights. */
+@media (min-width:781px) {
+  /* Remove the extra top offset inherited from the planner's FREE NOTE layout. */
+  .picture-diary-book-frame > .diary-right-page > .diary-journal-section {
+    margin-top:0 !important;
+  }
+
+  /* Keep a compact, even gap below the weather and time controls. */
+  .picture-diary-book-frame .diary-daily-info {
+    margin-bottom:8px !important;
+  }
+}
