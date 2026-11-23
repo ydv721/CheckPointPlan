@@ -783,7 +783,6 @@ export default function MarkdownDiary({
   const [currentStroke, setCurrentStroke] = useState<DrawingStroke | null>(null);
   const [drawingCanvasHeight, setDrawingCanvasHeight] = useState(1);
   const [drawingScrollTop, setDrawingScrollTop] = useState(0);
-  const captureRef = useRef<HTMLDivElement>(null);
   const leftEditorRef = useRef<HTMLDivElement>(null);
   const currentStrokeRef = useRef<DrawingStroke | null>(null);
   const drawingPointerIdRef = useRef<number | null>(null);
@@ -1495,100 +1494,375 @@ export default function MarkdownDiary({
   }
 
   async function downloadImage() {
-    const target = captureRef.current;
     const editor = leftEditorRef.current;
-    if (!activeNote || !target || !editor || loading || imageExporting || pdfExporting) return;
+    if (!activeNote || !editor || loading || imageExporting || pdfExporting) return;
+
+    const pagesForImage = getCurrentPages();
+    const annotationsForImage = normalizePageAnnotations(pageAnnotations, pagesForImage.length);
+    if (currentStroke) {
+      const currentAnnotations = annotationsForImage[activePageIndex] ?? createEmptyPageAnnotations();
+      annotationsForImage[activePageIndex] = {
+        ...currentAnnotations,
+        strokes: [
+          ...currentAnnotations.strokes.filter(stroke => stroke.id !== currentStroke.id),
+          currentStroke
+        ]
+      };
+    }
 
     setImageExporting(true);
-    setExportFeedback("프리노트 전체 영역을 이미지로 만들고 있습니다.");
+    setExportFeedback(pagesForImage.length + "개 페이지를 하나의 긴 PNG로 만들고 있습니다.");
+
+    let exportRoot: HTMLDivElement | null = null;
 
     try {
       await loadHtml2Canvas();
       if (!window.html2canvas) throw new Error("이미지 변환 도구를 사용할 수 없습니다.");
 
       if (document.fonts?.ready) await document.fonts.ready;
+
+      const editorStyles = window.getComputedStyle(editor);
+      const fullWidth = Math.ceil(editor.getBoundingClientRect().width);
+      const basePageHeight = Math.ceil(Math.max(320, editor.clientHeight, drawingCanvasHeight));
+
+      if (fullWidth <= 0 || basePageHeight <= 0) {
+        throw new Error("노트의 크기를 확인할 수 없습니다.");
+      }
+
+      exportRoot = document.createElement("div");
+      exportRoot.className = "markdown-free-note-section markdown-long-image-export-root";
+      exportRoot.style.cssText = [
+        "position:absolute",
+        "left:-10000px",
+        "top:0",
+        "display:block",
+        "flex:none",
+        "width:" + fullWidth + "px",
+        "min-width:0",
+        "min-height:0",
+        "height:auto",
+        "max-height:none",
+        "margin:0",
+        "padding:0",
+        "overflow:visible",
+        "background:#ffffff",
+        "color:" + editorStyles.color,
+        "font-family:" + editorStyles.fontFamily,
+        "box-sizing:border-box",
+        "z-index:-1",
+        "visibility:visible"
+      ].join(";");
+
+      ["--accent", "--line", "--paper", "--soft", "--ink", "--font"].forEach(variable => {
+        const value = editorStyles.getPropertyValue(variable).trim();
+        if (value) exportRoot?.style.setProperty(variable, value);
+      });
+
+      const pagesRoot = document.createElement("div");
+      pagesRoot.className = "markdown-long-image-pages";
+      pagesRoot.style.cssText = [
+        "display:flex",
+        "flex-direction:column",
+        "gap:18px",
+        "width:100%",
+        "height:auto",
+        "margin:0",
+        "padding:0",
+        "box-sizing:border-box"
+      ].join(";");
+
+      const pageRecords: Array<{
+        paper: HTMLDivElement;
+        viewport: HTMLDivElement;
+        editor: HTMLDivElement;
+        drawingLayer: SVGSVGElement | null;
+        stickyLayer: HTMLDivElement;
+        stickyNotes: Array<{ element: HTMLDivElement; top: number }>;
+        annotationHeight: number;
+        drawingHeight: number;
+      }> = [];
+
+      pagesForImage.forEach((markdown, index) => {
+        const annotations = annotationsForImage[index] ?? createEmptyPageAnnotations(basePageHeight);
+
+        const page = document.createElement("section");
+        page.className = "markdown-long-image-page";
+        page.dataset.pageIndex = String(index);
+        page.style.cssText = [
+          "display:block",
+          "width:100%",
+          "min-width:0",
+          "margin:0",
+          "padding:0",
+          "box-sizing:border-box"
+        ].join(";");
+
+        const paper = document.createElement("div");
+        paper.className = "free-note-paper markdown-long-image-paper";
+        paper.style.cssText = [
+          "position:relative",
+          "display:block",
+          "flex:none",
+          "width:100%",
+          "height:auto",
+          "min-height:" + basePageHeight + "px",
+          "max-height:none",
+          "overflow:visible",
+          "box-sizing:border-box",
+          "border:1px solid var(--line)",
+          "border-radius:10px",
+          "background:var(--soft)"
+        ].join(";");
+
+        const viewport = document.createElement("div");
+        viewport.className = "free-note-editor-viewport markdown-long-image-viewport";
+        viewport.style.cssText = [
+          "position:relative",
+          "display:block",
+          "width:100%",
+          "height:auto",
+          "min-height:" + basePageHeight + "px",
+          "max-height:none",
+          "overflow:visible",
+          "isolation:isolate",
+          "box-sizing:border-box"
+        ].join(";");
+
+        const pageEditor = document.createElement("div");
+        pageEditor.className = "free-note-input markdown-editor-grid";
+        pageEditor.innerHTML = markdownToHtml(markdown);
+        pageEditor.style.cssText = [
+          "position:relative !important",
+          "z-index:1 !important",
+          "display:block !important",
+          "flex:0 0 auto !important",
+          "box-sizing:border-box !important",
+          "width:100% !important",
+          "height:auto !important",
+          "min-height:" + basePageHeight + "px !important",
+          "max-height:none !important",
+          "margin:0 !important",
+          "padding:18px 22px !important",
+          "overflow:visible !important",
+          "overflow-y:visible !important",
+          "border:0 !important",
+          "border-radius:0 !important",
+          "outline:0 !important",
+          "box-shadow:none !important"
+        ].join(";");
+
+        pageEditor.querySelectorAll<HTMLSelectElement>(".markdown-code-language").forEach(select => {
+          const language = document.createElement("span");
+          language.className = "markdown-code-language-label";
+          language.textContent = select.selectedOptions[0]?.textContent?.trim() || select.value.toUpperCase();
+          language.style.cssText = "color:#68748a;font-size:9px;";
+          select.replaceWith(language);
+        });
+        pageEditor.querySelectorAll("button, input, textarea, script, iframe, object, embed").forEach(element => element.remove());
+        pageEditor.querySelectorAll<HTMLElement>("*").forEach(element => {
+          element.removeAttribute("contenteditable");
+          Array.from(element.attributes).forEach(attribute => {
+            if (attribute.name.toLowerCase().startsWith("on")) element.removeAttribute(attribute.name);
+            if (
+              ["href", "src"].includes(attribute.name.toLowerCase()) &&
+              /^\s*javascript:/i.test(attribute.value)
+            ) element.removeAttribute(attribute.name);
+          });
+        });
+
+        const maxStrokeY = annotations.strokes.reduce(
+          (bottom, stroke) => Math.max(bottom, ...stroke.points.map(point => point.y)),
+          0
+        );
+        const drawingHeight = Math.ceil(Math.max(1, annotations.height, maxStrokeY + 24));
+        let drawingLayer: SVGSVGElement | null = null;
+
+        if (annotations.strokes.length > 0) {
+          drawingLayer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+          drawingLayer.classList.add("free-note-drawing-layer");
+          drawingLayer.setAttribute("viewBox", "0 0 1000 " + drawingHeight);
+          drawingLayer.setAttribute("preserveAspectRatio", "none");
+          drawingLayer.setAttribute("aria-hidden", "true");
+          drawingLayer.style.cssText = [
+            "position:absolute",
+            "top:0",
+            "left:0",
+            "z-index:4",
+            "display:block",
+            "width:100%",
+            "height:" + drawingHeight + "px",
+            "pointer-events:none",
+            "touch-action:none",
+            "overflow:visible",
+            "transform:none"
+          ].join(";");
+
+          annotations.strokes.forEach(stroke => {
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            const pathData = stroke.points.map((point, pointIndex) =>
+              (pointIndex === 0 ? "M " : "L ") + point.x + " " + point.y
+            ).join(" ");
+            path.setAttribute("d", stroke.points.length === 1 ? pathData + " l 0.1 0" : pathData);
+            path.setAttribute("fill", "none");
+            path.setAttribute("stroke", stroke.color);
+            path.setAttribute("stroke-width", stroke.tool === "highlighter" ? "18" : "3.2");
+            path.setAttribute("stroke-opacity", stroke.tool === "highlighter" ? "0.42" : "0.95");
+            path.setAttribute("stroke-linecap", "round");
+            path.setAttribute("stroke-linejoin", "round");
+            path.setAttribute("vector-effect", "non-scaling-stroke");
+            drawingLayer?.appendChild(path);
+          });
+        }
+
+        const stickyLayer = document.createElement("div");
+        stickyLayer.className = "free-note-sticky-layer markdown-long-image-sticky-layer";
+        stickyLayer.style.cssText = [
+          "position:absolute",
+          "top:0",
+          "left:0",
+          "z-index:5",
+          "width:100%",
+          "height:" + basePageHeight + "px",
+          "pointer-events:none",
+          "transform:none",
+          "overflow:visible"
+        ].join(";");
+
+        const stickyNotes: Array<{ element: HTMLDivElement; top: number }> = [];
+        annotations.notes.forEach(note => {
+          const sticky = document.createElement("div");
+          sticky.className = "free-note-sticky-note";
+          sticky.style.left = (note.x / 10) + "%";
+          sticky.style.top = note.y + "px";
+          sticky.style.backgroundColor = note.color;
+
+          const header = document.createElement("div");
+          header.className = "free-note-sticky-note-header";
+          header.textContent = "MEMO";
+
+          const body = document.createElement("div");
+          body.className = "markdown-long-image-sticky-note-body";
+          body.textContent = note.text;
+          body.style.cssText = [
+            "display:block",
+            "flex:1 1 auto",
+            "width:100%",
+            "min-height:84px",
+            "height:auto",
+            "padding:8px 9px",
+            "box-sizing:border-box",
+            "background:transparent",
+            "color:#38332a",
+            "font-family:" + editorStyles.fontFamily,
+            "font-size:12px",
+            "font-weight:500",
+            "line-height:1.5",
+            "white-space:pre-wrap",
+            "overflow-wrap:anywhere"
+          ].join(";");
+
+          sticky.append(header, body);
+          stickyLayer.appendChild(sticky);
+          stickyNotes.push({ element: sticky, top: note.y });
+        });
+
+        viewport.appendChild(pageEditor);
+        if (drawingLayer) viewport.appendChild(drawingLayer);
+        viewport.appendChild(stickyLayer);
+        paper.appendChild(viewport);
+        page.appendChild(paper);
+        pagesRoot.appendChild(page);
+
+        pageRecords.push({
+          paper,
+          viewport,
+          editor: pageEditor,
+          drawingLayer,
+          stickyLayer,
+          stickyNotes,
+          annotationHeight: annotations.height,
+          drawingHeight
+        });
+      });
+
+      exportRoot.appendChild(pagesRoot);
+      document.body.appendChild(exportRoot);
+
+      if (document.fonts?.ready) await document.fonts.ready;
+      await new Promise<void>(resolve => {
+        window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve()));
+      });
+
+      pageRecords.forEach(record => {
+        const textHeight = Math.max(
+          record.editor.scrollHeight,
+          record.editor.getBoundingClientRect().height
+        );
+        const stickyBottom = record.stickyNotes.reduce(
+          (bottom, note) => Math.max(bottom, note.top + note.element.offsetHeight),
+          0
+        );
+        const pageHeight = Math.ceil(Math.max(
+          basePageHeight,
+          textHeight,
+          record.annotationHeight,
+          record.drawingHeight,
+          stickyBottom
+        ));
+
+        record.paper.style.height = pageHeight + "px";
+        record.paper.style.minHeight = pageHeight + "px";
+        record.viewport.style.height = pageHeight + "px";
+        record.viewport.style.minHeight = pageHeight + "px";
+        record.editor.style.setProperty("height", pageHeight + "px", "important");
+        record.editor.style.setProperty("min-height", pageHeight + "px", "important");
+        record.stickyLayer.style.height = pageHeight + "px";
+      });
+
       await new Promise<void>(resolve => window.requestAnimationFrame(() => resolve()));
 
-      const stickyNotes = Array.from(target.querySelectorAll<HTMLElement>(".free-note-sticky-note"));
-      const stickyNotesBottom = stickyNotes.reduce(
-        (bottom, note) => Math.max(bottom, note.offsetTop + note.offsetHeight),
-        0
+      const totalWidth = Math.ceil(exportRoot.getBoundingClientRect().width);
+      const totalHeight = Math.ceil(pagesRoot.getBoundingClientRect().height);
+      if (totalWidth <= 0 || totalHeight <= 0) {
+        throw new Error("전체 페이지의 이미지 크기를 계산하지 못했습니다.");
+      }
+
+      const maxCanvasDimension = 32767;
+      const maxCanvasArea = 268435456;
+      const outputScale = Math.min(
+        1,
+        maxCanvasDimension / totalWidth,
+        maxCanvasDimension / totalHeight,
+        Math.sqrt(maxCanvasArea / (totalWidth * totalHeight))
       );
-      const fullHeight = Math.ceil(Math.max(
-        target.clientHeight,
-        editor.clientHeight,
-        editor.scrollHeight,
-        drawingCanvasHeight,
-        currentPageAnnotations.height,
-        stickyNotesBottom
-      ));
-      const fullWidth = Math.ceil(target.getBoundingClientRect().width);
-
-      if (fullWidth <= 0 || fullHeight <= 0) {
-        throw new Error("프리노트의 전체 크기를 계산하지 못했습니다.");
-      }
-      if (fullWidth > 32767 || fullHeight > 32767 || fullWidth * fullHeight > 268435456) {
-        throw new Error("현재 브라우저에서 한 장으로 저장할 수 있는 이미지 크기를 초과했습니다. 페이지를 나누어 저장해 주세요.");
+      if (outputScale < 0.35) {
+        throw new Error("페이지가 너무 많아 한 장의 PNG로 저장하기 어렵습니다. PDF로 저장하거나 페이지 수를 줄여 주세요.");
       }
 
-      const targetTop = target.getBoundingClientRect().top;
-      const captureWindowHeight = Math.max(window.innerHeight, Math.ceil(targetTop + fullHeight));
-
-      const canvas = await window.html2canvas(target, {
-        scale: 1,
+      const canvas = await window.html2canvas(exportRoot, {
+        scale: outputScale,
         backgroundColor: "#ffffff",
         useCORS: true,
         logging: false,
         normalizeDom: false,
-        width: fullWidth,
-        height: fullHeight,
+        width: totalWidth,
+        height: totalHeight,
         windowWidth: window.innerWidth,
-        windowHeight: captureWindowHeight,
+        windowHeight: Math.max(window.innerHeight, Math.min(totalHeight, maxCanvasDimension)),
         scrollX: 0,
         scrollY: 0,
-        onclone: (_clonedDocument, clonedTarget) => {
-          const setImportantStyle = (
-            element: HTMLElement | SVGElement,
-            property: string,
-            value: string
-          ) => element.style.setProperty(property, value, "important");
+        onclone: clonedDocument => {
+          const clonedRoot = clonedDocument.querySelector<HTMLElement>(".markdown-long-image-export-root");
+          if (!clonedRoot) return;
 
-          const clonedEditor = clonedTarget.querySelector<HTMLElement>(".free-note-input");
-          const clonedDrawingLayer = clonedTarget.querySelector<SVGSVGElement>(".free-note-drawing-layer");
-          const clonedStickyLayer = clonedTarget.querySelector<HTMLElement>(".free-note-sticky-layer");
-
-          setImportantStyle(clonedTarget, "height", fullHeight + "px");
-          setImportantStyle(clonedTarget, "min-height", fullHeight + "px");
-          setImportantStyle(clonedTarget, "max-height", "none");
-          setImportantStyle(clonedTarget, "flex", "0 0 auto");
-          setImportantStyle(clonedTarget, "overflow", "visible");
-          setImportantStyle(clonedTarget, "contain", "none");
-
-          if (clonedEditor) {
-            setImportantStyle(clonedEditor, "height", fullHeight + "px");
-            setImportantStyle(clonedEditor, "min-height", fullHeight + "px");
-            setImportantStyle(clonedEditor, "max-height", "none");
-            setImportantStyle(clonedEditor, "flex", "0 0 auto");
-            setImportantStyle(clonedEditor, "overflow", "visible");
-            setImportantStyle(clonedEditor, "overflow-y", "visible");
-            clonedEditor.scrollTop = 0;
-            clonedEditor.scrollLeft = 0;
-          }
-
-          if (clonedDrawingLayer) {
-            clonedDrawingLayer.setAttribute("viewBox", "0 0 1000 " + fullHeight);
-            setImportantStyle(clonedDrawingLayer, "height", fullHeight + "px");
-            setImportantStyle(clonedDrawingLayer, "transform", "none");
-          }
-
-          if (clonedStickyLayer) {
-            setImportantStyle(clonedStickyLayer, "height", fullHeight + "px");
-            setImportantStyle(clonedStickyLayer, "transform", "none");
-            setImportantStyle(clonedStickyLayer, "overflow", "visible");
-          }
-
-          clonedTarget.scrollTop = 0;
-          clonedTarget.scrollLeft = 0;
+          clonedRoot.style.setProperty("position", "static", "important");
+          clonedRoot.style.setProperty("left", "auto", "important");
+          clonedRoot.style.setProperty("top", "auto", "important");
+          clonedRoot.style.setProperty("z-index", "auto", "important");
+          clonedRoot.style.setProperty("transform", "none", "important");
+          clonedRoot.style.setProperty("visibility", "visible", "important");
+          clonedRoot.style.setProperty("opacity", "1", "important");
+          clonedRoot.style.setProperty("width", totalWidth + "px", "important");
         }
       });
 
@@ -1602,7 +1876,6 @@ export default function MarkdownDiary({
           else reject(new Error("PNG 이미지 데이터를 생성하지 못했습니다."));
         }, "image/png");
       });
-
       if (blob.size === 0) throw new Error("저장할 이미지 데이터가 비어 있습니다.");
 
       const now = new Date();
@@ -1615,7 +1888,7 @@ export default function MarkdownDiary({
         .replace(/[\\/:*?"<>|]+/g, "-")
         .replace(/\s+/g, " ")
         .trim();
-      const fileName = safeTitle + "_" + dateStamp + ".png";
+      const fileName = safeTitle + "_전체_" + dateStamp + ".png";
 
       const imageUrl = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
@@ -1626,13 +1899,18 @@ export default function MarkdownDiary({
       anchor.remove();
       window.setTimeout(() => URL.revokeObjectURL(imageUrl), 1000);
 
-      setExportFeedback("전체 프리노트 PNG 다운로드가 완료되었습니다. (" + canvas.width + " × " + canvas.height + "px)");
+      const scaledMessage = outputScale < 1 ? " (이미지 크기에 맞춰 해상도를 조정했습니다.)" : "";
+      setExportFeedback(
+        pagesForImage.length + "개 페이지를 이어 붙인 PNG 저장 완료. (" +
+        canvas.width + " × " + canvas.height + "px)" + scaledMessage
+      );
     } catch (imageError) {
-      console.error("PNG export failed:", imageError);
+      console.error("Full notebook PNG export failed:", imageError);
       setExportFeedback(imageError instanceof Error
         ? "이미지 저장에 실패했습니다: " + imageError.message
         : "이미지 저장에 실패했습니다. 다시 시도해 주세요.");
     } finally {
+      exportRoot?.remove();
       setImageExporting(false);
     }
   }
@@ -2048,8 +2326,8 @@ export default function MarkdownDiary({
                       <button
                         type="button"
                         className="markdown-share-top-button markdown-image-top-button"
-                        aria-label={imageExporting ? "이미지 저장 중" : "PNG 이미지 다운로드"}
-                        title={imageExporting ? "이미지 저장 중" : "PNG 이미지 다운로드"}
+                        aria-label={imageExporting ? "전체 노트 이미지 저장 중" : "전체 노트 PNG 다운로드"}
+                        title={imageExporting ? "전체 노트 이미지 저장 중" : "전체 노트 PNG 다운로드"}
                         disabled={imageExporting || pdfExporting || loading || !activeNote}
                         aria-busy={imageExporting}
                         onMouseDown={event => event.preventDefault()}
@@ -2250,7 +2528,7 @@ export default function MarkdownDiary({
                             </button>
                             </div>
                         ) : null}
-                        <div ref={captureRef} className="free-note-editor-viewport">
+                        <div className="free-note-editor-viewport">
                         <div
                           ref={leftEditorRef}
                           className={"free-note-input markdown-editor-grid" + (drawingMode ? " is-readonly" : "")}
