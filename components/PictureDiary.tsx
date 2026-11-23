@@ -663,9 +663,6 @@ export default function PictureDiary({
                   <DiaryTimePicker label="잠잘 시간" value={entry.sleep_time} onChange={sleep_time => updateEntry({ sleep_time })}/>
                 </div>
 
-                <div className="diary-drawing-heading">
-                  <strong>오늘의 그림</strong>
-                </div>
                 <button type="button" className={drawingUrl ? "picture-diary-drawing-area has-image" : "picture-diary-drawing-area"}
                   disabled={loading || uploading} onClick={() => setChoiceOpen(true)} aria-label="그림 추가 또는 변경">
                   {drawingUrl ? (
