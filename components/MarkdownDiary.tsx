@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type TouchEvent as ReactTouchEvent, type WheelEvent as ReactWheelEvent } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronLeft, ChevronRight, Code2, Eraser, FileDown, Heading1, Highlighter, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, Share2, StickyNote as StickyNoteIcon, Strikethrough, Type, Underline, Check, Trash2, X } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronLeft, ChevronRight, Code2, Eraser, FileDown, Heading1, Highlighter, Image as ImageIcon, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, StickyNote as StickyNoteIcon, Strikethrough, Type, Underline, Check, Trash2, X } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import PlannerSpread from "@/components/PlannerSpread";
 import type { ThemeName } from "@/lib/types";
@@ -1528,7 +1528,7 @@ export default function MarkdownDiary({
       ].join("-");
       const safeTitle = (notebookTitle.trim() || "프리노트")
         .replace(/[\\/:*?"<>|]+/g, "-")
-        .replace(/\\s+/g, " ")
+        .replace(/\s+/g, " ")
         .trim();
       const fileName = `${safeTitle}_${dateStamp}.png`;
 
@@ -1554,7 +1554,7 @@ export default function MarkdownDiary({
 
   async function downloadPdf() {
     const editor = leftEditorRef.current;
-    if (!activeNote || !editor || loading || pdfExporting) return;
+    if (!activeNote || !editor || loading || pdfExporting || imageExporting) return;
     const pagesForPdf = getCurrentPages();
     const annotationsForPdf = decodeNoteAnnotations(activeNote.content);
 
