@@ -8830,7 +8830,7 @@ html,body{width:100%;overflow-x:clip}
 
 
 /* Share feedback stays beside the FREE NOTE heading action. */
-.markdown-share-feedback{
+.markdown-export-feedback{
   flex:0 1 auto;
   max-width:220px;
   overflow:hidden;
@@ -8844,7 +8844,7 @@ html,body{width:100%;overflow-x:clip}
   .markdown-note-heading-actions{
     gap:6px;
   }
-  .markdown-share-feedback{
+  .markdown-export-feedback{
     max-width:130px;
     font-size:10px;
   }
