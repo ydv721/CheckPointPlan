@@ -11015,10 +11015,18 @@ html,body{width:100%;overflow-x:clip}
   box-shadow:none !important;
 }
 
-/* Picture Diary labels: unify all Korean section labels at 14px. */
+/* Picture Diary: consistent 14px regular-weight Korean labels. */
 .picture-diary-book-frame .diary-title-field label,
 .picture-diary-book-frame .diary-field-label,
 .picture-diary-book-frame .diary-small-writing-panel .section-heading > span {
+  color:var(--ink) !important;
   font-size:14px !important;
+  font-weight:400 !important;
+  opacity:1 !important;
+}
+
+/* Picture Diary: time display text. */
+.picture-diary-book-frame .diary-time-value {
+  font-size:15px !important;
 }
 
