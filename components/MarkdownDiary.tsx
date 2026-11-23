@@ -33,6 +33,14 @@ type Html2CanvasOptions = {
   scale?: number;
   useCORS?: boolean;
   logging?: boolean;
+  width?: number;
+  height?: number;
+  windowWidth?: number;
+  windowHeight?: number;
+  scrollX?: number;
+  scrollY?: number;
+  normalizeDom?: boolean;
+  onclone?: (clonedDocument: Document, clonedElement: HTMLElement) => void | Promise<void>;
 };
 
 declare global {
@@ -1488,10 +1496,11 @@ export default function MarkdownDiary({
 
   async function downloadImage() {
     const target = captureRef.current;
-    if (!activeNote || !target || loading || imageExporting || pdfExporting) return;
+    const editor = leftEditorRef.current;
+    if (!activeNote || !target || !editor || loading || imageExporting || pdfExporting) return;
 
     setImageExporting(true);
-    setExportFeedback("PNG 이미지를 생성하고 있습니다.");
+    setExportFeedback("프리노트 전체 영역을 이미지로 만들고 있습니다.");
 
     try {
       await loadHtml2Canvas();
@@ -1500,11 +1509,87 @@ export default function MarkdownDiary({
       if (document.fonts?.ready) await document.fonts.ready;
       await new Promise<void>(resolve => window.requestAnimationFrame(() => resolve()));
 
+      const stickyNotes = Array.from(target.querySelectorAll<HTMLElement>(".free-note-sticky-note"));
+      const stickyNotesBottom = stickyNotes.reduce(
+        (bottom, note) => Math.max(bottom, note.offsetTop + note.offsetHeight),
+        0
+      );
+      const fullHeight = Math.ceil(Math.max(
+        target.clientHeight,
+        editor.clientHeight,
+        editor.scrollHeight,
+        drawingCanvasHeight,
+        currentPageAnnotations.height,
+        stickyNotesBottom
+      ));
+      const fullWidth = Math.ceil(target.getBoundingClientRect().width);
+
+      if (fullWidth <= 0 || fullHeight <= 0) {
+        throw new Error("프리노트의 전체 크기를 계산하지 못했습니다.");
+      }
+      if (fullWidth > 32767 || fullHeight > 32767 || fullWidth * fullHeight > 268435456) {
+        throw new Error("현재 브라우저에서 한 장으로 저장할 수 있는 이미지 크기를 초과했습니다. 페이지를 나누어 저장해 주세요.");
+      }
+
+      const targetTop = target.getBoundingClientRect().top;
+      const captureWindowHeight = Math.max(window.innerHeight, Math.ceil(targetTop + fullHeight));
+
       const canvas = await window.html2canvas(target, {
         scale: 1,
         backgroundColor: "#ffffff",
         useCORS: true,
-        logging: false
+        logging: false,
+        normalizeDom: false,
+        width: fullWidth,
+        height: fullHeight,
+        windowWidth: window.innerWidth,
+        windowHeight: captureWindowHeight,
+        scrollX: 0,
+        scrollY: 0,
+        onclone: (_clonedDocument, clonedTarget) => {
+          const setImportantStyle = (
+            element: HTMLElement | SVGElement,
+            property: string,
+            value: string
+          ) => element.style.setProperty(property, value, "important");
+
+          const clonedEditor = clonedTarget.querySelector<HTMLElement>(".free-note-input");
+          const clonedDrawingLayer = clonedTarget.querySelector<SVGSVGElement>(".free-note-drawing-layer");
+          const clonedStickyLayer = clonedTarget.querySelector<HTMLElement>(".free-note-sticky-layer");
+
+          setImportantStyle(clonedTarget, "height", fullHeight + "px");
+          setImportantStyle(clonedTarget, "min-height", fullHeight + "px");
+          setImportantStyle(clonedTarget, "max-height", "none");
+          setImportantStyle(clonedTarget, "flex", "0 0 auto");
+          setImportantStyle(clonedTarget, "overflow", "visible");
+          setImportantStyle(clonedTarget, "contain", "none");
+
+          if (clonedEditor) {
+            setImportantStyle(clonedEditor, "height", fullHeight + "px");
+            setImportantStyle(clonedEditor, "min-height", fullHeight + "px");
+            setImportantStyle(clonedEditor, "max-height", "none");
+            setImportantStyle(clonedEditor, "flex", "0 0 auto");
+            setImportantStyle(clonedEditor, "overflow", "visible");
+            setImportantStyle(clonedEditor, "overflow-y", "visible");
+            clonedEditor.scrollTop = 0;
+            clonedEditor.scrollLeft = 0;
+          }
+
+          if (clonedDrawingLayer) {
+            clonedDrawingLayer.setAttribute("viewBox", "0 0 1000 " + fullHeight);
+            setImportantStyle(clonedDrawingLayer, "height", fullHeight + "px");
+            setImportantStyle(clonedDrawingLayer, "transform", "none");
+          }
+
+          if (clonedStickyLayer) {
+            setImportantStyle(clonedStickyLayer, "height", fullHeight + "px");
+            setImportantStyle(clonedStickyLayer, "transform", "none");
+            setImportantStyle(clonedStickyLayer, "overflow", "visible");
+          }
+
+          clonedTarget.scrollTop = 0;
+          clonedTarget.scrollLeft = 0;
+        }
       });
 
       if (canvas.width <= 0 || canvas.height <= 0) {
@@ -1530,7 +1615,7 @@ export default function MarkdownDiary({
         .replace(/[\\/:*?"<>|]+/g, "-")
         .replace(/\s+/g, " ")
         .trim();
-      const fileName = `${safeTitle}_${dateStamp}.png`;
+      const fileName = safeTitle + "_" + dateStamp + ".png";
 
       const imageUrl = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
@@ -1541,11 +1626,11 @@ export default function MarkdownDiary({
       anchor.remove();
       window.setTimeout(() => URL.revokeObjectURL(imageUrl), 1000);
 
-      setExportFeedback("PNG 이미지 다운로드가 완료되었습니다.");
+      setExportFeedback("전체 프리노트 PNG 다운로드가 완료되었습니다. (" + canvas.width + " × " + canvas.height + "px)");
     } catch (imageError) {
       console.error("PNG export failed:", imageError);
       setExportFeedback(imageError instanceof Error
-        ? `이미지 저장에 실패했습니다: ${imageError.message}`
+        ? "이미지 저장에 실패했습니다: " + imageError.message
         : "이미지 저장에 실패했습니다. 다시 시도해 주세요.");
     } finally {
       setImageExporting(false);
