@@ -283,6 +283,7 @@ export default function PictureDiary({
   const [sketchOpen, setSketchOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const datePickerRef = useRef<HTMLInputElement>(null);
   const entryRef = useRef(entry);
   const lastSavedRef = useRef("");
   const saveQueueRef = useRef<Promise<boolean>>(Promise.resolve(true));
@@ -548,10 +549,33 @@ export default function PictureDiary({
                     <button type="button" className="month-nav-button" aria-label="이전 날짜" title="이전 날짜" disabled={loading || uploading} onClick={() => void navigateDate(shiftDate(date, -1))}><ChevronLeft size={16}/></button>
                     <strong>{dateLabel(date)}</strong>
                     <button type="button" className="month-nav-button" aria-label="다음 날짜" title="다음 날짜" disabled={loading || uploading} onClick={() => void navigateDate(shiftDate(date, 1))}><ChevronRight size={16}/></button>
-                    <label className="diary-date-picker" title="날짜 선택">
-                      <CalendarDays size={16}/>
-                      <input type="date" aria-label="그림일기 날짜 선택" value={date} disabled={loading || uploading} onChange={event => void navigateDate(event.target.value)}/>
-                    </label>
+                    <div className="date-picker-trigger">
+                      <button
+                        type="button"
+                        className="date-picker-trigger-button"
+                        aria-label="달력에서 날짜 선택"
+                        title="달력에서 날짜 선택"
+                        disabled={loading || uploading}
+                        onClick={() => {
+                          const picker = datePickerRef.current as (HTMLInputElement & { showPicker?: () => void }) | null;
+                          if (!picker) return;
+                          if (typeof picker.showPicker === "function") picker.showPicker();
+                          else picker.click();
+                        }}
+                      >
+                        <CalendarDays size={16}/>
+                      </button>
+                      <input
+                        ref={datePickerRef}
+                        className="date-picker-input"
+                        aria-hidden="true"
+                        tabIndex={-1}
+                        type="date"
+                        value={date}
+                        disabled={loading || uploading}
+                        onChange={event => void navigateDate(event.target.value)}
+                      />
+                    </div>
                   </div>
                 </div>
 
