@@ -11081,6 +11081,7 @@ html,body{width:100%;overflow-x:clip}
 .day-book-frame .free-note-input,
 .day-book-frame .color-guide-input,
 .month-book-frame .month-day-note,
+.month-book-frame .month-day-cell > .month-day-note,
 .month-book-frame .month-memo-note,
 .markdown-free-note-section .markdown-editor-grid,
 .picture-diary-book-frame .diary-title-field input,
