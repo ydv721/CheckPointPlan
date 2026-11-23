@@ -9375,19 +9375,6 @@ html,body{width:100%;overflow-x:clip}
   border-radius:10px;
   background:color-mix(in srgb,var(--soft) 48%,var(--paper));
 }
-.diary-journal-paper .markdown-toolbar {
-  flex:0 0 auto;
-  flex-wrap:wrap;
-  gap:4px;
-  padding:6px;
-  border-bottom:1px solid var(--line);
-  background:var(--paper);
-}
-.diary-journal-paper .markdown-toolbar-button {
-  flex:0 0 31px;
-  width:31px;
-  height:31px;
-}
 .diary-journal-paper .markdown-editor-grid {
   display:block !important;
   box-sizing:border-box !important;
