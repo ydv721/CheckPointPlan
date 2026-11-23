@@ -555,21 +555,9 @@ export default function PictureDiary({
                   </div>
                 </div>
 
-                <div className="diary-daily-info">
-                  <div className="diary-weather-group">
-                    <span className="diary-field-label">오늘의 날씨</span>
-                    <div className="diary-weather-options" role="group" aria-label="오늘의 날씨">
-                      {WEATHER_OPTIONS.map(option => (
-                        <button key={option.id} type="button" className={entry.weather === option.id ? "diary-weather-option is-active" : "diary-weather-option"}
-                          aria-label={option.label} title={option.label} aria-pressed={entry.weather === option.id}
-                          onClick={() => updateEntry({ weather: option.id })}>
-                          <span>{option.emoji}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <DiaryTimePicker label="일어난 시간" value={entry.wake_time} onChange={wake_time => updateEntry({ wake_time })}/>
-                  <DiaryTimePicker label="잠잘 시간" value={entry.sleep_time} onChange={sleep_time => updateEntry({ sleep_time })}/>
+                <div className="diary-title-field">
+                  <label htmlFor="picture-diary-title">제목</label>
+                  <input id="picture-diary-title" type="text" maxLength={100} value={entry.title} onChange={event => updateEntry({ title: event.target.value })}/>
                 </div>
 
                 <button type="button" className={drawingUrl ? "picture-diary-drawing-area has-image" : "picture-diary-drawing-area"}
@@ -589,9 +577,21 @@ export default function PictureDiary({
               </section>
 
               <section className="paper-page right-page diary-right-page" aria-label="오늘의 일기">
-                <div className="diary-title-field">
-                  <label htmlFor="picture-diary-title">제목</label>
-                  <input id="picture-diary-title" type="text" maxLength={100} value={entry.title} onChange={event => updateEntry({ title: event.target.value })}/>
+                <div className="diary-daily-info">
+                  <div className="diary-weather-group">
+                    <span className="diary-field-label">오늘의 날씨</span>
+                    <div className="diary-weather-options" role="group" aria-label="오늘의 날씨">
+                      {WEATHER_OPTIONS.map(option => (
+                        <button key={option.id} type="button" className={entry.weather === option.id ? "diary-weather-option is-active" : "diary-weather-option"}
+                          aria-label={option.label} title={option.label} aria-pressed={entry.weather === option.id}
+                          onClick={() => updateEntry({ weather: option.id })}>
+                          <span>{option.emoji}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <DiaryTimePicker label="일어난 시간" value={entry.wake_time} onChange={wake_time => updateEntry({ wake_time })}/>
+                  <DiaryTimePicker label="잠잘 시간" value={entry.sleep_time} onChange={sleep_time => updateEntry({ sleep_time })}/>
                 </div>
 
                 <section className="paper-section key-section diary-journal-section">
