@@ -666,11 +666,11 @@ export default function PictureDiary({
 
                 <div className="diary-bottom-panels">
                   <section className="diary-small-writing-panel">
-                    <div className="section-heading"><span>메모</span><small>MEMO</small></div>
+                    <div className="section-heading"><small>MEMO</small></div>
                     <textarea aria-label="오늘의 메모" value={entry.memo} onChange={event => updateEntry({ memo: event.target.value })}/>
                   </section>
                   <section className="diary-small-writing-panel">
-                    <div className="section-heading"><span>하루 돌아보기</span><small>REFLECTION</small></div>
+                    <div className="section-heading"><small>REFLECTION</small></div>
                     <textarea aria-label="하루 돌아보기" value={entry.reflection} onChange={event => updateEntry({ reflection: event.target.value })}/>
                   </section>
                 </div>
