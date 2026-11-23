@@ -686,7 +686,6 @@ export default function PictureDiary({
                 </div>
 
                 <section className="paper-section key-section diary-journal-section">
-                  <div className="section-heading diary-journal-heading"><span>오늘의 일기</span><small>JOURNAL</small></div>
                   <div className="free-note-paper diary-journal-paper">
                     {loading ? <div className="markdown-empty-state">일기를 불러오는 중입니다...</div> : (
                       <>
