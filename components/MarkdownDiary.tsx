@@ -1563,7 +1563,7 @@ export default function MarkdownDiary({
       pagesRoot.style.cssText = [
         "display:flex",
         "flex-direction:column",
-        "gap:18px",
+        "gap:0px",
         "width:100%",
         "height:auto",
         "margin:0",
@@ -1609,8 +1609,8 @@ export default function MarkdownDiary({
           "max-height:none",
           "overflow:visible",
           "box-sizing:border-box",
-          "border:1px solid var(--line)",
-          "border-radius:10px",
+          "border:0",
+          "border-radius:0",
           "background:var(--soft)"
         ].join(";");
 
