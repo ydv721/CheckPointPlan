@@ -10980,3 +10980,29 @@ html,body{width:100%;overflow-x:clip}
   }
 }
 
+/* Picture Diary: remove the pale-blue divider and outline strokes. */
+.picture-diary-book-frame .diary-date-heading,
+.picture-diary-book-frame .diary-title-field,
+.picture-diary-book-frame .picture-diary-drawing-area,
+.picture-diary-book-frame .diary-weather-group,
+.picture-diary-book-frame .diary-time-field,
+.picture-diary-book-frame .diary-title-field input,
+.picture-diary-book-frame .diary-journal-paper,
+.picture-diary-book-frame .diary-small-writing-panel {
+  border-color:transparent !important;
+}
+
+.picture-diary-book-frame .diary-date-heading,
+.picture-diary-book-frame .diary-title-field {
+  border-bottom-color:transparent !important;
+}
+
+.picture-diary-book-frame .picture-diary-drawing-area {
+  border-color:transparent !important;
+}
+
+.picture-diary-book-frame .diary-title-field input:focus,
+.picture-diary-book-frame .picture-diary-drawing-area:hover:not(:disabled) {
+  box-shadow:none !important;
+}
+
