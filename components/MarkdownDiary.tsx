@@ -1895,7 +1895,7 @@ export default function MarkdownDiary({
 
     const pageCount = getCurrentPages().length;
     setPdfExporting(true);
-    setExportFeedback(pageCount + "개 페이지를 하나의 긴 PDF로 만들고 있습니다.");
+    setExportFeedback("pdf 생성 중...");
 
     try {
       await loadJsPdf();
@@ -1944,11 +1944,7 @@ export default function MarkdownDiary({
       const imageScaledMessage = outputScale < 1
         ? " 캡처 크기에 맞춰 이미지 해상도를 조정했습니다."
         : "";
-      setExportFeedback(
-        renderedPageCount + "개 페이지를 이어 붙인 PDF 저장 완료. (" +
-        canvas.width + " × " + canvas.height + "px)" +
-        pdfScaledMessage + imageScaledMessage
-      );
+      setExportFeedback("pdf 저장 완료");
     } catch (pdfError) {
       console.error("Full notebook PDF export failed:", pdfError);
       setExportFeedback(pdfError instanceof Error
