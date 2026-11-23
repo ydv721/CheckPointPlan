@@ -28,13 +28,22 @@ type Html2PdfWorker = {
   save: () => PromiseLike<unknown>;
 };
 
+type Html2CanvasOptions = {
+  backgroundColor?: string | null;
+  scale?: number;
+  useCORS?: boolean;
+  logging?: boolean;
+};
+
 declare global {
   interface Window {
     html2pdf?: () => Html2PdfWorker;
+    html2canvas?: (element: HTMLElement, options?: Html2CanvasOptions) => Promise<HTMLCanvasElement>;
   }
 }
 
 const HTML2PDF_SCRIPT_URL = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+const HTML2CANVAS_SCRIPT_URL = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
 
 function loadHtml2Pdf(): Promise<void> {
   if (typeof window === "undefined") return Promise.reject(new Error("브라우저에서만 PDF를 만들 수 있습니다."));
@@ -65,6 +74,48 @@ function loadHtml2Pdf(): Promise<void> {
     script.onerror = () => {
       script.remove();
       reject(new Error("PDF 변환 도구를 불러오지 못했습니다. 네트워크 연결을 확인해 주세요."));
+    };
+    document.head.appendChild(script);
+  });
+}
+
+function loadHtml2Canvas(): Promise<void> {
+  if (typeof window === "undefined") {
+    return Promise.reject(new Error("브라우저에서만 이미지를 저장할 수 있습니다."));
+  }
+  if (window.html2canvas) return Promise.resolve();
+
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>('script[data-html2canvas-loader="true"]');
+    if (existing) {
+      if (existing.dataset.loaded === "true") {
+        if (window.html2canvas) resolve();
+        else reject(new Error("이미지 변환 도구를 초기화하지 못했습니다."));
+        return;
+      }
+      existing.addEventListener("load", () => {
+        if (window.html2canvas) resolve();
+        else reject(new Error("이미지 변환 도구를 초기화하지 못했습니다."));
+      }, { once: true });
+      existing.addEventListener("error", () => {
+        reject(new Error("이미지 변환 도구를 불러오지 못했습니다."));
+      }, { once: true });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = HTML2CANVAS_SCRIPT_URL;
+    script.async = true;
+    script.crossOrigin = "anonymous";
+    script.dataset.html2canvasLoader = "true";
+    script.onload = () => {
+      script.dataset.loaded = "true";
+      if (window.html2canvas) resolve();
+      else reject(new Error("이미지 변환 도구를 초기화하지 못했습니다."));
+    };
+    script.onerror = () => {
+      script.remove();
+      reject(new Error("이미지 변환 도구를 불러오지 못했습니다. 네트워크 연결을 확인해 주세요."));
     };
     document.head.appendChild(script);
   });
@@ -712,7 +763,8 @@ export default function MarkdownDiary({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [, setSaveState] = useState<"saved" | "dirty" | "saving" | "error">("saved");
-  const [shareFeedback, setShareFeedback] = useState("");
+  const [exportFeedback, setExportFeedback] = useState("");
+  const [imageExporting, setImageExporting] = useState(false);
   const [pdfExporting, setPdfExporting] = useState(false);
   const [pageDeleteOpen, setPageDeleteOpen] = useState(false);
   const [colorPaletteOpen, setColorPaletteOpen] = useState(false);
@@ -723,6 +775,7 @@ export default function MarkdownDiary({
   const [currentStroke, setCurrentStroke] = useState<DrawingStroke | null>(null);
   const [drawingCanvasHeight, setDrawingCanvasHeight] = useState(1);
   const [drawingScrollTop, setDrawingScrollTop] = useState(0);
+  const captureRef = useRef<HTMLDivElement>(null);
   const leftEditorRef = useRef<HTMLDivElement>(null);
   const currentStrokeRef = useRef<DrawingStroke | null>(null);
   const drawingPointerIdRef = useRef<number | null>(null);
@@ -1433,51 +1486,69 @@ export default function MarkdownDiary({
     editor.focus();
   }
 
-  function getMarkdownContent(note: MarkdownNote, pages = decodeNotePages(note.content)) {
-    return [
-      "# " + (note.title.trim() || "제목 없는 글"),
-      "",
-      pages.map((page, index) => index === 0 ? page : "---\n\n" + page).join("\n\n")
-    ].join("\n");
-  }
+  async function downloadImage() {
+    const target = captureRef.current;
+    if (!activeNote || !target || loading || imageExporting || pdfExporting) return;
 
-  function downloadMarkdown(title: string, markdown: string) {
-    const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    const filename = title.replace(/[\\/:*?"<>|]+/g, "-").trim() || "markdown-note";
-    anchor.href = url;
-    anchor.download = filename + ".md";
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
-
-  async function shareMarkdown() {
-    if (!activeNote) return;
-
-    const title = activeNote.title.trim() || "제목 없는 글";
-    const markdown = getMarkdownContent(activeNote, getCurrentPages());
-    setShareFeedback("");
-
-    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
-      try {
-        await navigator.share({ title, text: markdown });
-        setShareFeedback("공유 창을 열었습니다.");
-        return;
-      } catch (shareError) {
-        if (shareError instanceof Error && shareError.name === "AbortError") return;
-      }
-    }
+    setImageExporting(true);
+    setExportFeedback("PNG 이미지를 생성하고 있습니다.");
 
     try {
-      if (!navigator.clipboard?.writeText) throw new Error("클립보드를 사용할 수 없습니다.");
-      await navigator.clipboard.writeText(markdown);
-      setShareFeedback("Markdown 내용을 복사했습니다.");
-    } catch {
-      downloadMarkdown(title, markdown);
-      setShareFeedback("공유 기능을 지원하지 않아 Markdown 파일로 저장했습니다.");
+      await loadHtml2Canvas();
+      if (!window.html2canvas) throw new Error("이미지 변환 도구를 사용할 수 없습니다.");
+
+      if (document.fonts?.ready) await document.fonts.ready;
+      await new Promise<void>(resolve => window.requestAnimationFrame(() => resolve()));
+
+      const canvas = await window.html2canvas(target, {
+        scale: 1,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        logging: false
+      });
+
+      if (canvas.width <= 0 || canvas.height <= 0) {
+        throw new Error("캡처된 이미지 크기가 올바르지 않습니다.");
+      }
+
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(result => {
+          if (result) resolve(result);
+          else reject(new Error("PNG 이미지 데이터를 생성하지 못했습니다."));
+        }, "image/png");
+      });
+
+      if (blob.size === 0) throw new Error("저장할 이미지 데이터가 비어 있습니다.");
+
+      const now = new Date();
+      const dateStamp = [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, "0"),
+        String(now.getDate()).padStart(2, "0")
+      ].join("-");
+      const safeTitle = (notebookTitle.trim() || "프리노트")
+        .replace(/[\\/:*?"<>|]+/g, "-")
+        .replace(/\\s+/g, " ")
+        .trim();
+      const fileName = `${safeTitle}_${dateStamp}.png`;
+
+      const imageUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = imageUrl;
+      anchor.download = fileName;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(imageUrl), 1000);
+
+      setExportFeedback("PNG 이미지 다운로드가 완료되었습니다.");
+    } catch (imageError) {
+      console.error("PNG export failed:", imageError);
+      setExportFeedback(imageError instanceof Error
+        ? `이미지 저장에 실패했습니다: ${imageError.message}`
+        : "이미지 저장에 실패했습니다. 다시 시도해 주세요.");
+    } finally {
+      setImageExporting(false);
     }
   }
 
@@ -1488,7 +1559,7 @@ export default function MarkdownDiary({
     const annotationsForPdf = decodeNoteAnnotations(activeNote.content);
 
     setPdfExporting(true);
-    setShareFeedback("pdf를 생성 중입니다.");
+    setExportFeedback("pdf를 생성 중입니다.");
     let exportRoot: HTMLDivElement | null = null;
     let exportStyle: HTMLStyleElement | null = null;
 
@@ -1807,10 +1878,10 @@ export default function MarkdownDiary({
         enableLinks: true
       }).from(exportRoot).save();
 
-      setShareFeedback("pdf 다운로드가 완료되었습니다.");
+      setExportFeedback("pdf 다운로드가 완료되었습니다.");
     } catch (pdfError) {
       console.error("PDF export failed:", pdfError);
-      setShareFeedback(pdfError instanceof Error
+      setExportFeedback(pdfError instanceof Error
         ? `PDF 저장 실패: ${pdfError.message}`
         : "PDF 저장에 실패했습니다. 다시 시도해 주세요.");
     } finally {
@@ -1862,8 +1933,8 @@ export default function MarkdownDiary({
                   <div className="section-heading markdown-note-heading">
                     <span>FREE NOTE</span>
                     <div className="markdown-note-heading-actions">
-                      {shareFeedback ? (
-                        <span className="markdown-share-feedback" aria-live="polite">{shareFeedback}</span>
+                      {exportFeedback ? (
+                        <span className="markdown-export-feedback" aria-live="polite">{exportFeedback}</span>
                       ) : null}
                                             <button
                         type="button"
@@ -1891,20 +1962,22 @@ export default function MarkdownDiary({
 
                       <button
                         type="button"
-                        className="markdown-share-top-button"
-                        aria-label="공유"
-                        title="공유"
+                        className="markdown-share-top-button markdown-image-top-button"
+                        aria-label={imageExporting ? "이미지 저장 중" : "PNG 이미지 다운로드"}
+                        title={imageExporting ? "이미지 저장 중" : "PNG 이미지 다운로드"}
+                        disabled={imageExporting || pdfExporting || loading || !activeNote}
+                        aria-busy={imageExporting}
                         onMouseDown={event => event.preventDefault()}
-                        onClick={() => { void shareMarkdown(); }}
+                        onClick={() => { void downloadImage(); }}
                       >
-                        <Share2 size={16} strokeWidth={2}/>
+                        <ImageIcon size={16} strokeWidth={2}/>
                       </button>
                       <button
                         type="button"
                         className="markdown-share-top-button markdown-pdf-top-button"
                         aria-label={pdfExporting ? "PDF 저장 중" : "PDF 다운로드"}
                         title={pdfExporting ? "PDF 저장 중" : "PDF 다운로드"}
-                        disabled={pdfExporting || loading || !activeNote}
+                        disabled={pdfExporting || imageExporting || loading || !activeNote}
                         aria-busy={pdfExporting}
                         onMouseDown={event => event.preventDefault()}
                         onClick={() => { void downloadPdf(); }}
@@ -2092,7 +2165,7 @@ export default function MarkdownDiary({
                             </button>
                             </div>
                         ) : null}
-                        <div className="free-note-editor-viewport">
+                        <div ref={captureRef} className="free-note-editor-viewport">
                         <div
                           ref={leftEditorRef}
                           className={"free-note-input markdown-editor-grid" + (drawingMode ? " is-readonly" : "")}
