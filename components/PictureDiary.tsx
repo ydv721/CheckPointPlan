@@ -3,15 +3,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
-  AlignCenter, AlignLeft, AlignRight, Brush, CalendarDays, Check, ChevronLeft, ChevronRight,
-  ImagePlus, Palette, X
+  Brush, CalendarDays, Check, ChevronLeft, ChevronRight, ImagePlus, X
 } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import PlannerSpread from "@/components/PlannerSpread";
 import SketchWorkspace, { createEmptySketchDocument, type SketchDocument } from "@/components/SketchWorkspace";
 import {
-  MARKDOWN_TOOLBAR, createMarkdownCodeBlockHtml, highlightCodeBlocks,
-  htmlToMarkdown, markdownToHtml, type MarkdownAction
+  highlightCodeBlocks, htmlToMarkdown, markdownToHtml
 } from "@/components/MarkdownDiary";
 import type { ThemeName } from "@/lib/types";
 
@@ -57,15 +55,6 @@ const WEATHER_OPTIONS = [
   { id: "rainy", label: "비", emoji: "🌧️" },
   { id: "snowy", label: "눈", emoji: "❄️" },
   { id: "windy", label: "바람", emoji: "🍃" }
-];
-const TEXT_COLORS = [
-  { label: "빨강", color: "#d64545" },
-  { label: "주황", color: "#d97736" },
-  { label: "노랑", color: "#b58a00" },
-  { label: "초록", color: "#39845b" },
-  { label: "파랑", color: "#3978b8" },
-  { label: "보라", color: "#8063b5" },
-  { label: "분홍", color: "#c96b91" }
 ];
 const uid = () => globalThis.crypto?.randomUUID?.() || String(Date.now()) + "-" + Math.random().toString(36).slice(2);
 
@@ -298,9 +287,6 @@ export default function PictureDiary({
   const lastSavedRef = useRef("");
   const saveQueueRef = useRef<Promise<boolean>>(Promise.resolve(true));
   const editorRef = useRef<HTMLDivElement>(null);
-  const editorSelectionRef = useRef<Range | null>(null);
-  const [colorPaletteOpen, setColorPaletteOpen] = useState(false);
-  const [customTextColor, setCustomTextColor] = useState("#7868e8");
 
   useEffect(() => {
     entryRef.current = entry;
@@ -448,83 +434,6 @@ export default function PictureDiary({
   function updateJournalContent() {
     const editor = editorRef.current;
     if (editor) updateEntry({ journal_content: htmlToMarkdown(editor.innerHTML) });
-  }
-
-  function rememberEditorSelection() {
-    const editor = editorRef.current;
-    const selection = window.getSelection();
-    if (!editor || !selection?.rangeCount || !selection.anchorNode || !selection.focusNode) return;
-    if (editor.contains(selection.anchorNode) && editor.contains(selection.focusNode)) {
-      editorSelectionRef.current = selection.getRangeAt(0).cloneRange();
-    }
-  }
-
-  function applyTextColor(color: string, keepPickerOpen = false) {
-    const editor = editorRef.current;
-    if (!editor) return;
-    if (!keepPickerOpen) editor.focus();
-    const selection = window.getSelection();
-    const savedRange = editorSelectionRef.current;
-    if (selection && savedRange && editor.contains(savedRange.commonAncestorContainer)) {
-      selection.removeAllRanges();
-      selection.addRange(savedRange);
-    }
-    if (!selection?.rangeCount || selection.isCollapsed || !selection.anchorNode || !selection.focusNode ||
-      !editor.contains(selection.anchorNode) || !editor.contains(selection.focusNode)) return;
-    document.execCommand("foreColor", false, color);
-    updateJournalContent();
-    if (keepPickerOpen) {
-      if (selection.rangeCount && editor.contains(selection.getRangeAt(0).commonAncestorContainer)) {
-        editorSelectionRef.current = selection.getRangeAt(0).cloneRange();
-      }
-      return;
-    }
-    editorSelectionRef.current = null;
-    setColorPaletteOpen(false);
-    editor.focus();
-  }
-
-  function applyMarkdown(action: MarkdownAction) {
-    const editor = editorRef.current;
-    if (!editor || loading) return;
-    editor.focus();
-    if (action === "bold") document.execCommand("bold");
-    else if (action === "italic") document.execCommand("italic");
-    else if (action === "underline") document.execCommand("underline");
-    else if (action === "strike") document.execCommand("strikeThrough");
-    else if (action === "heading") document.execCommand("formatBlock", false, "H1");
-    else if (action === "bullet") document.execCommand("insertUnorderedList");
-    else if (action === "ordered") document.execCommand("insertOrderedList");
-    else if (action === "quote") document.execCommand("formatBlock", false, "BLOCKQUOTE");
-    else if (action === "divider") document.execCommand("insertHorizontalRule");
-    else if (action === "code") {
-      const selection = window.getSelection();
-      const selectedCode = selection?.rangeCount ? selection.toString() : "";
-      document.execCommand("insertHTML", false, createMarkdownCodeBlockHtml(selectedCode, "plaintext", true));
-      const inserted = editor.querySelector<HTMLElement>('.markdown-code-block[data-inserted="true"]');
-      if (inserted) {
-        inserted.removeAttribute("data-inserted");
-        const code = inserted.querySelector("pre code");
-        if (code && selection) {
-          const range = document.createRange();
-          range.selectNodeContents(code);
-          range.collapse(false);
-          selection.removeAllRanges();
-          selection.addRange(range);
-        }
-      }
-    }
-    updateJournalContent();
-    editor.focus();
-  }
-
-  function applyTextAlignment(alignment: "left" | "center" | "right") {
-    const editor = editorRef.current;
-    if (!editor) return;
-    editor.focus();
-    document.execCommand(alignment === "left" ? "justifyLeft" : alignment === "center" ? "justifyCenter" : "justifyRight");
-    updateJournalContent();
-    editor.focus();
   }
 
   async function replaceDrawing(file: File, drawingState: SketchDocument | null) {
@@ -689,41 +598,6 @@ export default function PictureDiary({
                   <div className="free-note-paper diary-journal-paper">
                     {loading ? <div className="markdown-empty-state">일기를 불러오는 중입니다...</div> : (
                       <>
-                        <div className="markdown-toolbar" role="toolbar" aria-label="Markdown 도구 모음">
-                          {MARKDOWN_TOOLBAR.map(({ action, label, icon: Icon }) => (
-                            <button key={action} type="button" className="markdown-toolbar-button" aria-label={label} title={label}
-                              onMouseDown={event => event.preventDefault()} onClick={() => applyMarkdown(action)}>
-                              <Icon size={16} strokeWidth={2}/>
-                            </button>
-                          ))}
-                          <div className="markdown-align-controls" role="group" aria-label="텍스트 정렬">
-                            <button type="button" className="markdown-toolbar-button" aria-label="왼쪽 정렬" title="왼쪽 정렬" onMouseDown={event => event.preventDefault()} onClick={() => applyTextAlignment("left")}><AlignLeft size={16}/></button>
-                            <button type="button" className="markdown-toolbar-button" aria-label="가운데 정렬" title="가운데 정렬" onMouseDown={event => event.preventDefault()} onClick={() => applyTextAlignment("center")}><AlignCenter size={16}/></button>
-                            <button type="button" className="markdown-toolbar-button" aria-label="오른쪽 정렬" title="오른쪽 정렬" onMouseDown={event => event.preventDefault()} onClick={() => applyTextAlignment("right")}><AlignRight size={16}/></button>
-                          </div>
-                          <div className="markdown-color-picker-wrap">
-                            <button type="button" className="markdown-toolbar-button" aria-label="글자색" title="글자색" aria-expanded={colorPaletteOpen}
-                              onMouseDown={event => { event.preventDefault(); rememberEditorSelection(); }} onClick={() => setColorPaletteOpen(open => !open)}>
-                              <Palette size={16} strokeWidth={2}/>
-                            </button>
-                            {colorPaletteOpen ? (
-                              <div className="markdown-color-palette" role="group" aria-label="글자색 선택">
-                                <div className="markdown-color-palette-title">글자색</div>
-                                <div className="markdown-color-swatches">
-                                  <button type="button" className="markdown-color-swatch markdown-color-default" aria-label="기본 글자색" title="기본 글자색" onMouseDown={event => event.preventDefault()} onClick={() => applyTextColor("#000000")}/>
-                                  <button type="button" className="markdown-color-swatch markdown-color-theme" aria-label="테마 색상" title="테마 색상" onMouseDown={event => event.preventDefault()} onClick={() => applyTextColor(customColor)}/>
-                                  {TEXT_COLORS.map(({ label, color }) => (
-                                    <button key={color} type="button" className="markdown-color-swatch" aria-label={label} title={label} style={{ backgroundColor: color }}
-                                      onMouseDown={event => event.preventDefault()} onClick={() => applyTextColor(color)}/>
-                                  ))}
-                                  <label className="markdown-color-swatch markdown-color-custom-swatch" title="사용자 지정 글자색" onMouseDown={rememberEditorSelection}>
-                                    <input type="color" aria-label="사용자 지정 글자색" value={customTextColor} onChange={event => { setCustomTextColor(event.target.value); applyTextColor(event.target.value, true); }}/>
-                                  </label>
-                                </div>
-                              </div>
-                            ) : null}
-                          </div>
-                        </div>
                         <div ref={editorRef} className="free-note-input markdown-editor-grid picture-diary-rich-editor"
                           role="textbox" aria-label="오늘의 일기 내용" aria-multiline="true" contentEditable suppressContentEditableWarning
                           onInput={updateJournalContent}
