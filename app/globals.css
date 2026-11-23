@@ -9490,15 +9490,16 @@ html,body{width:100%;overflow-x:clip}
 .picture-diary-choice-options button {
   display:flex;
   flex-direction:column;
-  align-items:flex-start;
-  gap:8px;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
   min-height:145px;
   padding:17px;
   border:1px solid var(--line);
   border-radius:12px;
   background:var(--paper);
   color:var(--ink);
-  text-align:left;
+  text-align:center;
   cursor:pointer;
   transition:border-color .15s,background .15s,transform .15s;
 }
@@ -9510,11 +9511,15 @@ html,body{width:100%;overflow-x:clip}
 .picture-diary-choice-icon {
   display:grid;
   place-items:center;
-  width:42px;
-  height:42px;
-  border-radius:12px;
+  width:36px;
+  height:36px;
+  border-radius:11px;
   background:var(--soft);
   color:var(--accent);
+}
+.picture-diary-choice-icon svg {
+  width:19px;
+  height:19px;
 }
 .picture-diary-choice-options strong {
   font-size:14px;
