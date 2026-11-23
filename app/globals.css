@@ -11114,3 +11114,12 @@ html,body{width:100%;overflow-x:clip}
   font-size: inherit !important;
   font-weight: 400 !important;
 }
+
+
+/* Picture Diary: keep the English memo section labels bold and left-aligned. */
+.picture-diary-book-frame .diary-small-writing-panel .section-heading {
+  justify-content: flex-start !important;
+}
+.picture-diary-book-frame .diary-small-writing-panel .section-heading > small {
+  font-weight: 700 !important;
+}
