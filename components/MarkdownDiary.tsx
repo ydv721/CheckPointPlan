@@ -43,7 +43,7 @@ declare global {
 }
 
 const HTML2PDF_SCRIPT_URL = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
-const HTML2CANVAS_SCRIPT_URL = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+const HTML2CANVAS_SCRIPT_URL = "https://cdn.jsdelivr.net/npm/html2canvas-pro@2.6.4/dist/html2canvas-pro.min.js";
 
 function loadHtml2Pdf(): Promise<void> {
   if (typeof window === "undefined") return Promise.reject(new Error("브라우저에서만 PDF를 만들 수 있습니다."));
@@ -86,7 +86,7 @@ function loadHtml2Canvas(): Promise<void> {
   if (window.html2canvas) return Promise.resolve();
 
   return new Promise((resolve, reject) => {
-    const existing = document.querySelector<HTMLScriptElement>('script[data-html2canvas-loader="true"]');
+    const existing = document.querySelector<HTMLScriptElement>('script[data-html2canvas-pro-loader="true"]');
     if (existing) {
       if (existing.dataset.loaded === "true") {
         if (window.html2canvas) resolve();
@@ -107,7 +107,7 @@ function loadHtml2Canvas(): Promise<void> {
     script.src = HTML2CANVAS_SCRIPT_URL;
     script.async = true;
     script.crossOrigin = "anonymous";
-    script.dataset.html2canvasLoader = "true";
+    script.dataset.html2canvasProLoader = "true";
     script.onload = () => {
       script.dataset.loaded = "true";
       if (window.html2canvas) resolve();
