@@ -11030,3 +11030,86 @@ html,body{width:100%;overflow-x:clip}
   font-size:15px !important;
 }
 
+:root {
+  --type-display-size: clamp(19px, 2.2vw, 30px);
+  --type-label-size: 14px;
+  --type-body-size: 15px;
+}
+
+/* CheckPointPlan shared typography system: display, labels, and writing text. */
+
+/* 1. Dates and prominent page titles */
+.day-book-frame .page-date .date-value,
+.day-book-frame .page-date .dday-prefix,
+.day-book-frame .page-date .dday-value-row input,
+.month-book-frame .month-page-title,
+.picture-diary-book-frame .diary-date-navigation strong {
+  color: var(--ink) !important;
+  font-family: var(--font) !important;
+  font-size: var(--type-display-size) !important;
+  font-weight: 800 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0 !important;
+}
+
+/* 2. Labels and section names */
+.day-book-frame .section-heading > span,
+.day-book-frame .small-info-block input.header-label-input,
+.day-book-frame .time-head,
+.day-book-frame .time-hour,
+.month-book-frame .month-weekdays > span,
+.month-book-frame .month-day-date,
+.markdown-free-note-section > .markdown-note-heading > span,
+.picture-diary-book-frame .diary-title-field label,
+.picture-diary-book-frame .diary-field-label,
+.picture-diary-book-frame .diary-small-writing-panel .section-heading > span,
+.picture-diary-book-frame .diary-small-writing-panel .section-heading > small {
+  color: var(--ink) !important;
+  font-family: var(--font) !important;
+  font-size: var(--type-label-size) !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+  opacity: 1 !important;
+}
+
+/* 3. User-entered text and document body */
+.day-book-frame .small-info-block input.header-value-input,
+.day-book-frame .focus-section textarea,
+.day-book-frame .key-section textarea,
+.day-book-frame .todo-text,
+.day-book-frame .memo-section textarea,
+.day-book-frame .free-note-input,
+.day-book-frame .color-guide-input,
+.month-book-frame .month-day-note,
+.month-book-frame .month-memo-note,
+.markdown-free-note-section .markdown-editor-grid,
+.picture-diary-book-frame .diary-title-field input,
+.picture-diary-book-frame .diary-journal-paper .markdown-editor-grid,
+.picture-diary-book-frame .diary-small-writing-panel textarea,
+.picture-diary-book-frame .diary-time-value,
+.picture-diary-book-frame .diary-time-direct-input input {
+  color: var(--ink) !important;
+  font-family: var(--font) !important;
+  font-size: var(--type-body-size) !important;
+  font-weight: 400 !important;
+}
+
+/* Keep placeholders at the same size and weight as their input text. */
+.day-book-frame input::placeholder,
+.day-book-frame textarea::placeholder,
+.month-book-frame textarea::placeholder,
+.markdown-free-note-section .markdown-editor-grid:empty::before,
+.picture-diary-book-frame input::placeholder,
+.picture-diary-book-frame textarea::placeholder,
+.picture-diary-book-frame .diary-journal-paper .markdown-editor-grid:empty::before {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  font-weight: 400 !important;
+}
+
+/* Time controls inherit the unified 15px writing-text size. */
+.picture-diary-book-frame .diary-time-value button {
+  font-family: var(--font) !important;
+  font-size: inherit !important;
+  font-weight: 400 !important;
+}
