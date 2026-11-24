@@ -4605,28 +4605,54 @@ html,body{width:100%;overflow-x:clip}
   overscroll-behavior: contain;
 }
 
-/* Cover editor scrollbar: slim, rounded, and consistent with the editor UI. */
-.app-shell.cover-view .cover-editor {
+/* Shared scrollbar: slim, rounded, and theme-aware across the editor surfaces. */
+.app-shell.cover-view .cover-editor,
+.sketch-workspace .sketch-tool-rail,
+.sketch-workspace .sketch-canvas-stage,
+.sketch-workspace .sketch-settings-panel,
+.sketch-workspace .sketch-layer-list,
+body:has(.sketch-workspace) .app-sidebar-panel {
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--ink) 30%, transparent) transparent;
 }
 
-.app-shell.cover-view .cover-editor::-webkit-scrollbar {
+.app-shell.cover-view .cover-editor::-webkit-scrollbar,
+.sketch-workspace .sketch-tool-rail::-webkit-scrollbar,
+.sketch-workspace .sketch-canvas-stage::-webkit-scrollbar,
+.sketch-workspace .sketch-settings-panel::-webkit-scrollbar,
+.sketch-workspace .sketch-layer-list::-webkit-scrollbar,
+body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar {
   width: 5px;
+  height: 5px;
 }
 
-.app-shell.cover-view .cover-editor::-webkit-scrollbar-track {
+.app-shell.cover-view .cover-editor::-webkit-scrollbar-track,
+.sketch-workspace .sketch-tool-rail::-webkit-scrollbar-track,
+.sketch-workspace .sketch-canvas-stage::-webkit-scrollbar-track,
+.sketch-workspace .sketch-settings-panel::-webkit-scrollbar-track,
+.sketch-workspace .sketch-layer-list::-webkit-scrollbar-track,
+body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.app-shell.cover-view .cover-editor::-webkit-scrollbar-thumb {
+.app-shell.cover-view .cover-editor::-webkit-scrollbar-thumb,
+.sketch-workspace .sketch-tool-rail::-webkit-scrollbar-thumb,
+.sketch-workspace .sketch-canvas-stage::-webkit-scrollbar-thumb,
+.sketch-workspace .sketch-settings-panel::-webkit-scrollbar-thumb,
+.sketch-workspace .sketch-layer-list::-webkit-scrollbar-thumb,
+body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb {
   border: 1px solid transparent;
   border-radius: 999px;
   background: color-mix(in srgb, var(--ink) 30%, transparent);
   background-clip: padding-box;
 }
 
-.app-shell.cover-view .cover-editor::-webkit-scrollbar-thumb:hover {
+.app-shell.cover-view .cover-editor::-webkit-scrollbar-thumb:hover,
+.sketch-workspace .sketch-tool-rail::-webkit-scrollbar-thumb:hover,
+.sketch-workspace .sketch-canvas-stage::-webkit-scrollbar-thumb:hover,
+.sketch-workspace .sketch-settings-panel::-webkit-scrollbar-thumb:hover,
+.sketch-workspace .sketch-layer-list::-webkit-scrollbar-thumb:hover,
+body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   background: color-mix(in srgb, var(--ink) 46%, transparent);
   background-clip: padding-box;
 }
@@ -9795,7 +9821,6 @@ html,body{width:100%;overflow-x:clip}
   overflow-y:auto;
   border-left:1px solid var(--line);
   background:var(--paper);
-  scrollbar-width:thin;
 }
 .sketch-settings-section {
   padding:15px 15px 17px;
