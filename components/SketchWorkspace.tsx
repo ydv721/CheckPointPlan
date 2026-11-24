@@ -558,6 +558,13 @@ export default function SketchWorkspace({
   }, []);
 
   const redo = useCallback(() => {
+    if (selectionSourceDocRef.current) {
+      const original = selectionSourceDocRef.current;
+      selectionSourceDocRef.current = null;
+      docRef.current = original;
+      setDoc(original);
+      setSelectedKeys([]);
+    }
     const nextIndex = Math.min(historyRef.current.length - 1, historyIndexRef.current + 1);
     if (nextIndex === historyIndexRef.current) return;
     historyIndexRef.current = nextIndex;
@@ -1309,7 +1316,7 @@ export default function SketchWorkspace({
             <div className="sketch-layer-list">
               {[...doc.layers].reverse().map(layer => (
                 <div key={layer.id} className={layer.id === selectedLayer?.id ? "sketch-layer-row is-active" : "sketch-layer-row"}>
-                  <button type="button" className="sketch-layer-select" onClick={() => { setSelectedLayerId(layer.id); setSelectedKeys([]); }}>
+                  <button type="button" className="sketch-layer-select" onClick={() => { setSelectedLayerId(layer.id); clearSelection(); }}>
                     <span className="sketch-layer-thumbnail"><Layers3 size={15}/></span>
                     <span>{layer.name}</span>
                   </button>
