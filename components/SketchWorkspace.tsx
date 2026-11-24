@@ -1302,7 +1302,7 @@ export default function SketchWorkspace({
             </div>
           </div>
           <div className="sketch-bottom-hint">
-            <span>펜: B</span><span>지우개: E</span><span>올가미: L</span><span>실행 취소: Ctrl + Z</span><span>이동: 마우스 오른쪽 버튼 드래그</span><span>확대·축소: 마우스 휠 · 두 손가락</span>
+            <span>펜: B</span><span>지우개: E</span><span>올가미: L</span><span>실행 취소: Ctrl + Z</span><span>다시 실행: Ctrl + Y · Ctrl + Shift + Z</span><span>이동: 마우스 오른쪽 버튼 드래그</span><span>확대·축소: 마우스 휠 · 두 손가락</span>
             {selectedKeys.length ? <strong>{selectedKeys.length}개 선택됨 · Ctrl + D 복제 · Delete 삭제</strong> : null}
           </div>
         </section>
