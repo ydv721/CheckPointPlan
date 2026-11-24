@@ -9287,16 +9287,25 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   opacity:.7;
 }
 .picture-diary-drawing-area.has-image {
+  padding:0;
   border-style:solid;
   background:var(--paper);
 }
 .picture-diary-drawing-area > img {
+  position:absolute;
+  inset:0;
   display:block;
   width:100%;
   height:100%;
-  max-height:100%;
-  object-fit:contain;
+  max-height:none;
+  object-fit:cover;
   border-radius:5px;
+  cursor:grab;
+  touch-action:none;
+  user-select:none;
+}
+.picture-diary-drawing-area.has-image .picture-diary-drawing-edit {
+  z-index:1;
 }
 .picture-diary-drawing-empty {
   display:flex;
