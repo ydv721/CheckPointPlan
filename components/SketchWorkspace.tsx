@@ -329,7 +329,10 @@ export default function SketchWorkspace({
   const [lassoPoints, setLassoPoints] = useState<SketchPoint[]>([]);
   const lassoPointsRef = useRef<SketchPoint[]>([]);
   const pointerModeRef = useRef<PointerMode | null>(null);
+  const touchPointsRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const pinchStateRef = useRef<{ distance: number; zoom: number } | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasStageRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(100);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -418,6 +421,20 @@ export default function SketchWorkspace({
   }, []);
 
   useEffect(() => {
+    const stage = canvasStageRef.current;
+    if (!stage) return;
+
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      const factor = Math.exp(-event.deltaY * 0.0015);
+      setZoom(current => clamp(Math.round(current * factor), 50, 300));
+    };
+
+    stage.addEventListener("wheel", onWheel, { passive: false });
+    return () => stage.removeEventListener("wheel", onWheel);
+  }, []);
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target && ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return;
@@ -452,6 +469,73 @@ export default function SketchWorkspace({
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   });
+
+  function cancelPointerForPinch() {
+    const mode = pointerModeRef.current;
+    if (mode?.kind === "stroke") {
+      const current = docRef.current;
+      const next: SketchDocument = {
+        ...current,
+        layers: current.layers.map(layer => layer.id === mode.layerId
+          ? { ...layer, strokes: layer.strokes.filter(stroke => stroke.id !== mode.strokeId) }
+          : layer)
+      };
+      setWorkingDocument(next);
+    } else if (mode?.kind === "move") {
+      setWorkingDocument(mode.origin);
+    } else if (mode?.kind === "lasso") {
+      lassoPointsRef.current = [];
+      setLassoPoints([]);
+    }
+    pointerModeRef.current = null;
+  }
+
+  function handleStagePointerDownCapture(event: ReactPointerEvent<HTMLDivElement>) {
+    if (event.pointerType !== "touch") return;
+
+    touchPointsRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (touchPointsRef.current.size < 2) return;
+
+    const points = Array.from(touchPointsRef.current.values()).slice(0, 2);
+    const distance = Math.hypot(points[1].x - points[0].x, points[1].y - points[0].y);
+    if (!pinchStateRef.current && distance > 0) {
+      pinchStateRef.current = { distance, zoom };
+      cancelPointerForPinch();
+    }
+
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {}
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  function handleStagePointerMoveCapture(event: ReactPointerEvent<HTMLDivElement>) {
+    if (event.pointerType !== "touch" || !touchPointsRef.current.has(event.pointerId)) return;
+
+    touchPointsRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    const pinch = pinchStateRef.current;
+    if (!pinch || touchPointsRef.current.size < 2) return;
+
+    const points = Array.from(touchPointsRef.current.values()).slice(0, 2);
+    const distance = Math.hypot(points[1].x - points[0].x, points[1].y - points[0].y);
+    setZoom(clamp(Math.round(pinch.zoom * distance / pinch.distance), 50, 300));
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  function handleStagePointerEndCapture(event: ReactPointerEvent<HTMLDivElement>) {
+    if (event.pointerType !== "touch" || !touchPointsRef.current.has(event.pointerId)) return;
+
+    const wasPinching = pinchStateRef.current !== null;
+    touchPointsRef.current.delete(event.pointerId);
+    if (wasPinching) {
+      pinchStateRef.current = null;
+      touchPointsRef.current.clear();
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }
 
   function canvasPoint(event: ReactPointerEvent<HTMLCanvasElement>): SketchPoint {
     const canvas = canvasRef.current;
@@ -816,9 +900,9 @@ export default function SketchWorkspace({
         <section className="sketch-canvas-area" aria-label="그림 캔버스">
           <div className="sketch-canvas-toolbar">
             <div className="sketch-zoom-controls">
-              <button type="button" aria-label="축소" title="축소" onClick={() => setZoom(value => clamp(value - 10, 50, 180))}><ZoomOut size={16}/></button>
+              <button type="button" aria-label="축소" title="축소" onClick={() => setZoom(value => clamp(value - 10, 50, 300))}><ZoomOut size={16}/></button>
               <span>{zoom}%</span>
-              <button type="button" aria-label="확대" title="확대" onClick={() => setZoom(value => clamp(value + 10, 50, 180))}><ZoomIn size={16}/></button>
+              <button type="button" aria-label="확대" title="확대" onClick={() => setZoom(value => clamp(value + 10, 50, 300))}><ZoomIn size={16}/></button>
               <button type="button" title="화면에 맞춤" aria-label="화면에 맞춤" onClick={() => setZoom(100)}><LayoutGrid size={15}/></button>
               <button type="button" className="sketch-rotate-button" title="캔버스를 시계 방향으로 90도 회전" aria-label="캔버스 90도 회전" onClick={rotateCanvasClockwise}>
                 <RotateCw size={15}/><span>90° 회전</span>
@@ -831,7 +915,14 @@ export default function SketchWorkspace({
               setSelectedKeys([]);
             }}><Trash2 size={14}/> 현재 레이어 비우기</button>
           </div>
-          <div className="sketch-canvas-stage">
+          <div
+            ref={canvasStageRef}
+            className="sketch-canvas-stage"
+            onPointerDownCapture={handleStagePointerDownCapture}
+            onPointerMoveCapture={handleStagePointerMoveCapture}
+            onPointerUpCapture={handleStagePointerEndCapture}
+            onPointerCancelCapture={handleStagePointerEndCapture}
+          >
             <div className="sketch-canvas-wrap" style={{ width: zoom + "%" }}>
               <canvas ref={canvasRef} className="sketch-canvas" width={doc.width} height={doc.height}
                 onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}
@@ -839,7 +930,7 @@ export default function SketchWorkspace({
             </div>
           </div>
           <div className="sketch-bottom-hint">
-            <span>펜: B</span><span>지우개: E</span><span>올가미: L</span><span>실행 취소: Ctrl + Z</span>
+            <span>펜: B</span><span>지우개: E</span><span>올가미: L</span><span>실행 취소: Ctrl + Z</span><span>확대·축소: 마우스 휠 · 두 손가락</span>
             {selectedKeys.length ? <strong>{selectedKeys.length}개 선택됨 · Ctrl + D 복제 · Delete 삭제</strong> : null}
           </div>
         </section>
