@@ -11291,15 +11291,15 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   min-height:0;
 }
 
-/* Free Note: selectable image frames with persistent resize and crop settings. */
+/* Free Note: controls belong to the selected image, not the text toolbar. */
 .markdown-note-image-frame {
   display:block;
   position:relative;
+  isolation:isolate;
   box-sizing:border-box;
-  width:100%;
   max-width:100%;
-  margin:16px auto;
-  overflow:hidden;
+  margin:26px auto;
+  overflow:visible;
   cursor:grab;
   user-select:none;
   -webkit-user-drag:element;
@@ -11307,7 +11307,16 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 .markdown-note-image-frame:active {
   cursor:grabbing;
 }
-.markdown-note-image-frame > .markdown-note-image {
+.markdown-note-image-content {
+  position:relative;
+  display:block;
+  width:100%;
+  overflow:hidden;
+  border-radius:7px;
+  transform-origin:center center;
+  pointer-events:none;
+}
+.markdown-note-image-content > .markdown-note-image {
   display:block;
   width:100%;
   max-width:100%;
@@ -11319,78 +11328,142 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   user-select:none;
   -webkit-user-drag:none;
 }
-.markdown-free-note-section .markdown-editor-grid .markdown-note-image-frame.is-selected {
+.markdown-free-note-section .markdown-editor-grid .markdown-note-image-frame.is-selected > .markdown-note-image-content {
   outline:2px solid var(--accent);
-  outline-offset:3px;
+  outline-offset:2px;
+}
+.markdown-note-image-control {
+  position:absolute;
+  z-index:6;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  padding:0;
+  border:1px solid var(--accent);
+  border-radius:50%;
+  background:var(--paper);
+  color:var(--ink);
+  box-shadow:0 2px 7px rgba(24,35,55,.24);
+  font-family:inherit;
+  cursor:pointer;
+  touch-action:none;
+}
+.markdown-note-image-menu-trigger {
+  top:6px;
+  right:6px;
+  display:flex;
+  width:29px;
+  height:29px;
+  border-radius:9px;
+  font-size:21px;
+  line-height:1;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .12s ease,background .12s ease;
+}
+.markdown-note-image-frame:hover > .markdown-note-image-menu-trigger,
+.markdown-note-image-frame.is-selected > .markdown-note-image-menu-trigger,
+.markdown-note-image-menu-trigger:focus-visible {
+  opacity:1;
+  pointer-events:auto;
+}
+.markdown-note-image-options {
+  position:absolute;
+  z-index:12;
+  top:40px;
+  right:6px;
+  display:none;
+  flex-direction:column;
+  width:112px;
+  gap:2px;
+  padding:5px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:var(--paper);
+  box-shadow:0 8px 24px rgba(18,29,44,.18);
+}
+.markdown-note-image-frame.menu-open > .markdown-note-image-options {
+  display:flex;
+}
+.markdown-note-image-options > button {
+  position:relative;
+  display:block;
+  width:100%;
+  min-height:33px;
+  padding:7px 10px;
+  border:0;
+  border-radius:6px;
+  background:transparent;
+  color:var(--ink);
+  font-size:12px;
+  text-align:left;
+  box-shadow:none;
+}
+.markdown-note-image-options > button:hover,
+.markdown-note-image-options > button:focus-visible {
+  background:var(--soft);
+}
+.markdown-note-image-options > .markdown-note-image-delete {
+  color:#bd6874;
+}
+.markdown-note-image-rotation-stem {
+  position:absolute;
+  z-index:5;
+  top:-14px;
+  left:50%;
+  display:none;
+  height:14px;
+  border-left:1px dashed var(--accent);
+  pointer-events:none;
+}
+.markdown-note-image-rotate-handle,
+.markdown-note-image-resize-handle {
+  display:none;
+  width:28px;
+  height:28px;
+  font-size:20px;
+  font-weight:600;
+  line-height:1;
+}
+.markdown-note-image-rotate-handle {
+  top:-40px;
+  left:50%;
+  transform:translateX(-50%);
+  cursor:grab;
+}
+.markdown-note-image-resize-handle {
+  right:-14px;
+  bottom:-14px;
+  cursor:nwse-resize;
+}
+.markdown-note-image-frame.is-selected > .markdown-note-image-rotation-stem,
+.markdown-note-image-frame.is-selected > .markdown-note-image-rotate-handle,
+.markdown-note-image-frame.is-selected > .markdown-note-image-resize-handle {
+  display:flex;
+}
+.markdown-note-image-control:hover {
+  background:var(--soft);
+}
+.markdown-note-image-control:focus-visible {
+  outline:2px solid var(--accent);
+  outline-offset:2px;
 }
 .markdown-long-image-export-root .markdown-note-image-frame {
   break-inside:avoid;
   page-break-inside:avoid;
 }
-.markdown-image-edit-panel {
-  display:flex;
-  flex-wrap:wrap;
-  align-items:center;
-  gap:8px 12px;
-  padding:9px 12px;
-  border-bottom:1px solid var(--line);
-  background:var(--paper);
-  color:var(--ink);
+.markdown-long-image-export-root .markdown-note-image-control,
+.markdown-long-image-export-root .markdown-note-image-options,
+.markdown-long-image-export-root .markdown-note-image-rotation-stem {
+  display:none !important;
 }
-.markdown-image-edit-size {
-  display:flex;
-  flex:1 1 180px;
-  min-width:150px;
-  flex-direction:column;
-  gap:4px;
-  font-size:12px;
-  font-weight:700;
-}
-.markdown-image-edit-size label {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-.markdown-image-edit-size output,
 .markdown-image-crop-controls output {
   color:var(--accent);
   font-variant-numeric:tabular-nums;
 }
-.markdown-image-edit-size input,
 .markdown-image-crop-controls input {
   width:100%;
   accent-color:var(--accent);
-}
-.markdown-image-edit-hint {
-  display:inline-flex;
-  align-items:center;
-  gap:5px;
-  color:var(--ink);
-  opacity:.65;
-  font-size:11px;
-  white-space:nowrap;
-}
-.markdown-image-edit-button {
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:5px;
-  min-height:31px;
-  padding:5px 9px;
-  border:1px solid var(--line);
-  border-radius:7px;
-  background:var(--soft);
-  color:var(--ink);
-  font-size:12px;
-  font-weight:700;
-  cursor:pointer;
-}
-.markdown-image-edit-button:hover {
-  border-color:var(--accent);
-  color:var(--accent);
-}
-.markdown-image-remove-button {
-  color:#bd6874;
 }
 .markdown-image-crop-backdrop {
   position:fixed;
@@ -11511,17 +11584,6 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   min-height:36px;
 }
 @media(max-width:520px) {
-  .markdown-image-edit-panel {
-    gap:8px;
-    padding:8px;
-  }
-  .markdown-image-edit-size {
-    flex-basis:100%;
-  }
-  .markdown-image-edit-hint {
-    flex:1 1 100%;
-    white-space:normal;
-  }
   .markdown-image-crop-modal {
     padding:16px;
   }
