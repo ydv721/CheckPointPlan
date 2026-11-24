@@ -2488,29 +2488,6 @@ export default function MarkdownDiary({
                               <Icon size={16} strokeWidth={2}/>
                             </button>
                           ))}
-                          <button
-                            type="button"
-                            className="markdown-toolbar-button markdown-image-insert-button"
-                            aria-label={imageUploading ? "이미지 업로드 중" : "이미지 추가"}
-                            title={imageUploading ? "이미지 업로드 중" : "이미지 추가"}
-                            disabled={imageUploading || loading || !activeNote}
-                            onMouseDown={rememberEditorSelection}
-                            onClick={() => imageInputRef.current?.click()}
-                          >
-                            <ImagePlus size={16} strokeWidth={2}/>
-                          </button>
-                          <input
-                            ref={imageInputRef}
-                            className="sr-only"
-                            type="file"
-                            accept="image/png,image/jpeg,image/webp,image/gif"
-                            aria-label="추가할 이미지 선택"
-                            onChange={event => {
-                              const file = event.currentTarget.files?.[0];
-                              if (file) void uploadAndInsertImage(file);
-                              event.currentTarget.value = "";
-                            }}
-                          />
                           <div className="markdown-align-controls" role="group" aria-label="텍스트 정렬">
                             <button
                               type="button"
@@ -2621,6 +2598,29 @@ export default function MarkdownDiary({
                             )}
                           </div>
 
+                          <button
+                            type="button"
+                            className="markdown-toolbar-button markdown-image-insert-button"
+                            aria-label={imageUploading ? "이미지 업로드 중" : "이미지 추가"}
+                            title={imageUploading ? "이미지 업로드 중" : "이미지 추가"}
+                            disabled={imageUploading || loading || !activeNote}
+                            onMouseDown={rememberEditorSelection}
+                            onClick={() => imageInputRef.current?.click()}
+                          >
+                            <ImagePlus size={16} strokeWidth={2}/>
+                          </button>
+                          <input
+                            ref={imageInputRef}
+                            className="sr-only"
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp,image/gif"
+                            aria-label="추가할 이미지 선택"
+                            onChange={event => {
+                              const file = event.currentTarget.files?.[0];
+                              if (file) void uploadAndInsertImage(file);
+                              event.currentTarget.value = "";
+                            }}
+                          />
                           <button
                             type="button"
                             className="markdown-toolbar-button markdown-toolbar-drawing-toggle"
