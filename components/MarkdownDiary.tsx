@@ -3398,56 +3398,47 @@ export default function MarkdownDiary({
               <button type="button" aria-label="닫기" onClick={() => setImageCropOpen(false)}><X size={18}/></button>
             </div>
             <div
-              className="markdown-image-crop-preview"
+              className="markdown-image-crop-stage"
               style={{
                 width: (() => {
                   const image = selectedImageElementRef.current?.querySelector<HTMLImageElement>("img.markdown-note-image");
-                  const ratio = imageCropRatio === "original"
-                    ? (image?.naturalWidth || 4) / (image?.naturalHeight || 3)
-                    : imageCropRatio === "1:1" ? 1
-                      : imageCropRatio === "4:3" ? 4 / 3
-                        : imageCropRatio === "16:9" ? 16 / 9 : 3 / 4;
-                  return "min(100%, " + Math.min(420, 320 * ratio) + "px)";
+                  const ratio = (image?.naturalWidth || image?.width || 4) / (image?.naturalHeight || image?.height || 3);
+                  return "min(100%, " + Math.min(640, 360 * ratio) + "px)";
                 })(),
-                aspectRatio: imageCropRatio === "original"
-                  ? (() => {
-                      const image = selectedImageElementRef.current?.querySelector<HTMLImageElement>("img.markdown-note-image");
-                      return String(image?.naturalWidth || 4) + " / " + String(image?.naturalHeight || 3);
-                    })()
-                  : imageCropRatio.replace(":", " / ")
+                aspectRatio: (() => {
+                  const image = selectedImageElementRef.current?.querySelector<HTMLImageElement>("img.markdown-note-image");
+                  return String(image?.naturalWidth || image?.width || 4) + " / " + String(image?.naturalHeight || image?.height || 3);
+                })()
               }}
+              onPointerDown={startImageCropAdjust}
+              onPointerMove={moveImageCropAdjust}
+              onPointerUp={finishImageCropAdjust}
+              onPointerCancel={finishImageCropAdjust}
             >
               <img
                 src={selectedImageElementRef.current?.querySelector<HTMLImageElement>("img.markdown-note-image")?.src ?? ""}
-                alt="자르기 미리보기"
-                style={{
-                  objectFit: imageCropRatio === "original" ? "contain" : "cover",
-                  objectPosition: String(imageCropX) + "% " + String(imageCropY) + "%",
-                  transform: "scale(" + imageCropZoom / 100 + ")",
-                  transformOrigin: String(imageCropX) + "% " + String(imageCropY) + "%"
-                }}
+                alt="자를 원본 이미지"
+                draggable={false}
               />
-            </div>
-            <div className="markdown-image-crop-ratios" role="group" aria-label="자르기 비율">
-              {(["original", "1:1", "4:3", "16:9", "3:4"] as const).map(ratio => (
-                <button key={ratio} type="button" className={imageCropRatio === ratio ? "is-active" : ""} aria-pressed={imageCropRatio === ratio} onClick={() => setImageCropRatio(ratio)}>
-                  {ratio === "original" ? "원본" : ratio}
-                </button>
-              ))}
-            </div>
-            <div className="markdown-image-crop-controls">
-              <label>
-                확대 <output>{imageCropZoom}%</output>
-                <input type="range" min={100} max={300} step={5} value={imageCropZoom} onChange={event => setImageCropZoom(Number(event.currentTarget.value))}/>
-              </label>
-              <label>
-                가로 위치 <output>{imageCropX}%</output>
-                <input type="range" min={0} max={100} step={1} value={imageCropX} onChange={event => setImageCropX(Number(event.currentTarget.value))}/>
-              </label>
-              <label>
-                세로 위치 <output>{imageCropY}%</output>
-                <input type="range" min={0} max={100} step={1} value={imageCropY} onChange={event => setImageCropY(Number(event.currentTarget.value))}/>
-              </label>
+              <div
+                className="markdown-image-crop-selection"
+                style={{
+                  left: imageCropRect.x + "%",
+                  top: imageCropRect.y + "%",
+                  width: imageCropRect.width + "%",
+                  height: imageCropRect.height + "%"
+                }}
+              >
+                {(["nw", "n", "ne", "e", "se", "s", "sw", "w"] as const).map(handle => (
+                  <button
+                    key={handle}
+                    type="button"
+                    className={"markdown-image-crop-handle is-" + handle}
+                    data-crop-handle={handle}
+                    aria-label="자르기 영역 조절"
+                  />
+                ))}
+              </div>
             </div>
             <div className="markdown-image-crop-actions">
               <button type="button" className="outline-btn" onClick={() => setImageCropOpen(false)}>취소</button>
