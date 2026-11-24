@@ -11257,3 +11257,20 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
     margin-bottom:8px !important;
   }
 }
+
+/* Keep the Sketch header visible even inside the full-height planner shell. */
+.sketch-workspace.app-shell.planner-view > .site-header.sketch-topbar {
+  display:flex !important;
+  flex:0 0 64px !important;
+  height:64px !important;
+  min-height:64px !important;
+  width:100%;
+  position:relative;
+  z-index:2;
+}
+.sketch-workspace.app-shell.planner-view > .site-header.sketch-topbar > .sketch-header-inner {
+  display:flex;
+  align-items:center;
+  height:100%;
+  min-height:0;
+}
