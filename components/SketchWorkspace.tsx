@@ -1319,7 +1319,6 @@ export default function SketchWorkspace({
               </>
             ) : tool === "lasso" ? (
               <div className="sketch-selection-actions">
-                <p>올가미로 둘러싼 영역 안의 선 부분만 분리됩니다. 선택 영역 안쪽을 드래그해 이동하고, 테두리의 조절점을 드래그해 크기를 바꿀 수 있습니다. 모서리 조절은 비율을 유지하며, Shift를 누르면 가로·세로를 따로 조절합니다.</p>
                 <button type="button" disabled={!selectedKeys.length} onClick={duplicateSelection}>선택 복제</button>
                 <button type="button" disabled={!selectedKeys.length} onClick={deleteSelection}>선택 삭제</button>
                 <button type="button" disabled={!selectedKeys.length} onClick={clearSelection}>선택 해제</button>
