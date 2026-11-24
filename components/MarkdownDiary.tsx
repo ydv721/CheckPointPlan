@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type TouchEvent as ReactTouchEvent, type WheelEvent as ReactWheelEvent } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronLeft, ChevronRight, Code2, Eraser, FileDown, Heading1, Highlighter, ImagePlus, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, StickyNote as StickyNoteIcon, Strikethrough, Type, Underline, Check, Trash2, X } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, ChevronLeft, ChevronRight, Code2, Eraser, FileDown, Heading1, Highlighter, ImagePlus, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, StickyNote as StickyNoteIcon, Strikethrough, Type, Underline, Check, Trash2, X } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import PlannerSpread from "@/components/PlannerSpread";
 import type { ThemeName } from "@/lib/types";
@@ -905,6 +905,8 @@ export default function MarkdownDiary({
   const [customTextColor, setCustomTextColor] = useState("#7868e8");
   const [drawingMode, setDrawingMode] = useState(false);
   const [drawingTool, setDrawingTool] = useState<DrawingTool>("highlighter");
+  const [highlighterMode, setHighlighterMode] = useState<"free" | "straight">("free");
+  const [highlighterMenuOpen, setHighlighterMenuOpen] = useState(false);
   const [drawingColor, setDrawingColor] = useState("#F4D35E");
   const [currentStroke, setCurrentStroke] = useState<DrawingStroke | null>(null);
   const [drawingCanvasHeight, setDrawingCanvasHeight] = useState(1);
@@ -917,6 +919,7 @@ export default function MarkdownDiary({
   const [imageCropX, setImageCropX] = useState(50);
   const [imageCropY, setImageCropY] = useState(50);
   const leftEditorRef = useRef<HTMLDivElement>(null);
+  const highlighterMenuRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const selectedImageElementRef = useRef<HTMLElement | null>(null);
   const movingImageElementRef = useRef<HTMLElement | null>(null);
@@ -975,6 +978,7 @@ export default function MarkdownDiary({
     setColorPaletteOpen(false);
     setDrawingMode(false);
     setDrawingTool("highlighter");
+    setHighlighterMenuOpen(false);
     setCurrentStroke(null);
     currentStrokeRef.current = null;
     drawingPointerIdRef.current = null;
@@ -1368,13 +1372,26 @@ export default function MarkdownDiary({
     const editor = leftEditorRef.current;
     if (!editor) return;
     const rect = editor.getBoundingClientRect();
-    const xTolerance = rect.width ? 24 / rect.width * 1000 : 24;
     const current = pageAnnotations[activePageIndex] ?? createEmptyPageAnnotations(drawingCanvasHeight);
-    const strokes = current.strokes.filter(stroke => !stroke.points.some(candidate => {
-      const dx = (candidate.x - point.x) / 1000 * rect.width;
-      const dy = candidate.y - point.y;
-      return Math.hypot(dx, dy) <= 24 || (Math.abs(candidate.x - point.x) <= xTolerance && Math.abs(dy) <= 24);
-    }));
+    const strokes = current.strokes.filter(stroke => {
+      for (let index = 0; index < stroke.points.length; index += 1) {
+        const candidate = stroke.points[index];
+        const x = (candidate.x - point.x) / 1000 * rect.width;
+        const y = candidate.y - point.y;
+        if (Math.hypot(x, y) <= 24) return false;
+        if (index === 0) continue;
+        const previous = stroke.points[index - 1];
+        const previousX = (previous.x - point.x) / 1000 * rect.width;
+        const previousY = previous.y - point.y;
+        const dx = x - previousX;
+        const dy = y - previousY;
+        const lengthSquared = dx * dx + dy * dy;
+        const fraction = lengthSquared === 0 ? 0
+          : Math.max(0, Math.min(1, -(previousX * dx + previousY * dy) / lengthSquared));
+        if (Math.hypot(previousX + dx * fraction, previousY + dy * fraction) <= 24) return false;
+      }
+      return true;
+    });
     const notes = current.notes.filter(note => {
       const dx = Math.abs(note.x - point.x) / 1000 * rect.width;
       const dy = point.y - note.y;
@@ -1426,7 +1443,10 @@ export default function MarkdownDiary({
     if (!current) return;
     const previous = current.points[current.points.length - 1];
     if (previous && Math.hypot((point.x - previous.x) / 1000 * (leftEditorRef.current?.clientWidth ?? 1), point.y - previous.y) < 1.5) return;
-    const nextStroke = { ...current, points: [...current.points, point] };
+    const points = current.tool === "highlighter" && highlighterMode === "straight"
+      ? [current.points[0], point]
+      : [...current.points, point];
+    const nextStroke = { ...current, points };
     currentStrokeRef.current = nextStroke;
     setCurrentStroke(nextStroke);
   }
@@ -1476,10 +1496,14 @@ export default function MarkdownDiary({
   function finishDrawingPointer(event: ReactPointerEvent<SVGSVGElement>) {
     if (drawingPointerIdRef.current !== event.pointerId) return;
     drawingPointerIdRef.current = null;
-    const stroke = currentStrokeRef.current;
+    let stroke = currentStrokeRef.current;
     currentStrokeRef.current = null;
     setCurrentStroke(null);
     if (!stroke || stroke.points.length === 0) return;
+    if (stroke.tool === "highlighter" && highlighterMode === "straight") {
+      const endPoint = getDrawingPoint(event.clientX, event.clientY);
+      if (endPoint) stroke = { ...stroke, points: [stroke.points[0], endPoint] };
+    }
     const nextAnnotations = [...pageAnnotations];
     const current = nextAnnotations[activePageIndex] ?? createEmptyPageAnnotations(drawingCanvasHeight);
     nextAnnotations[activePageIndex] = {
@@ -1490,6 +1514,24 @@ export default function MarkdownDiary({
     updateCurrentPageAnnotations(nextAnnotations);
   }
 
+  useEffect(() => {
+    if (!highlighterMenuOpen) return;
+    const closeWhenOutside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !highlighterMenuRef.current?.contains(event.target)) {
+        setHighlighterMenuOpen(false);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setHighlighterMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", closeWhenOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeWhenOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [highlighterMenuOpen]);
+
   function enterDrawingMode() {
     const editor = leftEditorRef.current;
     if (editor) updateCurrentPage(htmlToMarkdown(editor.innerHTML));
@@ -1497,12 +1539,14 @@ export default function MarkdownDiary({
     editorSelectionRef.current = null;
     window.getSelection()?.removeAllRanges();
     setDrawingTool("highlighter");
+    setHighlighterMenuOpen(false);
     setDrawingMode(true);
     syncDrawingCanvasMetrics();
   }
 
   function exitDrawingMode() {
     setDrawingMode(false);
+    setHighlighterMenuOpen(false);
     setCurrentStroke(null);
     currentStrokeRef.current = null;
     drawingPointerIdRef.current = null;
