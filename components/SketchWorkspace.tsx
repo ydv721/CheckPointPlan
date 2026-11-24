@@ -418,15 +418,22 @@ function splitStrokeByPolygon(stroke: SketchStroke, polygon: SketchPoint[]) {
   }
 
   const isShape = stroke.tool === "rect" || stroke.tool === "ellipse";
+  const insidePieces = pieces.filter(piece => piece.inside && piece.points.length > 1);
+  const outsidePieces = pieces.filter(piece => !piece.inside && piece.points.length > 1);
+  if (!insidePieces.length) return { inside: [] as SketchStroke[], outside: [stroke] };
+  if (isShape && insidePieces.length === 1 && outsidePieces.length === 0) {
+    return { inside: [{ ...stroke, id: uid() }], outside: [] as SketchStroke[] };
+  }
   const makeStroke = (points: SketchPoint[]): SketchStroke => ({
     ...stroke,
     id: uid(),
     tool: isShape ? "pen" : stroke.tool,
     points
   });
-  const inside = pieces.filter(piece => piece.inside && piece.points.length > 1).map(piece => makeStroke(piece.points));
-  const outside = pieces.filter(piece => !piece.inside && piece.points.length > 1).map(piece => makeStroke(piece.points));
-  return inside.length ? { inside, outside } : { inside: [] as SketchStroke[], outside: [stroke] };
+  return {
+    inside: insidePieces.map(piece => makeStroke(piece.points)),
+    outside: outsidePieces.map(piece => makeStroke(piece.points))
+  };
 }
 
 function distanceToSegment(point: SketchPoint, start: SketchPoint, end: SketchPoint) {
@@ -840,7 +847,19 @@ export default function SketchWorkspace({
 
   function handlePointerMove(event: ReactPointerEvent<HTMLCanvasElement>) {
     const mode = pointerModeRef.current;
-    if (!mode) return;
+    if (!mode) {
+      const bounds = tool === "lasso" ? getSelectionBounds(docRef.current, selectedKeys) : null;
+      const point = canvasPoint(event);
+      const handle = bounds ? findSelectionHandle(point, bounds, Math.max(5, 14 * 100 / zoom)) : null;
+      const cursorByHandle: Record<SelectionHandle, string> = {
+        nw: "nwse-resize", n: "ns-resize", ne: "nesw-resize", e: "ew-resize",
+        se: "nwse-resize", s: "ns-resize", sw: "nesw-resize", w: "ew-resize"
+      };
+      event.currentTarget.style.cursor = handle
+        ? cursorByHandle[handle]
+        : bounds && isInsideBounds(point, bounds) ? "move" : "crosshair";
+      return;
+    }
     const point = canvasPoint(event);
     if (mode.kind === "lasso") {
       const nextPoints = lassoPointsRef.current.concat([point]);
@@ -937,7 +956,7 @@ export default function SketchWorkspace({
           })
         }));
         if (selected.length) {
-          commitDocument({ ...docRef.current, layers: nextLayers });
+          setWorkingDocument({ ...docRef.current, layers: nextLayers });
           setSelectedKeys(selected);
         } else {
           setSelectedKeys([]);
