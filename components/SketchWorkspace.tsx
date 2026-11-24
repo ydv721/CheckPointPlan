@@ -331,9 +331,11 @@ export default function SketchWorkspace({
   const pointerModeRef = useRef<PointerMode | null>(null);
   const touchPointsRef = useRef<Map<number, { x: number; y: number }>>(new Map());
   const pinchStateRef = useRef<{ distance: number; zoom: number } | null>(null);
+  const panStateRef = useRef<{ pointerId: number; startX: number; startY: number; scrollLeft: number; scrollTop: number } | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasStageRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(100);
+  const [isPanning, setIsPanning] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [dirty, setDirty] = useState(false);
@@ -491,6 +493,24 @@ export default function SketchWorkspace({
   }
 
   function handleStagePointerDownCapture(event: ReactPointerEvent<HTMLDivElement>) {
+    if (event.pointerType === "mouse" && event.button === 2) {
+      const stage = event.currentTarget;
+      panStateRef.current = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        scrollLeft: stage.scrollLeft,
+        scrollTop: stage.scrollTop
+      };
+      setIsPanning(true);
+      try {
+        stage.setPointerCapture(event.pointerId);
+      } catch {}
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
     if (event.pointerType !== "touch") return;
 
     touchPointsRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
@@ -511,6 +531,15 @@ export default function SketchWorkspace({
   }
 
   function handleStagePointerMoveCapture(event: ReactPointerEvent<HTMLDivElement>) {
+    const pan = panStateRef.current;
+    if (pan && pan.pointerId === event.pointerId) {
+      event.currentTarget.scrollLeft = pan.scrollLeft - (event.clientX - pan.startX);
+      event.currentTarget.scrollTop = pan.scrollTop - (event.clientY - pan.startY);
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
     if (event.pointerType !== "touch" || !touchPointsRef.current.has(event.pointerId)) return;
 
     touchPointsRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
@@ -525,6 +554,15 @@ export default function SketchWorkspace({
   }
 
   function handleStagePointerEndCapture(event: ReactPointerEvent<HTMLDivElement>) {
+    const pan = panStateRef.current;
+    if (pan && pan.pointerId === event.pointerId) {
+      panStateRef.current = null;
+      setIsPanning(false);
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
     if (event.pointerType !== "touch" || !touchPointsRef.current.has(event.pointerId)) return;
 
     const wasPinching = pinchStateRef.current !== null;
@@ -917,7 +955,8 @@ export default function SketchWorkspace({
           </div>
           <div
             ref={canvasStageRef}
-            className="sketch-canvas-stage"
+            className={isPanning ? "sketch-canvas-stage is-panning" : "sketch-canvas-stage"}
+            onContextMenu={event => event.preventDefault()}
             onPointerDownCapture={handleStagePointerDownCapture}
             onPointerMoveCapture={handleStagePointerMoveCapture}
             onPointerUpCapture={handleStagePointerEndCapture}
@@ -930,7 +969,7 @@ export default function SketchWorkspace({
             </div>
           </div>
           <div className="sketch-bottom-hint">
-            <span>펜: B</span><span>지우개: E</span><span>올가미: L</span><span>실행 취소: Ctrl + Z</span><span>확대·축소: 마우스 휠 · 두 손가락</span>
+            <span>펜: B</span><span>지우개: E</span><span>올가미: L</span><span>실행 취소: Ctrl + Z</span><span>이동: 마우스 오른쪽 버튼 드래그</span><span>확대·축소: 마우스 휠 · 두 손가락</span>
             {selectedKeys.length ? <strong>{selectedKeys.length}개 선택됨 · Ctrl + D 복제 · Delete 삭제</strong> : null}
           </div>
         </section>
