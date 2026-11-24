@@ -437,6 +437,13 @@ export default function SketchWorkspace({
   }, []);
 
   useEffect(() => {
+    const stage = canvasStageRef.current;
+    if (!stage) return;
+    stage.scrollLeft = Math.max(0, (stage.scrollWidth - stage.clientWidth) / 2);
+    stage.scrollTop = Math.max(0, (stage.scrollHeight - stage.clientHeight) / 2);
+  }, [zoom, doc.width, doc.height]);
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target && ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return;
