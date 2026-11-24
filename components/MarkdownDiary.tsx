@@ -1902,8 +1902,8 @@ export default function MarkdownDiary({
     const heightValue = Number(frame.dataset.checkpointImageCropHeight);
     const left = Number.isFinite(leftValue) ? Math.max(0, Math.min(99, leftValue)) : 0;
     const top = Number.isFinite(topValue) ? Math.max(0, Math.min(99, topValue)) : 0;
-    const width = Number.isFinite(widthValue) ? Math.max(4, Math.min(100 - left, widthValue)) : 100;
-    const height = Number.isFinite(heightValue) ? Math.max(4, Math.min(100 - top, heightValue)) : 100;
+    const width = Number.isFinite(widthValue) ? Math.min(100 - left, Math.max(4, widthValue)) : 100;
+    const height = Number.isFinite(heightValue) ? Math.min(100 - top, Math.max(4, heightValue)) : 100;
     setImageCropRect({ x: left, y: top, width, height });
     imageCropDragRef.current = null;
     setImageCropOpen(true);
