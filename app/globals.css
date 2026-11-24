@@ -11284,17 +11284,238 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   min-height:0;
 }
 
-/* Free Note: inline images uploaded to the private note asset storage. */
-.markdown-free-note-section .markdown-editor-grid .markdown-note-image,
-.markdown-long-image-export-root .markdown-note-image {
+/* Free Note: selectable image frames with persistent resize and crop settings. */
+.markdown-note-image-frame {
   display:block;
-  width:auto;
+  position:relative;
+  box-sizing:border-box;
+  width:100%;
+  max-width:100%;
+  margin:16px auto;
+  overflow:hidden;
+  cursor:grab;
+  user-select:none;
+  -webkit-user-drag:element;
+}
+.markdown-note-image-frame:active {
+  cursor:grabbing;
+}
+.markdown-note-image-frame > .markdown-note-image {
+  display:block;
+  width:100%;
   max-width:100%;
   height:auto;
-  margin:16px auto;
+  margin:0;
   border:0;
   border-radius:7px;
   object-fit:contain;
   user-select:none;
   -webkit-user-drag:none;
+}
+.markdown-free-note-section .markdown-editor-grid .markdown-note-image-frame.is-selected {
+  outline:2px solid var(--accent);
+  outline-offset:3px;
+}
+.markdown-long-image-export-root .markdown-note-image-frame {
+  break-inside:avoid;
+  page-break-inside:avoid;
+}
+.markdown-image-edit-panel {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px 12px;
+  padding:9px 12px;
+  border-bottom:1px solid var(--line);
+  background:var(--paper);
+  color:var(--ink);
+}
+.markdown-image-edit-size {
+  display:flex;
+  flex:1 1 180px;
+  min-width:150px;
+  flex-direction:column;
+  gap:4px;
+  font-size:12px;
+  font-weight:700;
+}
+.markdown-image-edit-size label {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.markdown-image-edit-size output,
+.markdown-image-crop-controls output {
+  color:var(--accent);
+  font-variant-numeric:tabular-nums;
+}
+.markdown-image-edit-size input,
+.markdown-image-crop-controls input {
+  width:100%;
+  accent-color:var(--accent);
+}
+.markdown-image-edit-hint {
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  color:var(--ink);
+  opacity:.65;
+  font-size:11px;
+  white-space:nowrap;
+}
+.markdown-image-edit-button {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  min-height:31px;
+  padding:5px 9px;
+  border:1px solid var(--line);
+  border-radius:7px;
+  background:var(--soft);
+  color:var(--ink);
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+.markdown-image-edit-button:hover {
+  border-color:var(--accent);
+  color:var(--accent);
+}
+.markdown-image-remove-button {
+  color:#bd6874;
+}
+.markdown-image-crop-backdrop {
+  position:fixed;
+  inset:0;
+  z-index:1200;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  padding:18px;
+  overflow-y:auto;
+  background:rgba(15,20,30,.52);
+}
+.markdown-image-crop-modal {
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  box-sizing:border-box;
+  width:min(100%,520px);
+  max-height:calc(100vh - 36px);
+  padding:20px;
+  overflow-y:auto;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:var(--paper);
+  color:var(--ink);
+  box-shadow:0 18px 60px rgba(0,0,0,.22);
+}
+.markdown-image-crop-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.markdown-image-crop-header h2 {
+  margin:0;
+  font-size:18px;
+  font-weight:850;
+}
+.markdown-image-crop-header button {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:32px;
+  height:32px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:var(--soft);
+  color:var(--ink);
+}
+.markdown-image-crop-preview {
+  position:relative;
+  width:100%;
+  max-width:420px;
+  max-height:320px;
+  margin:0 auto;
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:
+    linear-gradient(45deg,#d8dbe1 25%,transparent 25%),
+    linear-gradient(-45deg,#d8dbe1 25%,transparent 25%),
+    linear-gradient(45deg,transparent 75%,#d8dbe1 75%),
+    linear-gradient(-45deg,transparent 75%,#d8dbe1 75%);
+  background-size:16px 16px;
+  background-position:0 0,0 8px,8px -8px,-8px 0;
+}
+.markdown-image-crop-preview img {
+  display:block;
+  width:100%;
+  height:100%;
+  max-width:none;
+}
+.markdown-image-crop-ratios {
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:7px;
+}
+.markdown-image-crop-ratios button {
+  min-width:52px;
+  padding:7px 10px;
+  border:1px solid var(--line);
+  border-radius:7px;
+  background:var(--soft);
+  color:var(--ink);
+  font-size:12px;
+  font-weight:700;
+}
+.markdown-image-crop-ratios button.is-active {
+  border-color:var(--accent);
+  background:var(--accent);
+  color:#fff;
+}
+.markdown-image-crop-controls {
+  display:grid;
+  gap:12px;
+}
+.markdown-image-crop-controls label {
+  display:grid;
+  grid-template-columns:1fr auto;
+  align-items:center;
+  gap:5px 12px;
+  font-size:12px;
+  font-weight:700;
+}
+.markdown-image-crop-controls input {
+  grid-column:1 / -1;
+}
+.markdown-image-crop-actions {
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  padding-top:4px;
+}
+.markdown-image-crop-actions button {
+  min-width:78px;
+  min-height:36px;
+}
+@media(max-width:520px) {
+  .markdown-image-edit-panel {
+    gap:8px;
+    padding:8px;
+  }
+  .markdown-image-edit-size {
+    flex-basis:100%;
+  }
+  .markdown-image-edit-hint {
+    flex:1 1 100%;
+    white-space:normal;
+  }
+  .markdown-image-crop-modal {
+    padding:16px;
+  }
 }
