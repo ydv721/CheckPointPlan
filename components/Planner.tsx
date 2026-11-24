@@ -383,7 +383,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
       return;
     }
     const distance=Math.hypot(e.clientX-active.centerX,e.clientY-active.centerY);
-    const ratio=clamp(distance/active.startDistance,.25,5);
+    const ratio=clamp(distance/active.startDistance,.25,3.5);
     setCover(c=>({...c,items:c.items.map(i=>{
       if(i.id!==active.id)return i;
       const size=clamp(active.originSize*ratio,8,180);
