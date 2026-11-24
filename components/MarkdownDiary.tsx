@@ -525,6 +525,12 @@ function renderInlineMarkdown(value: string, imageUrls: Record<string, string> =
       const zoom = clampNumber(options.get("z"), 100, 100, 300);
       const cropX = clampNumber(options.get("x"), 50, 0, 100);
       const cropY = clampNumber(options.get("y"), 50, 0, 100);
+      const hasCrop = options.has("cw") && options.has("ch");
+      const cropLeft = clampNumber(options.get("cx"), 0, 0, 99);
+      const cropTop = clampNumber(options.get("cy"), 0, 0, 99);
+      const cropWidth = clampNumber(options.get("cw"), 100, 1, 100);
+      const cropHeight = clampNumber(options.get("ch"), 100, 1, 100);
+      const cropAspect = clampNumber(options.get("ar"), 4 / 3, 0.1, 10);
       const rotation = clampNumber(options.get("rot"), 0, -180, 180);
       const src = imageUrls[path];
       const srcAttribute = src ? ' src="' + escapeHtml(src) + '"' : "";
@@ -536,17 +542,26 @@ function renderInlineMarkdown(value: string, imageUrls: Record<string, string> =
         "max-width:100%",
         "margin:26px auto",
         "overflow:visible",
-        ratio === "original" ? "" : "aspect-ratio:" + ratio.replace(":", " / ")
+        hasCrop
+          ? "aspect-ratio:" + (cropAspect * cropWidth / cropHeight)
+          : ratio === "original" ? "" : "aspect-ratio:" + ratio.replace(":", " / ")
       ].filter(Boolean).join(";");
-      const imageStyle = ratio === "original"
-        ? "display:block;position:relative;width:100%;height:auto;max-width:100%;object-fit:contain;transform:scale(" + zoom / 100 + ");transform-origin:" + cropX + "% " + cropY + "%;"
-        : "display:block;position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:cover;object-position:" + cropX + "% " + cropY + "%;transform:scale(" + zoom / 100 + ");transform-origin:" + cropX + "% " + cropY + "%;";
+      const imageStyle = hasCrop
+        ? "display:block;position:absolute;left:" + (-cropLeft / cropWidth * 100) + "%;top:" + (-cropTop / cropHeight * 100) + "%;width:" + (100 / cropWidth) + "%;height:" + (100 / cropHeight) + "%;max-width:none;object-fit:fill;transform:none;"
+        : ratio === "original"
+          ? "display:block;position:relative;width:100%;height:auto;max-width:100%;object-fit:contain;transform:scale(" + zoom / 100 + ");transform-origin:" + cropX + "% " + cropY + "%;"
+          : "display:block;position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:cover;object-position:" + cropX + "% " + cropY + "%;transform:scale(" + zoom / 100 + ");transform-origin:" + cropX + "% " + cropY + "%;";
+      const cropAttributes = hasCrop
+        ? ' data-checkpoint-image-crop-x="' + cropLeft + '" data-checkpoint-image-crop-y="' + cropTop +
+          '" data-checkpoint-image-crop-width="' + cropWidth + '" data-checkpoint-image-crop-height="' + cropHeight +
+          '" data-checkpoint-image-aspect-ratio="' + cropAspect + '"'
+        : "";
       return stash(
         '<span class="markdown-note-image-frame" data-checkpoint-image-path="' + escapeHtml(path) +
         '" data-checkpoint-image-width="' + width + '" data-checkpoint-image-ratio="' + ratio +
         '" data-checkpoint-image-zoom="' + zoom + '" data-checkpoint-image-x="' + cropX +
-        '" data-checkpoint-image-y="' + cropY + '" data-checkpoint-image-rotation="' + rotation +
-        '" contenteditable="false" draggable="true" style="' + escapeHtml(wrapperStyle) + '">' +
+        '" data-checkpoint-image-y="' + cropY + '" data-checkpoint-image-rotation="' + rotation + '"' + cropAttributes +
+        ' contenteditable="false" draggable="true" style="' + escapeHtml(wrapperStyle) + '">' +
         '<span class="markdown-note-image-content" style="transform:rotate(' + rotation + 'deg)">' +
         '<img class="markdown-note-image" data-checkpoint-image-path="' + escapeHtml(path) +
         '"' + srcAttribute + ' alt="' + escapeHtml(alt || "이미지") +
@@ -749,12 +764,31 @@ export function htmlToMarkdown(html: string) {
       const cropY = Number.isFinite(cropYValue) ? Math.min(100, Math.max(0, cropYValue)) : 50;
       const rotationValue = Number(element.dataset.checkpointImageRotation);
       const rotation = Number.isFinite(rotationValue) ? Math.min(180, Math.max(-180, rotationValue)) : 0;
+      const cropWidthValue = Number(element.dataset.checkpointImageCropWidth);
+      const cropHeightValue = Number(element.dataset.checkpointImageCropHeight);
+      const hasCrop = Number.isFinite(cropWidthValue) && Number.isFinite(cropHeightValue) &&
+        element.dataset.checkpointImageCropWidth !== undefined && element.dataset.checkpointImageCropHeight !== undefined;
+      const cropLeftValue = Number(element.dataset.checkpointImageCropX);
+      const cropTopValue = Number(element.dataset.checkpointImageCropY);
+      const cropLeft = hasCrop && Number.isFinite(cropLeftValue) ? Math.max(0, Math.min(99, cropLeftValue)) : 0;
+      const cropTop = hasCrop && Number.isFinite(cropTopValue) ? Math.max(0, Math.min(99, cropTopValue)) : 0;
+      const cropWidth = hasCrop ? Math.max(1, Math.min(100 - cropLeft, cropWidthValue)) : 100;
+      const cropHeight = hasCrop ? Math.max(1, Math.min(100 - cropTop, cropHeightValue)) : 100;
+      const cropAspectValue = Number(element.dataset.checkpointImageAspectRatio);
+      const cropAspect = Number.isFinite(cropAspectValue) && cropAspectValue > 0 ? Math.min(10, Math.max(.1, cropAspectValue)) : 4 / 3;
       const options = new URLSearchParams();
       if (width !== 100) options.set("w", String(width));
       if (ratio !== "original") options.set("r", ratio);
       if (zoom !== 100) options.set("z", String(zoom));
       if (cropX !== 50) options.set("x", String(cropX));
       if (cropY !== 50) options.set("y", String(cropY));
+      if (hasCrop) {
+        options.set("cx", String(cropLeft));
+        options.set("cy", String(cropTop));
+        options.set("cw", String(cropWidth));
+        options.set("ch", String(cropHeight));
+        options.set("ar", String(cropAspect));
+      }
       if (rotation !== 0) options.set("rot", String(Math.round(rotation * 10) / 10));
       const query = options.toString();
       return "![" + alt + "](checkpoint-image:" + encodeURIComponent(path) + (query ? "?" + query : "") + ")";
