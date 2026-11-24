@@ -341,9 +341,9 @@ function strokeToPolyline(stroke: SketchStroke): SketchPoint[] {
     const end = points[points.length - 1];
     return [
       start,
-      { x: end.x, y: start.y, pressure: 0.5 },
+      { x: end.x, y: start.y, pressure: 1 },
       end,
-      { x: start.x, y: end.y, pressure: 0.5 },
+      { x: start.x, y: end.y, pressure: 1 },
       start
     ];
   }
@@ -356,7 +356,7 @@ function strokeToPolyline(stroke: SketchStroke): SketchPoint[] {
     const radiusY = Math.abs(end.y - start.y) / 2;
     return Array.from({ length: 97 }, (_, index) => {
       const angle = (index / 96) * Math.PI * 2;
-      return { x: centerX + Math.cos(angle) * radiusX, y: centerY + Math.sin(angle) * radiusY, pressure: 0.5 };
+      return { x: centerX + Math.cos(angle) * radiusX, y: centerY + Math.sin(angle) * radiusY, pressure: 1 };
     });
   }
   return points;
@@ -502,6 +502,7 @@ export default function SketchWorkspace({
   const [eraserStrength, setEraserStrength] = useState(100);
   const [selectedLayerId, setSelectedLayerId] = useState(initial.layers[0]?.id ?? "");
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+  const selectionSourceDocRef = useRef<SketchDocument | null>(null);
   const [lassoPoints, setLassoPoints] = useState<SketchPoint[]>([]);
   const lassoPointsRef = useRef<SketchPoint[]>([]);
   const pointerModeRef = useRef<PointerMode | null>(null);
@@ -525,6 +526,7 @@ export default function SketchWorkspace({
   }, []);
 
   const commitDocument = useCallback((next: SketchDocument) => {
+    selectionSourceDocRef.current = null;
     const nextHistory = historyRef.current.slice(0, historyIndexRef.current + 1).concat([next]);
     historyRef.current = nextHistory;
     historyIndexRef.current = nextHistory.length - 1;
@@ -536,6 +538,14 @@ export default function SketchWorkspace({
   }, []);
 
   const undo = useCallback(() => {
+    if (selectionSourceDocRef.current) {
+      const original = selectionSourceDocRef.current;
+      selectionSourceDocRef.current = null;
+      docRef.current = original;
+      setDoc(original);
+      setSelectedKeys([]);
+      return;
+    }
     const nextIndex = Math.max(0, historyIndexRef.current - 1);
     if (nextIndex === historyIndexRef.current) return;
     historyIndexRef.current = nextIndex;
@@ -656,7 +666,7 @@ export default function SketchWorkspace({
       else if (key === "[") setBrushSize(value => clamp(value - 1, 1, 80));
       else if (key === "]") setBrushSize(value => clamp(value + 1, 1, 80));
       else if (key === "escape") {
-        if (selectedKeys.length) setSelectedKeys([]);
+        if (selectedKeys.length || selectionSourceDocRef.current) clearSelection();
         else requestClose();
       }
     };
@@ -956,13 +966,14 @@ export default function SketchWorkspace({
           })
         }));
         if (selected.length) {
+          if (!selectionSourceDocRef.current) selectionSourceDocRef.current = docRef.current;
           setWorkingDocument({ ...docRef.current, layers: nextLayers });
           setSelectedKeys(selected);
         } else {
-          setSelectedKeys([]);
+          clearSelection();
         }
       } else {
-        setSelectedKeys([]);
+        clearSelection();
       }
       lassoPointsRef.current = [];
       setLassoPoints([]);
@@ -1003,6 +1014,15 @@ export default function SketchWorkspace({
     const layers = docRef.current.layers.filter(layer => layer.id !== selectedLayer.id);
     commitDocument({ ...docRef.current, layers });
     setSelectedLayerId(layers[layers.length - 1].id);
+    setSelectedKeys([]);
+  }
+
+  function clearSelection() {
+    if (selectionSourceDocRef.current) {
+      const original = selectionSourceDocRef.current;
+      selectionSourceDocRef.current = null;
+      setWorkingDocument(original);
+    }
     setSelectedKeys([]);
   }
 
@@ -1116,8 +1136,9 @@ export default function SketchWorkspace({
     setSaving(true);
     setMessage("");
     try {
-      const blob = await documentToBlob(docRef.current);
-      const saved = await onSave(blob, docRef.current);
+      const documentToSave = selectionSourceDocRef.current ?? docRef.current;
+      const blob = await documentToBlob(documentToSave);
+      const saved = await onSave(blob, documentToSave);
       if (saved) {
         setDirty(false);
         onClose();
@@ -1133,7 +1154,8 @@ export default function SketchWorkspace({
 
   async function downloadSketch() {
     try {
-      const blob = await documentToBlob(docRef.current);
+      const documentToDownload = selectionSourceDocRef.current ?? docRef.current;
+      const blob = await documentToBlob(documentToDownload);
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
@@ -1272,7 +1294,7 @@ export default function SketchWorkspace({
                 <p>올가미로 둘러싼 영역 안의 선 부분만 분리됩니다. 선택 영역 안쪽을 드래그해 이동하고, 테두리의 조절점을 드래그해 크기를 바꿀 수 있습니다. 모서리 조절은 비율을 유지하며, Shift를 누르면 가로·세로를 따로 조절합니다.</p>
                 <button type="button" disabled={!selectedKeys.length} onClick={duplicateSelection}>선택 복제</button>
                 <button type="button" disabled={!selectedKeys.length} onClick={deleteSelection}>선택 삭제</button>
-                <button type="button" disabled={!selectedKeys.length} onClick={() => setSelectedKeys([])}>선택 해제</button>
+                <button type="button" disabled={!selectedKeys.length} onClick={clearSelection}>선택 해제</button>
               </div>
             ) : (
               <p className="sketch-setting-help">캔버스에서 시작점을 누른 뒤 드래그해 도형을 그릴 수 있습니다.</p>
