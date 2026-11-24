@@ -3379,6 +3379,9 @@ export default function MarkdownDiary({
                 return String(image?.naturalWidth || image?.width || 4) + " / " + String(image?.naturalHeight || image?.height || 3);
               })()
             }}
+            onClick={event => {
+              if (!(event.target as HTMLElement).closest(".markdown-image-crop-selection")) saveImageCrop();
+            }}
             onPointerDown={startImageCropAdjust}
             onPointerMove={moveImageCropAdjust}
             onPointerUp={finishImageCropAdjust}
