@@ -9751,6 +9751,8 @@ html,body{width:100%;overflow-x:clip}
   min-height:0;
   padding:20px;
   overflow:auto;
+  touch-action:none;
+  overscroll-behavior:contain;
   background-color:var(--bg);
   background-image:radial-gradient(var(--line) .8px,transparent .8px);
   background-size:18px 18px;
