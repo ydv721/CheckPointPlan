@@ -544,6 +544,9 @@ export default function SketchWorkspace({
       docRef.current = original;
       setDoc(original);
       setSelectedKeys([]);
+      pointerModeRef.current = null;
+      lassoPointsRef.current = [];
+      setLassoPoints([]);
       return;
     }
     const nextIndex = Math.max(0, historyIndexRef.current - 1);
@@ -564,6 +567,9 @@ export default function SketchWorkspace({
       docRef.current = original;
       setDoc(original);
       setSelectedKeys([]);
+      pointerModeRef.current = null;
+      lassoPointsRef.current = [];
+      setLassoPoints([]);
     }
     const nextIndex = Math.min(historyRef.current.length - 1, historyIndexRef.current + 1);
     if (nextIndex === historyIndexRef.current) return;
@@ -1031,6 +1037,9 @@ export default function SketchWorkspace({
       setWorkingDocument(original);
     }
     setSelectedKeys([]);
+    pointerModeRef.current = null;
+    lassoPointsRef.current = [];
+    setLassoPoints([]);
   }
 
   function deleteSelection() {
