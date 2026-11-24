@@ -528,8 +528,8 @@ function renderInlineMarkdown(value: string, imageUrls: Record<string, string> =
       const hasCrop = options.has("cw") && options.has("ch");
       const cropLeft = clampNumber(options.get("cx"), 0, 0, 99);
       const cropTop = clampNumber(options.get("cy"), 0, 0, 99);
-      const cropWidth = clampNumber(options.get("cw"), 100, 1, 100);
-      const cropHeight = clampNumber(options.get("ch"), 100, 1, 100);
+      const cropWidth = Math.min(100 - cropLeft, clampNumber(options.get("cw"), 100, 1, 100));
+      const cropHeight = Math.min(100 - cropTop, clampNumber(options.get("ch"), 100, 1, 100));
       const cropAspect = clampNumber(options.get("ar"), 4 / 3, 0.1, 10);
       const rotation = clampNumber(options.get("rot"), 0, -180, 180);
       const src = imageUrls[path];
@@ -556,13 +556,16 @@ function renderInlineMarkdown(value: string, imageUrls: Record<string, string> =
           '" data-checkpoint-image-crop-width="' + cropWidth + '" data-checkpoint-image-crop-height="' + cropHeight +
           '" data-checkpoint-image-aspect-ratio="' + cropAspect + '"'
         : "";
+      const visualStyle = hasCrop
+        ? "position:absolute;inset:0;width:100%;height:100%;overflow:hidden;transform:rotate(" + rotation + "deg);transform-origin:center center;"
+        : "transform:rotate(" + rotation + "deg);";
       return stash(
         '<span class="markdown-note-image-frame" data-checkpoint-image-path="' + escapeHtml(path) +
         '" data-checkpoint-image-width="' + width + '" data-checkpoint-image-ratio="' + ratio +
         '" data-checkpoint-image-zoom="' + zoom + '" data-checkpoint-image-x="' + cropX +
         '" data-checkpoint-image-y="' + cropY + '" data-checkpoint-image-rotation="' + rotation + '"' + cropAttributes +
         ' contenteditable="false" draggable="true" style="' + escapeHtml(wrapperStyle) + '">' +
-        '<span class="markdown-note-image-content" style="transform:rotate(' + rotation + 'deg)">' +
+        '<span class="markdown-note-image-content" style="' + escapeHtml(visualStyle) + '">' +
         '<img class="markdown-note-image" data-checkpoint-image-path="' + escapeHtml(path) +
         '"' + srcAttribute + ' alt="' + escapeHtml(alt || "이미지") +
         '" draggable="false" style="' + escapeHtml(imageStyle) + '"></span>' +
