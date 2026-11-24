@@ -11504,7 +11504,7 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   max-width:100%;
   max-height:min(60vh,520px);
   margin:0 auto;
-  cursor:default;
+  cursor:pointer;
   overflow:hidden;
   border:1px solid var(--line);
   border-radius:9px;
