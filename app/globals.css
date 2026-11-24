@@ -9927,18 +9927,25 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   line-height:1.65;
 }
 .sketch-selection-actions {
-  display:grid;
-  gap:7px;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:5px;
 }
 .sketch-selection-actions button {
-  min-height:32px;
+  flex:1 1 auto;
+  width:auto;
+  min-width:0;
+  min-height:26px;
+  padding:0 8px;
   border:1px solid var(--line);
-  border-radius:7px;
+  border-radius:6px;
   background:var(--paper);
   color:var(--ink);
   font-family:inherit;
   font-size:10px;
-  font-weight:800;
+  font-weight:600;
+  white-space:nowrap;
   cursor:pointer;
 }
 .sketch-selection-actions button:disabled {
