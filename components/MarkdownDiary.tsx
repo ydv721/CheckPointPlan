@@ -2706,10 +2706,7 @@ export default function MarkdownDiary({
                           onDragStart={event => {
                             const target = event.target as HTMLElement;
                             const frame = target.closest<HTMLElement>(".markdown-note-image-frame");
-                            if (!frame || !leftEditorRef.current?.contains(frame)) {
-                              event.preventDefault();
-                              return;
-                            }
+                            if (!frame || !leftEditorRef.current?.contains(frame)) return;
                             movingImageElementRef.current = frame;
                             selectNoteImage(frame);
                             event.dataTransfer.effectAllowed = "move";
@@ -3081,7 +3078,7 @@ export default function MarkdownDiary({
               }}
             >
               <img
-                src={selectedImageElementRef.current.querySelector<HTMLImageElement>("img.markdown-note-image")?.src ?? ""}
+                src={selectedImageElementRef.current?.querySelector<HTMLImageElement>("img.markdown-note-image")?.src ?? ""}
                 alt="자르기 미리보기"
                 style={{
                   objectFit: imageCropRatio === "original" ? "contain" : "cover",
