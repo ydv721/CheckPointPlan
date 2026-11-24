@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type TouchEvent as ReactTouchEvent, type WheelEvent as ReactWheelEvent } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronLeft, ChevronRight, Code2, Eraser, FileDown, Heading1, Highlighter, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, StickyNote as StickyNoteIcon, Strikethrough, Type, Underline, Check, Trash2, X } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronLeft, ChevronRight, Code2, Eraser, FileDown, Heading1, Highlighter, ImagePlus, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, StickyNote as StickyNoteIcon, Strikethrough, Type, Underline, Check, Trash2, X } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import PlannerSpread from "@/components/PlannerSpread";
 import type { ThemeName } from "@/lib/types";
@@ -343,6 +343,21 @@ function encodeNotePages(pages: string[], annotations: FreeNotePageAnnotations[]
   });
 }
 
+function extractStoredImagePaths(markdown: string) {
+  const paths = new Set<string>();
+  const pattern = /!\[([^\]]*)\]\(checkpoint-image:([^)]+)\)/g;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(markdown)) !== null) {
+    try {
+      const path = decodeURIComponent(match[2]);
+      if (path) paths.add(path);
+    } catch {
+      // Ignore malformed stored image references.
+    }
+  }
+  return [...paths];
+}
+
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, "&amp;")
@@ -459,7 +474,7 @@ function safeMarkdownHref(value: string) {
   return "";
 }
 
-function renderInlineMarkdown(value: string) {
+function renderInlineMarkdown(value: string, imageUrls: Record<string, string> = {}) {
   const tokens: string[] = [];
   const stash = (html: string) => {
     tokens.push(html);
@@ -472,13 +487,27 @@ function renderInlineMarkdown(value: string) {
   );
   // Underline uses limited HTML syntax because standard Markdown has no underline marker.
   source = source.replace(/<(u|ins)>([\s\S]*?)<\/\1>/gi, (_match, _tag: string, content: string) =>
-    stash("<u>" + renderInlineMarkdown(content) + "</u>")
+    stash("<u>" + renderInlineMarkdown(content, imageUrls) + "</u>")
   );
   source = source.replace(
     /<span\s+style=["']color:\s*(#[0-9a-f]{6})["']\s*>([\s\S]*?)<\/span>/gi,
     (_match, color: string, content: string) =>
-      stash('<span style="color: ' + color.toLowerCase() + '">' + renderInlineMarkdown(content) + "</span>")
+      stash('<span style="color: ' + color.toLowerCase() + '">' + renderInlineMarkdown(content, imageUrls) + "</span>")
   );
+  source = source.replace(/!\[([^\]]*)\]\(checkpoint-image:([^)]+)\)/g, (_match, alt: string, encodedPath: string) => {
+    try {
+      const path = decodeURIComponent(encodedPath);
+      const src = imageUrls[path];
+      const srcAttribute = src ? ' src="' + escapeHtml(src) + '"' : "";
+      return stash(
+        '<img class="markdown-note-image" data-checkpoint-image-path="' +
+        escapeHtml(path) + '"' + srcAttribute + ' alt="' + escapeHtml(alt || "이미지") +
+        '" contenteditable="false" draggable="false">'
+      );
+    } catch {
+      return alt || "이미지";
+    }
+  });
   let html = escapeHtml(source);
   html = html.replace(/\*\*\*(.+?)\*\*\*/g, (_match, text: string) =>
     stash("<strong><em>" + text + "</em></strong>")
@@ -526,7 +555,7 @@ function renderInlineMarkdown(value: string) {
   return rendered;
 }
 
-export function markdownToHtml(markdown: string) {
+export function markdownToHtml(markdown: string, imageUrls: Record<string, string> = {}) {
   const lines = markdown.replace(/\r\n?/g, "\n").split("\n");
   const blocks: string[] = [];
   let index = 0;
@@ -568,7 +597,7 @@ export function markdownToHtml(markdown: string) {
         index += 1;
       }
 
-      const content = markdownToHtml(contentLines.join("\n"));
+      const content = markdownToHtml(contentLines.join("\n"), imageUrls);
       blocks.push('<div data-checkpoint-align="' + alignment + '" style="text-align:' + alignment + '">' + content + "</div>");
       continue;
     }
@@ -591,7 +620,7 @@ export function markdownToHtml(markdown: string) {
     const heading = line.match(/^(#{1,3})\s+(.*)$/);
     if (heading) {
       const level = heading[1].length;
-      blocks.push("<h" + level + ">" + renderInlineMarkdown(heading[2]) + "</h" + level + ">");
+      blocks.push("<h" + level + ">" + renderInlineMarkdown(heading[2], imageUrls) + "</h" + level + ">");
       index += 1;
       continue;
     }
@@ -608,7 +637,7 @@ export function markdownToHtml(markdown: string) {
         quoteLines.push(lines[index].replace(/^\s*>\s?/, ""));
         index += 1;
       }
-      blocks.push("<blockquote><p>" + renderInlineMarkdown(quoteLines.join("\n")).replace(/\n/g, "<br>") + "</p></blockquote>");
+      blocks.push("<blockquote><p>" + renderInlineMarkdown(quoteLines.join("\n"), imageUrls).replace(/\n/g, "<br>") + "</p></blockquote>");
       continue;
     }
 
@@ -622,7 +651,7 @@ export function markdownToHtml(markdown: string) {
         const itemAlignment = item[2].match(/^\{align=(left|center|right)\}\s?(.*)$/);
         const itemText = itemAlignment ? itemAlignment[2] : item[2];
         const alignmentStyle = itemAlignment ? ' style="text-align:' + itemAlignment[1] + '"' : "";
-        items.push("<li" + alignmentStyle + ">" + renderInlineMarkdown(itemText) + "</li>");
+        items.push("<li" + alignmentStyle + ">" + renderInlineMarkdown(itemText, imageUrls) + "</li>");
         index += 1;
       }
       const tag = ordered ? "ol" : "ul";
@@ -635,7 +664,7 @@ export function markdownToHtml(markdown: string) {
       paragraph.push(lines[index]);
       index += 1;
     }
-    blocks.push("<p>" + renderInlineMarkdown(paragraph.join("\n")).replace(/\n/g, "<br>") + "</p>");
+    blocks.push("<p>" + renderInlineMarkdown(paragraph.join("\n"), imageUrls).replace(/\n/g, "<br>") + "</p>");
   }
 
   return blocks.join("");
@@ -656,6 +685,12 @@ export function htmlToMarkdown(html: string) {
 
     if (tag === "BR") return "\n";
     if (tag === "HR") return "\n---\n";
+    if (tag === "IMG") {
+      const path = element.getAttribute("data-checkpoint-image-path") ?? "";
+      if (!path) return "";
+      const alt = (element.getAttribute("alt") ?? "이미지").replace(/[\[\]\r\n]/g, " ").trim() || "이미지";
+      return "![" + alt + "](checkpoint-image:" + encodeURIComponent(path) + ")";
+    }
     if (tag === "B" || tag === "STRONG") return "**" + children + "**";
     if (tag === "I" || tag === "EM") return "*" + children + "*";
     if (tag === "U" || tag === "INS") return "<u>" + children + "</u>";
@@ -785,6 +820,8 @@ export default function MarkdownDiary({
   const [notes, setNotes] = useState<MarkdownNote[]>([]);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [activePageIndex, setActivePageIndex] = useState(0);
+  const activePageIndexRef = useRef(activePageIndex);
+  activePageIndexRef.current = activePageIndex;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [, setSaveState] = useState<"saved" | "dirty" | "saving" | "error">("saved");
@@ -799,7 +836,10 @@ export default function MarkdownDiary({
   const [currentStroke, setCurrentStroke] = useState<DrawingStroke | null>(null);
   const [drawingCanvasHeight, setDrawingCanvasHeight] = useState(1);
   const [drawingScrollTop, setDrawingScrollTop] = useState(0);
+  const [noteImageUrls, setNoteImageUrls] = useState<Record<string, string>>({});
+  const [imageUploading, setImageUploading] = useState(false);
   const leftEditorRef = useRef<HTMLDivElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const currentStrokeRef = useRef<DrawingStroke | null>(null);
   const drawingPointerIdRef = useRef<number | null>(null);
   const touchScrollYRef = useRef<number | null>(null);
@@ -818,6 +858,10 @@ export default function MarkdownDiary({
   const pageContents = useMemo(
     () => decodeNotePages(activeNote?.content ?? ""),
     [activeNote?.content]
+  );
+  const storedImagePaths = useMemo(
+    () => [...new Set(pageContents.flatMap(extractStoredImagePaths))],
+    [pageContents]
   );
   const pageAnnotations = useMemo(
     () => decodeNoteAnnotations(activeNote?.content ?? ""),
@@ -855,15 +899,47 @@ export default function MarkdownDiary({
   }, [pageDeleteOpen]);
 
   useEffect(() => {
+    if (!activeNote || loading) return;
+    const ownedPrefix = userId + "/notes/" + notebookId + "/";
+    const missingPaths = storedImagePaths.filter(path =>
+      path.startsWith(ownedPrefix) && !noteImageUrls[path]
+    );
+    if (!missingPaths.length) return;
+
+    let active = true;
+    void Promise.all(missingPaths.map(async path => {
+      const { data, error: signedError } = await client.storage
+        .from("checkpoint-covers")
+        .createSignedUrl(path, 60 * 60);
+      return { path, url: signedError ? null : data?.signedUrl ?? null };
+    })).then(results => {
+      if (!active) return;
+      const entries = results.filter((item): item is { path: string; url: string } => Boolean(item.url));
+      if (entries.length) {
+        setNoteImageUrls(current => ({ ...current, ...Object.fromEntries(entries.map(item => [item.path, item.url])) }));
+      }
+      if (results.some(item => !item.url)) setError("일부 이미지를 불러오지 못했습니다.");
+    });
+
+    return () => { active = false; };
+  }, [client, userId, notebookId, activeNote?.id, loading, storedImagePaths, noteImageUrls]);
+
+  useEffect(() => {
     const editor = leftEditorRef.current;
     if (!editor || !activeNote || loading) return;
     const pageKey = activeNote.id + ":" + activePageIndex;
     if (editor.dataset.pageKey !== pageKey) {
-      editor.innerHTML = markdownToHtml(pageContents[activePageIndex] ?? "");
+      editor.innerHTML = markdownToHtml(pageContents[activePageIndex] ?? "", noteImageUrls);
       editor.dataset.pageKey = pageKey;
+    } else {
+      editor.querySelectorAll<HTMLImageElement>("img[data-checkpoint-image-path]").forEach(image => {
+        const path = image.dataset.checkpointImagePath;
+        const signedUrl = path ? noteImageUrls[path] : undefined;
+        if (signedUrl && image.getAttribute("src") !== signedUrl) image.src = signedUrl;
+      });
     }
     syncDrawingCanvasMetrics();
-  }, [activeNote, activePageIndex, loading, pageContents, syncDrawingCanvasMetrics]);
+  }, [activeNote, activePageIndex, loading, pageContents, noteImageUrls, syncDrawingCanvasMetrics]);
 
   useEffect(() => {
     const editor = leftEditorRef.current;
@@ -1372,6 +1448,136 @@ export default function MarkdownDiary({
     }
   }
 
+  function rememberEditorSelectionAtPoint(clientX: number, clientY: number) {
+    const editor = leftEditorRef.current;
+    if (!editor) return;
+    const documentWithCaret = document as Document & {
+      caretRangeFromPoint?: (x: number, y: number) => Range | null;
+      caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null;
+    };
+    const pointRange = documentWithCaret.caretRangeFromPoint?.(clientX, clientY);
+    if (pointRange && editor.contains(pointRange.commonAncestorContainer)) {
+      editorSelectionRef.current = pointRange.cloneRange();
+      return;
+    }
+    const position = documentWithCaret.caretPositionFromPoint?.(clientX, clientY);
+    if (position && editor.contains(position.offsetNode)) {
+      const range = document.createRange();
+      range.setStart(position.offsetNode, position.offset);
+      range.collapse(true);
+      editorSelectionRef.current = range;
+      return;
+    }
+    rememberEditorSelection();
+  }
+
+  async function uploadAndInsertImage(file: File) {
+    const targetNoteId = activeNote?.id;
+    const targetPageIndex = activePageIndex;
+    if (!targetNoteId || !activeNote || loading || imageUploading) return;
+
+    const extensions: Record<string, string> = {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/webp": "webp",
+      "image/gif": "gif"
+    };
+    const extension = extensions[file.type];
+    if (!extension) {
+      setError("PNG, JPG, WEBP, GIF 형식의 이미지만 추가할 수 있습니다.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("이미지는 5MB 이하만 추가할 수 있습니다.");
+      return;
+    }
+
+    setImageUploading(true);
+    setError("");
+    const path = userId + "/notes/" + notebookId + "/" + targetNoteId + "/" + createDrawingId() + "." + extension;
+    let uploaded = false;
+
+    try {
+      const { error: uploadError } = await client.storage
+        .from("checkpoint-covers")
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (uploadError) throw uploadError;
+      uploaded = true;
+
+      const { data, error: signedError } = await client.storage
+        .from("checkpoint-covers")
+        .createSignedUrl(path, 60 * 60);
+      if (signedError || !data?.signedUrl) {
+        throw signedError ?? new Error("이미지 주소를 만들지 못했습니다.");
+      }
+
+      if (currentNoteRef.current?.id !== targetNoteId || activePageIndexRef.current !== targetPageIndex) {
+        await client.storage.from("checkpoint-covers").remove([path]);
+        uploaded = false;
+        return;
+      }
+
+      const editor = leftEditorRef.current;
+      if (!editor) {
+        await client.storage.from("checkpoint-covers").remove([path]);
+        uploaded = false;
+        return;
+      }
+
+      setNoteImageUrls(current => ({ ...current, [path]: data.signedUrl }));
+      editor.focus();
+
+      const savedRange = editorSelectionRef.current;
+      const range = savedRange && editor.contains(savedRange.commonAncestorContainer)
+        ? savedRange.cloneRange()
+        : document.createRange();
+      if (!savedRange || !editor.contains(savedRange.commonAncestorContainer)) {
+        range.selectNodeContents(editor);
+        range.collapse(false);
+      }
+
+      const rangeNode = range.commonAncestorContainer.nodeType === 1
+        ? range.commonAncestorContainer as HTMLElement
+        : range.commonAncestorContainer.parentElement;
+      const codeBlock = rangeNode?.closest(".markdown-code-block");
+      if (codeBlock) {
+        range.selectNode(codeBlock);
+        range.collapse(false);
+      }
+
+      range.deleteContents();
+      const image = document.createElement("img");
+      image.className = "markdown-note-image";
+      image.dataset.checkpointImagePath = path;
+      image.src = data.signedUrl;
+      image.alt = file.name.replace(/\.[^.]+$/, "").replace(/[\[\]\r\n]/g, " ").trim() || "이미지";
+      image.contentEditable = "false";
+      image.draggable = false;
+      range.insertNode(image);
+
+      const lineBreak = document.createElement("br");
+      image.after(lineBreak);
+      const nextRange = document.createRange();
+      nextRange.setStartAfter(lineBreak);
+      nextRange.collapse(true);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(nextRange);
+      editorSelectionRef.current = nextRange.cloneRange();
+
+      updateCurrentPage(htmlToMarkdown(editor.innerHTML));
+      syncDrawingCanvasMetrics();
+      editor.focus();
+    } catch (uploadError) {
+      if (uploaded) await client.storage.from("checkpoint-covers").remove([path]);
+      const message = uploadError instanceof Error ? uploadError.message : "네트워크 연결을 확인해 주세요.";
+      setError("이미지 업로드에 실패했습니다: " + message);
+    } finally {
+      setImageUploading(false);
+      if (imageInputRef.current) imageInputRef.current.value = "";
+    }
+  }
+
   function applyTextColor(color: string, options: { keepPickerOpen?: boolean } = {}) {
     const editor = leftEditorRef.current;
     const keepPickerOpen = options.keepPickerOpen ?? false;
@@ -1514,6 +1720,23 @@ export default function MarkdownDiary({
     if (!activeNote || !editor || loading) throw new Error("프리노트를 먼저 열어 주세요.");
 
     const pagesForImage = getCurrentPages();
+    const imagePathsForExport = [...new Set(pagesForImage.flatMap(extractStoredImagePaths))];
+    const signedExportImages = await Promise.all(imagePathsForExport.map(async path => {
+      const ownedPrefix = userId + "/notes/" + notebookId + "/";
+      if (!path.startsWith(ownedPrefix)) return null;
+      const { data, error: signedError } = await client.storage
+        .from("checkpoint-covers")
+        .createSignedUrl(path, 60 * 60);
+      if (signedError || !data?.signedUrl) {
+        throw new Error("노트에 포함된 이미지를 불러오지 못했습니다.");
+      }
+      return [path, data.signedUrl] as const;
+    }));
+    const exportImageUrls = {
+      ...noteImageUrls,
+      ...Object.fromEntries(signedExportImages.filter((item): item is readonly [string, string] => item !== null))
+    };
+    setNoteImageUrls(current => ({ ...current, ...exportImageUrls }));
     const annotationsForImage = normalizePageAnnotations(pageAnnotations, pagesForImage.length);
     if (currentStroke) {
       const currentAnnotations = annotationsForImage[activePageIndex] ?? createEmptyPageAnnotations();
@@ -1643,7 +1866,7 @@ export default function MarkdownDiary({
 
         const pageEditor = document.createElement("div");
         pageEditor.className = "free-note-input markdown-editor-grid";
-        pageEditor.innerHTML = markdownToHtml(markdown);
+        pageEditor.innerHTML = markdownToHtml(markdown, exportImageUrls);
         pageEditor.style.cssText = [
           "position:relative !important",
           "z-index:1 !important",
@@ -1852,6 +2075,10 @@ export default function MarkdownDiary({
         throw new Error("페이지가 너무 많아 한 장의 PNG로 저장하기 어렵습니다. PDF로 저장하거나 페이지 수를 줄여 주세요.");
       }
 
+      await Promise.all(Array.from(exportRoot.querySelectorAll<HTMLImageElement>("img")).map(image =>
+        typeof image.decode === "function" ? image.decode().catch(() => undefined) : Promise.resolve()
+      ));
+
       const canvas = await window.html2canvas(exportRoot, {
         scale: outputScale,
         backgroundColor: "#ffffff",
@@ -2058,6 +2285,29 @@ export default function MarkdownDiary({
                               <Icon size={16} strokeWidth={2}/>
                             </button>
                           ))}
+                          <button
+                            type="button"
+                            className="markdown-toolbar-button markdown-image-insert-button"
+                            aria-label={imageUploading ? "이미지 업로드 중" : "이미지 추가"}
+                            title={imageUploading ? "이미지 업로드 중" : "이미지 추가"}
+                            disabled={imageUploading || loading || !activeNote}
+                            onMouseDown={rememberEditorSelection}
+                            onClick={() => imageInputRef.current?.click()}
+                          >
+                            <ImagePlus size={16} strokeWidth={2}/>
+                          </button>
+                          <input
+                            ref={imageInputRef}
+                            className="sr-only"
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp,image/gif"
+                            aria-label="추가할 이미지 선택"
+                            onChange={event => {
+                              const file = event.currentTarget.files?.[0];
+                              if (file) void uploadAndInsertImage(file);
+                              event.currentTarget.value = "";
+                            }}
+                          />
                           <div className="markdown-align-controls" role="group" aria-label="텍스트 정렬">
                             <button
                               type="button"
@@ -2236,6 +2486,18 @@ export default function MarkdownDiary({
                           }}
                           onScroll={syncDrawingCanvasMetrics}
                           onPaste={event => {
+                            const imageItem = Array.from(event.clipboardData.items).find(item =>
+                              item.kind === "file" && item.type.startsWith("image/")
+                            );
+                            const pastedImage = imageItem?.getAsFile() ??
+                              Array.from(event.clipboardData.files).find(file => file.type.startsWith("image/"));
+                            if (pastedImage) {
+                              event.preventDefault();
+                              rememberEditorSelection();
+                              void uploadAndInsertImage(pastedImage);
+                              return;
+                            }
+
                             event.preventDefault();
                             const pasted = event.clipboardData.getData("text/plain");
                             const target = event.target as HTMLElement;
@@ -2243,18 +2505,30 @@ export default function MarkdownDiary({
                             if (target.closest(".markdown-code-block")) {
                               document.execCommand("insertText", false, pasted);
                             } else {
-                              document.execCommand("insertHTML", false, markdownToHtml(pasted));
+                              document.execCommand("insertHTML", false, markdownToHtml(pasted, noteImageUrls));
                             }
+                          }}
+                          onDragOver={event => {
+                            if (Array.from(event.dataTransfer.types).includes("Files")) event.preventDefault();
                           }}
                           onDrop={event => {
                             event.preventDefault();
+                            const droppedImage = Array.from(event.dataTransfer.files).find(file =>
+                              file.type.startsWith("image/")
+                            );
+                            if (droppedImage) {
+                              rememberEditorSelectionAtPoint(event.clientX, event.clientY);
+                              void uploadAndInsertImage(droppedImage);
+                              return;
+                            }
+
                             const dropped = event.dataTransfer.getData("text/plain");
                             const target = event.target as HTMLElement;
                             if (!dropped) return;
                             if (target.closest(".markdown-code-block")) {
                               document.execCommand("insertText", false, dropped);
                             } else {
-                              document.execCommand("insertHTML", false, markdownToHtml(dropped));
+                              document.execCommand("insertHTML", false, markdownToHtml(dropped, noteImageUrls));
                             }
                           }}
                           onChange={event => {
