@@ -11283,3 +11283,18 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   height:100%;
   min-height:0;
 }
+
+/* Free Note: inline images uploaded to the private note asset storage. */
+.markdown-free-note-section .markdown-editor-grid .markdown-note-image,
+.markdown-long-image-export-root .markdown-note-image {
+  display:block;
+  width:auto;
+  max-width:100%;
+  height:auto;
+  margin:16px auto;
+  border:0;
+  border-radius:7px;
+  object-fit:contain;
+  user-select:none;
+  -webkit-user-drag:none;
+}
