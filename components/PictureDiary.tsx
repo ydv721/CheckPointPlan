@@ -50,7 +50,6 @@ type Props = {
 
 const WEATHER_OPTIONS = [
   { id: "sunny", label: "맑음", emoji: "☀️" },
-  { id: "partly-cloudy", label: "구름 조금", emoji: "🌤️" },
   { id: "cloudy", label: "흐림", emoji: "☁️" },
   { id: "rainy", label: "비", emoji: "🌧️" },
   { id: "snowy", label: "눈", emoji: "❄️" },
