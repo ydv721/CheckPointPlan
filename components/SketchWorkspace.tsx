@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import {
-  ArrowLeft, Brush, Circle, Download, Eraser, Eye, EyeOff, Layers3,
+  ArrowLeft, Brush, Check, Circle, Download, Eraser, Eye, EyeOff, Layers3,
   Lasso, LayoutGrid, Minus, MoveDown, MoveUp, Pipette, Plus,
   Redo2, Save, Square, Trash2, Undo2, ZoomIn, ZoomOut
 } from "lucide-react";
+import AppSidebar from "@/components/AppSidebar";
+import type { ThemeName } from "@/lib/types";
 
 export type SketchPoint = { x: number; y: number; pressure?: number };
 export type SketchStroke = {
@@ -43,6 +45,16 @@ type Props = {
   initialDocument?: SketchDocument | null;
   onSave: (blob: Blob, document: SketchDocument) => Promise<boolean>;
   onClose: () => void;
+  email: string;
+  themeStyle: CSSProperties;
+  theme: ThemeName;
+  customColor: string;
+  onThemeChange: (theme: ThemeName) => void;
+  onCustomColorChange: (color: string) => void;
+  onOpenNotebookList: () => void;
+  onOpenCover: () => void;
+  onSignOut: () => void;
+  onDeleteAccount: () => void;
 };
 
 const uid = () => globalThis.crypto?.randomUUID?.() || String(Date.now()) + "-" + Math.random().toString(36).slice(2);
@@ -267,7 +279,21 @@ const TOOL_OPTIONS: { id: SketchTool; label: string; icon: typeof Brush }[] = [
   { id: "eyedropper", label: "스포이드", icon: Pipette }
 ];
 
-export default function SketchWorkspace({ initialDocument, onSave, onClose }: Props) {
+export default function SketchWorkspace({
+  initialDocument,
+  onSave,
+  onClose,
+  email,
+  themeStyle,
+  theme,
+  customColor,
+  onThemeChange,
+  onCustomColorChange,
+  onOpenNotebookList,
+  onOpenCover,
+  onSignOut,
+  onDeleteAccount
+}: Props) {
   const initial = useMemo(() => normalizeSketchDocument(initialDocument), [initialDocument]);
   const [doc, setDoc] = useState<SketchDocument>(initial);
   const docRef = useRef<SketchDocument>(initial);
@@ -636,6 +662,12 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
     onClose();
   }
 
+  function navigateFromSketch(action: () => void) {
+    if (dirty && !window.confirm("저장하지 않은 그림이 있습니다. 저장하지 않고 나가시겠습니까?")) return;
+    onClose();
+    action();
+  }
+
   async function saveSketch() {
     if (saving) return;
     setSaving(true);
@@ -673,26 +705,47 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
   }
 
   return (
-    <div className="sketch-workspace" role="dialog" aria-modal="true" aria-label="그림 스케치 작업실">
-      <header className="sketch-topbar">
-        <button type="button" className="sketch-back-button" onClick={requestClose}>
-          <ArrowLeft size={18}/><span>일기로 돌아가기</span>
-        </button>
-        <div className="sketch-topbar-center">
-          <strong>SKETCH STUDIO</strong>
-          <span>{dirty ? "저장되지 않은 변경 사항" : "저장된 상태"}</span>
-        </div>
-        <div className="sketch-topbar-actions">
-          <button type="button" className="sketch-icon-action" title="PNG 다운로드" aria-label="PNG 다운로드" onClick={() => void downloadSketch()}>
-            <Download size={19}/>
+    <div className="sketch-workspace app-shell planner-view" style={themeStyle} role="dialog" aria-modal="true" aria-label="그림 스케치 작업실">
+      <AppSidebar
+        email={email}
+        currentView="markdown"
+        themeStyle={themeStyle}
+        theme={theme}
+        customColor={customColor}
+        onThemeChange={onThemeChange}
+        onCustomColorChange={onCustomColorChange}
+        onOpenNotebookList={() => navigateFromSketch(onOpenNotebookList)}
+        onViewChange={view => {
+          if (view === "cover") navigateFromSketch(onOpenCover);
+        }}
+        onSignOut={() => navigateFromSketch(onSignOut)}
+        onDeleteAccount={() => navigateFromSketch(onDeleteAccount)}
+      />
+      <header className="site-header sketch-topbar">
+        <div className="header-inner sketch-header-inner">
+          <button type="button" className="brand" onClick={requestClose} aria-label="그림일기로 돌아가기">
+            <span className="brand-lockup"><span className="brand-icon"><Check size={18} strokeWidth={3}/></span><span>CHECKPOINT</span></span>
           </button>
-          <button type="button" className="sketch-save-action" disabled={saving} onClick={() => void saveSketch()}>
-            <Save size={17}/><span>{saving ? "저장 중입니다..." : "저장"}</span>
-          </button>
+          <div className="sketch-topbar-center">
+            <strong>스케치</strong>
+            <span>{dirty ? "저장되지 않은 변경 사항이 있습니다." : "저장된 상태입니다."}</span>
+          </div>
+          <div className="sketch-topbar-actions">
+            <button type="button" className="sketch-back-button" onClick={requestClose}>
+              <ArrowLeft size={17}/><span>일기로 돌아가기</span>
+            </button>
+            <button type="button" className="sketch-icon-action" title="PNG 다운로드" aria-label="PNG 다운로드" onClick={() => void downloadSketch()}>
+              <Download size={18}/>
+            </button>
+            <button type="button" className="sketch-save-action" disabled={saving} onClick={() => void saveSketch()}>
+              <Save size={16}/><span>{saving ? "저장 중입니다..." : "저장"}</span>
+            </button>
+          </div>
         </div>
       </header>
 
-      <div className="sketch-layout">
+      <main className="sketch-main-area">
+        <div className="sketch-layout">
         <aside className="sketch-tool-rail" aria-label="그리기 도구">
           {TOOL_OPTIONS.map(option => {
             const Icon = option.icon;
@@ -758,17 +811,17 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
                 <input className="sketch-range" type="range" min={2} max={160} value={eraserSize} onChange={event => setEraserSize(Number(event.target.value))}/>
                 <label className="sketch-range-label"><span>지우개 강도</span><strong>{eraserStrength}%</strong></label>
                 <input className="sketch-range" type="range" min={5} max={100} value={eraserStrength} onChange={event => setEraserStrength(Number(event.target.value))}/>
-                <p className="sketch-setting-help">강도를 낮추면 한 번에 지워지는 양이 줄어들어.</p>
+                <p className="sketch-setting-help">강도를 낮추면 한 번에 지워지는 양이 줄어듭니다.</p>
               </>
             ) : tool === "lasso" ? (
               <div className="sketch-selection-actions">
-                <p>캔버스에서 원하는 부분을 둘러싸면 해당 선들이 선택돼. 선택한 선을 드래그해 이동할 수 있어.</p>
+                <p>캔버스에서 원하는 부분을 둘러싸면 해당 선들이 선택됩니다. 선택한 선을 드래그해 이동할 수 있습니다.</p>
                 <button type="button" disabled={!selectedKeys.length} onClick={duplicateSelection}>선택 복제</button>
                 <button type="button" disabled={!selectedKeys.length} onClick={deleteSelection}>선택 삭제</button>
                 <button type="button" disabled={!selectedKeys.length} onClick={() => setSelectedKeys([])}>선택 해제</button>
               </div>
             ) : (
-              <p className="sketch-setting-help">캔버스에서 시작점을 누른 뒤 드래그해 도형을 그려.</p>
+              <p className="sketch-setting-help">캔버스에서 시작점을 누른 뒤 드래그해 도형을 그릴 수 있습니다.</p>
             )}
           </section>
 
@@ -825,7 +878,8 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
             ) : null}
           </section>
         </aside>
-      </div>
+        </div>
+      </main>
       {message ? <div className="sketch-message" role="status">{message}</div> : null}
     </div>
   );
