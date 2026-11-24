@@ -511,7 +511,7 @@ export default function PictureDiary({
 
   return (
     <div className="app-shell planner-view picture-diary-shell" style={themeStyle}>
-      <AppSidebar
+      {!sketchOpen ? <AppSidebar
         email={email}
         currentView="markdown"
         themeStyle={themeStyle}
@@ -525,7 +525,7 @@ export default function PictureDiary({
         onOpenNotebookList={() => { void leaveDiary(onBack); }}
         onSignOut={() => { void leaveDiary(onSignOut); }}
         onDeleteAccount={() => { void leaveDiary(async () => { onDeleteAccount(); }); }}
-      />
+      /> : null}
 
       <header className="site-header">
         <div className="header-inner">
@@ -704,7 +704,22 @@ export default function PictureDiary({
       ) : null}
 
       {sketchOpen ? (
-        <SketchWorkspace key={date} initialDocument={entry.drawing_state ?? createEmptySketchDocument()} onSave={saveSketch} onClose={() => setSketchOpen(false)}/>
+        <SketchWorkspace
+          key={date}
+          initialDocument={entry.drawing_state ?? createEmptySketchDocument()}
+          onSave={saveSketch}
+          onClose={() => setSketchOpen(false)}
+          email={email}
+          themeStyle={themeStyle}
+          theme={theme}
+          customColor={customColor}
+          onThemeChange={onThemeChange}
+          onCustomColorChange={onCustomColorChange}
+          onOpenNotebookList={() => { void leaveDiary(onBack); }}
+          onOpenCover={() => { void saveAndOpenCover(); }}
+          onSignOut={() => { void leaveDiary(onSignOut); }}
+          onDeleteAccount={() => { void leaveDiary(async () => { onDeleteAccount(); }); }}
+        />
       ) : null}
     </div>
   );
