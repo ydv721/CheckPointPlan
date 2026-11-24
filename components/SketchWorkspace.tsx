@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import {
-  ArrowLeft, Brush, Check, Circle, Download, Eraser, Eye, EyeOff, Layers3,
-  Lasso, LayoutGrid, Minus, MoveDown, MoveUp, Pipette, Plus,
-  Redo2, RotateCw, Save, Square, Trash2, Undo2, ZoomIn, ZoomOut
+  ArrowLeft, Brush, Check, Download, Eraser, Eye, EyeOff, Layers3,
+  Lasso, LayoutGrid, MoveDown, MoveUp, Pipette, Plus,
+  Redo2, RotateCw, Save, Trash2, Undo2, ZoomIn, ZoomOut
 } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import type { ThemeName } from "@/lib/types";
@@ -466,9 +466,6 @@ const TOOL_OPTIONS: { id: SketchTool; label: string; icon: typeof Brush }[] = [
   { id: "pen", label: "펜", icon: Brush },
   { id: "eraser", label: "지우개", icon: Eraser },
   { id: "lasso", label: "올가미", icon: Lasso },
-  { id: "line", label: "직선", icon: Minus },
-  { id: "rect", label: "사각형", icon: Square },
-  { id: "ellipse", label: "타원", icon: Circle },
   { id: "eyedropper", label: "스포이드", icon: Pipette }
 ];
 
