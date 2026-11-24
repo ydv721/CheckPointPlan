@@ -635,6 +635,18 @@ export default function SketchWorkspace({
     if (!stage) return;
 
     const onWheel = (event: WheelEvent) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const bounds = canvas.getBoundingClientRect();
+      const isOverCanvas =
+        event.clientX >= bounds.left &&
+        event.clientX <= bounds.right &&
+        event.clientY >= bounds.top &&
+        event.clientY <= bounds.bottom;
+
+      if (!isOverCanvas) return;
+
       event.preventDefault();
       const factor = Math.exp(-event.deltaY * 0.0015);
       setZoom(current => clamp(Math.round(current * factor), 50, 300));
