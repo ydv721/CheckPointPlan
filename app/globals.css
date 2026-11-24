@@ -10919,6 +10919,57 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   color:var(--accent);
   opacity:1;
 }
+.free-note-highlighter-wrap {
+  position:relative;
+  display:inline-flex;
+  flex:0 0 auto;
+}
+.free-note-highlighter-wrap > .free-note-drawing-tool-button {
+  gap:4px;
+}
+.free-note-highlighter-menu {
+  position:absolute;
+  z-index:50;
+  top:calc(100% + 7px);
+  left:0;
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  min-width:152px;
+  padding:5px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:var(--paper);
+  box-shadow:0 7px 22px rgba(24,35,55,.17);
+}
+.free-note-highlighter-menu button {
+  display:flex;
+  align-items:center;
+  gap:9px;
+  width:100%;
+  min-height:34px;
+  padding:7px 9px;
+  border:0;
+  border-radius:6px;
+  background:transparent;
+  color:var(--ink);
+  font-size:12px;
+  font-weight:700;
+  white-space:nowrap;
+}
+.free-note-highlighter-menu button span {
+  flex:1;
+  text-align:left;
+}
+.free-note-highlighter-menu button:hover,
+.free-note-highlighter-menu button.is-active {
+  background:var(--soft);
+  color:var(--accent);
+}
+.free-note-highlighter-menu button:focus-visible {
+  outline:2px solid var(--accent);
+  outline-offset:1px;
+}
 .free-note-drawing-colors {
   padding-left:7px;
   border-left:1px solid var(--line);
