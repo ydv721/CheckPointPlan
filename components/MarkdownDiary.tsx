@@ -2779,16 +2779,57 @@ export default function MarkdownDiary({
                         {drawingMode ? (
                           <div className="markdown-toolbar free-note-drawing-toolbar" role="toolbar" aria-label="필기 도구 모음">
                             <div className="free-note-drawing-tool-group">
-                              <button type="button" className={"free-note-drawing-tool-button" + (drawingTool === "highlighter" ? " is-active" : "")} aria-pressed={drawingTool === "highlighter"} onClick={() => setDrawingTool("highlighter")}>
-                                <Highlighter size={16}/><span>형광펜</span>
-                              </button>
-                              <button type="button" className={"free-note-drawing-tool-button" + (drawingTool === "pen" ? " is-active" : "")} aria-pressed={drawingTool === "pen"} onClick={() => setDrawingTool("pen")}>
+                              <div className="free-note-highlighter-wrap" ref={highlighterMenuRef}>
+                                <button
+                                  type="button"
+                                  className={"free-note-drawing-tool-button" + (drawingTool === "highlighter" ? " is-active" : "")}
+                                  aria-pressed={drawingTool === "highlighter"}
+                                  aria-expanded={highlighterMenuOpen}
+                                  aria-haspopup="true"
+                                  aria-label="형광펜 그리기 방식 선택"
+                                  onClick={() => {
+                                    setDrawingTool("highlighter");
+                                    setHighlighterMenuOpen(open => !open);
+                                  }}
+                                >
+                                  <Highlighter size={16}/><span>형광펜</span><ChevronDown size={13}/>
+                                </button>
+                                {highlighterMenuOpen && (
+                                  <div className="free-note-highlighter-menu" role="group" aria-label="형광펜 그리기 방식">
+                                    <button
+                                      type="button"
+                                      className={highlighterMode === "straight" ? "is-active" : ""}
+                                      aria-pressed={highlighterMode === "straight"}
+                                      onClick={() => {
+                                        setHighlighterMode("straight");
+                                        setDrawingTool("highlighter");
+                                        setHighlighterMenuOpen(false);
+                                      }}
+                                    >
+                                      <Minus size={16}/><span>직선</span>{highlighterMode === "straight" && <Check size={14}/>}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className={highlighterMode === "free" ? "is-active" : ""}
+                                      aria-pressed={highlighterMode === "free"}
+                                      onClick={() => {
+                                        setHighlighterMode("free");
+                                        setDrawingTool("highlighter");
+                                        setHighlighterMenuOpen(false);
+                                      }}
+                                    >
+                                      <PenLine size={16}/><span>자유롭게</span>{highlighterMode === "free" && <Check size={14}/>}
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                              <button type="button" className={"free-note-drawing-tool-button" + (drawingTool === "pen" ? " is-active" : "")} aria-pressed={drawingTool === "pen"} onClick={() => { setDrawingTool("pen"); setHighlighterMenuOpen(false); }}>
                                 <PenLine size={16}/><span>펜</span>
                               </button>
-                              <button type="button" className={"free-note-drawing-tool-button" + (drawingTool === "sticky" ? " is-active" : "")} aria-pressed={drawingTool === "sticky"} onClick={() => setDrawingTool("sticky")}>
+                              <button type="button" className={"free-note-drawing-tool-button" + (drawingTool === "sticky" ? " is-active" : "")} aria-pressed={drawingTool === "sticky"} onClick={() => { setDrawingTool("sticky"); setHighlighterMenuOpen(false); }}>
                                 <StickyNoteIcon size={16}/><span>메모지</span>
                               </button>
-                              <button type="button" className={"free-note-drawing-tool-button" + (drawingTool === "eraser" ? " is-active" : "")} aria-pressed={drawingTool === "eraser"} onClick={() => setDrawingTool("eraser")}>
+                              <button type="button" className={"free-note-drawing-tool-button" + (drawingTool === "eraser" ? " is-active" : "")} aria-pressed={drawingTool === "eraser"} onClick={() => { setDrawingTool("eraser"); setHighlighterMenuOpen(false); }}>
                                 <Eraser size={16}/><span>지우개</span>
                               </button>
                             </div>
