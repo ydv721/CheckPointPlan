@@ -11623,14 +11623,14 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   transform:translate(-50%,-50%);
   touch-action:none;
 }
-.markdown-image-crop-handle.is-nw { left:0; top:0; cursor:nwse-resize; }
-.markdown-image-crop-handle.is-n { left:50%; top:0; cursor:ns-resize; }
-.markdown-image-crop-handle.is-ne { left:100%; top:0; cursor:nesw-resize; }
-.markdown-image-crop-handle.is-e { left:100%; top:50%; cursor:ew-resize; }
-.markdown-image-crop-handle.is-se { left:100%; top:100%; cursor:nwse-resize; }
-.markdown-image-crop-handle.is-s { left:50%; top:100%; cursor:ns-resize; }
-.markdown-image-crop-handle.is-sw { left:0; top:100%; cursor:nesw-resize; }
-.markdown-image-crop-handle.is-w { left:0; top:50%; cursor:ew-resize; }
+.markdown-image-crop-handle.is-nw { left:0; top:0; transform:none; cursor:nwse-resize; }
+.markdown-image-crop-handle.is-n { left:50%; top:0; transform:translateX(-50%); cursor:ns-resize; }
+.markdown-image-crop-handle.is-ne { left:100%; top:0; transform:translateX(-100%); cursor:nesw-resize; }
+.markdown-image-crop-handle.is-e { left:100%; top:50%; transform:translate(-100%,-50%); cursor:ew-resize; }
+.markdown-image-crop-handle.is-se { left:100%; top:100%; transform:translate(-100%,-100%); cursor:nwse-resize; }
+.markdown-image-crop-handle.is-s { left:50%; top:100%; transform:translate(-50%,-100%); cursor:ns-resize; }
+.markdown-image-crop-handle.is-sw { left:0; top:100%; transform:translateY(-100%); cursor:nesw-resize; }
+.markdown-image-crop-handle.is-w { left:0; top:50%; transform:translateY(-50%); cursor:ew-resize; }
 .markdown-image-crop-actions {
   display:flex;
   justify-content:flex-end;
