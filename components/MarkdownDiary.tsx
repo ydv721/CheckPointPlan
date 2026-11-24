@@ -477,14 +477,14 @@ function safeMarkdownHref(value: string) {
 
 function noteImageControlsMarkup() {
   return [
-    '<button type="button" class="markdown-note-image-menu-trigger" aria-label="이미지 메뉴" title="이미지 메뉴" draggable="false">⋯</button>',
+    '<button type="button" class="markdown-note-image-menu-trigger markdown-note-image-control" aria-label="이미지 메뉴" title="이미지 메뉴" draggable="false">⋯</button>',
     '<span class="markdown-note-image-options" role="group" aria-label="이미지 메뉴">',
-    '<button type="button" class="markdown-note-image-crop" draggable="false">자르기</button>',
-    '<button type="button" class="markdown-note-image-delete" draggable="false">삭제</button>',
+    '<button type="button" class="markdown-note-image-crop markdown-note-image-control" draggable="false">자르기</button>',
+    '<button type="button" class="markdown-note-image-delete markdown-note-image-control" draggable="false">삭제</button>',
     '</span>',
     '<span class="markdown-note-image-rotation-stem" aria-hidden="true"></span>',
-    '<button type="button" class="markdown-note-image-rotate-handle" aria-label="이미지 회전" title="이미지 회전" draggable="false">↻</button>',
-    '<button type="button" class="markdown-note-image-resize-handle" aria-label="이미지 크기 조절" title="이미지 크기 조절" draggable="false">↘</button>'
+    '<button type="button" class="markdown-note-image-rotate-handle markdown-note-image-control" aria-label="이미지 회전" title="이미지 회전" draggable="false">↻</button>',
+    '<button type="button" class="markdown-note-image-resize-handle markdown-note-image-control" aria-label="이미지 크기 조절" title="이미지 크기 조절" draggable="false">↘</button>'
   ].join("");
 }
 
@@ -1613,6 +1613,10 @@ export default function MarkdownDiary({
     frame.style.aspectRatio = ratio === "original" ? "" : ratio.replace(":", " / ");
     const rotation = Number(frame.dataset.checkpointImageRotation);
     visual.style.transform = "rotate(" + (Number.isFinite(rotation) ? Math.min(180, Math.max(-180, rotation)) : 0) + "deg)";
+    visual.style.transformOrigin = "center center";
+    visual.style.position = ratio === "original" ? "relative" : "absolute";
+    visual.style.inset = ratio === "original" ? "" : "0";
+    visual.style.height = ratio === "original" ? "" : "100%";
     if (ratio === "original") {
       image.style.cssText = [
         "display:block",
@@ -1649,6 +1653,65 @@ export default function MarkdownDiary({
     applyNoteImageFrameStyles(frame);
     updateCurrentPage(htmlToMarkdown(editor.innerHTML));
     syncDrawingCanvasMetrics();
+  }
+
+  function startNoteImageTransform(event: ReactPointerEvent<HTMLDivElement>) {
+    const handle = (event.target as HTMLElement).closest<HTMLButtonElement>(
+      ".markdown-note-image-rotate-handle, .markdown-note-image-resize-handle"
+    );
+    const frame = handle?.closest<HTMLElement>(".markdown-note-image-frame");
+    if (!handle || !frame || !leftEditorRef.current?.contains(frame) || drawingMode) return;
+    event.preventDefault();
+    event.stopPropagation();
+    selectNoteImage(frame);
+    frame.classList.remove("menu-open");
+    const rect = frame.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const kind = handle.classList.contains("markdown-note-image-rotate-handle") ? "rotate" : "resize";
+    imageTransformRef.current = {
+      frame,
+      pointerId: event.pointerId,
+      kind,
+      centerX,
+      centerY,
+      startAngle: Math.atan2(event.clientY - centerY, event.clientX - centerX),
+      startDistance: Math.max(8, Math.hypot(event.clientX - centerX, event.clientY - centerY)),
+      initialRotation: Number(frame.dataset.checkpointImageRotation) || 0,
+      initialWidth: Math.min(100, Math.max(20, Number(frame.dataset.checkpointImageWidth) || 80))
+    };
+    handle.setPointerCapture(event.pointerId);
+  }
+
+  function moveNoteImageTransform(event: ReactPointerEvent<HTMLDivElement>) {
+    const active = imageTransformRef.current;
+    if (!active || active.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    if (active.kind === "rotate") {
+      const angle = Math.atan2(event.clientY - active.centerY, event.clientX - active.centerX);
+      const delta = (angle - active.startAngle) * 180 / Math.PI;
+      const rotation = ((active.initialRotation + delta + 180) % 360 + 360) % 360 - 180;
+      active.frame.dataset.checkpointImageRotation = String(Math.round(rotation * 10) / 10);
+    } else {
+      const distance = Math.max(8, Math.hypot(event.clientX - active.centerX, event.clientY - active.centerY));
+      const width = Math.max(20, Math.min(100, Math.round(active.initialWidth * distance / active.startDistance)));
+      active.frame.dataset.checkpointImageWidth = String(width);
+    }
+    applyNoteImageFrameStyles(active.frame);
+  }
+
+  function finishNoteImageTransform(pointerId: number) {
+    const active = imageTransformRef.current;
+    if (!active || active.pointerId !== pointerId) return;
+    imageTransformRef.current = null;
+    const editor = leftEditorRef.current;
+    if (!editor || !editor.contains(active.frame)) return;
+    if (active.kind === "resize") {
+      updateSelectedImageWidth(Number(active.frame.dataset.checkpointImageWidth) || 80);
+    } else {
+      updateCurrentPage(htmlToMarkdown(editor.innerHTML));
+      syncDrawingCanvasMetrics();
+    }
   }
 
   function openImageCropEditor() {
@@ -2724,8 +2787,16 @@ export default function MarkdownDiary({
                             syncDrawingCanvasMetrics();
                           }}
                           onScroll={syncDrawingCanvasMetrics}
+                          onPointerDown={startNoteImageTransform}
+                          onPointerMove={moveNoteImageTransform}
+                          onPointerUp={event => finishNoteImageTransform(event.pointerId)}
+                          onPointerCancel={event => finishNoteImageTransform(event.pointerId)}
                           onDragStart={event => {
                             const target = event.target as HTMLElement;
+                            if (target.closest(".markdown-note-image-control, .markdown-note-image-options")) {
+                              event.preventDefault();
+                              return;
+                            }
                             const frame = target.closest<HTMLElement>(".markdown-note-image-frame");
                             if (!frame || !leftEditorRef.current?.contains(frame)) return;
                             movingImageElementRef.current = frame;
@@ -2833,7 +2904,18 @@ export default function MarkdownDiary({
                             const imageFrame = target.closest<HTMLElement>(".markdown-note-image-frame");
                             if (editor && imageFrame && editor.contains(imageFrame)) {
                               event.preventDefault();
+                              event.stopPropagation();
                               selectNoteImage(imageFrame);
+                              if (target.closest(".markdown-note-image-menu-trigger")) {
+                                imageFrame.classList.toggle("menu-open");
+                              } else if (target.closest(".markdown-note-image-crop")) {
+                                imageFrame.classList.remove("menu-open");
+                                openImageCropEditor();
+                              } else if (target.closest(".markdown-note-image-delete")) {
+                                removeSelectedNoteImage();
+                              } else if (!target.closest(".markdown-note-image-options")) {
+                                imageFrame.classList.remove("menu-open");
+                              }
                               return;
                             }
                             if (selectedImageElementRef.current) clearSelectedNoteImage();
