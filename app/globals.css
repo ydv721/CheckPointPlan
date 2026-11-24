@@ -11519,3 +11519,15 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
     padding:16px;
   }
 }
+.markdown-image-crop-apply {
+  padding:10px 16px;
+  border:1px solid var(--accent);
+  border-radius:9px;
+  background:var(--accent);
+  color:#fff;
+  font-size:12px;
+  font-weight:850;
+}
+.markdown-image-crop-apply:hover {
+  filter:brightness(.96);
+}
