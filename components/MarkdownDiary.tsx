@@ -504,7 +504,7 @@ function renderInlineMarkdown(value: string, imageUrls: Record<string, string> =
         const parsed = Number(value);
         return Number.isFinite(parsed) ? Math.min(max, Math.max(min, parsed)) : fallback;
       };
-      const width = clampNumber(options.get("w"), 100, 20, 100);
+      const width = clampNumber(options.get("w"), 80, 20, 100);
       const ratioValue = options.get("r") ?? "original";
       const ratio = ["original", "1:1", "4:3", "16:9", "3:4"].includes(ratioValue) ? ratioValue : "original";
       const zoom = clampNumber(options.get("z"), 100, 100, 300);
@@ -721,7 +721,7 @@ export function htmlToMarkdown(html: string) {
       if (!path) return "";
       const image = element.querySelector<HTMLImageElement>("img.markdown-note-image");
       const alt = (image?.getAttribute("alt") ?? "이미지").replace(/[\[\]()\r\n]/g, " ").trim() || "이미지";
-      const width = Math.min(100, Math.max(20, Number(element.dataset.checkpointImageWidth) || 100));
+      const width = Math.min(100, Math.max(20, Number(element.dataset.checkpointImageWidth) || 80));
       const ratioValue = element.dataset.checkpointImageRatio ?? "original";
       const ratio = ["original", "1:1", "4:3", "16:9", "3:4"].includes(ratioValue) ? ratioValue : "original";
       const zoom = Math.min(300, Math.max(100, Number(element.dataset.checkpointImageZoom) || 100));
@@ -892,7 +892,7 @@ export default function MarkdownDiary({
   const [noteImageUrls, setNoteImageUrls] = useState<Record<string, string>>({});
   const [imageUploading, setImageUploading] = useState(false);
   const [selectedImagePath, setSelectedImagePath] = useState<string | null>(null);
-  const [selectedImageWidth, setSelectedImageWidth] = useState(100);
+  const [selectedImageWidth, setSelectedImageWidth] = useState(80);
   const [imageCropOpen, setImageCropOpen] = useState(false);
   const [imageCropRatio, setImageCropRatio] = useState<"original" | "1:1" | "4:3" | "16:9" | "3:4">("original");
   const [imageCropZoom, setImageCropZoom] = useState(100);
@@ -1552,7 +1552,7 @@ export default function MarkdownDiary({
     selectedImageElementRef.current = frame;
     frame.classList.add("is-selected");
     setSelectedImagePath(frame.dataset.checkpointImagePath ?? null);
-    setSelectedImageWidth(Math.min(100, Math.max(20, Number(frame.dataset.checkpointImageWidth) || 100)));
+    setSelectedImageWidth(Math.min(100, Math.max(20, Number(frame.dataset.checkpointImageWidth) || 80)));
   }
 
   function clearSelectedNoteImage() {
@@ -1565,7 +1565,7 @@ export default function MarkdownDiary({
   function applyNoteImageFrameStyles(frame: HTMLElement) {
     const image = frame.querySelector<HTMLImageElement>("img.markdown-note-image");
     if (!image) return;
-    const width = Math.min(100, Math.max(20, Number(frame.dataset.checkpointImageWidth) || 100));
+    const width = Math.min(100, Math.max(20, Number(frame.dataset.checkpointImageWidth) || 80));
     const ratioValue = frame.dataset.checkpointImageRatio ?? "original";
     const ratio = ["original", "1:1", "4:3", "16:9", "3:4"].includes(ratioValue) ? ratioValue : "original";
     const zoom = Math.min(300, Math.max(100, Number(frame.dataset.checkpointImageZoom) || 100));
@@ -1739,7 +1739,7 @@ export default function MarkdownDiary({
       const frame = document.createElement("span");
       frame.className = "markdown-note-image-frame";
       frame.dataset.checkpointImagePath = path;
-      frame.dataset.checkpointImageWidth = "100";
+      frame.dataset.checkpointImageWidth = "80";
       frame.dataset.checkpointImageRatio = "original";
       frame.dataset.checkpointImageZoom = "100";
       frame.dataset.checkpointImageX = "50";
