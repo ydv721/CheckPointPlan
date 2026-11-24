@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type TouchEvent as ReactTouchEvent, type WheelEvent as ReactWheelEvent } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronLeft, ChevronRight, Code2, Eraser, FileDown, Heading1, Highlighter, ImagePlus, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, StickyNote as StickyNoteIcon, Strikethrough, Type, Underline, Check, Trash2, X } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronLeft, ChevronRight, Code2, Crop, Eraser, FileDown, Heading1, Highlighter, ImagePlus, Italic, List, ListOrdered, Minus, Move, Palette, PenLine, Plus, Quote, StickyNote as StickyNoteIcon, Strikethrough, Type, Underline, Check, Trash2, X } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import PlannerSpread from "@/components/PlannerSpread";
 import type { ThemeName } from "@/lib/types";
@@ -349,7 +349,8 @@ function extractStoredImagePaths(markdown: string) {
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(markdown)) !== null) {
     try {
-      const path = decodeURIComponent(match[2]);
+      const encodedPath = match[2].split("?")[0];
+      const path = decodeURIComponent(encodedPath);
       if (path) paths.add(path);
     } catch {
       // Ignore malformed stored image references.
@@ -494,15 +495,45 @@ function renderInlineMarkdown(value: string, imageUrls: Record<string, string> =
     (_match, color: string, content: string) =>
       stash('<span style="color: ' + color.toLowerCase() + '">' + renderInlineMarkdown(content, imageUrls) + "</span>")
   );
-  source = source.replace(/!\[([^\]]*)\]\(checkpoint-image:([^)]+)\)/g, (_match, alt: string, encodedPath: string) => {
+  source = source.replace(/!\[([^\]]*)\]\(checkpoint-image:([^)]+)\)/g, (_match, alt: string, encodedReference: string) => {
     try {
+      const [encodedPath, rawOptions = ""] = encodedReference.split("?");
       const path = decodeURIComponent(encodedPath);
+      const options = new URLSearchParams(rawOptions);
+      const clampNumber = (value: string | null, fallback: number, min: number, max: number) => {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? Math.min(max, Math.max(min, parsed)) : fallback;
+      };
+      const width = clampNumber(options.get("w"), 100, 20, 100);
+      const ratioValue = options.get("r") ?? "original";
+      const ratio = ["original", "1:1", "4:3", "16:9", "3:4"].includes(ratioValue) ? ratioValue : "original";
+      const zoom = clampNumber(options.get("z"), 100, 100, 300);
+      const cropX = clampNumber(options.get("x"), 50, 0, 100);
+      const cropY = clampNumber(options.get("y"), 50, 0, 100);
       const src = imageUrls[path];
       const srcAttribute = src ? ' src="' + escapeHtml(src) + '"' : "";
+      const wrapperStyle = [
+        "display:block",
+        "position:relative",
+        "box-sizing:border-box",
+        "width:" + width + "%",
+        "max-width:100%",
+        "margin:16px auto",
+        "overflow:hidden",
+        ratio === "original" ? "" : "aspect-ratio:" + ratio.replace(":", " / ")
+      ].filter(Boolean).join(";");
+      const imageStyle = ratio === "original"
+        ? "display:block;position:relative;width:100%;height:auto;max-width:100%;object-fit:contain;transform:scale(" + zoom / 100 + ");transform-origin:" + cropX + "% " + cropY + "%;"
+        : "display:block;position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:cover;object-position:" + cropX + "% " + cropY + "%;transform:scale(" + zoom / 100 + ");transform-origin:" + cropX + "% " + cropY + "%;";
       return stash(
-        '<img class="markdown-note-image" data-checkpoint-image-path="' +
-        escapeHtml(path) + '"' + srcAttribute + ' alt="' + escapeHtml(alt || "이미지") +
-        '" contenteditable="false" draggable="false">'
+        '<span class="markdown-note-image-frame" data-checkpoint-image-path="' + escapeHtml(path) +
+        '" data-checkpoint-image-width="' + width + '" data-checkpoint-image-ratio="' + ratio +
+        '" data-checkpoint-image-zoom="' + zoom + '" data-checkpoint-image-x="' + cropX +
+        '" data-checkpoint-image-y="' + cropY + '" contenteditable="false" draggable="true" style="' +
+        escapeHtml(wrapperStyle) + '">' +
+        '<img class="markdown-note-image" data-checkpoint-image-path="' + escapeHtml(path) +
+        '"' + srcAttribute + ' alt="' + escapeHtml(alt || "이미지") +
+        '" draggable="false" style="' + escapeHtml(imageStyle) + '"></span>'
       );
     } catch {
       return alt || "이미지";
@@ -685,6 +716,26 @@ export function htmlToMarkdown(html: string) {
 
     if (tag === "BR") return "\n";
     if (tag === "HR") return "\n---\n";
+    if (tag === "SPAN" && element.classList.contains("markdown-note-image-frame")) {
+      const path = element.dataset.checkpointImagePath ?? "";
+      if (!path) return "";
+      const image = element.querySelector<HTMLImageElement>("img.markdown-note-image");
+      const alt = (image?.getAttribute("alt") ?? "이미지").replace(/[\[\]\r\n]/g, " ").trim() || "이미지";
+      const width = Math.min(100, Math.max(20, Number(element.dataset.checkpointImageWidth) || 100));
+      const ratioValue = element.dataset.checkpointImageRatio ?? "original";
+      const ratio = ["original", "1:1", "4:3", "16:9", "3:4"].includes(ratioValue) ? ratioValue : "original";
+      const zoom = Math.min(300, Math.max(100, Number(element.dataset.checkpointImageZoom) || 100));
+      const cropX = Math.min(100, Math.max(0, Number(element.dataset.checkpointImageX) || 50));
+      const cropY = Math.min(100, Math.max(0, Number(element.dataset.checkpointImageY) || 50));
+      const options = new URLSearchParams();
+      if (width !== 100) options.set("w", String(width));
+      if (ratio !== "original") options.set("r", ratio);
+      if (zoom !== 100) options.set("z", String(zoom));
+      if (cropX !== 50) options.set("x", String(cropX));
+      if (cropY !== 50) options.set("y", String(cropY));
+      const query = options.toString();
+      return "![" + alt + "](checkpoint-image:" + encodeURIComponent(path) + (query ? "?" + query : "") + ")";
+    }
     if (tag === "IMG") {
       const path = element.getAttribute("data-checkpoint-image-path") ?? "";
       if (!path) return "";
@@ -838,8 +889,17 @@ export default function MarkdownDiary({
   const [drawingScrollTop, setDrawingScrollTop] = useState(0);
   const [noteImageUrls, setNoteImageUrls] = useState<Record<string, string>>({});
   const [imageUploading, setImageUploading] = useState(false);
+  const [selectedImagePath, setSelectedImagePath] = useState<string | null>(null);
+  const [selectedImageWidth, setSelectedImageWidth] = useState(100);
+  const [imageCropOpen, setImageCropOpen] = useState(false);
+  const [imageCropRatio, setImageCropRatio] = useState<"original" | "1:1" | "4:3" | "16:9" | "3:4">("original");
+  const [imageCropZoom, setImageCropZoom] = useState(100);
+  const [imageCropX, setImageCropX] = useState(50);
+  const [imageCropY, setImageCropY] = useState(50);
   const leftEditorRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const selectedImageElementRef = useRef<HTMLElement | null>(null);
+  const movingImageElementRef = useRef<HTMLElement | null>(null);
   const currentStrokeRef = useRef<DrawingStroke | null>(null);
   const drawingPointerIdRef = useRef<number | null>(null);
   const touchScrollYRef = useRef<number | null>(null);
@@ -887,6 +947,10 @@ export default function MarkdownDiary({
     setCurrentStroke(null);
     currentStrokeRef.current = null;
     drawingPointerIdRef.current = null;
+    setSelectedImagePath(null);
+    selectedImageElementRef.current = null;
+    movingImageElementRef.current = null;
+    setImageCropOpen(false);
   }, [activeNoteId]);
 
   useEffect(() => {
@@ -1448,27 +1512,139 @@ export default function MarkdownDiary({
     }
   }
 
-  function rememberEditorSelectionAtPoint(clientX: number, clientY: number) {
+  function getEditorRangeAtPoint(clientX: number, clientY: number) {
     const editor = leftEditorRef.current;
-    if (!editor) return;
+    if (!editor) return null;
     const documentWithCaret = document as Document & {
       caretRangeFromPoint?: (x: number, y: number) => Range | null;
       caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null;
     };
     const pointRange = documentWithCaret.caretRangeFromPoint?.(clientX, clientY);
-    if (pointRange && editor.contains(pointRange.commonAncestorContainer)) {
-      editorSelectionRef.current = pointRange.cloneRange();
-      return;
-    }
+    if (pointRange && editor.contains(pointRange.commonAncestorContainer)) return pointRange;
     const position = documentWithCaret.caretPositionFromPoint?.(clientX, clientY);
     if (position && editor.contains(position.offsetNode)) {
       const range = document.createRange();
       range.setStart(position.offsetNode, position.offset);
       range.collapse(true);
-      editorSelectionRef.current = range;
-      return;
+      return range;
     }
-    rememberEditorSelection();
+    return null;
+  }
+
+  function rememberEditorSelectionAtPoint(clientX: number, clientY: number) {
+    const range = getEditorRangeAtPoint(clientX, clientY);
+    if (range) editorSelectionRef.current = range.cloneRange();
+    else rememberEditorSelection();
+  }
+
+  function selectNoteImage(frame: HTMLElement) {
+    selectedImageElementRef.current?.classList.remove("is-selected");
+    selectedImageElementRef.current = frame;
+    frame.classList.add("is-selected");
+    setSelectedImagePath(frame.dataset.checkpointImagePath ?? null);
+    setSelectedImageWidth(Math.min(100, Math.max(20, Number(frame.dataset.checkpointImageWidth) || 100)));
+  }
+
+  function clearSelectedNoteImage() {
+    selectedImageElementRef.current?.classList.remove("is-selected");
+    selectedImageElementRef.current = null;
+    setSelectedImagePath(null);
+    setImageCropOpen(false);
+  }
+
+  function applyNoteImageFrameStyles(frame: HTMLElement) {
+    const image = frame.querySelector<HTMLImageElement>("img.markdown-note-image");
+    if (!image) return;
+    const width = Math.min(100, Math.max(20, Number(frame.dataset.checkpointImageWidth) || 100));
+    const ratioValue = frame.dataset.checkpointImageRatio ?? "original";
+    const ratio = ["original", "1:1", "4:3", "16:9", "3:4"].includes(ratioValue) ? ratioValue : "original";
+    const zoom = Math.min(300, Math.max(100, Number(frame.dataset.checkpointImageZoom) || 100));
+    const cropX = Math.min(100, Math.max(0, Number(frame.dataset.checkpointImageX) || 50));
+    const cropY = Math.min(100, Math.max(0, Number(frame.dataset.checkpointImageY) || 50));
+    frame.style.display = "block";
+    frame.style.position = "relative";
+    frame.style.boxSizing = "border-box";
+    frame.style.width = width + "%";
+    frame.style.maxWidth = "100%";
+    frame.style.margin = "16px auto";
+    frame.style.overflow = "hidden";
+    frame.style.aspectRatio = ratio === "original" ? "" : ratio.replace(":", " / ");
+    if (ratio === "original") {
+      image.style.cssText = [
+        "display:block",
+        "position:relative",
+        "width:100%",
+        "height:auto",
+        "max-width:100%",
+        "object-fit:contain",
+        "transform:scale(" + zoom / 100 + ")",
+        "transform-origin:" + cropX + "% " + cropY + "%"
+      ].join(";");
+    } else {
+      image.style.cssText = [
+        "display:block",
+        "position:absolute",
+        "inset:0",
+        "width:100%",
+        "height:100%",
+        "max-width:none",
+        "object-fit:cover",
+        "object-position:" + cropX + "% " + cropY + "%",
+        "transform:scale(" + zoom / 100 + ")",
+        "transform-origin:" + cropX + "% " + cropY + "%"
+      ].join(";");
+    }
+  }
+
+  function updateSelectedImageWidth(value: number) {
+    const frame = selectedImageElementRef.current;
+    const editor = leftEditorRef.current;
+    if (!frame || !editor) return;
+    const width = Math.min(100, Math.max(20, value));
+    frame.dataset.checkpointImageWidth = String(width);
+    applyNoteImageFrameStyles(frame);
+    setSelectedImageWidth(width);
+    updateCurrentPage(htmlToMarkdown(editor.innerHTML));
+    syncDrawingCanvasMetrics();
+  }
+
+  function openImageCropEditor() {
+    const frame = selectedImageElementRef.current;
+    const image = frame?.querySelector<HTMLImageElement>("img.markdown-note-image");
+    if (!frame || !image) return;
+    const ratioValue = frame.dataset.checkpointImageRatio ?? "original";
+    const ratio = ["original", "1:1", "4:3", "16:9", "3:4"].includes(ratioValue)
+      ? ratioValue as "original" | "1:1" | "4:3" | "16:9" | "3:4"
+      : "original";
+    setImageCropRatio(ratio);
+    setImageCropZoom(Math.min(300, Math.max(100, Number(frame.dataset.checkpointImageZoom) || 100)));
+    setImageCropX(Math.min(100, Math.max(0, Number(frame.dataset.checkpointImageX) || 50)));
+    setImageCropY(Math.min(100, Math.max(0, Number(frame.dataset.checkpointImageY) || 50)));
+    setImageCropOpen(true);
+  }
+
+  function saveImageCrop() {
+    const frame = selectedImageElementRef.current;
+    const editor = leftEditorRef.current;
+    if (!frame || !editor) return;
+    frame.dataset.checkpointImageRatio = imageCropRatio;
+    frame.dataset.checkpointImageZoom = String(imageCropZoom);
+    frame.dataset.checkpointImageX = String(imageCropX);
+    frame.dataset.checkpointImageY = String(imageCropY);
+    applyNoteImageFrameStyles(frame);
+    updateCurrentPage(htmlToMarkdown(editor.innerHTML));
+    setImageCropOpen(false);
+    syncDrawingCanvasMetrics();
+  }
+
+  function removeSelectedNoteImage() {
+    const frame = selectedImageElementRef.current;
+    const editor = leftEditorRef.current;
+    if (!frame || !editor) return;
+    frame.remove();
+    updateCurrentPage(htmlToMarkdown(editor.innerHTML));
+    clearSelectedNoteImage();
+    syncDrawingCanvasMetrics();
   }
 
   async function uploadAndInsertImage(file: File) {
@@ -1546,17 +1722,30 @@ export default function MarkdownDiary({
       }
 
       range.deleteContents();
+      const frame = document.createElement("span");
+      frame.className = "markdown-note-image-frame";
+      frame.dataset.checkpointImagePath = path;
+      frame.dataset.checkpointImageWidth = "100";
+      frame.dataset.checkpointImageRatio = "original";
+      frame.dataset.checkpointImageZoom = "100";
+      frame.dataset.checkpointImageX = "50";
+      frame.dataset.checkpointImageY = "50";
+      frame.contentEditable = "false";
+      frame.draggable = true;
+
       const image = document.createElement("img");
       image.className = "markdown-note-image";
       image.dataset.checkpointImagePath = path;
       image.src = data.signedUrl;
       image.alt = file.name.replace(/\.[^.]+$/, "").replace(/[\[\]\r\n]/g, " ").trim() || "이미지";
-      image.contentEditable = "false";
       image.draggable = false;
-      range.insertNode(image);
+      frame.append(image);
+      applyNoteImageFrameStyles(frame);
+      range.insertNode(frame);
+      selectNoteImage(frame);
 
       const lineBreak = document.createElement("br");
-      image.after(lineBreak);
+      frame.after(lineBreak);
       const nextRange = document.createRange();
       nextRange.setStartAfter(lineBreak);
       nextRange.collapse(true);
@@ -2430,6 +2619,29 @@ export default function MarkdownDiary({
                             <span>필기 모드</span>
                           </button>
                         </div>
+                        {selectedImagePath && !drawingMode ? (
+                          <div className="markdown-image-edit-panel" role="group" aria-label="이미지 편집">
+                            <div className="markdown-image-edit-size">
+                              <label htmlFor="markdown-image-width">이미지 크기 <output>{selectedImageWidth}%</output></label>
+                              <input
+                                id="markdown-image-width"
+                                type="range"
+                                min={20}
+                                max={100}
+                                step={5}
+                                value={selectedImageWidth}
+                                onChange={event => updateSelectedImageWidth(Number(event.currentTarget.value))}
+                              />
+                            </div>
+                            <span className="markdown-image-edit-hint"><Move size={14}/> 이미지를 끌어 원하는 위치로 이동</span>
+                            <button type="button" className="markdown-image-edit-button" onMouseDown={event => event.preventDefault()} onClick={openImageCropEditor}>
+                              <Crop size={15}/> 자르기
+                            </button>
+                            <button type="button" className="markdown-image-edit-button markdown-image-remove-button" onMouseDown={event => event.preventDefault()} onClick={removeSelectedNoteImage}>
+                              <Trash2 size={15}/> 삭제
+                            </button>
+                          </div>
+                        ) : null}
                         {drawingMode ? (
                           <div className="markdown-toolbar free-note-drawing-toolbar" role="toolbar" aria-label="필기 도구 모음">
                             <div className="free-note-drawing-tool-group">
@@ -2485,6 +2697,21 @@ export default function MarkdownDiary({
                             syncDrawingCanvasMetrics();
                           }}
                           onScroll={syncDrawingCanvasMetrics}
+                          onDragStart={event => {
+                            const target = event.target as HTMLElement;
+                            const frame = target.closest<HTMLElement>(".markdown-note-image-frame");
+                            if (!frame || !leftEditorRef.current?.contains(frame)) {
+                              event.preventDefault();
+                              return;
+                            }
+                            movingImageElementRef.current = frame;
+                            selectNoteImage(frame);
+                            event.dataTransfer.effectAllowed = "move";
+                            event.dataTransfer.setData("application/x-checkpoint-note-image", "move");
+                          }}
+                          onDragEnd={() => {
+                            movingImageElementRef.current = null;
+                          }}
                           onPaste={event => {
                             const imageItem = Array.from(event.clipboardData.items).find(item =>
                               item.kind === "file" && item.type.startsWith("image/")
@@ -2509,10 +2736,39 @@ export default function MarkdownDiary({
                             }
                           }}
                           onDragOver={event => {
-                            if (Array.from(event.dataTransfer.types).includes("Files")) event.preventDefault();
+                            const types = Array.from(event.dataTransfer.types);
+                            if (types.includes("Files") || types.includes("application/x-checkpoint-note-image")) event.preventDefault();
                           }}
                           onDrop={event => {
                             event.preventDefault();
+                            const editor = leftEditorRef.current;
+                            const movingFrame = movingImageElementRef.current;
+                            if (
+                              editor &&
+                              movingFrame &&
+                              event.dataTransfer.getData("application/x-checkpoint-note-image") === "move"
+                            ) {
+                              const dropRange = getEditorRangeAtPoint(event.clientX, event.clientY);
+                              if (dropRange && !movingFrame.contains(dropRange.commonAncestorContainer)) {
+                                const targetNode = dropRange.commonAncestorContainer.nodeType === 1
+                                  ? dropRange.commonAncestorContainer as HTMLElement
+                                  : dropRange.commonAncestorContainer.parentElement;
+                                if (!targetNode?.closest(".markdown-code-block")) {
+                                  const insertionRange = dropRange.cloneRange();
+                                  movingFrame.remove();
+                                  insertionRange.insertNode(movingFrame);
+                                  const lineBreak = document.createElement("br");
+                                  movingFrame.after(lineBreak);
+                                  updateCurrentPage(htmlToMarkdown(editor.innerHTML));
+                                  selectNoteImage(movingFrame);
+                                  syncDrawingCanvasMetrics();
+                                  editor.focus();
+                                }
+                              }
+                              movingImageElementRef.current = null;
+                              return;
+                            }
+
                             const droppedImage = Array.from(event.dataTransfer.files).find(file =>
                               file.type.startsWith("image/")
                             );
@@ -2550,6 +2806,13 @@ export default function MarkdownDiary({
                           onClick={event => {
                             const editor = leftEditorRef.current;
                             const target = event.target as HTMLElement;
+                            const imageFrame = target.closest<HTMLElement>(".markdown-note-image-frame");
+                            if (editor && imageFrame && editor.contains(imageFrame)) {
+                              event.preventDefault();
+                              selectNoteImage(imageFrame);
+                              return;
+                            }
+                            if (selectedImageElementRef.current) clearSelectedNoteImage();
                             const link = target.closest<HTMLAnchorElement>("a[href]");
                             if (!editor || !link || !editor.contains(link)) return;
 
@@ -2787,6 +3050,69 @@ export default function MarkdownDiary({
           </div>
         </div>
       </main>
+      {imageCropOpen && selectedImageElementRef.current ? (
+        <div
+          className="markdown-image-crop-backdrop"
+          role="presentation"
+          onMouseDown={event => {
+            if (event.target === event.currentTarget) setImageCropOpen(false);
+          }}
+        >
+          <section className="markdown-image-crop-modal" role="dialog" aria-modal="true" aria-labelledby="markdown-image-crop-title">
+            <div className="markdown-image-crop-header">
+              <h2 id="markdown-image-crop-title">이미지 자르기</h2>
+              <button type="button" aria-label="닫기" onClick={() => setImageCropOpen(false)}><X size={18}/></button>
+            </div>
+            <div
+              className="markdown-image-crop-preview"
+              style={{
+                aspectRatio: imageCropRatio === "original"
+                  ? (() => {
+                      const image = selectedImageElementRef.current?.querySelector<HTMLImageElement>("img.markdown-note-image");
+                      return String(image?.naturalWidth || 4) + " / " + String(image?.naturalHeight || 3);
+                    })()
+                  : imageCropRatio.replace(":", " / ")
+              }}
+            >
+              <img
+                src={selectedImageElementRef.current.querySelector<HTMLImageElement>("img.markdown-note-image")?.src ?? ""}
+                alt="자르기 미리보기"
+                style={{
+                  objectFit: imageCropRatio === "original" ? "contain" : "cover",
+                  objectPosition: String(imageCropX) + "% " + String(imageCropY) + "%",
+                  transform: "scale(" + imageCropZoom / 100 + ")",
+                  transformOrigin: String(imageCropX) + "% " + String(imageCropY) + "%"
+                }}
+              />
+            </div>
+            <div className="markdown-image-crop-ratios" role="group" aria-label="자르기 비율">
+              {(["original", "1:1", "4:3", "16:9", "3:4"] as const).map(ratio => (
+                <button key={ratio} type="button" className={imageCropRatio === ratio ? "is-active" : ""} aria-pressed={imageCropRatio === ratio} onClick={() => setImageCropRatio(ratio)}>
+                  {ratio === "original" ? "원본" : ratio}
+                </button>
+              ))}
+            </div>
+            <div className="markdown-image-crop-controls">
+              <label>
+                확대 <output>{imageCropZoom}%</output>
+                <input type="range" min={100} max={300} step={5} value={imageCropZoom} onChange={event => setImageCropZoom(Number(event.currentTarget.value))}/>
+              </label>
+              <label>
+                가로 위치 <output>{imageCropX}%</output>
+                <input type="range" min={0} max={100} step={1} value={imageCropX} onChange={event => setImageCropX(Number(event.currentTarget.value))}/>
+              </label>
+              <label>
+                세로 위치 <output>{imageCropY}%</output>
+                <input type="range" min={0} max={100} step={1} value={imageCropY} onChange={event => setImageCropY(Number(event.currentTarget.value))}/>
+              </label>
+            </div>
+            <div className="markdown-image-crop-actions">
+              <button type="button" className="outline-btn" onClick={() => setImageCropOpen(false)}>취소</button>
+              <button type="button" className="delete-confirm-btn" onClick={saveImageCrop}>적용</button>
+            </div>
+          </section>
+        </div>
+      ) : null}
       {pageDeleteOpen ? (
         <div
           className="modal-backdrop notebook-delete-backdrop"
