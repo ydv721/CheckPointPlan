@@ -4607,7 +4607,6 @@ html,body{width:100%;overflow-x:clip}
 
 /* Shared scrollbar: slim, rounded, and theme-aware across the editor surfaces. */
 .app-shell.cover-view .cover-editor,
-.sketch-workspace .sketch-tool-rail,
 .sketch-workspace .sketch-canvas-stage,
 .sketch-workspace .sketch-settings-panel,
 .sketch-workspace .sketch-layer-list,
@@ -4617,7 +4616,6 @@ body:has(.sketch-workspace) .app-sidebar-panel {
 }
 
 .app-shell.cover-view .cover-editor::-webkit-scrollbar,
-.sketch-workspace .sketch-tool-rail::-webkit-scrollbar,
 .sketch-workspace .sketch-canvas-stage::-webkit-scrollbar,
 .sketch-workspace .sketch-settings-panel::-webkit-scrollbar,
 .sketch-workspace .sketch-layer-list::-webkit-scrollbar,
@@ -4627,7 +4625,6 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar {
 }
 
 .app-shell.cover-view .cover-editor::-webkit-scrollbar-track,
-.sketch-workspace .sketch-tool-rail::-webkit-scrollbar-track,
 .sketch-workspace .sketch-canvas-stage::-webkit-scrollbar-track,
 .sketch-workspace .sketch-settings-panel::-webkit-scrollbar-track,
 .sketch-workspace .sketch-layer-list::-webkit-scrollbar-track,
@@ -4636,7 +4633,6 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-track {
 }
 
 .app-shell.cover-view .cover-editor::-webkit-scrollbar-thumb,
-.sketch-workspace .sketch-tool-rail::-webkit-scrollbar-thumb,
 .sketch-workspace .sketch-canvas-stage::-webkit-scrollbar-thumb,
 .sketch-workspace .sketch-settings-panel::-webkit-scrollbar-thumb,
 .sketch-workspace .sketch-layer-list::-webkit-scrollbar-thumb,
@@ -4648,13 +4644,21 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb {
 }
 
 .app-shell.cover-view .cover-editor::-webkit-scrollbar-thumb:hover,
-.sketch-workspace .sketch-tool-rail::-webkit-scrollbar-thumb:hover,
 .sketch-workspace .sketch-canvas-stage::-webkit-scrollbar-thumb:hover,
 .sketch-workspace .sketch-settings-panel::-webkit-scrollbar-thumb:hover,
 .sketch-workspace .sketch-layer-list::-webkit-scrollbar-thumb:hover,
 body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   background: color-mix(in srgb, var(--ink) 46%, transparent);
   background-clip: padding-box;
+}
+
+/* Hide the tool rail scrollbar while keeping touch and wheel scrolling available. */
+.sketch-workspace .sketch-tool-rail {
+  scrollbar-width:none;
+  -ms-overflow-style:none;
+}
+.sketch-workspace .sketch-tool-rail::-webkit-scrollbar {
+  display:none;
 }
 
 /* Keep emoji picker scrollbars compact and visually quiet. */
