@@ -614,7 +614,7 @@ export default function SketchWorkspace({
         selectionBounds.bottom - selectionBounds.top
       );
       context.setLineDash([]);
-      const handleSize = 12;
+      const handleSize = 18 * 100 / zoom;
       for (const handle of SELECTION_HANDLES) {
         const position = getSelectionHandlePoint(selectionBounds, handle);
         context.fillRect(position.x - handleSize / 2, position.y - handleSize / 2, handleSize, handleSize);
@@ -828,7 +828,7 @@ export default function SketchWorkspace({
 
     if (tool === "lasso") {
       const bounds = getSelectionBounds(current, selectedKeys);
-      const handle = bounds ? findSelectionHandle(point, bounds, Math.max(5, 14 * 100 / zoom)) : null;
+      const handle = bounds ? findSelectionHandle(point, bounds, Math.max(5, 20 * 100 / zoom)) : null;
       if (bounds && handle) {
         pointerModeRef.current = {
           kind: "scale",
@@ -873,7 +873,7 @@ export default function SketchWorkspace({
     if (!mode) {
       const bounds = tool === "lasso" ? getSelectionBounds(docRef.current, selectedKeys) : null;
       const point = canvasPoint(event);
-      const handle = bounds ? findSelectionHandle(point, bounds, Math.max(5, 14 * 100 / zoom)) : null;
+      const handle = bounds ? findSelectionHandle(point, bounds, Math.max(5, 20 * 100 / zoom)) : null;
       const cursorByHandle: Record<SelectionHandle, string> = {
         nw: "nwse-resize", n: "ns-resize", ne: "nesw-resize", e: "ew-resize",
         se: "nwse-resize", s: "ns-resize", sw: "nesw-resize", w: "ew-resize"
