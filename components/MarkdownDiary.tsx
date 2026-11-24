@@ -725,8 +725,10 @@ export function htmlToMarkdown(html: string) {
       const ratioValue = element.dataset.checkpointImageRatio ?? "original";
       const ratio = ["original", "1:1", "4:3", "16:9", "3:4"].includes(ratioValue) ? ratioValue : "original";
       const zoom = Math.min(300, Math.max(100, Number(element.dataset.checkpointImageZoom) || 100));
-      const cropX = Math.min(100, Math.max(0, Number(element.dataset.checkpointImageX) || 50));
-      const cropY = Math.min(100, Math.max(0, Number(element.dataset.checkpointImageY) || 50));
+      const cropXValue = Number(element.dataset.checkpointImageX);
+      const cropYValue = Number(element.dataset.checkpointImageY);
+      const cropX = Number.isFinite(cropXValue) ? Math.min(100, Math.max(0, cropXValue)) : 50;
+      const cropY = Number.isFinite(cropYValue) ? Math.min(100, Math.max(0, cropYValue)) : 50;
       const options = new URLSearchParams();
       if (width !== 100) options.set("w", String(width));
       if (ratio !== "original") options.set("r", ratio);
@@ -1559,8 +1561,10 @@ export default function MarkdownDiary({
     const ratioValue = frame.dataset.checkpointImageRatio ?? "original";
     const ratio = ["original", "1:1", "4:3", "16:9", "3:4"].includes(ratioValue) ? ratioValue : "original";
     const zoom = Math.min(300, Math.max(100, Number(frame.dataset.checkpointImageZoom) || 100));
-    const cropX = Math.min(100, Math.max(0, Number(frame.dataset.checkpointImageX) || 50));
-    const cropY = Math.min(100, Math.max(0, Number(frame.dataset.checkpointImageY) || 50));
+    const cropXValue = Number(frame.dataset.checkpointImageX);
+    const cropYValue = Number(frame.dataset.checkpointImageY);
+    const cropX = Number.isFinite(cropXValue) ? Math.min(100, Math.max(0, cropXValue)) : 50;
+    const cropY = Number.isFinite(cropYValue) ? Math.min(100, Math.max(0, cropYValue)) : 50;
     frame.style.display = "block";
     frame.style.position = "relative";
     frame.style.boxSizing = "border-box";
@@ -1618,8 +1622,10 @@ export default function MarkdownDiary({
       : "original";
     setImageCropRatio(ratio);
     setImageCropZoom(Math.min(300, Math.max(100, Number(frame.dataset.checkpointImageZoom) || 100)));
-    setImageCropX(Math.min(100, Math.max(0, Number(frame.dataset.checkpointImageX) || 50)));
-    setImageCropY(Math.min(100, Math.max(0, Number(frame.dataset.checkpointImageY) || 50)));
+    const cropXValue = Number(frame.dataset.checkpointImageX);
+    const cropYValue = Number(frame.dataset.checkpointImageY);
+    setImageCropX(Number.isFinite(cropXValue) ? Math.min(100, Math.max(0, cropXValue)) : 50);
+    setImageCropY(Number.isFinite(cropYValue) ? Math.min(100, Math.max(0, cropYValue)) : 50);
     setImageCropOpen(true);
   }
 
