@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type TouchEvent as ReactTouchEvent, type WheelEvent as ReactWheelEvent } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronLeft, ChevronRight, Code2, Crop, Eraser, FileDown, Heading1, Highlighter, ImagePlus, Italic, List, ListOrdered, Minus, Move, Palette, PenLine, Plus, Quote, StickyNote as StickyNoteIcon, Strikethrough, Type, Underline, Check, Trash2, X } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronLeft, ChevronRight, Code2, Eraser, FileDown, Heading1, Highlighter, ImagePlus, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, StickyNote as StickyNoteIcon, Strikethrough, Type, Underline, Check, Trash2, X } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import PlannerSpread from "@/components/PlannerSpread";
 import type { ThemeName } from "@/lib/types";
@@ -911,8 +911,6 @@ export default function MarkdownDiary({
   const [drawingScrollTop, setDrawingScrollTop] = useState(0);
   const [noteImageUrls, setNoteImageUrls] = useState<Record<string, string>>({});
   const [imageUploading, setImageUploading] = useState(false);
-  const [selectedImagePath, setSelectedImagePath] = useState<string | null>(null);
-  const [selectedImageWidth, setSelectedImageWidth] = useState(80);
   const [imageCropOpen, setImageCropOpen] = useState(false);
   const [imageCropRatio, setImageCropRatio] = useState<"original" | "1:1" | "4:3" | "16:9" | "3:4">("original");
   const [imageCropZoom, setImageCropZoom] = useState(100);
@@ -922,6 +920,17 @@ export default function MarkdownDiary({
   const imageInputRef = useRef<HTMLInputElement>(null);
   const selectedImageElementRef = useRef<HTMLElement | null>(null);
   const movingImageElementRef = useRef<HTMLElement | null>(null);
+  const imageTransformRef = useRef<{
+    frame: HTMLElement;
+    pointerId: number;
+    kind: "rotate" | "resize";
+    centerX: number;
+    centerY: number;
+    startAngle: number;
+    startDistance: number;
+    initialRotation: number;
+    initialWidth: number;
+  } | null>(null);
   const currentStrokeRef = useRef<DrawingStroke | null>(null);
   const drawingPointerIdRef = useRef<number | null>(null);
   const touchScrollYRef = useRef<number | null>(null);
@@ -969,17 +978,18 @@ export default function MarkdownDiary({
     setCurrentStroke(null);
     currentStrokeRef.current = null;
     drawingPointerIdRef.current = null;
-    setSelectedImagePath(null);
+    selectedImageElementRef.current?.classList.remove("is-selected", "menu-open");
     selectedImageElementRef.current = null;
     movingImageElementRef.current = null;
+    imageTransformRef.current = null;
     setImageCropOpen(false);
   }, [activeNoteId]);
 
   useEffect(() => {
-    selectedImageElementRef.current?.classList.remove("is-selected");
+    selectedImageElementRef.current?.classList.remove("is-selected", "menu-open");
     selectedImageElementRef.current = null;
     movingImageElementRef.current = null;
-    setSelectedImagePath(null);
+    imageTransformRef.current = null;
     setImageCropOpen(false);
   }, [activePageIndex, activeNoteId]);
 
@@ -1568,23 +1578,23 @@ export default function MarkdownDiary({
   }
 
   function selectNoteImage(frame: HTMLElement) {
-    selectedImageElementRef.current?.classList.remove("is-selected");
+    if (selectedImageElementRef.current !== frame) {
+      selectedImageElementRef.current?.classList.remove("is-selected", "menu-open");
+    }
     selectedImageElementRef.current = frame;
     frame.classList.add("is-selected");
-    setSelectedImagePath(frame.dataset.checkpointImagePath ?? null);
-    setSelectedImageWidth(Math.min(100, Math.max(20, Number(frame.dataset.checkpointImageWidth) || 80)));
   }
 
   function clearSelectedNoteImage() {
-    selectedImageElementRef.current?.classList.remove("is-selected");
+    selectedImageElementRef.current?.classList.remove("is-selected", "menu-open");
     selectedImageElementRef.current = null;
-    setSelectedImagePath(null);
     setImageCropOpen(false);
   }
 
   function applyNoteImageFrameStyles(frame: HTMLElement) {
     const image = frame.querySelector<HTMLImageElement>("img.markdown-note-image");
-    if (!image) return;
+    const visual = frame.querySelector<HTMLElement>(".markdown-note-image-content");
+    if (!image || !visual) return;
     const width = Math.min(100, Math.max(20, Number(frame.dataset.checkpointImageWidth) || 80));
     const ratioValue = frame.dataset.checkpointImageRatio ?? "original";
     const ratio = ["original", "1:1", "4:3", "16:9", "3:4"].includes(ratioValue) ? ratioValue : "original";
@@ -1598,9 +1608,11 @@ export default function MarkdownDiary({
     frame.style.boxSizing = "border-box";
     frame.style.width = width + "%";
     frame.style.maxWidth = "100%";
-    frame.style.margin = "16px auto";
-    frame.style.overflow = "hidden";
+    frame.style.margin = "26px auto";
+    frame.style.overflow = "visible";
     frame.style.aspectRatio = ratio === "original" ? "" : ratio.replace(":", " / ");
+    const rotation = Number(frame.dataset.checkpointImageRotation);
+    visual.style.transform = "rotate(" + (Number.isFinite(rotation) ? Math.min(180, Math.max(-180, rotation)) : 0) + "deg)";
     if (ratio === "original") {
       image.style.cssText = [
         "display:block",
@@ -1635,7 +1647,6 @@ export default function MarkdownDiary({
     const width = Math.min(100, Math.max(20, value));
     frame.dataset.checkpointImageWidth = String(width);
     applyNoteImageFrameStyles(frame);
-    setSelectedImageWidth(width);
     updateCurrentPage(htmlToMarkdown(editor.innerHTML));
     syncDrawingCanvasMetrics();
   }
@@ -2658,29 +2669,6 @@ export default function MarkdownDiary({
                             <span>필기 모드</span>
                           </button>
                         </div>
-                        {selectedImagePath && !drawingMode ? (
-                          <div className="markdown-image-edit-panel" role="group" aria-label="이미지 편집">
-                            <div className="markdown-image-edit-size">
-                              <label htmlFor="markdown-image-width">이미지 크기 <output>{selectedImageWidth}%</output></label>
-                              <input
-                                id="markdown-image-width"
-                                type="range"
-                                min={20}
-                                max={100}
-                                step={5}
-                                value={selectedImageWidth}
-                                onChange={event => updateSelectedImageWidth(Number(event.currentTarget.value))}
-                              />
-                            </div>
-                            <span className="markdown-image-edit-hint"><Move size={14}/> 이미지를 끌어 원하는 위치로 이동</span>
-                            <button type="button" className="markdown-image-edit-button" onMouseDown={event => event.preventDefault()} onClick={openImageCropEditor}>
-                              <Crop size={15}/> 자르기
-                            </button>
-                            <button type="button" className="markdown-image-edit-button markdown-image-remove-button" onMouseDown={event => event.preventDefault()} onClick={removeSelectedNoteImage}>
-                              <Trash2 size={15}/> 삭제
-                            </button>
-                          </div>
-                        ) : null}
                         {drawingMode ? (
                           <div className="markdown-toolbar free-note-drawing-toolbar" role="toolbar" aria-label="필기 도구 모음">
                             <div className="free-note-drawing-tool-group">
