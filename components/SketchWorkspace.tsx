@@ -285,7 +285,7 @@ const SELECTION_HANDLES: SelectionHandle[] = ["nw", "n", "ne", "e", "se", "s", "
 function getSelectionRotationHandlePoint(bounds: SelectionBounds, offset: number): SketchPoint {
   return {
     x: (bounds.left + bounds.right) / 2,
-    y: bounds.top - offset
+    y: bounds.top >= offset + 12 ? bounds.top - offset : bounds.top + offset
   };
 }
 
@@ -641,7 +641,9 @@ export default function SketchWorkspace({
       const centerX = (selectionBounds.left + selectionBounds.right) / 2;
       context.beginPath();
       context.moveTo(centerX, selectionBounds.top);
-      context.lineTo(rotationPoint.x, rotationPoint.y + rotationRadius);
+      context.lineTo(rotationPoint.x, rotationPoint.y < selectionBounds.top
+        ? rotationPoint.y + rotationRadius
+        : rotationPoint.y - rotationRadius);
       context.stroke();
       context.beginPath();
       context.arc(rotationPoint.x, rotationPoint.y, rotationRadius, 0, Math.PI * 2);
@@ -652,6 +654,7 @@ export default function SketchWorkspace({
       context.textAlign = "center";
       context.textBaseline = "middle";
       context.fillText("↻", rotationPoint.x, rotationPoint.y + 0.5 * 100 / zoom);
+      context.fillStyle = "#ffffff";
       for (const handle of SELECTION_HANDLES) {
         const position = getSelectionHandlePoint(selectionBounds, handle);
         context.fillRect(position.x - handleSize / 2, position.y - handleSize / 2, handleSize, handleSize);
@@ -884,7 +887,10 @@ export default function SketchWorkspace({
         pointerModeRef.current = {
           kind: "rotate",
           center: { x: (bounds.left + bounds.right) / 2, y: (bounds.top + bounds.bottom) / 2 },
-          startAngle: Math.atan2(point.y - (bounds.top - 34 * 100 / zoom), point.x - rotationPoint.x),
+          startAngle: Math.atan2(
+            point.y - (bounds.top + bounds.bottom) / 2,
+            point.x - (bounds.left + bounds.right) / 2
+          ),
           origin: current,
           keys: selectedKeys
         };
