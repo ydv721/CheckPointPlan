@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 import {
   ArrowLeft, Brush, Check, Circle, Download, Eraser, Eye, EyeOff, Layers3,
   Lasso, LayoutGrid, Minus, MoveDown, MoveUp, Pipette, Plus,
-  Redo2, Save, Square, Trash2, Undo2, ZoomIn, ZoomOut
+  Redo2, RotateCw, Save, Square, Trash2, Undo2, ZoomIn, ZoomOut
 } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import type { ThemeName } from "@/lib/types";
@@ -35,7 +35,24 @@ export type SketchDocument = {
 };
 
 type SketchTool = "pen" | "eraser" | "lasso" | "line" | "rect" | "ellipse" | "eyedropper";
-type LayoutPreset = "portrait" | "square" | "landscape";
+const CANVAS_RATIOS = [
+  { value: "1:1", width: 1200, height: 1200 },
+  { value: "3:4", width: 900, height: 1200 },
+  { value: "4:3", width: 1200, height: 900 },
+  { value: "9:16", width: 900, height: 1600 },
+  { value: "16:9", width: 1600, height: 900 }
+] as const;
+
+type CanvasRatio = typeof CANVAS_RATIOS[number]["value"];
+
+function getCanvasRatio(width: number, height: number): CanvasRatio {
+  const ratio = width / height;
+  return CANVAS_RATIOS.reduce((closest, option) => {
+    const closestDistance = Math.abs(Math.log(ratio / (closest.width / closest.height)));
+    const optionDistance = Math.abs(Math.log(ratio / (option.width / option.height)));
+    return optionDistance < closestDistance ? option : closest;
+  }).value;
+}
 type PointerMode =
   | { kind: "stroke"; layerId: string; strokeId: string }
   | { kind: "lasso" }
@@ -317,7 +334,7 @@ export default function SketchWorkspace({
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [dirty, setDirty] = useState(false);
-  const [layout, setLayout] = useState<LayoutPreset>(() => initial.width === initial.height ? "square" : initial.width > initial.height ? "landscape" : "portrait");
+  const layout = getCanvasRatio(doc.width, doc.height);
 
   const selectedLayer = doc.layers.find(layer => layer.id === selectedLayerId) ?? doc.layers[0];
 
@@ -628,29 +645,63 @@ export default function SketchWorkspace({
     commitDocument(next);
   }
 
-  function changeLayout(nextLayout: LayoutPreset) {
-    const dimensions = nextLayout === "square" ? [1100, 1100] : nextLayout === "landscape" ? [1273, 900] : [900, 1200];
-    const nextWidth = dimensions[0];
-    const nextHeight = dimensions[1];
+  function changeLayout(nextLayout: CanvasRatio) {
+    const preset = CANVAS_RATIOS.find(option => option.value === nextLayout);
+    if (!preset) return;
+
     const current = docRef.current;
-    const scaleX = nextWidth / current.width;
-    const scaleY = nextHeight / current.height;
-    const scaleSize = (scaleX + scaleY) / 2;
+    const scale = Math.min(preset.width / current.width, preset.height / current.height);
+    const offsetX = (preset.width - current.width * scale) / 2;
+    const offsetY = (preset.height - current.height * scale) / 2;
     const next: SketchDocument = {
       ...current,
-      width: nextWidth,
-      height: nextHeight,
+      width: preset.width,
+      height: preset.height,
       layers: current.layers.map(layer => ({
         ...layer,
         strokes: layer.strokes.map(stroke => ({
           ...stroke,
-          size: stroke.size * scaleSize,
-          points: stroke.points.map(point => ({ ...point, x: point.x * scaleX, y: point.y * scaleY }))
+          size: stroke.size * scale,
+          points: stroke.points.map(point => ({
+            ...point,
+            x: point.x * scale + offsetX,
+            y: point.y * scale + offsetY
+          }))
         }))
       }))
     };
-    setLayout(nextLayout);
+
     commitDocument(next);
+    setSelectedKeys([]);
+    lassoPointsRef.current = [];
+    setLassoPoints([]);
+    setZoom(100);
+  }
+
+  function rotateCanvasClockwise() {
+    const current = docRef.current;
+    const next: SketchDocument = {
+      ...current,
+      width: current.height,
+      height: current.width,
+      layers: current.layers.map(layer => ({
+        ...layer,
+        strokes: layer.strokes.map(stroke => ({
+          ...stroke,
+          points: stroke.points.map(point => ({
+            ...point,
+            x: current.height - point.y,
+            y: point.x
+          }))
+        }))
+      }))
+    };
+
+    commitDocument(next);
+    setSelectedKeys([]);
+    lassoPointsRef.current = [];
+    setLassoPoints([]);
+    setZoom(100);
   }
 
   function changeBackgroundStyle(value: SketchDocument["backgroundStyle"]) {
@@ -769,6 +820,9 @@ export default function SketchWorkspace({
               <span>{zoom}%</span>
               <button type="button" aria-label="확대" title="확대" onClick={() => setZoom(value => clamp(value + 10, 50, 180))}><ZoomIn size={16}/></button>
               <button type="button" title="화면에 맞춤" aria-label="화면에 맞춤" onClick={() => setZoom(100)}><LayoutGrid size={15}/></button>
+              <button type="button" className="sketch-rotate-button" title="캔버스를 시계 방향으로 90도 회전" aria-label="캔버스 90도 회전" onClick={rotateCanvasClockwise}>
+                <RotateCw size={15}/><span>90° 회전</span>
+              </button>
             </div>
             <span className="sketch-canvas-size">{doc.width} × {doc.height}px</span>
             <button type="button" className="sketch-clear-button" onClick={() => {
@@ -860,11 +914,13 @@ export default function SketchWorkspace({
 
           <section className="sketch-settings-section">
             <div className="sketch-panel-heading"><strong>캔버스 레이아웃</strong></div>
-            <label className="sketch-control-label">용지 비율</label>
-            <select className="sketch-select" value={layout} onChange={event => changeLayout(event.target.value as LayoutPreset)}>
-              <option value="portrait">세로형 · 그림일기</option>
-              <option value="square">정사각형</option>
-              <option value="landscape">가로형</option>
+            <label className="sketch-control-label">비율</label>
+            <select className="sketch-select" value={layout} onChange={event => changeLayout(event.target.value as CanvasRatio)}>
+              <option value="1:1">1:1</option>
+              <option value="3:4">3:4</option>
+              <option value="4:3">4:3</option>
+              <option value="9:16">9:16</option>
+              <option value="16:9">16:9</option>
             </select>
             <label className="sketch-control-label">배경</label>
             <select className="sketch-select" value={doc.backgroundStyle} onChange={event => changeBackgroundStyle(event.target.value as SketchDocument["backgroundStyle"])}>
