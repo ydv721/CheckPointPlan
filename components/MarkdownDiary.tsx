@@ -3128,7 +3128,7 @@ export default function MarkdownDiary({
             </div>
             <div className="markdown-image-crop-actions">
               <button type="button" className="outline-btn" onClick={() => setImageCropOpen(false)}>취소</button>
-              <button type="button" className="delete-confirm-btn" onClick={saveImageCrop}>적용</button>
+              <button type="button" className="markdown-image-crop-apply" onClick={saveImageCrop}>적용</button>
             </div>
           </section>
         </div>
