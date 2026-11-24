@@ -8424,7 +8424,16 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   flex:0 0 auto;
   align-items:center;
   gap:2px;
-  margin-left:3px;
+  margin:0;
+  padding:0;
+  border:0 !important;
+  box-shadow:none !important;
+  background:transparent;
+}
+.markdown-align-controls::before,
+.markdown-align-controls::after{
+  display:none !important;
+  content:none !important;
 }
 .markdown-toolbar-button{
   display:inline-flex;
