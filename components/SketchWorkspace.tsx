@@ -520,6 +520,22 @@ export default function SketchWorkspace({
 
   const selectedLayer = doc.layers.find(layer => layer.id === selectedLayerId) ?? doc.layers[0];
 
+  function fitCanvasToWindow() {
+    const stage = canvasStageRef.current;
+    if (!stage) return;
+
+    const styles = window.getComputedStyle(stage);
+    const horizontalPadding = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
+    const verticalPadding = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
+    const availableWidth = stage.clientWidth - horizontalPadding;
+    const availableHeight = stage.clientHeight - verticalPadding;
+    if (availableWidth <= 0 || availableHeight <= 0) return;
+
+    const canvasHeightAtFullWidth = availableWidth * doc.height / doc.width;
+    const fitZoom = Math.floor(Math.min(100, availableHeight / canvasHeightAtFullWidth * 100));
+    setZoom(clamp(fitZoom, 50, 100));
+  }
+
   const setWorkingDocument = useCallback((next: SketchDocument) => {
     docRef.current = next;
     setDoc(next);
@@ -1261,7 +1277,7 @@ export default function SketchWorkspace({
               <button type="button" aria-label="축소" title="축소" onClick={() => setZoom(value => clamp(value - 10, 50, 300))}><ZoomOut size={16}/></button>
               <span>{zoom}%</span>
               <button type="button" aria-label="확대" title="확대" onClick={() => setZoom(value => clamp(value + 10, 50, 300))}><ZoomIn size={16}/></button>
-              <button type="button" title="화면에 맞춤" aria-label="화면에 맞춤" onClick={() => setZoom(100)}><LayoutGrid size={15}/></button>
+              <button type="button" className="sketch-fit-button" title="창에 맞추기" aria-label="창에 맞추기" onClick={fitCanvasToWindow}><LayoutGrid size={15}/><span>창에 맞추기</span></button>
               <button type="button" className="sketch-rotate-button" title="캔버스를 시계 방향으로 90도 회전" aria-label="캔버스 90도 회전" onClick={rotateCanvasClockwise}>
                 <RotateCw size={15}/><span>90° 회전</span>
               </button>
