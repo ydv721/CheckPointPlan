@@ -720,7 +720,7 @@ export function htmlToMarkdown(html: string) {
       const path = element.dataset.checkpointImagePath ?? "";
       if (!path) return "";
       const image = element.querySelector<HTMLImageElement>("img.markdown-note-image");
-      const alt = (image?.getAttribute("alt") ?? "이미지").replace(/[\[\]\r\n]/g, " ").trim() || "이미지";
+      const alt = (image?.getAttribute("alt") ?? "이미지").replace(/[\[\]()\r\n]/g, " ").trim() || "이미지";
       const width = Math.min(100, Math.max(20, Number(element.dataset.checkpointImageWidth) || 100));
       const ratioValue = element.dataset.checkpointImageRatio ?? "original";
       const ratio = ["original", "1:1", "4:3", "16:9", "3:4"].includes(ratioValue) ? ratioValue : "original";
@@ -741,7 +741,7 @@ export function htmlToMarkdown(html: string) {
     if (tag === "IMG") {
       const path = element.getAttribute("data-checkpoint-image-path") ?? "";
       if (!path) return "";
-      const alt = (element.getAttribute("alt") ?? "이미지").replace(/[\[\]\r\n]/g, " ").trim() || "이미지";
+      const alt = (element.getAttribute("alt") ?? "이미지").replace(/[\[\]()\r\n]/g, " ").trim() || "이미지";
       return "![" + alt + "](checkpoint-image:" + encodeURIComponent(path) + ")";
     }
     if (tag === "B" || tag === "STRONG") return "**" + children + "**";
@@ -1751,7 +1751,7 @@ export default function MarkdownDiary({
       image.className = "markdown-note-image";
       image.dataset.checkpointImagePath = path;
       image.src = data.signedUrl;
-      image.alt = file.name.replace(/\.[^.]+$/, "").replace(/[\[\]\r\n]/g, " ").trim() || "이미지";
+      image.alt = file.name.replace(/\.[^.]+$/, "").replace(/[\[\]()\r\n]/g, " ").trim() || "이미지";
       image.draggable = false;
       frame.append(image);
       applyNoteImageFrameStyles(frame);
