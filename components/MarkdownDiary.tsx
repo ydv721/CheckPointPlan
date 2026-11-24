@@ -956,6 +956,14 @@ export default function MarkdownDiary({
   }, [activeNoteId]);
 
   useEffect(() => {
+    selectedImageElementRef.current?.classList.remove("is-selected");
+    selectedImageElementRef.current = null;
+    movingImageElementRef.current = null;
+    setSelectedImagePath(null);
+    setImageCropOpen(false);
+  }, [activePageIndex, activeNoteId]);
+
+  useEffect(() => {
     if (!pageDeleteOpen) return;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") setPageDeleteOpen(false);
