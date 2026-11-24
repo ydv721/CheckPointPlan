@@ -1696,8 +1696,43 @@ export default function MarkdownDiary({
     frame.style.maxWidth = "100%";
     frame.style.margin = "26px auto";
     frame.style.overflow = "visible";
-    frame.style.aspectRatio = ratio === "original" ? "" : ratio.replace(":", " / ");
     const rotation = Number(frame.dataset.checkpointImageRotation);
+    const hasCrop = frame.dataset.checkpointImageCropWidth !== undefined && frame.dataset.checkpointImageCropHeight !== undefined;
+    if (hasCrop) {
+      const cropLeftValue = Number(frame.dataset.checkpointImageCropX);
+      const cropTopValue = Number(frame.dataset.checkpointImageCropY);
+      const cropWidthValue = Number(frame.dataset.checkpointImageCropWidth);
+      const cropHeightValue = Number(frame.dataset.checkpointImageCropHeight);
+      const cropLeft = Number.isFinite(cropLeftValue) ? Math.max(0, Math.min(99, cropLeftValue)) : 0;
+      const cropTop = Number.isFinite(cropTopValue) ? Math.max(0, Math.min(99, cropTopValue)) : 0;
+      const cropWidth = Number.isFinite(cropWidthValue) ? Math.max(1, Math.min(100 - cropLeft, cropWidthValue)) : 100;
+      const cropHeight = Number.isFinite(cropHeightValue) ? Math.max(1, Math.min(100 - cropTop, cropHeightValue)) : 100;
+      const aspectValue = Number(frame.dataset.checkpointImageAspectRatio);
+      const aspect = Number.isFinite(aspectValue) && aspectValue > 0
+        ? Math.min(10, Math.max(.1, aspectValue))
+        : (image.naturalWidth || 4) / (image.naturalHeight || 3);
+      frame.style.aspectRatio = String(aspect * cropWidth / cropHeight);
+      visual.style.position = "absolute";
+      visual.style.inset = "0";
+      visual.style.width = "100%";
+      visual.style.height = "100%";
+      visual.style.overflow = "hidden";
+      visual.style.transform = "rotate(" + (Number.isFinite(rotation) ? Math.min(180, Math.max(-180, rotation)) : 0) + "deg)";
+      visual.style.transformOrigin = "center center";
+      image.style.cssText = [
+        "display:block",
+        "position:absolute",
+        "left:" + (-cropLeft / cropWidth * 100) + "%",
+        "top:" + (-cropTop / cropHeight * 100) + "%",
+        "width:" + (100 / cropWidth) + "%",
+        "height:" + (100 / cropHeight) + "%",
+        "max-width:none",
+        "object-fit:fill",
+        "transform:none"
+      ].join(";");
+      return;
+    }
+    frame.style.aspectRatio = ratio === "original" ? "" : ratio.replace(":", " / ");
     visual.style.transform = "rotate(" + (Number.isFinite(rotation) ? Math.min(180, Math.max(-180, rotation)) : 0) + "deg)";
     visual.style.transformOrigin = "center center";
     visual.style.position = ratio === "original" ? "relative" : "absolute";
