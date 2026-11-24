@@ -475,6 +475,19 @@ function safeMarkdownHref(value: string) {
   return "";
 }
 
+function noteImageControlsMarkup() {
+  return [
+    '<button type="button" class="markdown-note-image-menu-trigger" aria-label="이미지 메뉴" title="이미지 메뉴" draggable="false">⋯</button>',
+    '<span class="markdown-note-image-options" role="group" aria-label="이미지 메뉴">',
+    '<button type="button" class="markdown-note-image-crop" draggable="false">자르기</button>',
+    '<button type="button" class="markdown-note-image-delete" draggable="false">삭제</button>',
+    '</span>',
+    '<span class="markdown-note-image-rotation-stem" aria-hidden="true"></span>',
+    '<button type="button" class="markdown-note-image-rotate-handle" aria-label="이미지 회전" title="이미지 회전" draggable="false">↻</button>',
+    '<button type="button" class="markdown-note-image-resize-handle" aria-label="이미지 크기 조절" title="이미지 크기 조절" draggable="false">↘</button>'
+  ].join("");
+}
+
 function renderInlineMarkdown(value: string, imageUrls: Record<string, string> = {}) {
   const tokens: string[] = [];
   const stash = (html: string) => {
@@ -501,6 +514,7 @@ function renderInlineMarkdown(value: string, imageUrls: Record<string, string> =
       const path = decodeURIComponent(encodedPath);
       const options = new URLSearchParams(rawOptions);
       const clampNumber = (value: string | null, fallback: number, min: number, max: number) => {
+        if (value === null || value.trim() === "") return fallback;
         const parsed = Number(value);
         return Number.isFinite(parsed) ? Math.min(max, Math.max(min, parsed)) : fallback;
       };
@@ -510,6 +524,7 @@ function renderInlineMarkdown(value: string, imageUrls: Record<string, string> =
       const zoom = clampNumber(options.get("z"), 100, 100, 300);
       const cropX = clampNumber(options.get("x"), 50, 0, 100);
       const cropY = clampNumber(options.get("y"), 50, 0, 100);
+      const rotation = clampNumber(options.get("rot"), 0, -180, 180);
       const src = imageUrls[path];
       const srcAttribute = src ? ' src="' + escapeHtml(src) + '"' : "";
       const wrapperStyle = [
@@ -518,8 +533,8 @@ function renderInlineMarkdown(value: string, imageUrls: Record<string, string> =
         "box-sizing:border-box",
         "width:" + width + "%",
         "max-width:100%",
-        "margin:16px auto",
-        "overflow:hidden",
+        "margin:26px auto",
+        "overflow:visible",
         ratio === "original" ? "" : "aspect-ratio:" + ratio.replace(":", " / ")
       ].filter(Boolean).join(";");
       const imageStyle = ratio === "original"
@@ -529,11 +544,13 @@ function renderInlineMarkdown(value: string, imageUrls: Record<string, string> =
         '<span class="markdown-note-image-frame" data-checkpoint-image-path="' + escapeHtml(path) +
         '" data-checkpoint-image-width="' + width + '" data-checkpoint-image-ratio="' + ratio +
         '" data-checkpoint-image-zoom="' + zoom + '" data-checkpoint-image-x="' + cropX +
-        '" data-checkpoint-image-y="' + cropY + '" contenteditable="false" draggable="true" style="' +
-        escapeHtml(wrapperStyle) + '">' +
+        '" data-checkpoint-image-y="' + cropY + '" data-checkpoint-image-rotation="' + rotation +
+        '" contenteditable="false" draggable="true" style="' + escapeHtml(wrapperStyle) + '">' +
+        '<span class="markdown-note-image-content" style="transform:rotate(' + rotation + 'deg)">' +
         '<img class="markdown-note-image" data-checkpoint-image-path="' + escapeHtml(path) +
         '"' + srcAttribute + ' alt="' + escapeHtml(alt || "이미지") +
-        '" draggable="false" style="' + escapeHtml(imageStyle) + '"></span>'
+        '" draggable="false" style="' + escapeHtml(imageStyle) + '"></span>' +
+        noteImageControlsMarkup() + '</span>'
       );
     } catch {
       return alt || "이미지";
@@ -729,12 +746,15 @@ export function htmlToMarkdown(html: string) {
       const cropYValue = Number(element.dataset.checkpointImageY);
       const cropX = Number.isFinite(cropXValue) ? Math.min(100, Math.max(0, cropXValue)) : 50;
       const cropY = Number.isFinite(cropYValue) ? Math.min(100, Math.max(0, cropYValue)) : 50;
+      const rotationValue = Number(element.dataset.checkpointImageRotation);
+      const rotation = Number.isFinite(rotationValue) ? Math.min(180, Math.max(-180, rotationValue)) : 0;
       const options = new URLSearchParams();
       if (width !== 100) options.set("w", String(width));
       if (ratio !== "original") options.set("r", ratio);
       if (zoom !== 100) options.set("z", String(zoom));
       if (cropX !== 50) options.set("x", String(cropX));
       if (cropY !== 50) options.set("y", String(cropY));
+      if (rotation !== 0) options.set("rot", String(Math.round(rotation * 10) / 10));
       const query = options.toString();
       return "![" + alt + "](checkpoint-image:" + encodeURIComponent(path) + (query ? "?" + query : "") + ")";
     }
@@ -1744,6 +1764,7 @@ export default function MarkdownDiary({
       frame.dataset.checkpointImageZoom = "100";
       frame.dataset.checkpointImageX = "50";
       frame.dataset.checkpointImageY = "50";
+      frame.dataset.checkpointImageRotation = "0";
       frame.contentEditable = "false";
       frame.draggable = true;
 
@@ -1753,7 +1774,11 @@ export default function MarkdownDiary({
       image.src = data.signedUrl;
       image.alt = file.name.replace(/\.[^.]+$/, "").replace(/[\[\]()\r\n]/g, " ").trim() || "이미지";
       image.draggable = false;
-      frame.append(image);
+      const visual = document.createElement("span");
+      visual.className = "markdown-note-image-content";
+      visual.append(image);
+      frame.append(visual);
+      frame.insertAdjacentHTML("beforeend", noteImageControlsMarkup());
       applyNoteImageFrameStyles(frame);
       range.insertNode(frame);
       selectNoteImage(frame);
