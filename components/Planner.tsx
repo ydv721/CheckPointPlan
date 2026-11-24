@@ -307,7 +307,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
   }
 
   function addSticker(s:string) {
-    const item:CoverItem={id:uid(),kind:"sticker",value:s,x:50,y:50,size:42,rotation:0};
+    const item:CoverItem={id:uid(),kind:"sticker",value:s,x:50,y:50,size:60,rotation:0};
     setCover(c=>({...c,items:[...c.items,item]}));
     setSelectedItemId(item.id);
   }
@@ -383,10 +383,10 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
       return;
     }
     const distance=Math.hypot(e.clientX-active.centerX,e.clientY-active.centerY);
-    const ratio=clamp(distance/active.startDistance,.25,3.5);
+    const ratio=clamp(distance/active.startDistance,.25,5);
     setCover(c=>({...c,items:c.items.map(i=>{
       if(i.id!==active.id)return i;
-      const size=clamp(active.originSize*ratio,8,120);
+      const size=clamp(active.originSize*ratio,8,180);
       if(i.kind!=="text")return {...i,size};
       return {
         ...i,size,
