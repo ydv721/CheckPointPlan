@@ -480,11 +480,8 @@ function noteImageControlsMarkup() {
   return [
     '<button type="button" class="markdown-note-image-menu-trigger markdown-note-image-control" aria-label="이미지 메뉴" title="이미지 메뉴" draggable="false">⋯</button>',
     '<span class="markdown-note-image-options" role="group" aria-label="이미지 메뉴">',
-    '<button type="button" class="markdown-note-image-crop markdown-note-image-control" draggable="false">자르기</button>',
     '<button type="button" class="markdown-note-image-delete markdown-note-image-control" draggable="false">삭제</button>',
     '</span>',
-    '<span class="markdown-note-image-rotation-stem" aria-hidden="true"></span>',
-    '<button type="button" class="markdown-note-image-rotate-handle markdown-note-image-control" aria-label="이미지 회전" title="이미지 회전" draggable="false">↻</button>',
     '<button type="button" class="markdown-note-image-resize-handle markdown-note-image-control" aria-label="이미지 크기 조절" title="이미지 크기 조절" draggable="false">↘</button>'
   ].join("");
 }
@@ -531,7 +528,6 @@ function renderInlineMarkdown(value: string, imageUrls: Record<string, string> =
       const cropWidth = Math.min(100 - cropLeft, clampNumber(options.get("cw"), 100, 1, 100));
       const cropHeight = Math.min(100 - cropTop, clampNumber(options.get("ch"), 100, 1, 100));
       const cropAspect = clampNumber(options.get("ar"), 4 / 3, 0.1, 10);
-      const rotation = clampNumber(options.get("rot"), 0, -180, 180);
       const src = imageUrls[path];
       const srcAttribute = src ? ' src="' + escapeHtml(src) + '"' : "";
       const wrapperStyle = [
@@ -557,13 +553,13 @@ function renderInlineMarkdown(value: string, imageUrls: Record<string, string> =
           '" data-checkpoint-image-aspect-ratio="' + cropAspect + '"'
         : "";
       const visualStyle = hasCrop
-        ? "position:absolute;inset:0;width:100%;height:100%;overflow:hidden;transform:rotate(" + rotation + "deg);transform-origin:center center;"
-        : "transform:rotate(" + rotation + "deg);";
+        ? "position:absolute;inset:0;width:100%;height:100%;overflow:hidden;"
+        : "";
       return stash(
         '<span class="markdown-note-image-frame" data-checkpoint-image-path="' + escapeHtml(path) +
         '" data-checkpoint-image-width="' + width + '" data-checkpoint-image-ratio="' + ratio +
         '" data-checkpoint-image-zoom="' + zoom + '" data-checkpoint-image-x="' + cropX +
-        '" data-checkpoint-image-y="' + cropY + '" data-checkpoint-image-rotation="' + rotation + '"' + cropAttributes +
+        '" data-checkpoint-image-y="' + cropY + '"' + cropAttributes +
         ' contenteditable="false" draggable="true" style="' + escapeHtml(wrapperStyle) + '">' +
         '<span class="markdown-note-image-content" style="' + escapeHtml(visualStyle) + '">' +
         '<img class="markdown-note-image" data-checkpoint-image-path="' + escapeHtml(path) +
@@ -765,8 +761,6 @@ export function htmlToMarkdown(html: string) {
       const cropYValue = Number(element.dataset.checkpointImageY);
       const cropX = Number.isFinite(cropXValue) ? Math.min(100, Math.max(0, cropXValue)) : 50;
       const cropY = Number.isFinite(cropYValue) ? Math.min(100, Math.max(0, cropYValue)) : 50;
-      const rotationValue = Number(element.dataset.checkpointImageRotation);
-      const rotation = Number.isFinite(rotationValue) ? Math.min(180, Math.max(-180, rotationValue)) : 0;
       const cropWidthValue = Number(element.dataset.checkpointImageCropWidth);
       const cropHeightValue = Number(element.dataset.checkpointImageCropHeight);
       const hasCrop = Number.isFinite(cropWidthValue) && Number.isFinite(cropHeightValue) &&
@@ -792,7 +786,6 @@ export function htmlToMarkdown(html: string) {
         options.set("ch", String(cropHeight));
         options.set("ar", String(cropAspect));
       }
-      if (rotation !== 0) options.set("rot", String(Math.round(rotation * 10) / 10));
       const query = options.toString();
       return "![" + alt + "](checkpoint-image:" + encodeURIComponent(path) + (query ? "?" + query : "") + ")";
     }
@@ -971,12 +964,9 @@ export default function MarkdownDiary({
   const imageTransformRef = useRef<{
     frame: HTMLElement;
     pointerId: number;
-    kind: "rotate" | "resize";
     centerX: number;
     centerY: number;
-    startAngle: number;
     startDistance: number;
-    initialRotation: number;
     initialWidth: number;
   } | null>(null);
   const currentStrokeRef = useRef<DrawingStroke | null>(null);
@@ -1699,7 +1689,6 @@ export default function MarkdownDiary({
     frame.style.maxWidth = "100%";
     frame.style.margin = "26px auto";
     frame.style.overflow = "visible";
-    const rotation = Number(frame.dataset.checkpointImageRotation);
     const hasCrop = frame.dataset.checkpointImageCropWidth !== undefined && frame.dataset.checkpointImageCropHeight !== undefined;
     if (hasCrop) {
       const cropLeftValue = Number(frame.dataset.checkpointImageCropX);
@@ -1720,8 +1709,7 @@ export default function MarkdownDiary({
       visual.style.width = "100%";
       visual.style.height = "100%";
       visual.style.overflow = "hidden";
-      visual.style.transform = "rotate(" + (Number.isFinite(rotation) ? Math.min(180, Math.max(-180, rotation)) : 0) + "deg)";
-      visual.style.transformOrigin = "center center";
+      visual.style.transform = "none";
       image.style.cssText = [
         "display:block",
         "position:absolute",
@@ -1736,8 +1724,7 @@ export default function MarkdownDiary({
       return;
     }
     frame.style.aspectRatio = ratio === "original" ? "" : ratio.replace(":", " / ");
-    visual.style.transform = "rotate(" + (Number.isFinite(rotation) ? Math.min(180, Math.max(-180, rotation)) : 0) + "deg)";
-    visual.style.transformOrigin = "center center";
+    visual.style.transform = "none";
     visual.style.position = ratio === "original" ? "relative" : "absolute";
     visual.style.inset = ratio === "original" ? "" : "0";
     visual.style.height = ratio === "original" ? "" : "100%";
@@ -1780,9 +1767,7 @@ export default function MarkdownDiary({
   }
 
   function startNoteImageTransform(event: ReactPointerEvent<HTMLDivElement>) {
-    const handle = (event.target as HTMLElement).closest<HTMLButtonElement>(
-      ".markdown-note-image-rotate-handle, .markdown-note-image-resize-handle"
-    );
+    const handle = (event.target as HTMLElement).closest<HTMLButtonElement>(".markdown-note-image-resize-handle");
     const frame = handle?.closest<HTMLElement>(".markdown-note-image-frame");
     if (!handle || !frame || !leftEditorRef.current?.contains(frame) || drawingMode) return;
     event.preventDefault();
@@ -1792,16 +1777,12 @@ export default function MarkdownDiary({
     const rect = frame.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
-    const kind = handle.classList.contains("markdown-note-image-rotate-handle") ? "rotate" : "resize";
     imageTransformRef.current = {
       frame,
       pointerId: event.pointerId,
-      kind,
       centerX,
       centerY,
-      startAngle: Math.atan2(event.clientY - centerY, event.clientX - centerX),
       startDistance: Math.max(8, Math.hypot(event.clientX - centerX, event.clientY - centerY)),
-      initialRotation: Number(frame.dataset.checkpointImageRotation) || 0,
       initialWidth: Math.min(100, Math.max(20, Number(frame.dataset.checkpointImageWidth) || 80))
     };
     handle.setPointerCapture(event.pointerId);
@@ -1811,16 +1792,9 @@ export default function MarkdownDiary({
     const active = imageTransformRef.current;
     if (!active || active.pointerId !== event.pointerId) return;
     event.preventDefault();
-    if (active.kind === "rotate") {
-      const angle = Math.atan2(event.clientY - active.centerY, event.clientX - active.centerX);
-      const delta = (angle - active.startAngle) * 180 / Math.PI;
-      const rotation = ((active.initialRotation + delta + 180) % 360 + 360) % 360 - 180;
-      active.frame.dataset.checkpointImageRotation = String(Math.round(rotation * 10) / 10);
-    } else {
-      const distance = Math.max(8, Math.hypot(event.clientX - active.centerX, event.clientY - active.centerY));
-      const width = Math.max(20, Math.min(100, Math.round(active.initialWidth * distance / active.startDistance)));
-      active.frame.dataset.checkpointImageWidth = String(width);
-    }
+    const distance = Math.max(8, Math.hypot(event.clientX - active.centerX, event.clientY - active.centerY));
+    const width = Math.max(20, Math.min(100, Math.round(active.initialWidth * distance / active.startDistance)));
+    active.frame.dataset.checkpointImageWidth = String(width);
     applyNoteImageFrameStyles(active.frame);
   }
 
@@ -1830,12 +1804,7 @@ export default function MarkdownDiary({
     imageTransformRef.current = null;
     const editor = leftEditorRef.current;
     if (!editor || !editor.contains(active.frame)) return;
-    if (active.kind === "resize") {
-      updateSelectedImageWidth(Number(active.frame.dataset.checkpointImageWidth) || 80);
-    } else {
-      updateCurrentPage(htmlToMarkdown(editor.innerHTML));
-      syncDrawingCanvasMetrics();
-    }
+    updateSelectedImageWidth(Number(active.frame.dataset.checkpointImageWidth) || 80);
   }
 
   function startImageCropAdjust(event: ReactPointerEvent<HTMLDivElement>) {
@@ -2028,7 +1997,6 @@ export default function MarkdownDiary({
       frame.dataset.checkpointImageZoom = "100";
       frame.dataset.checkpointImageX = "50";
       frame.dataset.checkpointImageY = "50";
-      frame.dataset.checkpointImageRotation = "0";
       frame.contentEditable = "false";
       frame.draggable = true;
 
@@ -3139,13 +3107,13 @@ export default function MarkdownDiary({
                               selectNoteImage(imageFrame);
                               if (target.closest(".markdown-note-image-menu-trigger")) {
                                 imageFrame.classList.toggle("menu-open");
-                              } else if (target.closest(".markdown-note-image-crop")) {
-                                imageFrame.classList.remove("menu-open");
-                                openImageCropEditor();
                               } else if (target.closest(".markdown-note-image-delete")) {
                                 removeSelectedNoteImage();
+                              } else if (target.closest(".markdown-note-image-resize-handle")) {
+                                imageFrame.classList.remove("menu-open");
                               } else if (!target.closest(".markdown-note-image-options")) {
                                 imageFrame.classList.remove("menu-open");
+                                openImageCropEditor();
                               }
                               return;
                             }
@@ -3391,63 +3359,55 @@ export default function MarkdownDiary({
         <div
           className="markdown-image-crop-backdrop"
           role="presentation"
-          onMouseDown={event => {
-            if (event.target === event.currentTarget) setImageCropOpen(false);
+          onPointerDown={event => {
+            if (event.target === event.currentTarget) saveImageCrop();
           }}
         >
-          <section className="markdown-image-crop-modal" role="dialog" aria-modal="true" aria-labelledby="markdown-image-crop-title">
-            <div className="markdown-image-crop-header">
-              <h2 id="markdown-image-crop-title">이미지 자르기</h2>
-              <button type="button" aria-label="닫기" onClick={() => setImageCropOpen(false)}><X size={18}/></button>
-            </div>
+          <div
+            className="markdown-image-crop-stage"
+            role="dialog"
+            aria-label="이미지 자르기"
+            style={{
+              width: (() => {
+                const image = selectedImageElementRef.current?.querySelector<HTMLImageElement>("img.markdown-note-image");
+                const ratio = (image?.naturalWidth || image?.width || 4) / (image?.naturalHeight || image?.height || 3);
+                return "min(100%, " + Math.min(640, 360 * ratio) + "px)";
+              })(),
+              aspectRatio: (() => {
+                const image = selectedImageElementRef.current?.querySelector<HTMLImageElement>("img.markdown-note-image");
+                return String(image?.naturalWidth || image?.width || 4) + " / " + String(image?.naturalHeight || image?.height || 3);
+              })()
+            }}
+            onPointerDown={startImageCropAdjust}
+            onPointerMove={moveImageCropAdjust}
+            onPointerUp={finishImageCropAdjust}
+            onPointerCancel={finishImageCropAdjust}
+          >
+            <img
+              src={selectedImageElementRef.current?.querySelector<HTMLImageElement>("img.markdown-note-image")?.src ?? ""}
+              alt="자를 원본 이미지"
+              draggable={false}
+            />
             <div
-              className="markdown-image-crop-stage"
+              className="markdown-image-crop-selection"
               style={{
-                width: (() => {
-                  const image = selectedImageElementRef.current?.querySelector<HTMLImageElement>("img.markdown-note-image");
-                  const ratio = (image?.naturalWidth || image?.width || 4) / (image?.naturalHeight || image?.height || 3);
-                  return "min(100%, " + Math.min(640, 360 * ratio) + "px)";
-                })(),
-                aspectRatio: (() => {
-                  const image = selectedImageElementRef.current?.querySelector<HTMLImageElement>("img.markdown-note-image");
-                  return String(image?.naturalWidth || image?.width || 4) + " / " + String(image?.naturalHeight || image?.height || 3);
-                })()
+                left: imageCropRect.x + "%",
+                top: imageCropRect.y + "%",
+                width: imageCropRect.width + "%",
+                height: imageCropRect.height + "%"
               }}
-              onPointerDown={startImageCropAdjust}
-              onPointerMove={moveImageCropAdjust}
-              onPointerUp={finishImageCropAdjust}
-              onPointerCancel={finishImageCropAdjust}
             >
-              <img
-                src={selectedImageElementRef.current?.querySelector<HTMLImageElement>("img.markdown-note-image")?.src ?? ""}
-                alt="자를 원본 이미지"
-                draggable={false}
-              />
-              <div
-                className="markdown-image-crop-selection"
-                style={{
-                  left: imageCropRect.x + "%",
-                  top: imageCropRect.y + "%",
-                  width: imageCropRect.width + "%",
-                  height: imageCropRect.height + "%"
-                }}
-              >
-                {(["nw", "n", "ne", "e", "se", "s", "sw", "w"] as const).map(handle => (
-                  <button
-                    key={handle}
-                    type="button"
-                    className={"markdown-image-crop-handle is-" + handle}
-                    data-crop-handle={handle}
-                    aria-label="자르기 영역 조절"
-                  />
-                ))}
-              </div>
+              {(["nw", "n", "ne", "e", "se", "s", "sw", "w"] as const).map(handle => (
+                <button
+                  key={handle}
+                  type="button"
+                  className={"markdown-image-crop-handle is-" + handle}
+                  data-crop-handle={handle}
+                  aria-label="자르기 영역 조절"
+                />
+              ))}
             </div>
-            <div className="markdown-image-crop-actions">
-              <button type="button" className="outline-btn" onClick={() => setImageCropOpen(false)}>취소</button>
-              <button type="button" className="markdown-image-crop-apply" onClick={saveImageCrop}>적용</button>
-            </div>
-          </section>
+          </div>
         </div>
       ) : null}
       {pageDeleteOpen ? (
