@@ -337,8 +337,8 @@ function strokeToPolyline(stroke: SketchStroke): SketchPoint[] {
   const points = stroke.points;
   if (stroke.tool === "line") return points.length > 1 ? [points[0], points[points.length - 1]] : points;
   if (stroke.tool === "rect" && points.length > 1) {
-    const start = points[0];
-    const end = points[points.length - 1];
+    const start = { ...points[0], pressure: 1 };
+    const end = { ...points[points.length - 1], pressure: 1 };
     return [
       start,
       { x: end.x, y: start.y, pressure: 1 },
