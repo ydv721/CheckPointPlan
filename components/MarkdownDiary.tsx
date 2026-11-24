@@ -3359,13 +3359,14 @@ export default function MarkdownDiary({
         <div
           className="markdown-image-crop-backdrop"
           role="presentation"
-          onPointerDown={event => {
+          onClick={event => {
             if (event.target === event.currentTarget) saveImageCrop();
           }}
         >
           <div
             className="markdown-image-crop-stage"
             role="dialog"
+            aria-modal="true"
             aria-label="이미지 자르기"
             style={{
               width: (() => {
