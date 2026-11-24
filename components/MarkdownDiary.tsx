@@ -200,6 +200,7 @@ const PAGE_CONTENT_PREFIX = "\u001eCHECKPOINT_FREE_NOTE_V2\u001e";
 
 type DrawingTool = "pen" | "highlighter" | "sticky" | "eraser";
 type DrawingPoint = { x: number; y: number };
+type ImageCropRect = { x: number; y: number; width: number; height: number };
 type DrawingStroke = {
   id: string;
   tool: "pen" | "highlighter";
@@ -914,10 +915,17 @@ export default function MarkdownDiary({
   const [noteImageUrls, setNoteImageUrls] = useState<Record<string, string>>({});
   const [imageUploading, setImageUploading] = useState(false);
   const [imageCropOpen, setImageCropOpen] = useState(false);
-  const [imageCropRatio, setImageCropRatio] = useState<"original" | "1:1" | "4:3" | "16:9" | "3:4">("original");
-  const [imageCropZoom, setImageCropZoom] = useState(100);
-  const [imageCropX, setImageCropX] = useState(50);
-  const [imageCropY, setImageCropY] = useState(50);
+  const [imageCropRect, setImageCropRect] = useState<ImageCropRect>({ x: 0, y: 0, width: 100, height: 100 });
+  const imageCropDragRef = useRef<{
+    pointerId: number;
+    mode: "move" | "resize";
+    handle: string;
+    startX: number;
+    startY: number;
+    startRect: ImageCropRect;
+    stageWidth: number;
+    stageHeight: number;
+  } | null>(null);
   const leftEditorRef = useRef<HTMLDivElement>(null);
   const highlighterMenuRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
