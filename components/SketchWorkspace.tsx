@@ -60,7 +60,8 @@ type PointerMode =
   | { kind: "stroke"; layerId: string; strokeId: string }
   | { kind: "lasso" }
   | { kind: "move"; start: SketchPoint; origin: SketchDocument; keys: string[] }
-  | { kind: "scale"; start: SketchPoint; anchor: SketchPoint; bounds: SelectionBounds; handle: SelectionHandle; origin: SketchDocument; keys: string[] };
+  | { kind: "scale"; start: SketchPoint; anchor: SketchPoint; bounds: SelectionBounds; handle: SelectionHandle; origin: SketchDocument; keys: string[] }
+  | { kind: "rotate"; center: SketchPoint; startAngle: number; origin: SketchDocument; keys: string[] };
 
 type Props = {
   initialDocument?: SketchDocument | null;
@@ -280,6 +281,13 @@ function getSelectionBounds(doc: SketchDocument, keys: string[]): SelectionBound
 }
 
 const SELECTION_HANDLES: SelectionHandle[] = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
+
+function getSelectionRotationHandlePoint(bounds: SelectionBounds, offset: number): SketchPoint {
+  return {
+    x: (bounds.left + bounds.right) / 2,
+    y: bounds.top - offset
+  };
+}
 
 function getSelectionHandlePoint(bounds: SelectionBounds, handle: SelectionHandle): SketchPoint {
   const centerX = (bounds.left + bounds.right) / 2;
@@ -628,6 +636,22 @@ export default function SketchWorkspace({
       );
       context.setLineDash([]);
       const handleSize = 18 * 100 / zoom;
+      const rotationPoint = getSelectionRotationHandlePoint(selectionBounds, 34 * 100 / zoom);
+      const rotationRadius = 10 * 100 / zoom;
+      const centerX = (selectionBounds.left + selectionBounds.right) / 2;
+      context.beginPath();
+      context.moveTo(centerX, selectionBounds.top);
+      context.lineTo(rotationPoint.x, rotationPoint.y + rotationRadius);
+      context.stroke();
+      context.beginPath();
+      context.arc(rotationPoint.x, rotationPoint.y, rotationRadius, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+      context.fillStyle = "#6f83b0";
+      context.font = `${16 * 100 / zoom}px sans-serif`;
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillText("↻", rotationPoint.x, rotationPoint.y + 0.5 * 100 / zoom);
       for (const handle of SELECTION_HANDLES) {
         const position = getSelectionHandlePoint(selectionBounds, handle);
         context.fillRect(position.x - handleSize / 2, position.y - handleSize / 2, handleSize, handleSize);
@@ -635,7 +659,7 @@ export default function SketchWorkspace({
       }
       context.restore();
     }
-  }, [doc, lassoPoints, selectedKeys]);
+  }, [doc, lassoPoints, selectedKeys, zoom]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -723,7 +747,7 @@ export default function SketchWorkspace({
           : layer)
       };
       setWorkingDocument(next);
-    } else if (mode?.kind === "move" || mode?.kind === "scale") {
+    } else if (mode?.kind === "move" || mode?.kind === "scale" || mode?.kind === "rotate") {
       setWorkingDocument(mode.origin);
     } else if (mode?.kind === "lasso") {
       lassoPointsRef.current = [];
@@ -853,8 +877,19 @@ export default function SketchWorkspace({
 
     if (tool === "lasso") {
       const bounds = getSelectionBounds(current, selectedKeys);
+      const rotationPoint = bounds ? getSelectionRotationHandlePoint(bounds, 34 * 100 / zoom) : null;
+      const rotationTolerance = Math.max(5, 14 * 100 / zoom);
       const handle = bounds ? findSelectionHandle(point, bounds, Math.max(5, 20 * 100 / zoom)) : null;
-      if (bounds && handle) {
+      if (bounds && rotationPoint && Math.hypot(point.x - rotationPoint.x, point.y - rotationPoint.y) <= rotationTolerance) {
+        pointerModeRef.current = {
+          kind: "rotate",
+          center: { x: (bounds.left + bounds.right) / 2, y: (bounds.top + bounds.bottom) / 2 },
+          startAngle: Math.atan2(point.y - (bounds.top - 34 * 100 / zoom), point.x - rotationPoint.x),
+          origin: current,
+          keys: selectedKeys
+        };
+        event.currentTarget.style.cursor = "grabbing";
+      } else if (bounds && handle) {
         pointerModeRef.current = {
           kind: "scale",
           start: getSelectionHandlePoint(bounds, handle),
@@ -898,14 +933,19 @@ export default function SketchWorkspace({
     if (!mode) {
       const bounds = tool === "lasso" ? getSelectionBounds(docRef.current, selectedKeys) : null;
       const point = canvasPoint(event);
+      const rotationPoint = bounds ? getSelectionRotationHandlePoint(bounds, 34 * 100 / zoom) : null;
+      const isOverRotationHandle = !!(rotationPoint &&
+        Math.hypot(point.x - rotationPoint.x, point.y - rotationPoint.y) <= Math.max(5, 14 * 100 / zoom));
       const handle = bounds ? findSelectionHandle(point, bounds, Math.max(5, 20 * 100 / zoom)) : null;
       const cursorByHandle: Record<SelectionHandle, string> = {
         nw: "nwse-resize", n: "ns-resize", ne: "nesw-resize", e: "ew-resize",
         se: "nwse-resize", s: "ns-resize", sw: "nesw-resize", w: "ew-resize"
       };
-      event.currentTarget.style.cursor = handle
-        ? cursorByHandle[handle]
-        : bounds && isInsideBounds(point, bounds) ? "move" : "crosshair";
+      event.currentTarget.style.cursor = isOverRotationHandle
+        ? "grab"
+        : handle
+          ? cursorByHandle[handle]
+          : bounds && isInsideBounds(point, bounds) ? "move" : "crosshair";
       return;
     }
     const point = canvasPoint(event);
@@ -926,6 +966,39 @@ export default function SketchWorkspace({
           strokes: layer.strokes.map(stroke => selected.has(layer.id + ":" + stroke.id)
             ? { ...stroke, points: stroke.points.map(item => ({ ...item, x: clamp(item.x + dx, 0, mode.origin.width), y: clamp(item.y + dy, 0, mode.origin.height) })) }
             : stroke)
+        }))
+      };
+      setWorkingDocument(next);
+      return;
+    }
+    if (mode.kind === "rotate") {
+      event.currentTarget.style.cursor = "grabbing";
+      const selected = new Set(mode.keys);
+      const angle = Math.atan2(point.y - mode.center.y, point.x - mode.center.x) - mode.startAngle;
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      const next: SketchDocument = {
+        ...mode.origin,
+        layers: mode.origin.layers.map(layer => ({
+          ...layer,
+          strokes: layer.strokes.map(stroke => {
+            if (!selected.has(layer.id + ":" + stroke.id)) return stroke;
+            const isEllipseOrRect = stroke.tool === "rect" || stroke.tool === "ellipse";
+            const sourcePoints = isEllipseOrRect ? strokeToPolyline(stroke) : stroke.points;
+            return {
+              ...stroke,
+              tool: isEllipseOrRect ? "pen" : stroke.tool,
+              points: sourcePoints.map(item => {
+                const dx = item.x - mode.center.x;
+                const dy = item.y - mode.center.y;
+                return {
+                  ...item,
+                  x: clamp(mode.center.x + dx * cos - dy * sin, 0, mode.origin.width),
+                  y: clamp(mode.center.y + dx * sin + dy * cos, 0, mode.origin.height)
+                };
+              })
+            };
+          })
         }))
       };
       setWorkingDocument(next);
@@ -986,10 +1059,11 @@ export default function SketchWorkspace({
     setWorkingDocument(next);
   }
 
-  function handlePointerUp() {
+  function handlePointerUp(event?: ReactPointerEvent<HTMLCanvasElement>) {
     const mode = pointerModeRef.current;
     if (!mode) return;
     pointerModeRef.current = null;
+    if (mode.kind === "rotate" && event) event.currentTarget.style.cursor = "crosshair";
     if (mode.kind === "lasso") {
       const polygon = lassoPointsRef.current;
       const selected: string[] = [];
@@ -1017,7 +1091,7 @@ export default function SketchWorkspace({
       setLassoPoints([]);
       return;
     }
-    if (mode.kind === "stroke" || mode.kind === "move" || mode.kind === "scale") commitDocument(docRef.current);
+    if (mode.kind === "stroke" || mode.kind === "move" || mode.kind === "scale" || mode.kind === "rotate") commitDocument(docRef.current);
   }
 
   function addLayer() {
