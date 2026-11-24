@@ -3069,6 +3069,15 @@ export default function MarkdownDiary({
             <div
               className="markdown-image-crop-preview"
               style={{
+                width: (() => {
+                  const image = selectedImageElementRef.current?.querySelector<HTMLImageElement>("img.markdown-note-image");
+                  const ratio = imageCropRatio === "original"
+                    ? (image?.naturalWidth || 4) / (image?.naturalHeight || 3)
+                    : imageCropRatio === "1:1" ? 1
+                      : imageCropRatio === "4:3" ? 4 / 3
+                        : imageCropRatio === "16:9" ? 16 / 9 : 3 / 4;
+                  return "min(100%, " + Math.min(420, 320 * ratio) + "px)";
+                })(),
                 aspectRatio: imageCropRatio === "original"
                   ? (() => {
                       const image = selectedImageElementRef.current?.querySelector<HTMLImageElement>("img.markdown-note-image");
