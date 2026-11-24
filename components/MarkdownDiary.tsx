@@ -1835,34 +1835,100 @@ export default function MarkdownDiary({
     }
   }
 
+  function startImageCropAdjust(event: ReactPointerEvent<HTMLDivElement>) {
+    const target = event.target as HTMLElement;
+    const selection = target.closest<HTMLElement>(".markdown-image-crop-selection");
+    if (!selection) return;
+    event.preventDefault();
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const handle = target.closest<HTMLElement>("[data-crop-handle]");
+    imageCropDragRef.current = {
+      pointerId: event.pointerId,
+      mode: handle ? "resize" : "move",
+      handle: handle?.dataset.cropHandle ?? "",
+      startX: event.clientX,
+      startY: event.clientY,
+      startRect: { ...imageCropRect },
+      stageWidth: Math.max(1, bounds.width),
+      stageHeight: Math.max(1, bounds.height)
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function moveImageCropAdjust(event: ReactPointerEvent<HTMLDivElement>) {
+    const drag = imageCropDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    const deltaX = (event.clientX - drag.startX) / drag.stageWidth * 100;
+    const deltaY = (event.clientY - drag.startY) / drag.stageHeight * 100;
+    const start = drag.startRect;
+    const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+
+    if (drag.mode === "move") {
+      setImageCropRect({
+        ...start,
+        x: clamp(start.x + deltaX, 0, 100 - start.width),
+        y: clamp(start.y + deltaY, 0, 100 - start.height)
+      });
+      return;
+    }
+
+    let left = start.x;
+    let top = start.y;
+    let right = start.x + start.width;
+    let bottom = start.y + start.height;
+    if (drag.handle.includes("w")) left = clamp(start.x + deltaX, 0, right - 4);
+    if (drag.handle.includes("e")) right = clamp(start.x + start.width + deltaX, left + 4, 100);
+    if (drag.handle.includes("n")) top = clamp(start.y + deltaY, 0, bottom - 4);
+    if (drag.handle.includes("s")) bottom = clamp(start.y + start.height + deltaY, top + 4, 100);
+    setImageCropRect({ x: left, y: top, width: right - left, height: bottom - top });
+  }
+
+  function finishImageCropAdjust(event: ReactPointerEvent<HTMLDivElement>) {
+    if (imageCropDragRef.current?.pointerId !== event.pointerId) return;
+    imageCropDragRef.current = null;
+  }
+
   function openImageCropEditor() {
     const frame = selectedImageElementRef.current;
     const image = frame?.querySelector<HTMLImageElement>("img.markdown-note-image");
     if (!frame || !image) return;
-    const ratioValue = frame.dataset.checkpointImageRatio ?? "original";
-    const ratio = ["original", "1:1", "4:3", "16:9", "3:4"].includes(ratioValue)
-      ? ratioValue as "original" | "1:1" | "4:3" | "16:9" | "3:4"
-      : "original";
-    setImageCropRatio(ratio);
-    setImageCropZoom(Math.min(300, Math.max(100, Number(frame.dataset.checkpointImageZoom) || 100)));
-    const cropXValue = Number(frame.dataset.checkpointImageX);
-    const cropYValue = Number(frame.dataset.checkpointImageY);
-    setImageCropX(Number.isFinite(cropXValue) ? Math.min(100, Math.max(0, cropXValue)) : 50);
-    setImageCropY(Number.isFinite(cropYValue) ? Math.min(100, Math.max(0, cropYValue)) : 50);
+    const leftValue = Number(frame.dataset.checkpointImageCropX);
+    const topValue = Number(frame.dataset.checkpointImageCropY);
+    const widthValue = Number(frame.dataset.checkpointImageCropWidth);
+    const heightValue = Number(frame.dataset.checkpointImageCropHeight);
+    const left = Number.isFinite(leftValue) ? Math.max(0, Math.min(99, leftValue)) : 0;
+    const top = Number.isFinite(topValue) ? Math.max(0, Math.min(99, topValue)) : 0;
+    const width = Number.isFinite(widthValue) ? Math.max(4, Math.min(100 - left, widthValue)) : 100;
+    const height = Number.isFinite(heightValue) ? Math.max(4, Math.min(100 - top, heightValue)) : 100;
+    setImageCropRect({ x: left, y: top, width, height });
+    imageCropDragRef.current = null;
     setImageCropOpen(true);
   }
 
   function saveImageCrop() {
     const frame = selectedImageElementRef.current;
     const editor = leftEditorRef.current;
-    if (!frame || !editor) return;
-    frame.dataset.checkpointImageRatio = imageCropRatio;
-    frame.dataset.checkpointImageZoom = String(imageCropZoom);
-    frame.dataset.checkpointImageX = String(imageCropX);
-    frame.dataset.checkpointImageY = String(imageCropY);
+    const image = frame?.querySelector<HTMLImageElement>("img.markdown-note-image");
+    if (!frame || !editor || !image) return;
+    const left = Math.max(0, Math.min(99, imageCropRect.x));
+    const top = Math.max(0, Math.min(99, imageCropRect.y));
+    const width = Math.max(1, Math.min(100 - left, imageCropRect.width));
+    const height = Math.max(1, Math.min(100 - top, imageCropRect.height));
+    const aspect = (image.naturalWidth || image.width || 4) / (image.naturalHeight || image.height || 3);
+    frame.dataset.checkpointImageCropX = String(left);
+    frame.dataset.checkpointImageCropY = String(top);
+    frame.dataset.checkpointImageCropWidth = String(width);
+    frame.dataset.checkpointImageCropHeight = String(height);
+    frame.dataset.checkpointImageAspectRatio = String(aspect);
+    frame.dataset.checkpointImageRatio = "original";
+    frame.dataset.checkpointImageZoom = "100";
+    frame.dataset.checkpointImageX = "50";
+    frame.dataset.checkpointImageY = "50";
     applyNoteImageFrameStyles(frame);
     updateCurrentPage(htmlToMarkdown(editor.innerHTML));
     setImageCropOpen(false);
+    imageCropDragRef.current = null;
     syncDrawingCanvasMetrics();
   }
 
