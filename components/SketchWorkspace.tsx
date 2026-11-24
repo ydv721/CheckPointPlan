@@ -53,10 +53,14 @@ function getCanvasRatio(width: number, height: number): CanvasRatio {
     return optionDistance < closestDistance ? option : closest;
   }).value;
 }
+type SelectionBounds = { left: number; top: number; right: number; bottom: number };
+type SelectionHandle = "nw" | "n" | "ne" | "e" | "se" | "s" | "sw" | "w";
+
 type PointerMode =
   | { kind: "stroke"; layerId: string; strokeId: string }
   | { kind: "lasso" }
-  | { kind: "move"; start: SketchPoint; origin: SketchDocument; keys: string[] };
+  | { kind: "move"; start: SketchPoint; origin: SketchDocument; keys: string[] }
+  | { kind: "scale"; start: SketchPoint; anchor: SketchPoint; bounds: SelectionBounds; handle: SelectionHandle; origin: SketchDocument; keys: string[] };
 
 type Props = {
   initialDocument?: SketchDocument | null;
@@ -260,6 +264,171 @@ function strokeBounds(stroke: SketchStroke) {
   };
 }
 
+function getSelectionBounds(doc: SketchDocument, keys: string[]): SelectionBounds | null {
+  if (!keys.length) return null;
+  const selected = new Set(keys);
+  const bounds = doc.layers.flatMap(layer => layer.strokes
+    .filter(stroke => selected.has(layer.id + ":" + stroke.id))
+    .map(strokeBounds));
+  if (!bounds.length) return null;
+  return {
+    left: Math.min(...bounds.map(item => item.left)),
+    top: Math.min(...bounds.map(item => item.top)),
+    right: Math.max(...bounds.map(item => item.right)),
+    bottom: Math.max(...bounds.map(item => item.bottom))
+  };
+}
+
+const SELECTION_HANDLES: SelectionHandle[] = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
+
+function getSelectionHandlePoint(bounds: SelectionBounds, handle: SelectionHandle): SketchPoint {
+  const centerX = (bounds.left + bounds.right) / 2;
+  const centerY = (bounds.top + bounds.bottom) / 2;
+  const positions: Record<SelectionHandle, SketchPoint> = {
+    nw: { x: bounds.left, y: bounds.top },
+    n: { x: centerX, y: bounds.top },
+    ne: { x: bounds.right, y: bounds.top },
+    e: { x: bounds.right, y: centerY },
+    se: { x: bounds.right, y: bounds.bottom },
+    s: { x: centerX, y: bounds.bottom },
+    sw: { x: bounds.left, y: bounds.bottom },
+    w: { x: bounds.left, y: centerY }
+  };
+  return positions[handle];
+}
+
+function getSelectionAnchor(bounds: SelectionBounds, handle: SelectionHandle): SketchPoint {
+  const centerX = (bounds.left + bounds.right) / 2;
+  const centerY = (bounds.top + bounds.bottom) / 2;
+  const anchors: Record<SelectionHandle, SketchPoint> = {
+    nw: { x: bounds.right, y: bounds.bottom },
+    n: { x: centerX, y: bounds.bottom },
+    ne: { x: bounds.left, y: bounds.bottom },
+    e: { x: bounds.left, y: centerY },
+    se: { x: bounds.left, y: bounds.top },
+    s: { x: centerX, y: bounds.top },
+    sw: { x: bounds.right, y: bounds.top },
+    w: { x: bounds.right, y: centerY }
+  };
+  return anchors[handle];
+}
+
+function findSelectionHandle(point: SketchPoint, bounds: SelectionBounds, tolerance: number): SelectionHandle | null {
+  for (const handle of SELECTION_HANDLES) {
+    const position = getSelectionHandlePoint(bounds, handle);
+    if (Math.hypot(point.x - position.x, point.y - position.y) <= tolerance) return handle;
+  }
+  return null;
+}
+
+function isInsideBounds(point: SketchPoint, bounds: SelectionBounds) {
+  return point.x >= bounds.left && point.x <= bounds.right && point.y >= bounds.top && point.y <= bounds.bottom;
+}
+
+function interpolatePoint(start: SketchPoint, end: SketchPoint, t: number): SketchPoint {
+  return {
+    x: start.x + (end.x - start.x) * t,
+    y: start.y + (end.y - start.y) * t,
+    pressure: (start.pressure ?? 0.5) + ((end.pressure ?? 0.5) - (start.pressure ?? 0.5)) * t
+  };
+}
+
+function strokeToPolyline(stroke: SketchStroke): SketchPoint[] {
+  const points = stroke.points;
+  if (stroke.tool === "line") return points.length > 1 ? [points[0], points[points.length - 1]] : points;
+  if (stroke.tool === "rect" && points.length > 1) {
+    const start = points[0];
+    const end = points[points.length - 1];
+    return [
+      start,
+      { x: end.x, y: start.y, pressure: 0.5 },
+      end,
+      { x: start.x, y: end.y, pressure: 0.5 },
+      start
+    ];
+  }
+  if (stroke.tool === "ellipse" && points.length > 1) {
+    const start = points[0];
+    const end = points[points.length - 1];
+    const centerX = (start.x + end.x) / 2;
+    const centerY = (start.y + end.y) / 2;
+    const radiusX = Math.abs(end.x - start.x) / 2;
+    const radiusY = Math.abs(end.y - start.y) / 2;
+    return Array.from({ length: 97 }, (_, index) => {
+      const angle = (index / 96) * Math.PI * 2;
+      return { x: centerX + Math.cos(angle) * radiusX, y: centerY + Math.sin(angle) * radiusY, pressure: 0.5 };
+    });
+  }
+  return points;
+}
+
+function segmentPolygonIntersections(start: SketchPoint, end: SketchPoint, polygon: SketchPoint[]) {
+  const rx = end.x - start.x;
+  const ry = end.y - start.y;
+  const intersections: number[] = [];
+  for (let index = 0; index < polygon.length; index += 1) {
+    const a = polygon[index];
+    const b = polygon[(index + 1) % polygon.length];
+    const sx = b.x - a.x;
+    const sy = b.y - a.y;
+    const denominator = rx * sy - ry * sx;
+    if (Math.abs(denominator) < 1e-8) continue;
+    const qpx = a.x - start.x;
+    const qpy = a.y - start.y;
+    const t = (qpx * sy - qpy * sx) / denominator;
+    const u = (qpx * ry - qpy * rx) / denominator;
+    if (t > 1e-6 && t < 1 - 1e-6 && u >= -1e-6 && u <= 1 + 1e-6) intersections.push(t);
+  }
+  return intersections;
+}
+
+function splitStrokeByPolygon(stroke: SketchStroke, polygon: SketchPoint[]) {
+  const path = strokeToPolyline(stroke);
+  if (path.length === 1) {
+    return pointInPolygon(path[0], polygon)
+      ? { inside: [{ ...stroke, id: uid() }], outside: [] as SketchStroke[] }
+      : { inside: [] as SketchStroke[], outside: [stroke] };
+  }
+
+  const pieces: { inside: boolean; points: SketchPoint[] }[] = [];
+  for (let index = 1; index < path.length; index += 1) {
+    const start = path[index - 1];
+    const end = path[index];
+    const cuts = [0, ...segmentPolygonIntersections(start, end, polygon), 1]
+      .sort((a, b) => a - b)
+      .filter((value, cutIndex, values) => cutIndex === 0 || Math.abs(value - values[cutIndex - 1]) > 1e-6);
+
+    for (let cutIndex = 1; cutIndex < cuts.length; cutIndex += 1) {
+      const from = cuts[cutIndex - 1];
+      const to = cuts[cutIndex];
+      if (to - from < 1e-6) continue;
+      const midpoint = interpolatePoint(start, end, (from + to) / 2);
+      const inside = pointInPolygon(midpoint, polygon);
+      const first = interpolatePoint(start, end, from);
+      const last = interpolatePoint(start, end, to);
+      const previous = pieces[pieces.length - 1];
+      const previousPoint = previous?.points[previous.points.length - 1];
+      if (previous && previous.inside === inside && previousPoint &&
+        Math.hypot(previousPoint.x - first.x, previousPoint.y - first.y) < 1e-3) {
+        previous.points.push(last);
+      } else {
+        pieces.push({ inside, points: [first, last] });
+      }
+    }
+  }
+
+  const isShape = stroke.tool === "rect" || stroke.tool === "ellipse";
+  const makeStroke = (points: SketchPoint[]): SketchStroke => ({
+    ...stroke,
+    id: uid(),
+    tool: isShape ? "pen" : stroke.tool,
+    points
+  });
+  const inside = pieces.filter(piece => piece.inside && piece.points.length > 1).map(piece => makeStroke(piece.points));
+  const outside = pieces.filter(piece => !piece.inside && piece.points.length > 1).map(piece => makeStroke(piece.points));
+  return inside.length ? { inside, outside } : { inside: [] as SketchStroke[], outside: [stroke] };
+}
+
 function distanceToSegment(point: SketchPoint, start: SketchPoint, end: SketchPoint) {
   const dx = end.x - start.x;
   const dy = end.y - start.y;
@@ -401,17 +570,26 @@ export default function SketchWorkspace({
       context.stroke();
       context.restore();
     }
-    if (selectedKeys.length) {
-      const selected = new Set(selectedKeys);
+    const selectionBounds = getSelectionBounds(doc, selectedKeys);
+    if (selectionBounds) {
       context.save();
       context.strokeStyle = "#6f83b0";
+      context.fillStyle = "#ffffff";
       context.lineWidth = 2;
       context.setLineDash([7, 5]);
-      doc.layers.forEach(layer => layer.strokes.forEach(stroke => {
-        if (!selected.has(layer.id + ":" + stroke.id) || !stroke.points.length) return;
-        const bounds = strokeBounds(stroke);
-        context.strokeRect(bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top);
-      }));
+      context.strokeRect(
+        selectionBounds.left,
+        selectionBounds.top,
+        selectionBounds.right - selectionBounds.left,
+        selectionBounds.bottom - selectionBounds.top
+      );
+      context.setLineDash([]);
+      const handleSize = 12;
+      for (const handle of SELECTION_HANDLES) {
+        const position = getSelectionHandlePoint(selectionBounds, handle);
+        context.fillRect(position.x - handleSize / 2, position.y - handleSize / 2, handleSize, handleSize);
+        context.strokeRect(position.x - handleSize / 2, position.y - handleSize / 2, handleSize, handleSize);
+      }
       context.restore();
     }
   }, [doc, lassoPoints, selectedKeys]);
@@ -490,7 +668,7 @@ export default function SketchWorkspace({
           : layer)
       };
       setWorkingDocument(next);
-    } else if (mode?.kind === "move") {
+    } else if (mode?.kind === "move" || mode?.kind === "scale") {
       setWorkingDocument(mode.origin);
     } else if (mode?.kind === "lasso") {
       lassoPointsRef.current = [];
@@ -619,9 +797,22 @@ export default function SketchWorkspace({
     }
 
     if (tool === "lasso") {
-      if (selectedKeys.length && findHitSelected(point)) {
+      const bounds = getSelectionBounds(current, selectedKeys);
+      const handle = bounds ? findSelectionHandle(point, bounds, Math.max(5, 14 * 100 / zoom)) : null;
+      if (bounds && handle) {
+        pointerModeRef.current = {
+          kind: "scale",
+          start: getSelectionHandlePoint(bounds, handle),
+          anchor: getSelectionAnchor(bounds, handle),
+          bounds,
+          handle,
+          origin: current,
+          keys: selectedKeys
+        };
+      } else if (bounds && (isInsideBounds(point, bounds) || findHitSelected(point))) {
         pointerModeRef.current = { kind: "move", start: point, origin: current, keys: selectedKeys };
       } else {
+        setSelectedKeys([]);
         pointerModeRef.current = { kind: "lasso" };
         lassoPointsRef.current = [point];
         setLassoPoints([point]);
@@ -673,6 +864,46 @@ export default function SketchWorkspace({
       setWorkingDocument(next);
       return;
     }
+    if (mode.kind === "scale") {
+      const selected = new Set(mode.keys);
+      const startVectorX = mode.start.x - mode.anchor.x;
+      const startVectorY = mode.start.y - mode.anchor.y;
+      const isCorner = ["nw", "ne", "se", "sw"].includes(mode.handle);
+      let scaleX = Math.abs(startVectorX) > 1e-6 ? (point.x - mode.anchor.x) / startVectorX : 1;
+      let scaleY = Math.abs(startVectorY) > 1e-6 ? (point.y - mode.anchor.y) / startVectorY : 1;
+
+      if (isCorner && !event.shiftKey) {
+        const denominator = startVectorX * startVectorX + startVectorY * startVectorY;
+        const uniformScale = denominator > 1e-6
+          ? ((point.x - mode.anchor.x) * startVectorX + (point.y - mode.anchor.y) * startVectorY) / denominator
+          : 1;
+        scaleX = uniformScale;
+        scaleY = uniformScale;
+      }
+
+      scaleX = clamp(scaleX, 0.05, 10);
+      scaleY = clamp(scaleY, 0.05, 10);
+      const sizeScale = (scaleX + scaleY) / 2;
+      const next: SketchDocument = {
+        ...mode.origin,
+        layers: mode.origin.layers.map(layer => ({
+          ...layer,
+          strokes: layer.strokes.map(stroke => selected.has(layer.id + ":" + stroke.id)
+            ? {
+                ...stroke,
+                size: clamp(stroke.size * sizeScale, 1, 160),
+                points: stroke.points.map(item => ({
+                  ...item,
+                  x: clamp(mode.anchor.x + (item.x - mode.anchor.x) * scaleX, 0, mode.origin.width),
+                  y: clamp(mode.anchor.y + (item.y - mode.anchor.y) * scaleY, 0, mode.origin.height)
+                }))
+              }
+            : stroke)
+        }))
+      };
+      setWorkingDocument(next);
+      return;
+    }
     const current = docRef.current;
     const next: SketchDocument = {
       ...current,
@@ -696,16 +927,29 @@ export default function SketchWorkspace({
       const polygon = lassoPointsRef.current;
       const selected: string[] = [];
       if (polygon.length > 2) {
-        docRef.current.layers.forEach(layer => layer.strokes.forEach(stroke => {
-          if (stroke.points.some(point => pointInPolygon(point, polygon))) selected.push(layer.id + ":" + stroke.id);
+        const nextLayers = docRef.current.layers.map(layer => ({
+          ...layer,
+          strokes: layer.strokes.flatMap(stroke => {
+            const split = splitStrokeByPolygon(stroke, polygon);
+            if (!split.inside.length) return [stroke];
+            split.inside.forEach(piece => selected.push(layer.id + ":" + piece.id));
+            return [...split.outside, ...split.inside];
+          })
         }));
+        if (selected.length) {
+          commitDocument({ ...docRef.current, layers: nextLayers });
+          setSelectedKeys(selected);
+        } else {
+          setSelectedKeys([]);
+        }
+      } else {
+        setSelectedKeys([]);
       }
-      setSelectedKeys(selected);
       lassoPointsRef.current = [];
       setLassoPoints([]);
       return;
     }
-    if (mode.kind === "stroke" || mode.kind === "move") commitDocument(docRef.current);
+    if (mode.kind === "stroke" || mode.kind === "move" || mode.kind === "scale") commitDocument(docRef.current);
   }
 
   function addLayer() {
@@ -1006,7 +1250,7 @@ export default function SketchWorkspace({
               </>
             ) : tool === "lasso" ? (
               <div className="sketch-selection-actions">
-                <p>캔버스에서 원하는 부분을 둘러싸면 해당 선들이 선택됩니다. 선택한 선을 드래그해 이동할 수 있습니다.</p>
+                <p>올가미로 둘러싼 영역 안의 선 부분만 분리됩니다. 선택 영역 안쪽을 드래그해 이동하고, 테두리의 조절점을 드래그해 크기를 바꿀 수 있습니다. 모서리 조절은 비율을 유지하며, Shift를 누르면 가로·세로를 따로 조절합니다.</p>
                 <button type="button" disabled={!selectedKeys.length} onClick={duplicateSelection}>선택 복제</button>
                 <button type="button" disabled={!selectedKeys.length} onClick={deleteSelection}>선택 삭제</button>
                 <button type="button" disabled={!selectedKeys.length} onClick={() => setSelectedKeys([])}>선택 해제</button>
