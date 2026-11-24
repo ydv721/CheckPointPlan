@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import {
   ArrowLeft, Brush, Check, Download, Eraser, Eye, EyeOff, Layers3,
-  Lasso, LayoutGrid, MoveDown, MoveUp, Pipette, Plus,
+  Lasso, LayoutGrid, MoveDown, MoveUp, PaintBucket, Pipette, Plus,
   Redo2, RotateCw, Save, Trash2, Undo2, ZoomIn, ZoomOut
 } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
@@ -12,12 +12,14 @@ import type { ThemeName } from "@/lib/types";
 export type SketchPoint = { x: number; y: number; pressure?: number };
 export type SketchStroke = {
   id: string;
-  tool: "pen" | "eraser" | "line" | "rect" | "ellipse";
+  tool: "pen" | "eraser" | "line" | "rect" | "ellipse" | "fill";
   color: string;
   size: number;
   opacity: number;
   points: SketchPoint[];
+  fillRuns?: SketchFillRun[];
 };
+export type SketchFillRun = { x: number; y: number; width: number };
 export type SketchLayer = {
   id: string;
   name: string;
@@ -34,7 +36,7 @@ export type SketchDocument = {
   layers: SketchLayer[];
 };
 
-type SketchTool = "pen" | "eraser" | "lasso" | "line" | "rect" | "ellipse" | "eyedropper";
+type SketchTool = "pen" | "eraser" | "lasso" | "fill" | "line" | "rect" | "ellipse" | "eyedropper";
 const CANVAS_RATIOS = [
   { value: "1:1", width: 1200, height: 1200 },
   { value: "3:4", width: 900, height: 1200 },
@@ -109,21 +111,31 @@ export function normalizeSketchDocument(value: unknown): SketchDocument {
     const strokes = Array.isArray(item.strokes) ? item.strokes.slice(0, 5000).flatMap((stroke): SketchStroke[] => {
       if (!stroke || typeof stroke !== "object") return [];
       const candidate = stroke as Partial<SketchStroke>;
-      const tool = candidate.tool === "eraser" || candidate.tool === "line" || candidate.tool === "rect" || candidate.tool === "ellipse" ? candidate.tool : "pen";
+      const tool = candidate.tool === "eraser" || candidate.tool === "line" || candidate.tool === "rect" || candidate.tool === "ellipse" || candidate.tool === "fill" ? candidate.tool : "pen";
       const points = Array.isArray(candidate.points) ? candidate.points.slice(0, 20000).flatMap((point): SketchPoint[] => {
         if (!point || typeof point !== "object") return [];
         const p = point as Partial<SketchPoint>;
         if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) return [];
         return [{ x: clamp(Number(p.x), 0, width), y: clamp(Number(p.y), 0, height), pressure: Number.isFinite(p.pressure) ? clamp(Number(p.pressure), 0, 1) : 0.5 }];
       }) : [];
-      if (points.length === 0) return [];
+      const fillRuns = Array.isArray(candidate.fillRuns) ? candidate.fillRuns.slice(0, width * height).flatMap(run => {
+        if (!run || typeof run !== "object") return [];
+        const item = run as Partial<SketchFillRun>;
+        if (!Number.isFinite(item.x) || !Number.isFinite(item.y) || !Number.isFinite(item.width)) return [];
+        const x = Math.floor(clamp(Number(item.x), 0, width - 1));
+        const y = Math.floor(clamp(Number(item.y), 0, height - 1));
+        const runWidth = Math.floor(clamp(Number(item.width), 1, width - x));
+        return [{ x, y, width: runWidth }];
+      }) : [];
+      if (points.length === 0 || (tool === "fill" && fillRuns.length === 0)) return [];
       return [{
         id: typeof candidate.id === "string" ? candidate.id : uid(),
         tool,
         color: typeof candidate.color === "string" && /^#[0-9a-fA-F]{6}$/.test(candidate.color) ? candidate.color : "#202124",
         size: Number.isFinite(candidate.size) ? clamp(Number(candidate.size), 1, 160) : 6,
         opacity: Number.isFinite(candidate.opacity) ? clamp(Number(candidate.opacity), 1, 100) : 100,
-        points
+        points,
+        ...(tool === "fill" ? { fillRuns } : {})
       }];
     }) : [];
     return [{
@@ -154,6 +166,12 @@ function drawStroke(ctx: CanvasRenderingContext2D, stroke: SketchStroke) {
   ctx.fillStyle = stroke.color;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
+  if (stroke.tool === "fill" && stroke.fillRuns?.length) {
+    ctx.fillStyle = stroke.color;
+    stroke.fillRuns.forEach(run => ctx.fillRect(run.x, run.y, run.width, 1));
+    ctx.restore();
+    return;
+  }
   if (stroke.tool === "line" || stroke.tool === "rect" || stroke.tool === "ellipse") {
     const start = points[0];
     const end = points[points.length - 1];
@@ -255,6 +273,14 @@ function pointInPolygon(point: SketchPoint, polygon: SketchPoint[]) {
 }
 
 function strokeBounds(stroke: SketchStroke) {
+  if (stroke.tool === "fill" && stroke.fillRuns?.length) {
+    return stroke.fillRuns.reduce((bounds, run) => ({
+      left: Math.min(bounds.left, run.x),
+      right: Math.max(bounds.right, run.x + run.width),
+      top: Math.min(bounds.top, run.y),
+      bottom: Math.max(bounds.bottom, run.y + 1)
+    }), { left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity });
+  }
   const xs = stroke.points.map(point => point.x);
   const ys = stroke.points.map(point => point.y);
   return {
@@ -391,6 +417,15 @@ function segmentPolygonIntersections(start: SketchPoint, end: SketchPoint, polyg
 }
 
 function splitStrokeByPolygon(stroke: SketchStroke, polygon: SketchPoint[]) {
+  if (stroke.tool === "fill" && stroke.fillRuns?.length) {
+    const intersects = stroke.fillRuns.some(run =>
+      pointInPolygon({ x: run.x + run.width / 2, y: run.y + 0.5 }, polygon) ||
+      polygon.some(point => point.x >= run.x && point.x <= run.x + run.width && point.y >= run.y && point.y <= run.y + 1)
+    );
+    return intersects
+      ? { inside: [{ ...stroke, id: uid() }], outside: [] as SketchStroke[] }
+      : { inside: [] as SketchStroke[], outside: [stroke] };
+  }
   const path = strokeToPolyline(stroke);
   if (path.length === 1) {
     return pointInPolygon(path[0], polygon)
@@ -454,12 +489,110 @@ function distanceToSegment(point: SketchPoint, start: SketchPoint, end: SketchPo
 }
 
 function hitStroke(point: SketchPoint, stroke: SketchStroke) {
+  if (stroke.tool === "fill" && stroke.fillRuns?.length) {
+    const x = Math.floor(point.x);
+    const y = Math.floor(point.y);
+    return stroke.fillRuns.some(run => run.y === y && x >= run.x && x < run.x + run.width);
+  }
   const tolerance = Math.max(14, stroke.size + 8);
   for (let i = 0; i < stroke.points.length; i += 1) {
     if (i === 0 && Math.hypot(point.x - stroke.points[i].x, point.y - stroke.points[i].y) <= tolerance) return true;
     if (i > 0 && distanceToSegment(point, stroke.points[i - 1], stroke.points[i]) <= tolerance) return true;
   }
   return false;
+}
+
+function floodFillRuns(image: ImageData, startX: number, startY: number, tolerance = 16): SketchFillRun[] {
+  const { width, height, data } = image;
+  if (startX < 0 || startY < 0 || startX >= width || startY >= height) return [];
+  const startOffset = (startY * width + startX) * 4;
+  const targetR = data[startOffset];
+  const targetG = data[startOffset + 1];
+  const targetB = data[startOffset + 2];
+  const targetA = data[startOffset + 3];
+  const visited = new Uint8Array(width * height);
+  const matches = (x: number, y: number) => {
+    if (x < 0 || y < 0 || x >= width || y >= height) return false;
+    const pixel = y * width + x;
+    if (visited[pixel]) return false;
+    const offset = pixel * 4;
+    const alpha = data[offset + 3];
+    if (targetA <= 8) return alpha <= tolerance;
+    return Math.abs(data[offset] - targetR) <= tolerance &&
+      Math.abs(data[offset + 1] - targetG) <= tolerance &&
+      Math.abs(data[offset + 2] - targetB) <= tolerance &&
+      Math.abs(alpha - targetA) <= tolerance;
+  };
+
+  const stack = [startY * width + startX];
+  const runs: SketchFillRun[] = [];
+  while (stack.length) {
+    const seed = stack.pop()!;
+    const y = Math.floor(seed / width);
+    const seedX = seed % width;
+    if (!matches(seedX, y)) continue;
+
+    let left = seedX;
+    while (left > 0 && matches(left - 1, y)) left -= 1;
+    let right = seedX;
+    while (right + 1 < width && matches(right + 1, y)) right += 1;
+
+    for (let x = left; x <= right; x += 1) visited[y * width + x] = 1;
+    runs.push({ x: left, y, width: right - left + 1 });
+
+    for (const adjacentY of [y - 1, y + 1]) {
+      if (adjacentY < 0 || adjacentY >= height) continue;
+      let inSpan = false;
+      for (let x = left; x <= right; x += 1) {
+        const matchesAboveOrBelow = matches(x, adjacentY);
+        if (matchesAboveOrBelow && !inSpan) stack.push(adjacentY * width + x);
+        inSpan = matchesAboveOrBelow;
+      }
+    }
+  }
+  return runs;
+}
+
+function translateFillRuns(runs: SketchFillRun[], dx: number, dy: number, width: number, height: number): SketchFillRun[] {
+  const offsetX = Math.round(dx);
+  const offsetY = Math.round(dy);
+  return runs.flatMap(run => {
+    const y = run.y + offsetY;
+    if (y < 0 || y >= height) return [];
+    const left = Math.max(0, run.x + offsetX);
+    const right = Math.min(width, run.x + offsetX + run.width);
+    return right > left ? [{ x: left, y, width: right - left }] : [];
+  });
+}
+
+function transformFillRuns(
+  runs: SketchFillRun[],
+  width: number,
+  height: number,
+  transform: (point: SketchPoint) => SketchPoint
+): SketchFillRun[] {
+  const mask = new Uint8Array(width * height);
+  for (const run of runs) {
+    for (let offset = 0; offset < run.width; offset += 1) {
+      const transformed = transform({ x: run.x + offset + 0.5, y: run.y + 0.5 });
+      const x = Math.floor(transformed.x);
+      const y = Math.floor(transformed.y);
+      if (x >= 0 && y >= 0 && x < width && y < height) mask[y * width + x] = 1;
+    }
+  }
+
+  const nextRuns: SketchFillRun[] = [];
+  for (let y = 0; y < height; y += 1) {
+    let x = 0;
+    while (x < width) {
+      while (x < width && !mask[y * width + x]) x += 1;
+      if (x >= width) break;
+      const left = x;
+      while (x < width && mask[y * width + x]) x += 1;
+      nextRuns.push({ x: left, y, width: x - left });
+    }
+  }
+  return nextRuns;
 }
 
 function documentToBlob(doc: SketchDocument): Promise<Blob> {
@@ -474,6 +607,7 @@ const TOOL_OPTIONS: { id: SketchTool; label: string; icon: typeof Brush }[] = [
   { id: "pen", label: "펜", icon: Brush },
   { id: "eraser", label: "지우개", icon: Eraser },
   { id: "lasso", label: "올가미", icon: Lasso },
+  { id: "fill", label: "채우기", icon: PaintBucket },
   { id: "eyedropper", label: "스포이드", icon: Pipette }
 ];
 
@@ -728,6 +862,7 @@ export default function SketchWorkspace({
       } else if (key === "b") setTool("pen");
       else if (key === "e") setTool("eraser");
       else if (key === "l") setTool("lasso");
+      else if (key === "g") setTool("fill");
       else if (key === "[") setBrushSize(value => clamp(value - 1, 1, 80));
       else if (key === "]") setBrushSize(value => clamp(value + 1, 1, 80));
       else if (key === "escape") {
@@ -863,11 +998,50 @@ export default function SketchWorkspace({
     return false;
   }
 
+  function fillAtPoint(point: SketchPoint) {
+    const current = docRef.current;
+    const layer = current.layers.find(item => item.id === selectedLayerId);
+    if (!layer || !layer.visible) return;
+
+    const sampleCanvas = document.createElement("canvas");
+    sampleCanvas.width = current.width;
+    sampleCanvas.height = current.height;
+    const sampleContext = sampleCanvas.getContext("2d", { willReadFrequently: true });
+    if (!sampleContext) return;
+    drawDocument(sampleCanvas, current);
+    const image = sampleContext.getImageData(0, 0, current.width, current.height);
+    const fillRuns = floodFillRuns(image, Math.floor(point.x), Math.floor(point.y));
+    if (!fillRuns.length) return;
+
+    const fillStroke: SketchStroke = {
+      id: uid(),
+      tool: "fill",
+      color,
+      size: 1,
+      opacity: brushOpacity,
+      points: [point],
+      fillRuns
+    };
+    const next: SketchDocument = {
+      ...current,
+      layers: current.layers.map(item => item.id === layer.id
+        ? { ...item, strokes: [...item.strokes, fillStroke] }
+        : item)
+    };
+    commitDocument(next);
+    setSelectedKeys([]);
+  }
+
   function handlePointerDown(event: ReactPointerEvent<HTMLCanvasElement>) {
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
     const point = canvasPoint(event);
     const current = docRef.current;
+
+    if (tool === "fill") {
+      fillAtPoint(point);
+      return;
+    }
 
     if (tool === "eyedropper") {
       const context = canvasRef.current?.getContext("2d");
@@ -969,9 +1143,14 @@ export default function SketchWorkspace({
         ...mode.origin,
         layers: mode.origin.layers.map(layer => ({
           ...layer,
-          strokes: layer.strokes.map(stroke => selected.has(layer.id + ":" + stroke.id)
-            ? { ...stroke, points: stroke.points.map(item => ({ ...item, x: clamp(item.x + dx, 0, mode.origin.width), y: clamp(item.y + dy, 0, mode.origin.height) })) }
-            : stroke)
+          strokes: layer.strokes.map(stroke => {
+            if (!selected.has(layer.id + ":" + stroke.id)) return stroke;
+            return {
+              ...stroke,
+              points: stroke.points.map(item => ({ ...item, x: clamp(item.x + dx, 0, mode.origin.width), y: clamp(item.y + dy, 0, mode.origin.height) })),
+              ...(stroke.fillRuns ? { fillRuns: translateFillRuns(stroke.fillRuns, dx, dy, mode.origin.width, mode.origin.height) } : {})
+            };
+          })
         }))
       };
       setWorkingDocument(next);
@@ -991,18 +1170,20 @@ export default function SketchWorkspace({
             if (!selected.has(layer.id + ":" + stroke.id)) return stroke;
             const isEllipseOrRect = stroke.tool === "rect" || stroke.tool === "ellipse";
             const sourcePoints = isEllipseOrRect ? strokeToPolyline(stroke) : stroke.points;
+            const transformPoint = (item: SketchPoint): SketchPoint => {
+              const dx = item.x - mode.center.x;
+              const dy = item.y - mode.center.y;
+              return {
+                ...item,
+                x: clamp(mode.center.x + dx * cos - dy * sin, 0, mode.origin.width),
+                y: clamp(mode.center.y + dx * sin + dy * cos, 0, mode.origin.height)
+              };
+            };
             return {
               ...stroke,
               tool: isEllipseOrRect ? "pen" : stroke.tool,
-              points: sourcePoints.map(item => {
-                const dx = item.x - mode.center.x;
-                const dy = item.y - mode.center.y;
-                return {
-                  ...item,
-                  x: clamp(mode.center.x + dx * cos - dy * sin, 0, mode.origin.width),
-                  y: clamp(mode.center.y + dx * sin + dy * cos, 0, mode.origin.height)
-                };
-              })
+              points: sourcePoints.map(transformPoint),
+              ...(stroke.fillRuns ? { fillRuns: transformFillRuns(stroke.fillRuns, mode.origin.width, mode.origin.height, transformPoint) } : {})
             };
           })
         }))
@@ -1035,15 +1216,19 @@ export default function SketchWorkspace({
         layers: mode.origin.layers.map(layer => ({
           ...layer,
           strokes: layer.strokes.map(stroke => selected.has(layer.id + ":" + stroke.id)
-            ? {
-                ...stroke,
-                size: clamp(stroke.size * sizeScale, 1, 160),
-                points: stroke.points.map(item => ({
+            ? (() => {
+                const transformPoint = (item: SketchPoint): SketchPoint => ({
                   ...item,
                   x: clamp(mode.anchor.x + (item.x - mode.anchor.x) * scaleX, 0, mode.origin.width),
                   y: clamp(mode.anchor.y + (item.y - mode.anchor.y) * scaleY, 0, mode.origin.height)
-                }))
-              }
+                });
+                return {
+                  ...stroke,
+                  size: clamp(stroke.size * sizeScale, 1, 160),
+                  points: stroke.points.map(transformPoint),
+                  ...(stroke.fillRuns ? { fillRuns: transformFillRuns(stroke.fillRuns, mode.origin.width, mode.origin.height, transformPoint) } : {})
+                };
+              })()
             : stroke)
         }))
       };
@@ -1170,7 +1355,8 @@ export default function SketchWorkspace({
         const copies = layer.strokes.filter(stroke => selected.has(layer.id + ":" + stroke.id)).map(stroke => ({
           ...stroke,
           id: uid(),
-          points: stroke.points.map(point => ({ ...point, x: clamp(point.x + 24, 0, docRef.current.width), y: clamp(point.y + 24, 0, docRef.current.height) }))
+          points: stroke.points.map(point => ({ ...point, x: clamp(point.x + 24, 0, docRef.current.width), y: clamp(point.y + 24, 0, docRef.current.height) })),
+          ...(stroke.fillRuns ? { fillRuns: translateFillRuns(stroke.fillRuns, 24, 24, docRef.current.width, docRef.current.height) } : {})
         }));
         return { ...layer, strokes: layer.strokes.concat(copies) };
       })
@@ -1382,24 +1568,26 @@ export default function SketchWorkspace({
             </div>
           </div>
           <div className="sketch-bottom-hint">
-            <span>펜: B</span><span>지우개: E</span><span>올가미: L</span><span>실행 취소: Ctrl + Z</span><span>다시 실행: Ctrl + Y</span><span>이동: 마우스 오른쪽 버튼 드래그</span><span>확대·축소: 마우스 휠 · 두 손가락</span>
+            <span>펜: B</span><span>지우개: E</span><span>올가미: L</span><span>채우기: G</span><span>실행 취소: Ctrl + Z</span><span>다시 실행: Ctrl + Y</span><span>이동: 마우스 오른쪽 버튼 드래그</span><span>확대·축소: 마우스 휠 · 두 손가락</span>
             {selectedKeys.length ? <strong>{selectedKeys.length}개 선택됨 · Ctrl + D 복제 · Delete 삭제</strong> : null}
           </div>
         </section>
 
         <aside className="sketch-settings-panel">
           <section className="sketch-settings-section">
-            <div className="sketch-panel-heading"><strong>{tool === "eraser" ? "지우개 설정" : tool === "lasso" ? "올가미 선택" : "도구 설정"}</strong></div>
-            {tool === "pen" || tool === "line" || tool === "rect" || tool === "ellipse" ? (
+            <div className="sketch-panel-heading"><strong>{tool === "eraser" ? "지우개 설정" : tool === "lasso" ? "올가미 선택" : tool === "fill" ? "채우기 설정" : "도구 설정"}</strong></div>
+            {tool === "pen" || tool === "line" || tool === "rect" || tool === "ellipse" || tool === "fill" ? (
               <>
-                <label className="sketch-control-label">색상</label>
+                <label className="sketch-control-label">{tool === "fill" ? "채우기 색상" : "색상"}</label>
                 <div className="sketch-color-row">
-                  <input type="color" value={color} aria-label="펜 색상" onChange={event => setColor(event.target.value)}/>
+                  <input type="color" value={color} aria-label={tool === "fill" ? "채우기 색상" : "펜 색상"} onChange={event => setColor(event.target.value)}/>
                   <div className="sketch-color-swatches">{COLOR_SWATCHES.map(swatch => <button key={swatch} type="button" aria-label={"색상 " + swatch} title={swatch} style={{ background: swatch }} className={color.toLowerCase() === swatch ? "is-selected" : ""} onClick={() => setColor(swatch)}/>)}</div>
                 </div>
-                <label className="sketch-range-label"><span>펜 굵기</span><strong>{brushSize}px</strong></label>
-                <input className="sketch-range" type="range" min={1} max={80} value={brushSize} onChange={event => setBrushSize(Number(event.target.value))}/>
-                <label className="sketch-range-label"><span>투명도</span><strong>{brushOpacity}%</strong></label>
+                {tool !== "fill" ? <>
+                  <label className="sketch-range-label"><span>펜 굵기</span><strong>{brushSize}px</strong></label>
+                  <input className="sketch-range" type="range" min={1} max={80} value={brushSize} onChange={event => setBrushSize(Number(event.target.value))}/>
+                </> : null}
+                <label className="sketch-range-label"><span>{tool === "fill" ? "채우기 불투명도" : "투명도"}</span><strong>{brushOpacity}%</strong></label>
                 <input className="sketch-range" type="range" min={1} max={100} value={brushOpacity} onChange={event => setBrushOpacity(Number(event.target.value))}/>
               </>
             ) : tool === "eraser" ? (
