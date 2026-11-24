@@ -956,6 +956,7 @@ export default function MarkdownDiary({
     stageWidth: number;
     stageHeight: number;
   } | null>(null);
+  const imageCropIgnoreClickRef = useRef(false);
   const leftEditorRef = useRef<HTMLDivElement>(null);
   const highlighterMenuRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -1810,7 +1811,11 @@ export default function MarkdownDiary({
   function startImageCropAdjust(event: ReactPointerEvent<HTMLDivElement>) {
     const target = event.target as HTMLElement;
     const selection = target.closest<HTMLElement>(".markdown-image-crop-selection");
-    if (!selection) return;
+    if (!selection) {
+      imageCropIgnoreClickRef.current = false;
+      return;
+    }
+    imageCropIgnoreClickRef.current = true;
     event.preventDefault();
     const bounds = event.currentTarget.getBoundingClientRect();
     const handle = target.closest<HTMLElement>("[data-crop-handle]");
@@ -3380,6 +3385,10 @@ export default function MarkdownDiary({
               })()
             }}
             onClick={event => {
+              if (imageCropIgnoreClickRef.current) {
+                imageCropIgnoreClickRef.current = false;
+                return;
+              }
               if (!(event.target as HTMLElement).closest(".markdown-image-crop-selection")) saveImageCrop();
             }}
             onPointerDown={startImageCropAdjust}
