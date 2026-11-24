@@ -11364,7 +11364,6 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   width:100%;
   overflow:hidden;
   border-radius:7px;
-  transform-origin:center center;
   pointer-events:none;
 }
 .markdown-note-image-content > .markdown-note-image {
@@ -11457,17 +11456,6 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 .markdown-note-image-options > .markdown-note-image-delete {
   color:#bd6874;
 }
-.markdown-note-image-rotation-stem {
-  position:absolute;
-  z-index:5;
-  top:-14px;
-  left:50%;
-  display:none;
-  height:14px;
-  border-left:1px dashed var(--accent);
-  pointer-events:none;
-}
-.markdown-note-image-rotate-handle,
 .markdown-note-image-resize-handle {
   display:none;
   width:28px;
@@ -11475,20 +11463,10 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   font-size:20px;
   font-weight:600;
   line-height:1;
-}
-.markdown-note-image-rotate-handle {
-  top:-40px;
-  left:50%;
-  transform:translateX(-50%);
-  cursor:grab;
-}
-.markdown-note-image-resize-handle {
   right:-14px;
   bottom:-14px;
   cursor:nwse-resize;
 }
-.markdown-note-image-frame.is-selected > .markdown-note-image-rotation-stem,
-.markdown-note-image-frame.is-selected > .markdown-note-image-rotate-handle,
 .markdown-note-image-frame.is-selected > .markdown-note-image-resize-handle {
   display:flex;
 }
@@ -11504,17 +11482,8 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   page-break-inside:avoid;
 }
 .markdown-long-image-export-root .markdown-note-image-control,
-.markdown-long-image-export-root .markdown-note-image-options,
-.markdown-long-image-export-root .markdown-note-image-rotation-stem {
+.markdown-long-image-export-root .markdown-note-image-options {
   display:none !important;
-}
-.markdown-image-crop-controls output {
-  color:var(--accent);
-  font-variant-numeric:tabular-nums;
-}
-.markdown-image-crop-controls input {
-  width:100%;
-  accent-color:var(--accent);
 }
 .markdown-image-crop-backdrop {
   position:fixed;
@@ -11527,43 +11496,7 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   padding:18px;
   overflow-y:auto;
   background:rgba(15,20,30,.52);
-}
-.markdown-image-crop-modal {
-  display:flex;
-  flex-direction:column;
-  gap:16px;
-  box-sizing:border-box;
-  width:min(100%,760px);
-  max-height:calc(100vh - 36px);
-  padding:20px;
-  overflow-y:auto;
-  border:1px solid var(--line);
-  border-radius:14px;
-  background:var(--paper);
-  color:var(--ink);
-  box-shadow:0 18px 60px rgba(0,0,0,.22);
-}
-.markdown-image-crop-header {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-}
-.markdown-image-crop-header h2 {
-  margin:0;
-  font-size:18px;
-  font-weight:850;
-}
-.markdown-image-crop-header button {
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  width:32px;
-  height:32px;
-  border:1px solid var(--line);
-  border-radius:8px;
-  background:var(--soft);
-  color:var(--ink);
+  cursor:pointer;
 }
 .markdown-image-crop-stage {
   position:relative;
@@ -11631,30 +11564,4 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 .markdown-image-crop-handle.is-s { left:50%; top:100%; transform:translate(-50%,-100%); cursor:ns-resize; }
 .markdown-image-crop-handle.is-sw { left:0; top:100%; transform:translateY(-100%); cursor:nesw-resize; }
 .markdown-image-crop-handle.is-w { left:0; top:50%; transform:translateY(-50%); cursor:ew-resize; }
-.markdown-image-crop-actions {
-  display:flex;
-  justify-content:flex-end;
-  gap:8px;
-  padding-top:4px;
-}
-.markdown-image-crop-actions button {
-  min-width:78px;
-  min-height:36px;
-}
-@media(max-width:520px) {
-  .markdown-image-crop-modal {
-    padding:16px;
-  }
-}
-.markdown-image-crop-apply {
-  padding:10px 16px;
-  border:1px solid var(--accent);
-  border-radius:9px;
-  background:var(--accent);
-  color:#fff;
-  font-size:12px;
-  font-weight:850;
-}
-.markdown-image-crop-apply:hover {
-  filter:brightness(.96);
-}
+
