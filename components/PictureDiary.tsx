@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent, type PointerEvent as ReactPointerEvent } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   Brush, CalendarDays, Check, ChevronLeft, ChevronRight, ImagePlus, X
@@ -13,6 +13,22 @@ import {
 } from "@/components/MarkdownDiary";
 import type { ThemeName } from "@/lib/types";
 
+type DiaryDrawingState = SketchDocument & {
+  imagePositionX?: number;
+  imagePositionY?: number;
+};
+
+type DrawingPan = {
+  pointerId: number;
+  startX: number;
+  startY: number;
+  originX: number;
+  originY: number;
+  overflowX: number;
+  overflowY: number;
+  moved: boolean;
+};
+
 type DiaryEntry = {
   id?: string;
   notebook_id: string;
@@ -23,7 +39,7 @@ type DiaryEntry = {
   wake_time: string;
   sleep_time: string;
   drawing_path: string | null;
-  drawing_state: SketchDocument | null;
+  drawing_state: DiaryDrawingState | null;
   journal_content: string;
   memo: string;
   reflection: string;
@@ -47,6 +63,8 @@ type Props = {
   onSignOut: () => Promise<void>;
   onDeleteAccount: () => void;
 };
+
+const clampDrawingPosition = (value: number) => Math.min(100, Math.max(0, value));
 
 const WEATHER_OPTIONS = [
   { id: "sunny", label: "맑음", emoji: "☀️" },
@@ -287,6 +305,8 @@ export default function PictureDiary({
   const lastSavedRef = useRef("");
   const saveQueueRef = useRef<Promise<boolean>>(Promise.resolve(true));
   const editorRef = useRef<HTMLDivElement>(null);
+  const drawingPanRef = useRef<DrawingPan | null>(null);
+  const suppressDrawingClickRef = useRef(false);
 
   useEffect(() => {
     entryRef.current = entry;
@@ -318,7 +338,7 @@ export default function PictureDiary({
           wake_time: data.wake_time || "",
           sleep_time: data.sleep_time || "",
           drawing_path: data.drawing_path || null,
-          drawing_state: data.drawing_state && typeof data.drawing_state === "object" ? data.drawing_state as SketchDocument : null,
+          drawing_state: data.drawing_state && typeof data.drawing_state === "object" ? data.drawing_state as DiaryDrawingState : null,
           journal_content: data.journal_content || "",
           memo: data.memo || "",
           reflection: data.reflection || "",
@@ -431,6 +451,69 @@ export default function PictureDiary({
     });
   }
 
+  function startDrawingPan(event: ReactPointerEvent<HTMLImageElement>) {
+    suppressDrawingClickRef.current = false;
+    if (event.button !== 0) return;
+
+    const image = event.currentTarget;
+    if (!image.naturalWidth || !image.naturalHeight) return;
+    const rect = image.getBoundingClientRect();
+    const scale = Math.max(rect.width / image.naturalWidth, rect.height / image.naturalHeight);
+    const overflowX = Math.max(0, image.naturalWidth * scale - rect.width);
+    const overflowY = Math.max(0, image.naturalHeight * scale - rect.height);
+    if (overflowX < 1 && overflowY < 1) return;
+
+    const drawingState = entryRef.current.drawing_state;
+    drawingPanRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      originX: clampDrawingPosition(drawingState?.imagePositionX ?? 50),
+      originY: clampDrawingPosition(drawingState?.imagePositionY ?? 50),
+      overflowX,
+      overflowY,
+      moved: false
+    };
+    image.setPointerCapture(event.pointerId);
+    image.style.cursor = "grabbing";
+  }
+
+  function moveDrawingPan(event: ReactPointerEvent<HTMLImageElement>) {
+    const active = drawingPanRef.current;
+    if (!active || active.pointerId !== event.pointerId) return;
+
+    const deltaX = event.clientX - active.startX;
+    const deltaY = event.clientY - active.startY;
+    if (Math.hypot(deltaX, deltaY) > 3) active.moved = true;
+    if (!active.moved) return;
+
+    const imagePositionX = active.overflowX > 0
+      ? clampDrawingPosition(active.originX - deltaX / active.overflowX * 100)
+      : active.originX;
+    const imagePositionY = active.overflowY > 0
+      ? clampDrawingPosition(active.originY - deltaY / active.overflowY * 100)
+      : active.originY;
+    const drawingState = entryRef.current.drawing_state ?? createEmptySketchDocument();
+    updateEntry({
+      drawing_state: { ...drawingState, imagePositionX, imagePositionY }
+    });
+  }
+
+  function finishDrawingPan(event: ReactPointerEvent<HTMLImageElement>) {
+    const active = drawingPanRef.current;
+    if (!active || active.pointerId !== event.pointerId) return;
+    suppressDrawingClickRef.current = active.moved;
+    drawingPanRef.current = null;
+    event.currentTarget.style.cursor = "grab";
+  }
+
+  function cancelDrawingPan(event: ReactPointerEvent<HTMLImageElement>) {
+    if (drawingPanRef.current?.pointerId !== event.pointerId) return;
+    drawingPanRef.current = null;
+    suppressDrawingClickRef.current = false;
+    event.currentTarget.style.cursor = "grab";
+  }
+
   function updateJournalContent() {
     const editor = editorRef.current;
     if (editor) updateEntry({ journal_content: htmlToMarkdown(editor.innerHTML) });
@@ -488,7 +571,13 @@ export default function PictureDiary({
 
   async function saveSketch(blob: Blob, document: SketchDocument) {
     const file = new File([blob], "picture-diary-sketch.png", { type: "image/png" });
-    return await replaceDrawing(file, document);
+    const previousDrawingState = entryRef.current.drawing_state;
+    const positionedDocument: DiaryDrawingState = {
+      ...document,
+      imagePositionX: previousDrawingState?.imagePositionX ?? 50,
+      imagePositionY: previousDrawingState?.imagePositionY ?? 50
+    };
+    return await replaceDrawing(file, positionedDocument);
   }
 
   async function uploadImage(event: ChangeEvent<HTMLInputElement>) {
@@ -587,7 +676,24 @@ export default function PictureDiary({
                   disabled={loading || uploading} onClick={() => setChoiceOpen(true)} aria-label="그림 추가 또는 변경">
                   {drawingUrl ? (
                     <>
-                      <img src={drawingUrl} alt="오늘의 그림"/>
+                      <img
+                        src={drawingUrl}
+                        alt="오늘의 그림"
+                        draggable={false}
+                        style={{
+                          objectPosition: `${entry.drawing_state?.imagePositionX ?? 50}% ${entry.drawing_state?.imagePositionY ?? 50}%`
+                        }}
+                        onPointerDown={startDrawingPan}
+                        onPointerMove={moveDrawingPan}
+                        onPointerUp={finishDrawingPan}
+                        onPointerCancel={cancelDrawingPan}
+                        onClick={event => {
+                          if (!suppressDrawingClickRef.current) return;
+                          event.preventDefault();
+                          event.stopPropagation();
+                          suppressDrawingClickRef.current = false;
+                        }}
+                      />
                       <span className="picture-diary-drawing-edit"><Brush size={15}/> 그림 변경</span>
                     </>
                   ) : (
