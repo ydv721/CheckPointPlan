@@ -1787,6 +1787,21 @@ export default function MarkdownDiary({
 
   function startNoteImageTransform(event: ReactPointerEvent<HTMLDivElement>) {
     const target = event.target as HTMLElement;
+
+    // The ellipsis must remain actionable even after the crop overlay was previously opened.
+    const cropTrigger = target.closest<HTMLButtonElement>(".markdown-note-image-menu-trigger");
+    if (cropTrigger) {
+      const frame = cropTrigger.closest<HTMLElement>(".markdown-note-image-frame");
+      if (frame && leftEditorRef.current?.contains(frame)) {
+        event.preventDefault();
+        event.stopPropagation();
+        selectNoteImage(frame);
+        frame.classList.remove("menu-open");
+        openImageCropEditor();
+      }
+      return;
+    }
+
     if (target.closest(".markdown-image-crop-selection")) {
       startImageCropAdjust(event);
       return;
@@ -3225,9 +3240,8 @@ export default function MarkdownDiary({
                               event.preventDefault();
                               event.stopPropagation();
                               if (target.closest(".markdown-note-image-menu-trigger")) {
-                                selectNoteImage(imageFrame);
-                                imageFrame.classList.remove("menu-open");
-                                openImageCropEditor();
+                                // Crop mode is entered on pointerdown so the overlay cannot swallow this click.
+                                return;
                               } else if (target.closest(".markdown-note-image-delete")) {
                                 selectNoteImage(imageFrame);
                                 removeSelectedNoteImage();
