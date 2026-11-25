@@ -3104,7 +3104,22 @@ export default function MarkdownDiary({
                           onScroll={syncDrawingCanvasMetrics}
                           onPointerDown={startNoteImageTransform}
                           onPointerMove={moveNoteImageTransform}
-                          onPointerUp={event => finishNoteImageTransform(event.pointerId)}
+                          onPointerUp={event => {
+                            finishNoteImageTransform(event.pointerId);
+                            const editor = leftEditorRef.current;
+                            const target = event.target as HTMLElement;
+                            const frame = target.closest<HTMLElement>(".markdown-note-image-frame");
+                            if (
+                              !editor ||
+                              !frame ||
+                              !editor.contains(frame) ||
+                              frame.classList.contains("crop-open") ||
+                              target.closest(".markdown-note-image-menu-trigger, .markdown-note-image-options")
+                            ) return;
+                            selectNoteImage(frame);
+                            frame.classList.remove("menu-open");
+                            openImageCropEditor();
+                          }}
                           onPointerCancel={event => finishNoteImageTransform(event.pointerId)}
                           onDragStart={event => {
                             const target = event.target as HTMLElement;
