@@ -440,18 +440,18 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
               : item.kind==="photo"
                 ? <img src={photoUrls[item.value]||""} alt="표지 장식 사진" draggable={false}/>
                 : <span className="placed-sticker-content">{item.value}</span>}
-            <button type="button" className="cover-object-handle cover-object-delete" aria-label="요소 삭제"
+            <button type="button" className={"cover-object-handle cover-object-delete"+(item.kind==="photo"?" image-control-unified image-control-delete":"")} aria-label={item.kind==="photo"?"이미지 삭제":"요소 삭제"} title={item.kind==="photo"?"이미지 삭제":"요소 삭제"}
               onPointerDown={e=>{e.preventDefault();e.stopPropagation();}}
               onClick={e=>{e.stopPropagation();removeItem(item.id);}}>
-              <Trash2 size={14}/>
+              <Trash2 size={item.kind==="photo"?18:14}/>
             </button>
-            <button type="button" className="cover-object-handle cover-object-rotate" aria-label={item.kind==="photo"?"이미지 회전":"요소 회전"} title={item.kind==="photo"?"이미지 회전":"요소 회전"}
+            <button type="button" className={"cover-object-handle cover-object-rotate"+(item.kind==="photo"?" image-control-unified image-control-rotate":"")} aria-label={item.kind==="photo"?"이미지 회전":"요소 회전"} title={item.kind==="photo"?"이미지 회전":"요소 회전"}
               onPointerDown={e=>startRotate(e,item)}>
-              <RotateCw size={14}/>
+              <RotateCw size={item.kind==="photo"?18:14}/>
             </button>
-            <button type="button" className="cover-object-handle cover-object-resize" aria-label="요소 크기 조절"
+            <button type="button" className={"cover-object-handle cover-object-resize"+(item.kind==="photo"?" image-control-unified image-control-resize":"")} aria-label={item.kind==="photo"?"이미지 크기 조절":"요소 크기 조절"} title={item.kind==="photo"?"이미지 크기 조절":"요소 크기 조절"}
               onPointerDown={e=>startResize(e,item)}>
-              <Expand size={14}/>
+              <Expand size={item.kind==="photo"?18:14}/>
             </button>
           </div>;
         })}
