@@ -489,10 +489,10 @@ function noteImageCropMarkup() {
 
 function noteImageControlsMarkup() {
   return [
-    '<button type="button" class="markdown-note-image-menu-trigger markdown-note-image-control" aria-label="이미지 메뉴" title="이미지 메뉴" draggable="false">⋯</button>',
-    '<span class="markdown-note-image-options" role="group" aria-label="이미지 메뉴">',
-    '<button type="button" class="markdown-note-image-delete markdown-note-image-control" draggable="false">삭제</button>',
-    '</span>'
+    ...["nw", "n", "ne", "e", "se", "s", "sw", "w"].map(handle =>
+      '<button type="button" class="markdown-note-image-resize-handle markdown-note-image-control is-' + handle + '" data-image-resize-handle="' + handle + '" aria-label="이미지 크기 조절" title="크기 조절" draggable="false"></button>'
+    ),
+    '<button type="button" class="markdown-note-image-menu-trigger markdown-note-image-control" aria-label="이미지 자르기" title="자르기" draggable="false">⋯</button>'
   ].join("");
 }
 
@@ -1788,21 +1788,6 @@ export default function MarkdownDiary({
     const target = event.target as HTMLElement;
     if (target.closest(".markdown-image-crop-selection")) {
       startImageCropAdjust(event);
-      return;
-    }
-
-    const imageFrame = target.closest<HTMLElement>(".markdown-note-image-frame");
-    if (
-      imageFrame &&
-      leftEditorRef.current?.contains(imageFrame) &&
-      !imageFrame.classList.contains("crop-open") &&
-      !target.closest(".markdown-note-image-menu-trigger, .markdown-note-image-options")
-    ) {
-      event.preventDefault();
-      event.stopPropagation();
-      selectNoteImage(imageFrame);
-      imageFrame.classList.remove("menu-open");
-      openImageCropEditor();
       return;
     }
 
@@ -3238,16 +3223,17 @@ export default function MarkdownDiary({
                             if (editor && imageFrame && editor.contains(imageFrame)) {
                               event.preventDefault();
                               event.stopPropagation();
-                              selectNoteImage(imageFrame);
                               if (target.closest(".markdown-note-image-menu-trigger")) {
-                                imageFrame.classList.toggle("menu-open");
-                              } else if (target.closest(".markdown-note-image-delete")) {
-                                removeSelectedNoteImage();
-                              } else if (imageFrame.classList.contains("crop-open")) {
-                                return;
-                              } else if (!target.closest(".markdown-note-image-options")) {
+                                selectNoteImage(imageFrame);
                                 imageFrame.classList.remove("menu-open");
                                 openImageCropEditor();
+                              } else if (imageFrame.classList.contains("crop-open")) {
+                                return;
+                              } else if (target.closest(".markdown-note-image-resize-handle")) {
+                                selectNoteImage(imageFrame);
+                              } else {
+                                selectNoteImage(imageFrame);
+                                imageFrame.classList.remove("menu-open");
                               }
                               return;
                             }
