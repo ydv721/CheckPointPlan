@@ -11377,19 +11377,19 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   page-break-inside:avoid;
 }
 
-/* Free Note handwriting image stickers. */
+/* Free Note handwriting images. */
 .free-note-image-sticker {
   position:absolute;
   z-index:6;
   display:block;
   box-sizing:border-box;
   max-width:70%;
-  padding:4px;
+  padding:0;
   overflow:visible;
-  border:1px solid rgba(42,52,67,.14);
-  border-radius:8px;
-  background:#fff;
-  box-shadow:0 4px 12px rgba(34,38,48,.18);
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
   transform:translateX(-50%);
   pointer-events:none;
   user-select:none;
@@ -11408,7 +11408,8 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   max-width:100%;
   height:auto;
   max-height:280px;
-  border-radius:4px;
+  border:0;
+  border-radius:0;
   object-fit:contain;
   pointer-events:none;
   user-select:none;
@@ -11466,7 +11467,7 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 @media(max-width:620px) {
   .free-note-image-sticker {
     max-width:78%;
-    padding:3px;
+    padding:0;
   }
   .free-note-image-sticker > img {
     max-height:220px;
