@@ -11515,6 +11515,34 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   cursor:pointer;
   touch-action:none;
 }
+
+/* Resize handles appear only after selecting an image. */
+.markdown-note-image-resize-handle {
+  display:none;
+  width:11px;
+  height:11px;
+  min-width:11px;
+  min-height:11px;
+  border:1px solid var(--accent);
+  border-radius:2px;
+  background:#fff;
+  box-shadow:0 1px 4px rgba(24,35,55,.28);
+  cursor:nwse-resize;
+}
+.markdown-note-image-frame.is-selected:not(.crop-open) > .markdown-note-image-resize-handle {
+  display:flex;
+}
+.markdown-note-image-frame.crop-open > .markdown-note-image-resize-handle {
+  display:none !important;
+}
+.markdown-note-image-resize-handle.is-nw { left:-5px;top:-5px; }
+.markdown-note-image-resize-handle.is-n { left:50%;top:-5px;transform:translateX(-50%);cursor:ns-resize; }
+.markdown-note-image-resize-handle.is-ne { right:-5px;top:-5px; }
+.markdown-note-image-resize-handle.is-e { right:-5px;top:50%;transform:translateY(-50%);cursor:ew-resize; }
+.markdown-note-image-resize-handle.is-se { right:-5px;bottom:-5px; }
+.markdown-note-image-resize-handle.is-s { left:50%;bottom:-5px;transform:translateX(-50%);cursor:ns-resize; }
+.markdown-note-image-resize-handle.is-sw { left:-5px;bottom:-5px; }
+.markdown-note-image-resize-handle.is-w { left:-5px;top:50%;transform:translateY(-50%);cursor:ew-resize; }
 .markdown-note-image-menu-trigger {
   top:6px;
   right:6px;
