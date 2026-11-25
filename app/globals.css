@@ -3718,6 +3718,10 @@ html,body{width:100%;overflow-x:clip}
   outline-color: currentColor;
 }
 
+.placed-object.placed-photo.is-selected {
+  outline-color: transparent;
+}
+
 .placed-text {
   box-sizing: border-box;
   min-width: 12%;
