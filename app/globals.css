@@ -11429,6 +11429,63 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 .markdown-note-image-crop-overlay .is-s { left:50%;bottom:0;transform:translateX(-50%);cursor:ns-resize; }
 .markdown-note-image-crop-overlay .is-sw { left:0;bottom:0;cursor:nesw-resize; }
 .markdown-note-image-crop-overlay .is-w { left:0;top:50%;transform:translateY(-50%);cursor:ew-resize; }
+
+/* Photo-editor crop grips: dark edge bars and L-shaped corner brackets. */
+.markdown-note-image-crop-overlay .markdown-image-crop-handle {
+  box-sizing:border-box;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:#171717;
+  box-shadow:0 1px 3px rgba(0,0,0,.28);
+}
+.markdown-note-image-crop-overlay .is-n,
+.markdown-note-image-crop-overlay .is-s {
+  left:50%;
+  width:38px;
+  height:6px;
+  transform:translateX(-50%);
+}
+.markdown-note-image-crop-overlay .is-e,
+.markdown-note-image-crop-overlay .is-w {
+  top:50%;
+  width:6px;
+  height:38px;
+  transform:translateY(-50%);
+}
+.markdown-note-image-crop-overlay .is-n { top:0; }
+.markdown-note-image-crop-overlay .is-s { bottom:0; }
+.markdown-note-image-crop-overlay .is-e { right:0; }
+.markdown-note-image-crop-overlay .is-w { left:0; }
+.markdown-note-image-crop-overlay .is-nw,
+.markdown-note-image-crop-overlay .is-ne,
+.markdown-note-image-crop-overlay .is-se,
+.markdown-note-image-crop-overlay .is-sw {
+  width:24px;
+  height:24px;
+  background:transparent;
+  box-shadow:none;
+}
+.markdown-note-image-crop-overlay .is-nw {
+  left:0;top:0;
+  border-left:6px solid #171717;
+  border-top:6px solid #171717;
+}
+.markdown-note-image-crop-overlay .is-ne {
+  right:0;top:0;
+  border-right:6px solid #171717;
+  border-top:6px solid #171717;
+}
+.markdown-note-image-crop-overlay .is-se {
+  right:0;bottom:0;
+  border-right:6px solid #171717;
+  border-bottom:6px solid #171717;
+}
+.markdown-note-image-crop-overlay .is-sw {
+  left:0;bottom:0;
+  border-left:6px solid #171717;
+  border-bottom:6px solid #171717;
+}
 .markdown-note-image-content > .markdown-note-image {
   display:block;
   width:100%;
