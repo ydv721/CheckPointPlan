@@ -230,6 +230,9 @@ type ImageStickerInteraction = {
   startX: number;
   startY: number;
   startWidth: number;
+  currentX: number;
+  currentY: number;
+  currentWidth: number;
 };
 type FreeNotePageAnnotations = {
   height: number;
@@ -292,10 +295,10 @@ async function createImageStickerDataUrl(file: File): Promise<string> {
       if (!compressed) {
         compressed = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/png"));
       }
-      if (compressed && compressed.size <= 450 * 1024) break;
+      if (compressed && compressed.size <= 300 * 1024) break;
     }
 
-    if (!compressed || compressed.size > 450 * 1024) {
+    if (!compressed || compressed.size > 300 * 1024) {
       throw new Error("이미지 용량이 큽니다. 더 작은 이미지를 선택해 주세요.");
     }
 
@@ -370,7 +373,7 @@ function normalizePageAnnotations(value: unknown, pageCount: number): FreeNotePa
           if (
             typeof sticker.x !== "number" || !Number.isFinite(sticker.x) ||
             typeof sticker.y !== "number" || !Number.isFinite(sticker.y) ||
-            typeof sticker.src !== "string" || sticker.src.length > 620000 ||
+            typeof sticker.src !== "string" || sticker.src.length > 420000 ||
             !/^data:image\/(?:webp|png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(sticker.src)
           ) return [];
           const width = typeof sticker.width === "number" && Number.isFinite(sticker.width)
@@ -1037,6 +1040,7 @@ export default function MarkdownDiary({
   const [drawingScrollTop, setDrawingScrollTop] = useState(0);
   const [noteImageUrls, setNoteImageUrls] = useState<Record<string, string>>({});
   const [imageStickerProcessing, setImageStickerProcessing] = useState(false);
+  const [imageStickerPreview, setImageStickerPreview] = useState<{ id: string; x: number; y: number; width: number } | null>(null);
   const leftEditorRef = useRef<HTMLDivElement>(null);
   const highlighterMenuRef = useRef<HTMLDivElement>(null);
   const imageStickerInputRef = useRef<HTMLInputElement>(null);
@@ -1096,6 +1100,7 @@ export default function MarkdownDiary({
 
   useEffect(() => {
     imageStickerInteractionRef.current = null;
+    setImageStickerPreview(null);
   }, [activePageIndex, activeNoteId]);
 
   useEffect(() => {
@@ -1488,6 +1493,7 @@ export default function MarkdownDiary({
   }
 
   function deleteImageSticker(stickerId: string) {
+    setImageStickerPreview(current => current?.id === stickerId ? null : current);
     if (!activeNote) return;
     const latestNote = currentNoteRef.current?.id === activeNote.id ? currentNoteRef.current : activeNote;
     const latestPages = decodeNotePages(latestNote.content);
@@ -1508,6 +1514,11 @@ export default function MarkdownDiary({
     const latestContent = currentNoteRef.current?.id === targetNoteId ? currentNoteRef.current.content : activeNote.content;
     const latestAnnotations = decodeNoteAnnotations(latestContent);
     const current = latestAnnotations[targetPageIndex] ?? createEmptyPageAnnotations(drawingCanvasHeight);
+    const totalImageStickers = latestAnnotations.reduce((total, page) => total + page.images.length, 0);
+    if (totalImageStickers >= 12) {
+      setError("한 다이어리에는 이미지 스티커를 최대 12개까지 추가할 수 있습니다.");
+      return;
+    }
     if (current.images.length >= 8) {
       setError("한 페이지에는 이미지 스티커를 최대 8개까지 추가할 수 있습니다.");
       return;
@@ -1522,6 +1533,11 @@ export default function MarkdownDiary({
       const latestPages = decodeNotePages(latestNote.content);
       const nextAnnotations = decodeNoteAnnotations(latestNote.content);
       const page = nextAnnotations[targetPageIndex] ?? createEmptyPageAnnotations(drawingCanvasHeight);
+      const currentTotal = nextAnnotations.reduce((total, item) => total + item.images.length, 0);
+      if (currentTotal >= 12) {
+        setError("한 다이어리에는 이미지 스티커를 최대 12개까지 추가할 수 있습니다.");
+        return;
+      }
       if (page.images.length >= 8) {
         setError("한 페이지에는 이미지 스티커를 최대 8개까지 추가할 수 있습니다.");
         return;
@@ -1569,8 +1585,12 @@ export default function MarkdownDiary({
       startClientY: event.clientY,
       startX: sticker.x,
       startY: sticker.y,
-      startWidth: sticker.width
+      startWidth: sticker.width,
+      currentX: sticker.x,
+      currentY: sticker.y,
+      currentWidth: sticker.width
     };
+    setImageStickerPreview({ id: sticker.id, x: sticker.x, y: sticker.y, width: sticker.width });
     event.currentTarget.setPointerCapture(event.pointerId);
   }
 
@@ -1583,21 +1603,29 @@ export default function MarkdownDiary({
     const deltaX = (event.clientX - interaction.startClientX) / rect.width * 1000;
     const deltaY = event.clientY - interaction.startClientY;
     if (interaction.mode === "move") {
-      updateImageSticker(interaction.id, {
-        x: Math.max(0, Math.min(1000, interaction.startX + deltaX)),
-        y: Math.max(0, interaction.startY + deltaY)
-      });
+      interaction.currentX = Math.max(0, Math.min(1000, interaction.startX + deltaX));
+      interaction.currentY = Math.max(0, interaction.startY + deltaY);
     } else {
-      updateImageSticker(interaction.id, {
-        width: Math.max(10, Math.min(70, interaction.startWidth + deltaX / 10))
-      });
+      interaction.currentWidth = Math.max(10, Math.min(70, interaction.startWidth + deltaX / 10));
     }
+    setImageStickerPreview({
+      id: interaction.id,
+      x: interaction.currentX,
+      y: interaction.currentY,
+      width: interaction.currentWidth
+    });
   }
 
   function finishImageStickerInteraction(event: ReactPointerEvent<HTMLElement>) {
-    if (imageStickerInteractionRef.current?.pointerId === event.pointerId) {
-      imageStickerInteractionRef.current = null;
-    }
+    const interaction = imageStickerInteractionRef.current;
+    if (!interaction || interaction.pointerId !== event.pointerId) return;
+    imageStickerInteractionRef.current = null;
+    updateImageSticker(interaction.id, {
+      x: interaction.currentX,
+      y: interaction.currentY,
+      width: interaction.currentWidth
+    });
+    setImageStickerPreview(null);
   }
 
   function eraseDrawingAt(point: DrawingPoint) {
@@ -2744,7 +2772,11 @@ export default function MarkdownDiary({
                                 type="button"
                                 className="free-note-drawing-tool-button"
                                 disabled={imageStickerProcessing || loading || !activeNote}
-                                onClick={() => imageStickerInputRef.current?.click()}
+                                onClick={() => {
+                                  if (!imageStickerInputRef.current) return;
+                                  imageStickerInputRef.current.value = "";
+                                  imageStickerInputRef.current.click();
+                                }}
                                 title="이미지 스티커 추가"
                                 aria-label="이미지 스티커 추가"
                               >
@@ -3057,7 +3089,11 @@ export default function MarkdownDiary({
                             <div
                               key={sticker.id}
                               className="free-note-image-sticker"
-                              style={{ left: (sticker.x / 10) + "%", top: sticker.y + "px", width: sticker.width + "%" }}
+                              style={{
+                                left: ((imageStickerPreview?.id === sticker.id ? imageStickerPreview.x : sticker.x) / 10) + "%",
+                                top: (imageStickerPreview?.id === sticker.id ? imageStickerPreview.y : sticker.y) + "px",
+                                width: (imageStickerPreview?.id === sticker.id ? imageStickerPreview.width : sticker.width) + "%"
+                              }}
                               onPointerDown={event => beginImageStickerInteraction(event, sticker, "move")}
                               onPointerMove={moveImageStickerInteraction}
                               onPointerUp={finishImageStickerInteraction}
