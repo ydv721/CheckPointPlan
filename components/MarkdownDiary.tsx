@@ -2314,7 +2314,7 @@ export default function MarkdownDiary({
           wrapper.style.left = (sticker.x / 10) + "%";
           wrapper.style.top = sticker.y + "px";
           wrapper.style.width = sticker.width + "%";
-          wrapper.style.rotate = sticker.rotation === 0 ? "none" : sticker.rotation + "deg";
+          wrapper.style.setProperty("rotate", sticker.rotation === 0 ? "none" : sticker.rotation + "deg");
           wrapper.style.pointerEvents = "none";
 
           const image = document.createElement("img");
