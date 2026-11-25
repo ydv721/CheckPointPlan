@@ -11384,7 +11384,11 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 }
 .markdown-note-image-frame.crop-open .markdown-note-image-crop-overlay {
   display:block;
+  z-index:5;
   pointer-events:auto;
+}
+.markdown-note-image-frame > .markdown-note-image-control {
+  z-index:10;
 }
 .markdown-note-image-crop-overlay .markdown-image-crop-selection {
   position:absolute;
