@@ -11443,7 +11443,7 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   font-weight:700;
 }
 .markdown-note-image-frame.crop-open > .markdown-note-image-inline-tools {
-  display:none;
+  display:flex;
 }
 .markdown-note-image-crop-overlay {
   position:absolute;
