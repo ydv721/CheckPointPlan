@@ -385,7 +385,7 @@ function normalizePageAnnotations(value: unknown, pageCount: number): FreeNotePa
             y: Math.max(0, Math.min(100000, sticker.y)),
             width,
             src: sticker.src,
-            alt: typeof sticker.alt === "string" ? sticker.alt.slice(0, 120) : "이미지 스티커"
+            alt: typeof sticker.alt === "string" ? sticker.alt.slice(0, 120) : "이미지"
           }];
         })
       : [];
@@ -1516,11 +1516,11 @@ export default function MarkdownDiary({
     const current = latestAnnotations[targetPageIndex] ?? createEmptyPageAnnotations(drawingCanvasHeight);
     const totalImageStickers = latestAnnotations.reduce((total, page) => total + page.images.length, 0);
     if (totalImageStickers >= 12) {
-      setError("한 다이어리에는 이미지 스티커를 최대 12개까지 추가할 수 있습니다.");
+      setError("한 다이어리에는 이미지를 최대 12개까지 추가할 수 있습니다.");
       return;
     }
     if (current.images.length >= 8) {
-      setError("한 페이지에는 이미지 스티커를 최대 8개까지 추가할 수 있습니다.");
+      setError("한 페이지에는 이미지를 최대 8개까지 추가할 수 있습니다.");
       return;
     }
 
@@ -1535,11 +1535,11 @@ export default function MarkdownDiary({
       const page = nextAnnotations[targetPageIndex] ?? createEmptyPageAnnotations(drawingCanvasHeight);
       const currentTotal = nextAnnotations.reduce((total, item) => total + item.images.length, 0);
       if (currentTotal >= 12) {
-        setError("한 다이어리에는 이미지 스티커를 최대 12개까지 추가할 수 있습니다.");
+        setError("한 다이어리에는 이미지를 최대 12개까지 추가할 수 있습니다.");
         return;
       }
       if (page.images.length >= 8) {
-        setError("한 페이지에는 이미지 스티커를 최대 8개까지 추가할 수 있습니다.");
+        setError("한 페이지에는 이미지를 최대 8개까지 추가할 수 있습니다.");
         return;
       }
 
@@ -1556,13 +1556,13 @@ export default function MarkdownDiary({
           y,
           width: 28,
           src,
-          alt: file.name.replace(/\.[^.]+$/, "").replace(/[\[\]()\r\n]/g, " ").trim().slice(0, 120) || "이미지 스티커"
+          alt: file.name.replace(/\.[^.]+$/, "").replace(/[\[\]()\r\n]/g, " ").trim().slice(0, 120) || "이미지"
         }]
       };
       updateActiveNote({ content: encodeNotePages(latestPages, normalizePageAnnotations(nextAnnotations, latestPages.length)) });
     } catch (imageError) {
       const message = imageError instanceof Error ? imageError.message : "이미지를 읽지 못했습니다.";
-      setError("이미지 스티커를 추가하지 못했습니다: " + message);
+      setError("이미지를 추가하지 못했습니다: " + message);
     } finally {
       setImageStickerProcessing(false);
       if (imageStickerInputRef.current) imageStickerInputRef.current.value = "";
@@ -2777,10 +2777,10 @@ export default function MarkdownDiary({
                                   imageStickerInputRef.current.value = "";
                                   imageStickerInputRef.current.click();
                                 }}
-                                title="이미지 스티커 추가"
-                                aria-label="이미지 스티커 추가"
+                                title="이미지 추가"
+                                aria-label="이미지 추가"
                               >
-                                <ImagePlus size={16}/><span>{imageStickerProcessing ? "추가 중" : "이미지 스티커"}</span>
+                                <ImagePlus size={16}/><span>{imageStickerProcessing ? "추가 중" : "이미지"}</span>
                               </button>
                               <input
                                 ref={imageStickerInputRef}
@@ -3105,8 +3105,8 @@ export default function MarkdownDiary({
                                   <button
                                     type="button"
                                     className="free-note-image-sticker-control free-note-image-sticker-delete"
-                                    aria-label="이미지 스티커 삭제"
-                                    title="이미지 스티커 삭제"
+                                    aria-label="이미지 삭제"
+                                    title="이미지 삭제"
                                     onPointerDown={event => event.stopPropagation()}
                                     onClick={() => deleteImageSticker(sticker.id)}
                                   >
@@ -3115,7 +3115,7 @@ export default function MarkdownDiary({
                                   <button
                                     type="button"
                                     className="free-note-image-sticker-control free-note-image-sticker-resize"
-                                    aria-label="이미지 스티커 크기 조절"
+                                    aria-label="이미지 크기 조절"
                                     title="크기 조절"
                                     onPointerDown={event => beginImageStickerInteraction(event, sticker, "resize")}
                                   />
