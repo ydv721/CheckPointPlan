@@ -3141,7 +3141,7 @@ export default function MarkdownDiary({
                                     onPointerDown={event => event.stopPropagation()}
                                     onClick={() => deleteImageSticker(sticker.id)}
                                   >
-                                    <Trash2 size={18}/>
+                                    <Trash2 size={20}/>
                                   </button>
                                   <button
                                     type="button"
@@ -3150,7 +3150,7 @@ export default function MarkdownDiary({
                                     title="회전"
                                     onPointerDown={event => beginImageStickerInteraction(event, sticker, "rotate")}
                                   >
-                                    <RotateCw size={18}/>
+                                    <RotateCw size={20}/>
                                   </button>
                                   <button
                                     type="button"
@@ -3159,7 +3159,7 @@ export default function MarkdownDiary({
                                     title="크기 조절"
                                     onPointerDown={event => beginImageStickerInteraction(event, sticker, "resize")}
                                   >
-                                    <Expand size={18}/>
+                                    <Expand size={20}/>
                                   </button>
                                 </>
                               ) : null}
