@@ -2516,7 +2516,6 @@ export default function MarkdownDiary({
             </span>
             <small>YOUR PACE, YOUR CHECKPOINT</small>
           </button>
-          <div className="picture-diary-header-title" title={notebookTitle}><span>{notebookTitle}</span></div>
         </div>
       </header>
 
@@ -2527,6 +2526,7 @@ export default function MarkdownDiary({
           <div className="workspace-canvas markdown-diary-canvas">
             <PlannerSpread className="book-frame markdown-diary-single-page">
               <section className="paper-page markdown-note-page markdown-single-note-page" aria-label="자유 노트">
+                <div className="diary-paper-notebook-title">{notebookTitle}</div>
                 <div className="paper-section key-section markdown-free-note-section">
                   <div className="section-heading markdown-note-heading">
                     <span>FREE NOTE</span>

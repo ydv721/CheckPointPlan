@@ -620,7 +620,6 @@ export default function PictureDiary({
           <button type="button" className="brand" onClick={() => { void leaveDiary(onBack); }}>
             <span className="brand-lockup"><span className="brand-icon"><Check size={18} strokeWidth={3}/></span><span>CHECKPOINT</span></span>
           </button>
-          <div className="picture-diary-header-title" title={notebookTitle}><span>{notebookTitle}</span></div>
         </div>
       </header>
 
@@ -632,6 +631,7 @@ export default function PictureDiary({
               <div className="book-spine" aria-hidden="true">{Array.from({ length: 13 }, (_, index) => <span key={index}/>)}</div>
 
               <section className="paper-page left-page diary-left-page" aria-label="오늘의 그림">
+                <div className="diary-paper-notebook-title">{notebookTitle}</div>
                 <div className="diary-date-heading">
                   <div className="diary-date-navigation">
                     <button type="button" className="month-nav-button" aria-label="이전 날짜" title="이전 날짜" disabled={loading || uploading} onClick={() => void navigateDate(shiftDate(date, -1))}><ChevronLeft size={16}/></button>
