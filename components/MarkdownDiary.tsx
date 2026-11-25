@@ -3223,13 +3223,9 @@ export default function MarkdownDiary({
                                 imageFrame.classList.toggle("menu-open");
                               } else if (target.closest(".markdown-note-image-delete")) {
                                 removeSelectedNoteImage();
-                              } else if (target.closest(".markdown-note-image-resize-handle")) {
-                                imageFrame.classList.remove("menu-open");
-                              } else if (target.closest(".markdown-image-crop-selection")) {
-                                return;
                               } else if (imageFrame.classList.contains("crop-open")) {
-                                if (!target.closest(".markdown-image-crop-selection")) void saveImageCrop();
-                              } else if (!target.closest(".markdown-note-image-options, .markdown-note-image-inline-tools")) {
+                                return;
+                              } else if (!target.closest(".markdown-note-image-options")) {
                                 imageFrame.classList.remove("menu-open");
                                 openImageCropEditor();
                               }
