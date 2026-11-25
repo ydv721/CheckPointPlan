@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type TouchEvent as ReactTouchEvent, type WheelEvent as ReactWheelEvent } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, ChevronLeft, ChevronRight, Code2, Eraser, FileDown, Heading1, Highlighter, ImagePlus, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, StickyNote as StickyNoteIcon, Strikethrough, Type, Underline, Check, RotateCw, Trash2, X } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, ChevronLeft, ChevronRight, Code2, Eraser, FileDown, Heading1, Highlighter, ImagePlus, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, StickyNote as StickyNoteIcon, Strikethrough, Type, Underline, Check, Expand, RotateCw, Trash2, X } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import PlannerSpread from "@/components/PlannerSpread";
 import type { ThemeName } from "@/lib/types";
@@ -3135,30 +3135,32 @@ export default function MarkdownDiary({
                                 <>
                                   <button
                                     type="button"
-                                    className="free-note-image-sticker-control free-note-image-sticker-delete"
+                                    className="free-note-image-sticker-control free-note-image-sticker-delete image-control-unified image-control-delete"
                                     aria-label="이미지 삭제"
                                     title="이미지 삭제"
                                     onPointerDown={event => event.stopPropagation()}
                                     onClick={() => deleteImageSticker(sticker.id)}
                                   >
-                                    <X size={13}/>
+                                    <Trash2 size={18}/>
                                   </button>
                                   <button
                                     type="button"
-                                    className="free-note-image-sticker-control free-note-image-sticker-rotate"
+                                    className="free-note-image-sticker-control free-note-image-sticker-rotate image-control-unified image-control-rotate"
                                     aria-label="이미지 회전"
                                     title="회전"
                                     onPointerDown={event => beginImageStickerInteraction(event, sticker, "rotate")}
                                   >
-                                    <RotateCw size={13}/>
+                                    <RotateCw size={18}/>
                                   </button>
                                   <button
                                     type="button"
-                                    className="free-note-image-sticker-control free-note-image-sticker-resize"
+                                    className="free-note-image-sticker-control free-note-image-sticker-resize image-control-unified image-control-resize"
                                     aria-label="이미지 크기 조절"
                                     title="크기 조절"
                                     onPointerDown={event => beginImageStickerInteraction(event, sticker, "resize")}
-                                  />
+                                  >
+                                    <Expand size={18}/>
+                                  </button>
                                 </>
                               ) : null}
                             </div>
