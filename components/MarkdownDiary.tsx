@@ -490,10 +490,10 @@ function noteImageCropMarkup() {
 function noteImageControlsMarkup() {
   return [
     ...["nw", "n", "ne", "e", "se", "s", "sw", "w"].map(handle =>
-      '<button type="button" class="markdown-note-image-resize-handle markdown-note-image-control is-' + handle + '" data-image-resize-handle="' + handle + '" aria-label="이미지 크기 조절" title="크기 조절" draggable="false"></button>'
+      '<button type="button" contenteditable="false" class="markdown-note-image-resize-handle markdown-note-image-control is-' + handle + '" data-image-resize-handle="' + handle + '" aria-label="이미지 크기 조절" title="크기 조절" draggable="false"></button>'
     ),
-    '<button type="button" class="markdown-note-image-delete markdown-note-image-control" aria-label="이미지 삭제" title="삭제" draggable="false">×</button>',
-    '<button type="button" class="markdown-note-image-menu-trigger markdown-note-image-control" aria-label="이미지 자르기" title="자르기" draggable="false">⋯</button>'
+    '<button type="button" contenteditable="false" class="markdown-note-image-delete markdown-note-image-control" aria-label="이미지 삭제" title="삭제" draggable="false">×</button>',
+    '<button type="button" contenteditable="false" class="markdown-note-image-menu-trigger markdown-note-image-control" aria-label="이미지 자르기" title="자르기" draggable="false">⋯</button>'
   ].join("");
 }
 
@@ -755,6 +755,14 @@ export function htmlToMarkdown(html: string) {
 
     const element = node as HTMLElement;
     const tag = element.tagName;
+
+    // Image editing controls are UI only; never serialize them as note content.
+    if (
+      element.classList.contains("markdown-note-image-control") ||
+      element.classList.contains("markdown-image-crop-handle") ||
+      element.classList.contains("markdown-note-image-crop-overlay")
+    ) return "";
+
     const children = Array.from(element.childNodes).map(inline).join("");
 
     if (tag === "BR") return "\n";
