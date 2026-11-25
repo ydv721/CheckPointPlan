@@ -570,7 +570,7 @@ function renderInlineMarkdown(value: string, imageUrls: Record<string, string> =
         '<span class="markdown-note-image-content" style="' + escapeHtml(visualStyle) + '">' +
         '<img class="markdown-note-image" crossorigin="anonymous" data-checkpoint-image-path="' + escapeHtml(path) +
         '"' + srcAttribute + ' alt="' + escapeHtml(alt || "이미지") +
-        '" draggable="false" style="' + escapeHtml(imageStyle) + '">' '</span>' +
+        '" draggable="false" style="' + escapeHtml(imageStyle) + '">' + '</span>' +
         noteImageControlsMarkup() + '</span>'
       );
     } catch {
