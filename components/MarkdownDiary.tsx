@@ -2027,9 +2027,8 @@ export default function MarkdownDiary({
       setImageCropOpen(false);
       imageCropDragRef.current = null;
       syncDrawingCanvasMetrics();
-      if (previousPath && previousPath !== path) {
-        void client.storage.from("checkpoint-covers").remove([previousPath]);
-      }
+      // Keep the source object: the same stored image may still be referenced by another page or note.
+      // Avoid deleting it here; safe garbage collection requires checking every persisted reference first.
     } catch (error) {
       setError(error instanceof Error ? error.message : "이미지를 편집하지 못했습니다.");
     } finally {
