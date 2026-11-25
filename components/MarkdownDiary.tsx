@@ -752,9 +752,7 @@ export function htmlToMarkdown(html: string) {
     const tag = element.tagName;
 
     // Image editing controls are UI only; never serialize them as note content.
-    if (
-      element.classList.contains("markdown-note-image-control") ||
-    ) return "";
+    if (element.classList.contains("markdown-note-image-control")) return "";
 
     const children = Array.from(element.childNodes).map(inline).join("");
 
