@@ -1785,11 +1785,28 @@ export default function MarkdownDiary({
   }
 
   function startNoteImageTransform(event: ReactPointerEvent<HTMLDivElement>) {
-    if ((event.target as HTMLElement).closest(".markdown-image-crop-selection")) {
+    const target = event.target as HTMLElement;
+    if (target.closest(".markdown-image-crop-selection")) {
       startImageCropAdjust(event);
       return;
     }
-    const handle = (event.target as HTMLElement).closest<HTMLButtonElement>(".markdown-note-image-resize-handle");
+
+    const imageFrame = target.closest<HTMLElement>(".markdown-note-image-frame");
+    if (
+      imageFrame &&
+      leftEditorRef.current?.contains(imageFrame) &&
+      !imageFrame.classList.contains("crop-open") &&
+      !target.closest(".markdown-note-image-menu-trigger, .markdown-note-image-options")
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      selectNoteImage(imageFrame);
+      imageFrame.classList.remove("menu-open");
+      openImageCropEditor();
+      return;
+    }
+
+    const handle = target.closest<HTMLButtonElement>(".markdown-note-image-resize-handle");
     const frame = handle?.closest<HTMLElement>(".markdown-note-image-frame");
     if (!handle || !frame || !leftEditorRef.current?.contains(frame) || drawingMode) return;
     event.preventDefault();
@@ -3106,22 +3123,7 @@ export default function MarkdownDiary({
                           onScroll={syncDrawingCanvasMetrics}
                           onPointerDown={startNoteImageTransform}
                           onPointerMove={moveNoteImageTransform}
-                          onPointerUp={event => {
-                            finishNoteImageTransform(event.pointerId);
-                            const editor = leftEditorRef.current;
-                            const target = event.target as HTMLElement;
-                            const frame = target.closest<HTMLElement>(".markdown-note-image-frame");
-                            if (
-                              !editor ||
-                              !frame ||
-                              !editor.contains(frame) ||
-                              frame.classList.contains("crop-open") ||
-                              target.closest(".markdown-note-image-menu-trigger, .markdown-note-image-options")
-                            ) return;
-                            selectNoteImage(frame);
-                            frame.classList.remove("menu-open");
-                            openImageCropEditor();
-                          }}
+                          onPointerUp={event => finishNoteImageTransform(event.pointerId)}
                           onPointerCancel={event => finishNoteImageTransform(event.pointerId)}
                           onDragStart={event => {
                             const target = event.target as HTMLElement;
