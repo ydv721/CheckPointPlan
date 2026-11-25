@@ -1373,7 +1373,6 @@ export default function Planner() {
     />
     <header className="site-header"><div className="header-inner">
       <button className="brand" onClick={()=>setView("planner")}><span className="brand-lockup"><AppIcon/><span>CHECKPOINT</span></span><small>YOUR PACE, YOUR CHECKPOINT</small></button>
-      <div className="picture-diary-header-title" title={notebooks.find(notebook=>notebook.id===activeNotebookId)?.title ?? ""}><span>{notebooks.find(notebook=>notebook.id===activeNotebookId)?.title ?? ""}</span></div>
     </div></header>
 
     <main className="main-area">
@@ -1386,6 +1385,7 @@ export default function Planner() {
           <PlannerSpread className="book-frame month-book-frame">
             <div className="book-spine" aria-hidden="true">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
             <section className="paper-page month-page">
+              <div className="diary-paper-notebook-title">{notebooks.find(notebook=>notebook.id===activeNotebookId)?.title ?? ""}</div>
               <div className="month-page-header">
                 <div className="month-page-heading">
                   <div className="month-page-title-row">
@@ -1499,6 +1499,7 @@ export default function Planner() {
           <PlannerSpread className="book-frame day-book-frame">
           <div className="book-spine" aria-hidden="true">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
           <section className="paper-page left-page">
+            <div className="diary-paper-notebook-title">{notebooks.find(notebook=>notebook.id===activeNotebookId)?.title ?? ""}</div>
             <div className="page-date">
               <div className="dday-field">
                 <div className="dday-value-row">
