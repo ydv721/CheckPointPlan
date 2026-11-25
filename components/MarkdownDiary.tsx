@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type TouchEvent as ReactTouchEvent, type WheelEvent as ReactWheelEvent } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, ChevronLeft, ChevronRight, Code2, Eraser, FileDown, Heading1, Highlighter, ImagePlus, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, StickyNote as StickyNoteIcon, Strikethrough, Type, Underline, Check, Trash2, X } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, ChevronLeft, ChevronRight, Code2, Eraser, FileDown, Heading1, Highlighter, ImagePlus, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, StickyNote as StickyNoteIcon, Strikethrough, Type, Underline, Check, RotateCw, Trash2, X } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import PlannerSpread from "@/components/PlannerSpread";
 import type { ThemeName } from "@/lib/types";
@@ -218,21 +218,27 @@ type ImageSticker = {
   x: number;
   y: number;
   width: number;
+  rotation: number;
   src: string;
   alt: string;
 };
 type ImageStickerInteraction = {
   id: string;
   pointerId: number;
-  mode: "move" | "resize";
+  mode: "move" | "resize" | "rotate";
   startClientX: number;
   startClientY: number;
   startX: number;
   startY: number;
   startWidth: number;
+  startRotation: number;
+  centerX: number;
+  centerY: number;
+  startAngle: number;
   currentX: number;
   currentY: number;
   currentWidth: number;
+  currentRotation: number;
 };
 type FreeNotePageAnnotations = {
   height: number;
@@ -384,6 +390,9 @@ function normalizePageAnnotations(value: unknown, pageCount: number): FreeNotePa
             x: Math.max(0, Math.min(1000, sticker.x)),
             y: Math.max(0, Math.min(100000, sticker.y)),
             width,
+            rotation: typeof sticker.rotation === "number" && Number.isFinite(sticker.rotation)
+              ? ((sticker.rotation + 180) % 360 + 360) % 360 - 180
+              : 0,
             src: sticker.src,
             alt: typeof sticker.alt === "string" ? sticker.alt.slice(0, 120) : "이미지"
           }];
@@ -1040,7 +1049,7 @@ export default function MarkdownDiary({
   const [drawingScrollTop, setDrawingScrollTop] = useState(0);
   const [noteImageUrls, setNoteImageUrls] = useState<Record<string, string>>({});
   const [imageStickerProcessing, setImageStickerProcessing] = useState(false);
-  const [imageStickerPreview, setImageStickerPreview] = useState<{ id: string; x: number; y: number; width: number } | null>(null);
+  const [imageStickerPreview, setImageStickerPreview] = useState<{ id: string; x: number; y: number; width: number; rotation: number } | null>(null);
   const leftEditorRef = useRef<HTMLDivElement>(null);
   const highlighterMenuRef = useRef<HTMLDivElement>(null);
   const imageStickerInputRef = useRef<HTMLInputElement>(null);
@@ -1555,6 +1564,7 @@ export default function MarkdownDiary({
           x: 500,
           y,
           width: 28,
+          rotation: 0,
           src,
           alt: file.name.replace(/\.[^.]+$/, "").replace(/[\[\]()\r\n]/g, " ").trim().slice(0, 120) || "이미지"
         }]
@@ -1572,11 +1582,16 @@ export default function MarkdownDiary({
   function beginImageStickerInteraction(
     event: ReactPointerEvent<HTMLElement>,
     sticker: ImageSticker,
-    mode: "move" | "resize"
+    mode: "move" | "resize" | "rotate"
   ) {
     if (!drawingMode) return;
     event.preventDefault();
     event.stopPropagation();
+    const imageElement = mode === "move" ? event.currentTarget : event.currentTarget.parentElement;
+    const rect = imageElement?.getBoundingClientRect();
+    const centerX = rect ? rect.left + rect.width / 2 : event.clientX;
+    const centerY = rect ? rect.top + rect.height / 2 : event.clientY;
+    const startAngle = Math.atan2(event.clientY - centerY, event.clientX - centerX);
     imageStickerInteractionRef.current = {
       id: sticker.id,
       pointerId: event.pointerId,
@@ -1586,11 +1601,16 @@ export default function MarkdownDiary({
       startX: sticker.x,
       startY: sticker.y,
       startWidth: sticker.width,
+      startRotation: sticker.rotation,
+      centerX,
+      centerY,
+      startAngle,
       currentX: sticker.x,
       currentY: sticker.y,
-      currentWidth: sticker.width
+      currentWidth: sticker.width,
+      currentRotation: sticker.rotation
     };
-    setImageStickerPreview({ id: sticker.id, x: sticker.x, y: sticker.y, width: sticker.width });
+    setImageStickerPreview({ id: sticker.id, x: sticker.x, y: sticker.y, width: sticker.width, rotation: sticker.rotation });
     event.currentTarget.setPointerCapture(event.pointerId);
   }
 
@@ -1605,14 +1625,19 @@ export default function MarkdownDiary({
     if (interaction.mode === "move") {
       interaction.currentX = Math.max(0, Math.min(1000, interaction.startX + deltaX));
       interaction.currentY = Math.max(0, interaction.startY + deltaY);
-    } else {
+    } else if (interaction.mode === "resize") {
       interaction.currentWidth = Math.max(10, Math.min(70, interaction.startWidth + deltaX / 10));
+    } else {
+      const angle = Math.atan2(event.clientY - interaction.centerY, event.clientX - interaction.centerX);
+      const delta = (angle - interaction.startAngle) * 180 / Math.PI;
+      interaction.currentRotation = ((interaction.startRotation + delta + 180) % 360 + 360) % 360 - 180;
     }
     setImageStickerPreview({
       id: interaction.id,
       x: interaction.currentX,
       y: interaction.currentY,
-      width: interaction.currentWidth
+      width: interaction.currentWidth,
+      rotation: interaction.currentRotation
     });
   }
 
@@ -1623,7 +1648,8 @@ export default function MarkdownDiary({
     updateImageSticker(interaction.id, {
       x: interaction.currentX,
       y: interaction.currentY,
-      width: interaction.currentWidth
+      width: interaction.currentWidth,
+      rotation: interaction.currentRotation
     });
     setImageStickerPreview(null);
   }
@@ -2092,7 +2118,7 @@ export default function MarkdownDiary({
         drawingLayer: SVGSVGElement | null;
         stickyLayer: HTMLDivElement;
         stickyNotes: Array<{ element: HTMLDivElement; top: number }>;
-        imageStickers: Array<{ element: HTMLDivElement; top: number }>;
+        imageStickers: Array<{ element: HTMLDivElement; top: number; rotation: number }>;
         annotationHeight: number;
         drawingHeight: number;
       }> = [];
@@ -2288,6 +2314,7 @@ export default function MarkdownDiary({
           wrapper.style.left = (sticker.x / 10) + "%";
           wrapper.style.top = sticker.y + "px";
           wrapper.style.width = sticker.width + "%";
+          wrapper.style.rotate = sticker.rotation === 0 ? "none" : sticker.rotation + "deg";
           wrapper.style.pointerEvents = "none";
 
           const image = document.createElement("img");
@@ -2296,7 +2323,7 @@ export default function MarkdownDiary({
           image.draggable = false;
           wrapper.appendChild(image);
           stickyLayer.appendChild(wrapper);
-          imageStickers.push({ element: wrapper, top: sticker.y });
+          imageStickers.push({ element: wrapper, top: sticker.y, rotation: sticker.rotation });
         });
 
         viewport.appendChild(pageEditor);
@@ -2340,10 +2367,13 @@ export default function MarkdownDiary({
           (bottom, note) => Math.max(bottom, note.top + note.element.offsetHeight),
           0
         );
-        const imageStickerBottom = record.imageStickers.reduce(
-          (bottom, sticker) => Math.max(bottom, sticker.top + sticker.element.offsetHeight),
-          0
-        );
+        const imageStickerBottom = record.imageStickers.reduce((bottom, sticker) => {
+          const radians = sticker.rotation * Math.PI / 180;
+          const width = sticker.element.offsetWidth;
+          const height = sticker.element.offsetHeight;
+          const rotatedHeight = Math.abs(Math.cos(radians)) * height + Math.abs(Math.sin(radians)) * width;
+          return Math.max(bottom, sticker.top + (height + rotatedHeight) / 2);
+        }, 0);
         const pageHeight = Math.ceil(Math.max(
           basePageHeight,
           textHeight,
@@ -3092,7 +3122,8 @@ export default function MarkdownDiary({
                               style={{
                                 left: ((imageStickerPreview?.id === sticker.id ? imageStickerPreview.x : sticker.x) / 10) + "%",
                                 top: (imageStickerPreview?.id === sticker.id ? imageStickerPreview.y : sticker.y) + "px",
-                                width: (imageStickerPreview?.id === sticker.id ? imageStickerPreview.width : sticker.width) + "%"
+                                width: (imageStickerPreview?.id === sticker.id ? imageStickerPreview.width : sticker.width) + "%",
+                                rotate: (imageStickerPreview?.id === sticker.id ? imageStickerPreview.rotation : sticker.rotation) + "deg"
                               }}
                               onPointerDown={event => beginImageStickerInteraction(event, sticker, "move")}
                               onPointerMove={moveImageStickerInteraction}
@@ -3111,6 +3142,15 @@ export default function MarkdownDiary({
                                     onClick={() => deleteImageSticker(sticker.id)}
                                   >
                                     <X size={13}/>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="free-note-image-sticker-control free-note-image-sticker-rotate"
+                                    aria-label="이미지 회전"
+                                    title="회전"
+                                    onPointerDown={event => beginImageStickerInteraction(event, sticker, "rotate")}
+                                  >
+                                    <RotateCw size={13}/>
                                   </button>
                                   <button
                                     type="button"
