@@ -11342,21 +11342,15 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   min-height:0;
 }
 
-/* Free Note: controls belong to the selected image, not the text toolbar. */
+/* Legacy Free Note images remain readable; new images are added as handwriting stickers. */
 .markdown-note-image-frame {
   display:block;
   position:relative;
-  isolation:isolate;
   box-sizing:border-box;
   max-width:100%;
   margin:26px auto;
   overflow:visible;
-  cursor:grab;
   user-select:none;
-  -webkit-user-drag:element;
-}
-.markdown-note-image-frame:active {
-  cursor:grabbing;
 }
 .markdown-note-image-content {
   position:relative;
@@ -11365,7 +11359,6 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   min-height:0;
   overflow:hidden;
   border-radius:7px;
-  pointer-events:auto;
 }
 .markdown-note-image-content > .markdown-note-image {
   display:block;
@@ -11379,95 +11372,103 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   user-select:none;
   -webkit-user-drag:none;
 }
-.markdown-free-note-section .markdown-editor-grid .markdown-note-image-frame.is-selected > .markdown-note-image-content {
-  outline:2px solid var(--accent);
-  outline-offset:2px;
+.markdown-long-image-export-root .markdown-note-image-frame {
+  break-inside:avoid;
+  page-break-inside:avoid;
 }
-.markdown-note-image-control {
+
+/* Free Note handwriting image stickers. */
+.free-note-image-sticker {
   position:absolute;
   z-index:6;
+  display:block;
+  box-sizing:border-box;
+  max-width:70%;
+  padding:4px;
+  overflow:visible;
+  border:1px solid rgba(42,52,67,.14);
+  border-radius:8px;
+  background:#fff;
+  box-shadow:0 4px 12px rgba(34,38,48,.18);
+  transform:translateX(-50%);
+  pointer-events:none;
+  user-select:none;
+  touch-action:none;
+}
+.free-note-sticky-layer.is-active .free-note-image-sticker {
+  pointer-events:auto;
+  cursor:grab;
+}
+.free-note-sticky-layer.is-active .free-note-image-sticker:active {
+  cursor:grabbing;
+}
+.free-note-image-sticker > img {
+  display:block;
+  width:100%;
+  max-width:100%;
+  height:auto;
+  max-height:280px;
+  border-radius:4px;
+  object-fit:contain;
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-drag:none;
+}
+.free-note-image-sticker-control {
+  position:absolute;
+  z-index:2;
+  display:inline-flex;
   align-items:center;
   justify-content:center;
   box-sizing:border-box;
+  width:24px;
+  height:24px;
   padding:0;
   border:1px solid var(--accent);
   border-radius:50%;
   background:var(--paper);
   color:var(--ink);
   box-shadow:0 2px 7px rgba(24,35,55,.24);
-  font-family:inherit;
   cursor:pointer;
   touch-action:none;
 }
-
-/* Resize handles appear only after selecting an image. */
-.markdown-note-image-resize-handle {
-  display:none;
-  width:11px;
-  height:11px;
-  min-width:11px;
-  min-height:11px;
-  border:1px solid var(--accent);
-  border-radius:2px;
-  background:#fff;
-  box-shadow:0 1px 4px rgba(24,35,55,.28);
-  cursor:default;
-}
-.markdown-note-image-frame.is-selected > .markdown-note-image-resize-handle {
-  display:flex;
-}
-.markdown-note-image-resize-handle.is-nw { left:-5px;top:-5px;cursor:nwse-resize; }
-.markdown-note-image-resize-handle.is-n { left:50%;top:-5px;transform:translateX(-50%);cursor:ns-resize; }
-.markdown-note-image-resize-handle.is-ne { right:-5px;top:-5px;cursor:nesw-resize; }
-.markdown-note-image-resize-handle.is-e { right:-5px;top:50%;transform:translateY(-50%);cursor:ew-resize; }
-.markdown-note-image-resize-handle.is-se { right:-5px;bottom:-5px;cursor:nwse-resize; }
-.markdown-note-image-resize-handle.is-s { left:50%;bottom:-5px;transform:translateX(-50%);cursor:ns-resize; }
-.markdown-note-image-resize-handle.is-sw { left:-5px;bottom:-5px;cursor:nesw-resize; }
-.markdown-note-image-resize-handle.is-w { left:-5px;top:50%;transform:translateY(-50%);cursor:ew-resize; }
-.markdown-note-image-delete {
-  top:6px;
-  right:6px;
-  display:flex;
-  width:29px;
-  height:29px;
-  border-radius:9px;
+.free-note-image-sticker-delete {
+  top:-10px;
+  right:-10px;
   color:#bd6874;
-  font-size:21px;
-  line-height:1;
-  opacity:0;
-  pointer-events:none;
 }
-.markdown-note-image-control svg {
-  display:block;
-  width:16px;
-  height:16px;
-  fill:none;
-  stroke:currentColor;
-  stroke-width:1.8;
-  stroke-linecap:round;
-  stroke-linejoin:round;
-  pointer-events:none;
+.free-note-image-sticker-delete:hover {
+  background:var(--soft);
+  color:#a43e4d;
 }
-.markdown-note-image-delete svg {
+.free-note-image-sticker-resize {
+  right:-7px;
+  bottom:-7px;
   width:15px;
   height:15px;
+  border-radius:3px;
+  cursor:nwse-resize;
 }
-.markdown-note-image-frame:hover > .markdown-note-image-delete,
-.markdown-note-image-frame.is-selected > .markdown-note-image-delete {
-  opacity:1;
-  pointer-events:auto;
+.free-note-image-sticker-resize::after {
+  width:6px;
+  height:6px;
+  border-right:2px solid currentColor;
+  border-bottom:2px solid currentColor;
+  content:"";
 }
-.markdown-note-image-control:hover {
-  background:var(--soft);
-}
-.markdown-note-image-control:focus-visible {
+.free-note-image-sticker-control:focus-visible {
   outline:2px solid var(--accent);
   outline-offset:2px;
 }
-.markdown-long-image-export-root .markdown-note-image-frame {
-  break-inside:avoid;
-  page-break-inside:avoid;
+.markdown-long-image-export-root .free-note-image-sticker {
+  pointer-events:none;
 }
-.markdown-long-image-export-root .markdown-note-image-control {
-  display:none !important;
+@media(max-width:620px) {
+  .free-note-image-sticker {
+    max-width:78%;
+    padding:3px;
+  }
+  .free-note-image-sticker > img {
+    max-height:220px;
+  }
 }

@@ -213,10 +213,32 @@ type StickyNote = {
   text: string;
   color: string;
 };
+type ImageSticker = {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  src: string;
+  alt: string;
+};
+type ImageStickerInteraction = {
+  id: string;
+  pointerId: number;
+  mode: "move" | "resize";
+  startClientX: number;
+  startClientY: number;
+  startX: number;
+  startY: number;
+  startWidth: number;
+  currentX: number;
+  currentY: number;
+  currentWidth: number;
+};
 type FreeNotePageAnnotations = {
   height: number;
   strokes: DrawingStroke[];
   notes: StickyNote[];
+  images: ImageSticker[];
 };
 
 const DRAWING_COLORS = [
@@ -229,12 +251,69 @@ const DRAWING_COLORS = [
 ] as const;
 
 function createEmptyPageAnnotations(height = 1): FreeNotePageAnnotations {
-  return { height: Math.max(1, height), strokes: [], notes: [] };
+  return { height: Math.max(1, height), strokes: [], notes: [], images: [] };
 }
 
 function createDrawingId() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
   return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+}
+
+async function createImageStickerDataUrl(file: File): Promise<string> {
+  if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+    throw new Error("PNG, JPG, WEBP 형식의 이미지만 추가할 수 있습니다.");
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    throw new Error("이미지는 5MB 이하만 추가할 수 있습니다.");
+  }
+
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = new Image();
+    image.src = objectUrl;
+    await image.decode();
+    if (!image.naturalWidth || !image.naturalHeight) {
+      throw new Error("이미지 크기를 확인하지 못했습니다.");
+    }
+
+    let compressed: Blob | null = null;
+    const scaleFactors = [1, 0.82, 0.66, 0.52];
+    const qualities = [0.82, 0.78, 0.74, 0.7];
+
+    for (let attempt = 0; attempt < scaleFactors.length; attempt += 1) {
+      const scale = Math.min(1, 1000 / Math.max(image.naturalWidth, image.naturalHeight)) * scaleFactors[attempt];
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("이미지를 처리할 수 없습니다.");
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+      compressed = await new Promise<Blob | null>(resolve => {
+        canvas.toBlob(resolve, "image/webp", qualities[attempt]);
+      });
+      if (!compressed) {
+        compressed = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/png"));
+      }
+      if (compressed && compressed.size <= 300 * 1024) break;
+    }
+
+    if (!compressed || compressed.size > 300 * 1024) {
+      throw new Error("이미지 용량이 큽니다. 더 작은 이미지를 선택해 주세요.");
+    }
+
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") resolve(reader.result);
+        else reject(new Error("이미지를 읽지 못했습니다."));
+      };
+      reader.onerror = () => reject(new Error("이미지를 읽지 못했습니다."));
+      reader.readAsDataURL(compressed);
+    });
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
 }
 
 function normalizePageAnnotations(value: unknown, pageCount: number): FreeNotePageAnnotations[] {
@@ -287,10 +366,34 @@ function normalizePageAnnotations(value: unknown, pageCount: number): FreeNotePa
           }];
         })
       : [];
+    const images = Array.isArray(raw.images)
+      ? raw.images.slice(0, 8).flatMap((item): ImageSticker[] => {
+          if (!item || typeof item !== "object") return [];
+          const sticker = item as Partial<ImageSticker>;
+          if (
+            typeof sticker.x !== "number" || !Number.isFinite(sticker.x) ||
+            typeof sticker.y !== "number" || !Number.isFinite(sticker.y) ||
+            typeof sticker.src !== "string" || sticker.src.length > 420000 ||
+            !/^data:image\/(?:webp|png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(sticker.src)
+          ) return [];
+          const width = typeof sticker.width === "number" && Number.isFinite(sticker.width)
+            ? Math.max(10, Math.min(70, sticker.width))
+            : 28;
+          return [{
+            id: typeof sticker.id === "string" ? sticker.id : createDrawingId(),
+            x: Math.max(0, Math.min(1000, sticker.x)),
+            y: Math.max(0, Math.min(100000, sticker.y)),
+            width,
+            src: sticker.src,
+            alt: typeof sticker.alt === "string" ? sticker.alt.slice(0, 120) : "이미지 스티커"
+          }];
+        })
+      : [];
     return {
       height: typeof raw.height === "number" && Number.isFinite(raw.height) ? Math.max(1, Math.min(100000, raw.height)) : 1,
       strokes,
-      notes
+      notes,
+      images
     };
   });
 }
@@ -475,23 +578,6 @@ function safeMarkdownHref(value: string) {
   return "";
 }
 
-function noteImageControlsMarkup() {
-  return [
-    ...["nw", "n", "ne", "e", "se", "s", "sw", "w"].map(handle =>
-      '<button type="button" contenteditable="false" class="markdown-note-image-resize-handle markdown-note-image-control is-' + handle + '" data-image-resize-handle="' + handle + '" aria-label="이미지 크기 조절" draggable="false"></button>'
-    ),
-    '<button type="button" contenteditable="false" class="markdown-note-image-delete markdown-note-image-control" aria-label="이미지 삭제" title="삭제" draggable="false">' +
-      '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
-        '<path d="M3 6h18" />' +
-        '<path d="M8 6V4h8v2" />' +
-        '<path d="M19 6l-1 14H6L5 6" />' +
-        '<path d="M10 11v6" />' +
-        '<path d="M14 11v6" />' +
-      '</svg>' +
-    '</button>'
-  ].join("");
-}
-
 function renderInlineMarkdown(value: string, imageUrls: Record<string, string> = {}) {
   const tokens: string[] = [];
   const stash = (html: string) => {
@@ -566,12 +652,12 @@ function renderInlineMarkdown(value: string, imageUrls: Record<string, string> =
         '" data-checkpoint-image-width="' + width + '" data-checkpoint-image-ratio="' + ratio +
         '" data-checkpoint-image-zoom="' + zoom + '" data-checkpoint-image-x="' + cropX +
         '" data-checkpoint-image-y="' + cropY + '"' + cropAttributes +
-        ' contenteditable="false" draggable="true" style="' + escapeHtml(wrapperStyle) + '">' +
+        ' contenteditable="false" draggable="false" style="' + escapeHtml(wrapperStyle) + '">' +
         '<span class="markdown-note-image-content" style="' + escapeHtml(visualStyle) + '">' +
         '<img class="markdown-note-image" crossorigin="anonymous" data-checkpoint-image-path="' + escapeHtml(path) +
         '"' + srcAttribute + ' alt="' + escapeHtml(alt || "이미지") +
         '" draggable="false" style="' + escapeHtml(imageStyle) + '">' + '</span>' +
-        noteImageControlsMarkup() + '</span>'
+        '</span>'
       );
     } catch {
       return alt || "이미지";
@@ -953,20 +1039,12 @@ export default function MarkdownDiary({
   const [drawingCanvasHeight, setDrawingCanvasHeight] = useState(1);
   const [drawingScrollTop, setDrawingScrollTop] = useState(0);
   const [noteImageUrls, setNoteImageUrls] = useState<Record<string, string>>({});
-  const [imageUploading, setImageUploading] = useState(false);
+  const [imageStickerProcessing, setImageStickerProcessing] = useState(false);
+  const [imageStickerPreview, setImageStickerPreview] = useState<{ id: string; x: number; y: number; width: number } | null>(null);
   const leftEditorRef = useRef<HTMLDivElement>(null);
   const highlighterMenuRef = useRef<HTMLDivElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
-  const selectedImageElementRef = useRef<HTMLElement | null>(null);
-  const movingImageElementRef = useRef<HTMLElement | null>(null);
-  const imageTransformRef = useRef<{
-    frame: HTMLElement;
-    pointerId: number;
-    centerX: number;
-    centerY: number;
-    startDistance: number;
-    initialWidth: number;
-  } | null>(null);
+  const imageStickerInputRef = useRef<HTMLInputElement>(null);
+  const imageStickerInteractionRef = useRef<ImageStickerInteraction | null>(null);
   const currentStrokeRef = useRef<DrawingStroke | null>(null);
   const drawingPointerIdRef = useRef<number | null>(null);
   const touchScrollYRef = useRef<number | null>(null);
@@ -1017,17 +1095,12 @@ export default function MarkdownDiary({
     setCurrentStroke(null);
     currentStrokeRef.current = null;
     drawingPointerIdRef.current = null;
-    selectedImageElementRef.current?.classList.remove("is-selected");
-    selectedImageElementRef.current = null;
-    movingImageElementRef.current = null;
-    imageTransformRef.current = null;
+    imageStickerInteractionRef.current = null;
   }, [activeNoteId]);
 
   useEffect(() => {
-    selectedImageElementRef.current?.classList.remove("is-selected");
-    selectedImageElementRef.current = null;
-    movingImageElementRef.current = null;
-    imageTransformRef.current = null;
+    imageStickerInteractionRef.current = null;
+    setImageStickerPreview(null);
   }, [activePageIndex, activeNoteId]);
 
   useEffect(() => {
@@ -1250,6 +1323,9 @@ export default function MarkdownDiary({
 
   function updateActiveNote(patch: Partial<Pick<MarkdownNote, "title" | "content">>) {
     if (!activeNoteId) return;
+    if (currentNoteRef.current?.id === activeNoteId) {
+      currentNoteRef.current = { ...currentNoteRef.current, ...patch };
+    }
     setNotes(current => current.map(note =>
       note.id === activeNoteId ? { ...note, ...patch } : note
     ));
@@ -1264,12 +1340,14 @@ export default function MarkdownDiary({
 
   function updateCurrentPageAnnotations(nextAnnotations: FreeNotePageAnnotations[]) {
     if (!activeNote) return;
-    const safeAnnotations = normalizePageAnnotations(nextAnnotations, pageContents.length);
+    const latestNote = currentNoteRef.current?.id === activeNote.id ? currentNoteRef.current : activeNote;
+    const latestPages = decodeNotePages(latestNote.content);
+    const safeAnnotations = normalizePageAnnotations(nextAnnotations, latestPages.length);
     safeAnnotations[activePageIndex] = {
       ...safeAnnotations[activePageIndex],
-      height: Math.max(1, drawingCanvasHeight)
+      height: Math.max(1, drawingCanvasHeight, safeAnnotations[activePageIndex].height)
     };
-    updateActiveNote({ content: encodeNotePages(pageContents, safeAnnotations) });
+    updateActiveNote({ content: encodeNotePages(latestPages, safeAnnotations) });
   }
 
   function getCurrentPages() {
@@ -1399,6 +1477,155 @@ export default function MarkdownDiary({
       notes: current.notes.filter(note => note.id !== noteId)
     };
     updateCurrentPageAnnotations(nextAnnotations);
+  }
+
+  function updateImageSticker(stickerId: string, patch: Partial<ImageSticker>) {
+    if (!activeNote) return;
+    const latestNote = currentNoteRef.current?.id === activeNote.id ? currentNoteRef.current : activeNote;
+    const latestPages = decodeNotePages(latestNote.content);
+    const nextAnnotations = decodeNoteAnnotations(latestNote.content);
+    const current = nextAnnotations[activePageIndex] ?? createEmptyPageAnnotations(drawingCanvasHeight);
+    nextAnnotations[activePageIndex] = {
+      ...current,
+      images: current.images.map(sticker => sticker.id === stickerId ? { ...sticker, ...patch } : sticker)
+    };
+    updateActiveNote({ content: encodeNotePages(latestPages, nextAnnotations) });
+  }
+
+  function deleteImageSticker(stickerId: string) {
+    setImageStickerPreview(current => current?.id === stickerId ? null : current);
+    if (!activeNote) return;
+    const latestNote = currentNoteRef.current?.id === activeNote.id ? currentNoteRef.current : activeNote;
+    const latestPages = decodeNotePages(latestNote.content);
+    const nextAnnotations = decodeNoteAnnotations(latestNote.content);
+    const current = nextAnnotations[activePageIndex] ?? createEmptyPageAnnotations(drawingCanvasHeight);
+    nextAnnotations[activePageIndex] = {
+      ...current,
+      images: current.images.filter(sticker => sticker.id !== stickerId)
+    };
+    updateActiveNote({ content: encodeNotePages(latestPages, nextAnnotations) });
+  }
+
+  async function addImageSticker(file: File) {
+    const targetNoteId = activeNote?.id;
+    const targetPageIndex = activePageIndex;
+    if (!targetNoteId || !activeNote || loading || imageStickerProcessing) return;
+
+    const latestContent = currentNoteRef.current?.id === targetNoteId ? currentNoteRef.current.content : activeNote.content;
+    const latestAnnotations = decodeNoteAnnotations(latestContent);
+    const current = latestAnnotations[targetPageIndex] ?? createEmptyPageAnnotations(drawingCanvasHeight);
+    const totalImageStickers = latestAnnotations.reduce((total, page) => total + page.images.length, 0);
+    if (totalImageStickers >= 12) {
+      setError("한 다이어리에는 이미지 스티커를 최대 12개까지 추가할 수 있습니다.");
+      return;
+    }
+    if (current.images.length >= 8) {
+      setError("한 페이지에는 이미지 스티커를 최대 8개까지 추가할 수 있습니다.");
+      return;
+    }
+
+    setImageStickerProcessing(true);
+    setError("");
+    try {
+      const src = await createImageStickerDataUrl(file);
+      const latestNote = currentNoteRef.current;
+      if (!latestNote || latestNote.id !== targetNoteId || activePageIndexRef.current !== targetPageIndex) return;
+      const latestPages = decodeNotePages(latestNote.content);
+      const nextAnnotations = decodeNoteAnnotations(latestNote.content);
+      const page = nextAnnotations[targetPageIndex] ?? createEmptyPageAnnotations(drawingCanvasHeight);
+      const currentTotal = nextAnnotations.reduce((total, item) => total + item.images.length, 0);
+      if (currentTotal >= 12) {
+        setError("한 다이어리에는 이미지 스티커를 최대 12개까지 추가할 수 있습니다.");
+        return;
+      }
+      if (page.images.length >= 8) {
+        setError("한 페이지에는 이미지 스티커를 최대 8개까지 추가할 수 있습니다.");
+        return;
+      }
+
+      const editor = leftEditorRef.current;
+      const y = editor
+        ? Math.max(0, editor.scrollTop + Math.max(16, (editor.clientHeight - 220) / 2))
+        : 24;
+      nextAnnotations[targetPageIndex] = {
+        ...page,
+        height: Math.max(page.height, drawingCanvasHeight),
+        images: [...page.images, {
+          id: createDrawingId(),
+          x: 500,
+          y,
+          width: 28,
+          src,
+          alt: file.name.replace(/\.[^.]+$/, "").replace(/[\[\]()\r\n]/g, " ").trim().slice(0, 120) || "이미지 스티커"
+        }]
+      };
+      updateActiveNote({ content: encodeNotePages(latestPages, normalizePageAnnotations(nextAnnotations, latestPages.length)) });
+    } catch (imageError) {
+      const message = imageError instanceof Error ? imageError.message : "이미지를 읽지 못했습니다.";
+      setError("이미지 스티커를 추가하지 못했습니다: " + message);
+    } finally {
+      setImageStickerProcessing(false);
+      if (imageStickerInputRef.current) imageStickerInputRef.current.value = "";
+    }
+  }
+
+  function beginImageStickerInteraction(
+    event: ReactPointerEvent<HTMLElement>,
+    sticker: ImageSticker,
+    mode: "move" | "resize"
+  ) {
+    if (!drawingMode) return;
+    event.preventDefault();
+    event.stopPropagation();
+    imageStickerInteractionRef.current = {
+      id: sticker.id,
+      pointerId: event.pointerId,
+      mode,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      startX: sticker.x,
+      startY: sticker.y,
+      startWidth: sticker.width,
+      currentX: sticker.x,
+      currentY: sticker.y,
+      currentWidth: sticker.width
+    };
+    setImageStickerPreview({ id: sticker.id, x: sticker.x, y: sticker.y, width: sticker.width });
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function moveImageStickerInteraction(event: ReactPointerEvent<HTMLElement>) {
+    const interaction = imageStickerInteractionRef.current;
+    const editor = leftEditorRef.current;
+    if (!drawingMode || !interaction || interaction.pointerId !== event.pointerId || !editor) return;
+    const rect = editor.getBoundingClientRect();
+    if (!rect.width) return;
+    const deltaX = (event.clientX - interaction.startClientX) / rect.width * 1000;
+    const deltaY = event.clientY - interaction.startClientY;
+    if (interaction.mode === "move") {
+      interaction.currentX = Math.max(0, Math.min(1000, interaction.startX + deltaX));
+      interaction.currentY = Math.max(0, interaction.startY + deltaY);
+    } else {
+      interaction.currentWidth = Math.max(10, Math.min(70, interaction.startWidth + deltaX / 10));
+    }
+    setImageStickerPreview({
+      id: interaction.id,
+      x: interaction.currentX,
+      y: interaction.currentY,
+      width: interaction.currentWidth
+    });
+  }
+
+  function finishImageStickerInteraction(event: ReactPointerEvent<HTMLElement>) {
+    const interaction = imageStickerInteractionRef.current;
+    if (!interaction || interaction.pointerId !== event.pointerId) return;
+    imageStickerInteractionRef.current = null;
+    updateImageSticker(interaction.id, {
+      x: interaction.currentX,
+      y: interaction.currentY,
+      width: interaction.currentWidth
+    });
+    setImageStickerPreview(null);
   }
 
   function eraseDrawingAt(point: DrawingPoint) {
@@ -1626,323 +1853,6 @@ export default function MarkdownDiary({
     if (!editor || !selection?.rangeCount || !selection.anchorNode || !selection.focusNode) return;
     if (editor.contains(selection.anchorNode) && editor.contains(selection.focusNode)) {
       editorSelectionRef.current = selection.getRangeAt(0).cloneRange();
-    }
-  }
-
-  function getEditorRangeAtPoint(clientX: number, clientY: number) {
-    const editor = leftEditorRef.current;
-    if (!editor) return null;
-    const documentWithCaret = document as Document & {
-      caretRangeFromPoint?: (x: number, y: number) => Range | null;
-      caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null;
-    };
-    const pointRange = documentWithCaret.caretRangeFromPoint?.(clientX, clientY);
-    if (pointRange && editor.contains(pointRange.commonAncestorContainer)) return pointRange;
-    const position = documentWithCaret.caretPositionFromPoint?.(clientX, clientY);
-    if (position && editor.contains(position.offsetNode)) {
-      const range = document.createRange();
-      range.setStart(position.offsetNode, position.offset);
-      range.collapse(true);
-      return range;
-    }
-    return null;
-  }
-
-  function rememberEditorSelectionAtPoint(clientX: number, clientY: number) {
-    const range = getEditorRangeAtPoint(clientX, clientY);
-    if (range) editorSelectionRef.current = range.cloneRange();
-    else rememberEditorSelection();
-  }
-
-  function selectNoteImage(frame: HTMLElement) {
-    if (selectedImageElementRef.current !== frame) {
-      selectedImageElementRef.current?.classList.remove("is-selected");
-    }
-    selectedImageElementRef.current = frame;
-    frame.classList.add("is-selected");
-  }
-
-  function clearSelectedNoteImage() {
-    selectedImageElementRef.current?.classList.remove("is-selected");
-    selectedImageElementRef.current = null;
-  }
-
-  function applyNoteImageFrameStyles(frame: HTMLElement) {
-    const image = frame.querySelector<HTMLImageElement>("img.markdown-note-image");
-    const visual = frame.querySelector<HTMLElement>(".markdown-note-image-content");
-    if (!image || !visual) return;
-    const width = Math.min(100, Math.max(20, Number(frame.dataset.checkpointImageWidth) || 80));
-    const ratioValue = frame.dataset.checkpointImageRatio ?? "original";
-    const ratio = ["original", "1:1", "4:3", "16:9", "3:4"].includes(ratioValue) ? ratioValue : "original";
-    const zoom = Math.min(300, Math.max(100, Number(frame.dataset.checkpointImageZoom) || 100));
-    const cropXValue = Number(frame.dataset.checkpointImageX);
-    const cropYValue = Number(frame.dataset.checkpointImageY);
-    const cropX = Number.isFinite(cropXValue) ? Math.min(100, Math.max(0, cropXValue)) : 50;
-    const cropY = Number.isFinite(cropYValue) ? Math.min(100, Math.max(0, cropYValue)) : 50;
-    frame.style.display = "block";
-    frame.style.position = "relative";
-    frame.style.boxSizing = "border-box";
-    frame.style.width = width + "%";
-    frame.style.maxWidth = "100%";
-    frame.style.margin = "26px auto";
-    frame.style.overflow = "visible";
-    frame.style.height = "auto";
-    const hasCrop = frame.dataset.checkpointImageCropWidth !== undefined && frame.dataset.checkpointImageCropHeight !== undefined;
-    if (hasCrop) {
-      const cropLeftValue = Number(frame.dataset.checkpointImageCropX);
-      const cropTopValue = Number(frame.dataset.checkpointImageCropY);
-      const cropWidthValue = Number(frame.dataset.checkpointImageCropWidth);
-      const cropHeightValue = Number(frame.dataset.checkpointImageCropHeight);
-      const cropLeft = Number.isFinite(cropLeftValue) ? Math.max(0, Math.min(99, cropLeftValue)) : 0;
-      const cropTop = Number.isFinite(cropTopValue) ? Math.max(0, Math.min(99, cropTopValue)) : 0;
-      const cropWidth = Number.isFinite(cropWidthValue) ? Math.max(1, Math.min(100 - cropLeft, cropWidthValue)) : 100;
-      const cropHeight = Number.isFinite(cropHeightValue) ? Math.max(1, Math.min(100 - cropTop, cropHeightValue)) : 100;
-      const aspectValue = Number(frame.dataset.checkpointImageAspectRatio);
-      const aspect = Number.isFinite(aspectValue) && aspectValue > 0
-        ? Math.min(10, Math.max(.1, aspectValue))
-        : (image.naturalWidth || 4) / (image.naturalHeight || 3);
-      frame.style.aspectRatio = String(aspect * cropWidth / cropHeight);
-      visual.style.position = "absolute";
-      visual.style.inset = "0";
-      visual.style.width = "100%";
-      visual.style.height = "100%";
-      visual.style.overflow = "hidden";
-      visual.style.transform = "none";
-      image.style.cssText = [
-        "display:block",
-        "position:absolute",
-        "left:" + (-cropLeft / cropWidth * 100) + "%",
-        "top:" + (-cropTop / cropHeight * 100) + "%",
-        "width:" + (100 / cropWidth) + "%",
-        "height:" + (100 / cropHeight) + "%",
-        "max-width:none",
-        "object-fit:fill",
-        "transform:none"
-      ].join(";");
-      return;
-    }
-    frame.style.aspectRatio = ratio === "original" ? "" : ratio.replace(":", " / ");
-    visual.style.transform = "none";
-    visual.style.position = ratio === "original" ? "relative" : "absolute";
-    visual.style.inset = ratio === "original" ? "" : "0";
-    visual.style.height = ratio === "original" ? "" : "100%";
-    if (ratio === "original") {
-      frame.style.aspectRatio = "";
-      visual.style.width = "100%";
-      visual.style.height = "auto";
-      visual.style.position = "relative";
-      visual.style.inset = "";
-      visual.style.overflow = "visible";
-      image.style.cssText = [
-        "display:block",
-        "position:relative",
-        "width:100%",
-        "height:auto",
-        "max-width:100%",
-        "object-fit:contain",
-        "transform:scale(" + zoom / 100 + ")",
-        "transform-origin:" + cropX + "% " + cropY + "%"
-      ].join(";");
-    } else {
-      image.style.cssText = [
-        "display:block",
-        "position:absolute",
-        "inset:0",
-        "width:100%",
-        "height:100%",
-        "max-width:none",
-        "object-fit:cover",
-        "object-position:" + cropX + "% " + cropY + "%",
-        "transform:scale(" + zoom / 100 + ")",
-        "transform-origin:" + cropX + "% " + cropY + "%"
-      ].join(";");
-    }
-  }
-
-  function updateSelectedImageWidth(value: number) {
-    const frame = selectedImageElementRef.current;
-    const editor = leftEditorRef.current;
-    if (!frame || !editor) return;
-    const width = Math.min(100, Math.max(20, value));
-    frame.dataset.checkpointImageWidth = String(width);
-    applyNoteImageFrameStyles(frame);
-    updateCurrentPage(htmlToMarkdown(editor.innerHTML));
-    syncDrawingCanvasMetrics();
-  }
-
-  function startNoteImageTransform(event: ReactPointerEvent<HTMLDivElement>) {
-    const target = event.target as HTMLElement;
-    const handle = target.closest<HTMLButtonElement>(".markdown-note-image-resize-handle");
-    const frame = handle?.closest<HTMLElement>(".markdown-note-image-frame");
-    if (!handle || !frame || !leftEditorRef.current?.contains(frame) || drawingMode) return;
-    event.preventDefault();
-    event.stopPropagation();
-    selectNoteImage(frame);
-    const rect = frame.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    imageTransformRef.current = {
-      frame,
-      pointerId: event.pointerId,
-      centerX,
-      centerY,
-      startDistance: Math.max(8, Math.hypot(event.clientX - centerX, event.clientY - centerY)),
-      initialWidth: Math.min(100, Math.max(20, Number(frame.dataset.checkpointImageWidth) || 80))
-    };
-    handle.setPointerCapture(event.pointerId);
-  }
-
-  function moveNoteImageTransform(event: ReactPointerEvent<HTMLDivElement>) {
-    const active = imageTransformRef.current;
-    if (!active || active.pointerId !== event.pointerId) return;
-    event.preventDefault();
-    const distance = Math.max(8, Math.hypot(event.clientX - active.centerX, event.clientY - active.centerY));
-    const width = Math.max(20, Math.min(100, Math.round(active.initialWidth * distance / active.startDistance)));
-    active.frame.dataset.checkpointImageWidth = String(width);
-    applyNoteImageFrameStyles(active.frame);
-  }
-
-  function finishNoteImageTransform(pointerId: number) {
-    const active = imageTransformRef.current;
-    if (!active || active.pointerId !== pointerId) return;
-    imageTransformRef.current = null;
-    const editor = leftEditorRef.current;
-    if (!editor || !editor.contains(active.frame)) return;
-    updateSelectedImageWidth(Number(active.frame.dataset.checkpointImageWidth) || 80);
-  }
-
-  function removeSelectedNoteImage() {
-    const frame = selectedImageElementRef.current;
-    const editor = leftEditorRef.current;
-    if (!frame || !editor) return;
-    frame.remove();
-    updateCurrentPage(htmlToMarkdown(editor.innerHTML));
-    clearSelectedNoteImage();
-    syncDrawingCanvasMetrics();
-  }
-
-  async function uploadAndInsertImage(file: File) {
-    const targetNoteId = activeNote?.id;
-    const targetPageIndex = activePageIndex;
-    if (!targetNoteId || !activeNote || loading || imageUploading) return;
-
-    const extensions: Record<string, string> = {
-      "image/jpeg": "jpg",
-      "image/png": "png",
-      "image/webp": "webp",
-      "image/gif": "gif"
-    };
-    const extension = extensions[file.type];
-    if (!extension) {
-      setError("PNG, JPG, WEBP, GIF 형식의 이미지만 추가할 수 있습니다.");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setError("이미지는 5MB 이하만 추가할 수 있습니다.");
-      return;
-    }
-
-    setImageUploading(true);
-    setError("");
-    const path = userId + "/notes/" + notebookId + "/" + targetNoteId + "/" + createDrawingId() + "." + extension;
-    let uploaded = false;
-
-    try {
-      const { error: uploadError } = await client.storage
-        .from("checkpoint-covers")
-        .upload(path, file, { contentType: file.type, upsert: false });
-      if (uploadError) throw uploadError;
-      uploaded = true;
-
-      const { data, error: signedError } = await client.storage
-        .from("checkpoint-covers")
-        .createSignedUrl(path, 60 * 60);
-      if (signedError || !data?.signedUrl) {
-        throw signedError ?? new Error("이미지 주소를 만들지 못했습니다.");
-      }
-
-      if (currentNoteRef.current?.id !== targetNoteId || activePageIndexRef.current !== targetPageIndex) {
-        await client.storage.from("checkpoint-covers").remove([path]);
-        uploaded = false;
-        return;
-      }
-
-      const editor = leftEditorRef.current;
-      if (!editor) {
-        await client.storage.from("checkpoint-covers").remove([path]);
-        uploaded = false;
-        return;
-      }
-
-      setNoteImageUrls(current => ({ ...current, [path]: data.signedUrl }));
-      editor.focus();
-
-      const savedRange = editorSelectionRef.current;
-      const range = savedRange && editor.contains(savedRange.commonAncestorContainer)
-        ? savedRange.cloneRange()
-        : document.createRange();
-      if (!savedRange || !editor.contains(savedRange.commonAncestorContainer)) {
-        range.selectNodeContents(editor);
-        range.collapse(false);
-      }
-
-      const rangeNode = range.commonAncestorContainer.nodeType === 1
-        ? range.commonAncestorContainer as HTMLElement
-        : range.commonAncestorContainer.parentElement;
-      const codeBlock = rangeNode?.closest(".markdown-code-block");
-      if (codeBlock) {
-        range.selectNode(codeBlock);
-        range.collapse(false);
-      }
-
-      range.deleteContents();
-      const frame = document.createElement("span");
-      frame.className = "markdown-note-image-frame";
-      frame.dataset.checkpointImagePath = path;
-      frame.dataset.checkpointImageWidth = "80";
-      frame.dataset.checkpointImageRatio = "original";
-      frame.dataset.checkpointImageZoom = "100";
-      frame.dataset.checkpointImageX = "50";
-      frame.dataset.checkpointImageY = "50";
-      frame.contentEditable = "false";
-      frame.draggable = true;
-
-      const image = document.createElement("img");
-      image.className = "markdown-note-image";
-      image.crossOrigin = "anonymous";
-      image.dataset.checkpointImagePath = path;
-      image.src = data.signedUrl;
-      image.alt = file.name.replace(/\.[^.]+$/, "").replace(/[\[\]()\r\n]/g, " ").trim() || "이미지";
-      image.draggable = false;
-      const visual = document.createElement("span");
-      visual.className = "markdown-note-image-content";
-      visual.append(image);
-      frame.append(visual);
-      frame.insertAdjacentHTML("beforeend", noteImageControlsMarkup());
-      applyNoteImageFrameStyles(frame);
-      range.insertNode(frame);
-      selectNoteImage(frame);
-
-      const lineBreak = document.createElement("br");
-      frame.after(lineBreak);
-      const nextRange = document.createRange();
-      nextRange.setStartAfter(lineBreak);
-      nextRange.collapse(true);
-      const selection = window.getSelection();
-      selection?.removeAllRanges();
-      selection?.addRange(nextRange);
-      editorSelectionRef.current = nextRange.cloneRange();
-
-      updateCurrentPage(htmlToMarkdown(editor.innerHTML));
-      syncDrawingCanvasMetrics();
-      editor.focus();
-    } catch (uploadError) {
-      if (uploaded) await client.storage.from("checkpoint-covers").remove([path]);
-      const message = uploadError instanceof Error ? uploadError.message : "네트워크 연결을 확인해 주세요.";
-      setError("이미지 업로드에 실패했습니다: " + message);
-    } finally {
-      setImageUploading(false);
-      if (imageInputRef.current) imageInputRef.current.value = "";
     }
   }
 
@@ -2182,6 +2092,7 @@ export default function MarkdownDiary({
         drawingLayer: SVGSVGElement | null;
         stickyLayer: HTMLDivElement;
         stickyNotes: Array<{ element: HTMLDivElement; top: number }>;
+        imageStickers: Array<{ element: HTMLDivElement; top: number }>;
         annotationHeight: number;
         drawingHeight: number;
       }> = [];
@@ -2370,6 +2281,24 @@ export default function MarkdownDiary({
           stickyNotes.push({ element: sticky, top: note.y });
         });
 
+        const imageStickers: Array<{ element: HTMLDivElement; top: number }> = [];
+        annotations.images.forEach(sticker => {
+          const wrapper = document.createElement("div");
+          wrapper.className = "free-note-image-sticker markdown-pdf-image-sticker";
+          wrapper.style.left = (sticker.x / 10) + "%";
+          wrapper.style.top = sticker.y + "px";
+          wrapper.style.width = sticker.width + "%";
+          wrapper.style.pointerEvents = "none";
+
+          const image = document.createElement("img");
+          image.src = sticker.src;
+          image.alt = sticker.alt;
+          image.draggable = false;
+          wrapper.appendChild(image);
+          stickyLayer.appendChild(wrapper);
+          imageStickers.push({ element: wrapper, top: sticker.y });
+        });
+
         viewport.appendChild(pageEditor);
         if (drawingLayer) viewport.appendChild(drawingLayer);
         viewport.appendChild(stickyLayer);
@@ -2384,6 +2313,7 @@ export default function MarkdownDiary({
           drawingLayer,
           stickyLayer,
           stickyNotes,
+          imageStickers,
           annotationHeight: annotations.height,
           drawingHeight
         });
@@ -2397,6 +2327,10 @@ export default function MarkdownDiary({
         window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve()));
       });
 
+      await Promise.all(Array.from(exportRoot.querySelectorAll<HTMLImageElement>("img")).map(image =>
+        typeof image.decode === "function" ? image.decode().catch(() => undefined) : Promise.resolve()
+      ));
+
       pageRecords.forEach(record => {
         const textHeight = Math.max(
           record.editor.scrollHeight,
@@ -2406,12 +2340,17 @@ export default function MarkdownDiary({
           (bottom, note) => Math.max(bottom, note.top + note.element.offsetHeight),
           0
         );
+        const imageStickerBottom = record.imageStickers.reduce(
+          (bottom, sticker) => Math.max(bottom, sticker.top + sticker.element.offsetHeight),
+          0
+        );
         const pageHeight = Math.ceil(Math.max(
           basePageHeight,
           textHeight,
           record.annotationHeight,
           record.drawingHeight,
-          stickyBottom
+          stickyBottom,
+          imageStickerBottom
         ));
 
         record.paper.style.height = pageHeight + "px";
@@ -2763,29 +2702,7 @@ export default function MarkdownDiary({
                             )}
                           </div>
 
-                          <button
-                            type="button"
-                            className="markdown-toolbar-button markdown-image-insert-button"
-                            aria-label={imageUploading ? "이미지 업로드 중" : "이미지 추가"}
-                            title={imageUploading ? "이미지 업로드 중" : "이미지 추가"}
-                            disabled={imageUploading || loading || !activeNote}
-                            onMouseDown={rememberEditorSelection}
-                            onClick={() => imageInputRef.current?.click()}
-                          >
-                            <ImagePlus size={16} strokeWidth={2}/>
-                          </button>
-                          <input
-                            ref={imageInputRef}
-                            className="sr-only"
-                            type="file"
-                            accept="image/png,image/jpeg,image/webp,image/gif"
-                            aria-label="추가할 이미지 선택"
-                            onChange={event => {
-                              const file = event.currentTarget.files?.[0];
-                              if (file) void uploadAndInsertImage(file);
-                              event.currentTarget.value = "";
-                            }}
-                          />
+
                           <button
                             type="button"
                             className="markdown-toolbar-button markdown-toolbar-drawing-toggle"
@@ -2851,6 +2768,32 @@ export default function MarkdownDiary({
                               <button type="button" className={"free-note-drawing-tool-button" + (drawingTool === "sticky" ? " is-active" : "")} aria-pressed={drawingTool === "sticky"} onClick={() => { setDrawingTool("sticky"); setHighlighterMenuOpen(false); }}>
                                 <StickyNoteIcon size={16}/><span>메모지</span>
                               </button>
+                              <button
+                                type="button"
+                                className="free-note-drawing-tool-button"
+                                disabled={imageStickerProcessing || loading || !activeNote}
+                                onClick={() => {
+                                  if (!imageStickerInputRef.current) return;
+                                  imageStickerInputRef.current.value = "";
+                                  imageStickerInputRef.current.click();
+                                }}
+                                title="이미지 스티커 추가"
+                                aria-label="이미지 스티커 추가"
+                              >
+                                <ImagePlus size={16}/><span>{imageStickerProcessing ? "추가 중" : "이미지 스티커"}</span>
+                              </button>
+                              <input
+                                ref={imageStickerInputRef}
+                                className="sr-only"
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp"
+                                aria-label="추가할 이미지 선택"
+                                onChange={event => {
+                                  const file = event.currentTarget.files?.[0];
+                                  if (file) void addImageSticker(file);
+                                  event.currentTarget.value = "";
+                                }}
+                              />
                               <button type="button" className={"free-note-drawing-tool-button" + (drawingTool === "eraser" ? " is-active" : "")} aria-pressed={drawingTool === "eraser"} onClick={() => { setDrawingTool("eraser"); setHighlighterMenuOpen(false); }}>
                                 <Eraser size={16}/><span>지우개</span>
                               </button>
@@ -2905,39 +2848,7 @@ export default function MarkdownDiary({
                             syncDrawingCanvasMetrics();
                           }}
                           onScroll={syncDrawingCanvasMetrics}
-                          onPointerDown={startNoteImageTransform}
-                          onPointerMove={moveNoteImageTransform}
-                          onPointerUp={event => finishNoteImageTransform(event.pointerId)}
-                          onPointerCancel={event => finishNoteImageTransform(event.pointerId)}
-                          onDragStart={event => {
-                            const target = event.target as HTMLElement;
-                            if (target.closest(".markdown-note-image-control, .markdown-note-image-options")) {
-                              event.preventDefault();
-                              return;
-                            }
-                            const frame = target.closest<HTMLElement>(".markdown-note-image-frame");
-                            if (!frame || !leftEditorRef.current?.contains(frame)) return;
-                            movingImageElementRef.current = frame;
-                            selectNoteImage(frame);
-                            event.dataTransfer.effectAllowed = "move";
-                            event.dataTransfer.setData("application/x-checkpoint-note-image", "move");
-                          }}
-                          onDragEnd={() => {
-                            movingImageElementRef.current = null;
-                          }}
                           onPaste={event => {
-                            const imageItem = Array.from(event.clipboardData.items).find(item =>
-                              item.kind === "file" && item.type.startsWith("image/")
-                            );
-                            const pastedImage = imageItem?.getAsFile() ??
-                              Array.from(event.clipboardData.files).find(file => file.type.startsWith("image/"));
-                            if (pastedImage) {
-                              event.preventDefault();
-                              rememberEditorSelection();
-                              void uploadAndInsertImage(pastedImage);
-                              return;
-                            }
-
                             event.preventDefault();
                             const pasted = event.clipboardData.getData("text/plain");
                             const target = event.target as HTMLElement;
@@ -2950,47 +2861,10 @@ export default function MarkdownDiary({
                           }}
                           onDragOver={event => {
                             const types = Array.from(event.dataTransfer.types);
-                            if (types.includes("Files") || types.includes("application/x-checkpoint-note-image")) event.preventDefault();
+                            if (types.includes("Files") || types.includes("text/plain")) event.preventDefault();
                           }}
                           onDrop={event => {
                             event.preventDefault();
-                            const editor = leftEditorRef.current;
-                            const movingFrame = movingImageElementRef.current;
-                            if (
-                              editor &&
-                              movingFrame &&
-                              event.dataTransfer.getData("application/x-checkpoint-note-image") === "move"
-                            ) {
-                              const dropRange = getEditorRangeAtPoint(event.clientX, event.clientY);
-                              if (dropRange && !movingFrame.contains(dropRange.commonAncestorContainer)) {
-                                const targetNode = dropRange.commonAncestorContainer.nodeType === 1
-                                  ? dropRange.commonAncestorContainer as HTMLElement
-                                  : dropRange.commonAncestorContainer.parentElement;
-                                if (!targetNode?.closest(".markdown-code-block")) {
-                                  const insertionRange = dropRange.cloneRange();
-                                  movingFrame.remove();
-                                  insertionRange.insertNode(movingFrame);
-                                  const lineBreak = document.createElement("br");
-                                  movingFrame.after(lineBreak);
-                                  updateCurrentPage(htmlToMarkdown(editor.innerHTML));
-                                  selectNoteImage(movingFrame);
-                                  syncDrawingCanvasMetrics();
-                                  editor.focus();
-                                }
-                              }
-                              movingImageElementRef.current = null;
-                              return;
-                            }
-
-                            const droppedImage = Array.from(event.dataTransfer.files).find(file =>
-                              file.type.startsWith("image/")
-                            );
-                            if (droppedImage) {
-                              rememberEditorSelectionAtPoint(event.clientX, event.clientY);
-                              void uploadAndInsertImage(droppedImage);
-                              return;
-                            }
-
                             const dropped = event.dataTransfer.getData("text/plain");
                             const target = event.target as HTMLElement;
                             if (!dropped) return;
@@ -3019,19 +2893,6 @@ export default function MarkdownDiary({
                           onClick={event => {
                             const editor = leftEditorRef.current;
                             const target = event.target as HTMLElement;
-                            const imageFrame = target.closest<HTMLElement>(".markdown-note-image-frame");
-                            if (editor && imageFrame && editor.contains(imageFrame)) {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              if (target.closest(".markdown-note-image-delete")) {
-                                selectNoteImage(imageFrame);
-                                removeSelectedNoteImage();
-                              } else {
-                                selectNoteImage(imageFrame);
-                              }
-                              return;
-                            }
-                            if (selectedImageElementRef.current) clearSelectedNoteImage();
                             const link = target.closest<HTMLAnchorElement>("a[href]");
                             if (!editor || !link || !editor.contains(link)) return;
 
@@ -3222,6 +3083,44 @@ export default function MarkdownDiary({
                                 onPointerDown={event => event.stopPropagation()}
                                 onChange={event => updateStickyNote(note.id, { text: event.target.value })}
                               />
+                            </div>
+                          ))}
+                          {currentPageAnnotations.images.map(sticker => (
+                            <div
+                              key={sticker.id}
+                              className="free-note-image-sticker"
+                              style={{
+                                left: ((imageStickerPreview?.id === sticker.id ? imageStickerPreview.x : sticker.x) / 10) + "%",
+                                top: (imageStickerPreview?.id === sticker.id ? imageStickerPreview.y : sticker.y) + "px",
+                                width: (imageStickerPreview?.id === sticker.id ? imageStickerPreview.width : sticker.width) + "%"
+                              }}
+                              onPointerDown={event => beginImageStickerInteraction(event, sticker, "move")}
+                              onPointerMove={moveImageStickerInteraction}
+                              onPointerUp={finishImageStickerInteraction}
+                              onPointerCancel={finishImageStickerInteraction}
+                            >
+                              <img src={sticker.src} alt={sticker.alt} draggable={false}/>
+                              {drawingMode ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    className="free-note-image-sticker-control free-note-image-sticker-delete"
+                                    aria-label="이미지 스티커 삭제"
+                                    title="이미지 스티커 삭제"
+                                    onPointerDown={event => event.stopPropagation()}
+                                    onClick={() => deleteImageSticker(sticker.id)}
+                                  >
+                                    <X size={13}/>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="free-note-image-sticker-control free-note-image-sticker-resize"
+                                    aria-label="이미지 스티커 크기 조절"
+                                    title="크기 조절"
+                                    onPointerDown={event => beginImageStickerInteraction(event, sticker, "resize")}
+                                  />
+                                </>
+                              ) : null}
                             </div>
                           ))}
                         </div>
