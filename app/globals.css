@@ -11543,6 +11543,19 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 .markdown-note-image-resize-handle.is-s { left:50%;bottom:-5px;transform:translateX(-50%);cursor:ns-resize; }
 .markdown-note-image-resize-handle.is-sw { left:-5px;bottom:-5px; }
 .markdown-note-image-resize-handle.is-w { left:-5px;top:50%;transform:translateY(-50%);cursor:ew-resize; }
+.markdown-note-image-delete {
+  top:6px;
+  right:41px;
+  display:flex;
+  width:29px;
+  height:29px;
+  border-radius:9px;
+  color:#bd6874;
+  font-size:21px;
+  line-height:1;
+  opacity:0;
+  pointer-events:none;
+}
 .markdown-note-image-menu-trigger {
   top:6px;
   right:6px;
@@ -11555,6 +11568,14 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   opacity:0;
   pointer-events:none;
   transition:opacity .12s ease,background .12s ease;
+}
+.markdown-note-image-frame:hover > .markdown-note-image-delete,
+.markdown-note-image-frame.is-selected > .markdown-note-image-delete,
+.markdown-note-image-frame:hover > .markdown-note-image-menu-trigger,
+.markdown-note-image-frame.is-selected > .markdown-note-image-menu-trigger,
+.markdown-note-image-menu-trigger:focus-visible {
+  opacity:1;
+  pointer-events:auto;
 }
 .markdown-note-image-frame:hover > .markdown-note-image-menu-trigger,
 .markdown-note-image-frame.is-selected > .markdown-note-image-menu-trigger,
