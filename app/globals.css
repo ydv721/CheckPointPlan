@@ -3718,6 +3718,10 @@ html,body{width:100%;overflow-x:clip}
   outline-color: currentColor;
 }
 
+.placed-object.placed-photo.is-selected {
+  outline-color: transparent;
+}
+
 .placed-text {
   box-sizing: border-box;
   min-width: 12%;
@@ -11435,8 +11439,19 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 }
 .free-note-image-sticker-delete {
   top:-10px;
-  right:-10px;
+  left:-10px;
   color:#bd6874;
+}
+.free-note-image-sticker-rotate {
+  top:-10px;
+  right:-10px;
+  cursor:grab;
+}
+.free-note-image-sticker-rotate:active {
+  cursor:grabbing;
+}
+.free-note-image-sticker-rotate:hover {
+  background:var(--soft);
 }
 .free-note-image-sticker-delete:hover {
   background:var(--soft);
@@ -11472,4 +11487,82 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   .free-note-image-sticker > img {
     max-height:220px;
   }
+}
+
+
+/* Cover image decorations preserve the uploaded image's original proportions. */
+.cover-art .placed-photo > img {
+  width:1.6em;
+  height:auto;
+  max-width:100%;
+  max-height:60vh;
+  object-fit:contain;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+}
+
+
+/* Unified image manipulation controls: Free Note and cover photos. */
+.free-note-image-sticker-control.image-control-unified,
+.cover-art .cover-object-handle.image-control-unified {
+  box-sizing:border-box;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:44px !important;
+  height:44px !important;
+  min-width:44px !important;
+  min-height:44px !important;
+  padding:0 !important;
+  border:1px solid #e5e7eb !important;
+  border-radius:50% !important;
+  background:#fff !important;
+  color:#263241 !important;
+  box-shadow:0 2px 8px rgba(24,35,55,.24) !important;
+  opacity:1;
+  cursor:pointer;
+  touch-action:none;
+}
+
+.free-note-image-sticker-control.image-control-unified:hover,
+.cover-art .cover-object-handle.image-control-unified:hover {
+  background:#f8fafc !important;
+}
+
+.free-note-image-sticker-control.image-control-delete,
+.cover-art .cover-object-handle.image-control-delete {
+  top:0 !important;
+  left:0 !important;
+  right:auto !important;
+  bottom:auto !important;
+  transform:translate(-50%,-50%) !important;
+  color:#bd6874 !important;
+}
+
+.free-note-image-sticker-control.image-control-rotate,
+.cover-art .cover-object-handle.image-control-rotate {
+  top:0 !important;
+  right:0 !important;
+  left:auto !important;
+  bottom:auto !important;
+  transform:translate(50%,-50%) !important;
+  color:#263241 !important;
+  cursor:grab;
+}
+
+.free-note-image-sticker-control.image-control-rotate:active,
+.cover-art .cover-object-handle.image-control-rotate:active {
+  cursor:grabbing;
+}
+
+.free-note-image-sticker-control.image-control-resize,
+.cover-art .cover-object-handle.image-control-resize {
+  right:0 !important;
+  bottom:0 !important;
+  top:auto !important;
+  left:auto !important;
+  transform:translate(50%,50%) !important;
+  color:#263241 !important;
+  cursor:nwse-resize;
 }
