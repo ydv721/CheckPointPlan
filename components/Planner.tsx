@@ -426,9 +426,9 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
             ...(item.kind==="text"?{width:String(item.width??76)+"%",height:String(item.height??20)+"%",color:item.color||undefined,fontWeight:item.weight??800}:{})
           };
           return <div key={item.id}
-            className={"placed-sticker placed-object "+(item.kind==="text"?"placed-text":"placed-decor")+(selected?" is-selected":"")}
+            className={"placed-sticker placed-object "+(item.kind==="text"?"placed-text":"placed-decor")+(item.kind==="photo"?" placed-photo":"")+(selected?" is-selected":"")}
             role="group" tabIndex={0}
-            aria-label={item.kind==="text"?"텍스트":"표지 장식"}
+            aria-label={item.kind==="text"?"텍스트":item.kind==="photo"?"이미지":"표지 장식"}
             style={itemStyle}
             onPointerDown={e=>pointerDown(e,item)}
             onPointerMove={pointerMove}
@@ -445,7 +445,7 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
               onClick={e=>{e.stopPropagation();removeItem(item.id);}}>
               <Trash2 size={14}/>
             </button>
-            <button type="button" className="cover-object-handle cover-object-rotate" aria-label="요소 회전"
+            <button type="button" className="cover-object-handle cover-object-rotate" aria-label={item.kind==="photo"?"이미지 회전":"요소 회전"} title={item.kind==="photo"?"이미지 회전":"요소 회전"}
               onPointerDown={e=>startRotate(e,item)}>
               <RotateCw size={14}/>
             </button>
