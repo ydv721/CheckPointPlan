@@ -4605,30 +4605,60 @@ html,body{width:100%;overflow-x:clip}
   overscroll-behavior: contain;
 }
 
-/* Cover editor scrollbar: slim, rounded, and consistent with the editor UI. */
-.app-shell.cover-view .cover-editor {
+/* Shared scrollbar: slim, rounded, and theme-aware across the editor surfaces. */
+.app-shell.cover-view .cover-editor,
+.sketch-workspace .sketch-canvas-stage,
+.sketch-workspace .sketch-settings-panel,
+.sketch-workspace .sketch-layer-list,
+body:has(.sketch-workspace) .app-sidebar-panel {
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--ink) 30%, transparent) transparent;
 }
 
-.app-shell.cover-view .cover-editor::-webkit-scrollbar {
+.app-shell.cover-view .cover-editor::-webkit-scrollbar,
+.sketch-workspace .sketch-canvas-stage::-webkit-scrollbar,
+.sketch-workspace .sketch-settings-panel::-webkit-scrollbar,
+.sketch-workspace .sketch-layer-list::-webkit-scrollbar,
+body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar {
   width: 5px;
+  height: 5px;
 }
 
-.app-shell.cover-view .cover-editor::-webkit-scrollbar-track {
+.app-shell.cover-view .cover-editor::-webkit-scrollbar-track,
+.sketch-workspace .sketch-canvas-stage::-webkit-scrollbar-track,
+.sketch-workspace .sketch-settings-panel::-webkit-scrollbar-track,
+.sketch-workspace .sketch-layer-list::-webkit-scrollbar-track,
+body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.app-shell.cover-view .cover-editor::-webkit-scrollbar-thumb {
+.app-shell.cover-view .cover-editor::-webkit-scrollbar-thumb,
+.sketch-workspace .sketch-canvas-stage::-webkit-scrollbar-thumb,
+.sketch-workspace .sketch-settings-panel::-webkit-scrollbar-thumb,
+.sketch-workspace .sketch-layer-list::-webkit-scrollbar-thumb,
+body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb {
   border: 1px solid transparent;
   border-radius: 999px;
   background: color-mix(in srgb, var(--ink) 30%, transparent);
   background-clip: padding-box;
 }
 
-.app-shell.cover-view .cover-editor::-webkit-scrollbar-thumb:hover {
+.app-shell.cover-view .cover-editor::-webkit-scrollbar-thumb:hover,
+.sketch-workspace .sketch-canvas-stage::-webkit-scrollbar-thumb:hover,
+.sketch-workspace .sketch-settings-panel::-webkit-scrollbar-thumb:hover,
+.sketch-workspace .sketch-layer-list::-webkit-scrollbar-thumb:hover,
+body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   background: color-mix(in srgb, var(--ink) 46%, transparent);
   background-clip: padding-box;
+}
+
+/* Hide the tool rail scrollbar while keeping touch and wheel scrolling available. */
+.sketch-workspace .sketch-tool-rail {
+  scrollbar-width:none;
+  -ms-overflow-style:none;
+}
+.sketch-workspace .sketch-tool-rail::-webkit-scrollbar {
+  display:none;
 }
 
 /* Keep emoji picker scrollbars compact and visually quiet. */
@@ -8394,9 +8424,16 @@ html,body{width:100%;overflow-x:clip}
   flex:0 0 auto;
   align-items:center;
   gap:2px;
-  margin-left:3px;
-  padding-left:6px;
-  border-left:1px solid var(--line);
+  margin:0;
+  padding:0;
+  border:0 !important;
+  box-shadow:none !important;
+  background:transparent;
+}
+.markdown-align-controls::before,
+.markdown-align-controls::after{
+  display:none !important;
+  content:none !important;
 }
 .markdown-toolbar-button{
   display:inline-flex;
@@ -8830,7 +8867,7 @@ html,body{width:100%;overflow-x:clip}
 
 
 /* Share feedback stays beside the FREE NOTE heading action. */
-.markdown-share-feedback{
+.markdown-export-feedback{
   flex:0 1 auto;
   max-width:220px;
   overflow:hidden;
@@ -8844,7 +8881,7 @@ html,body{width:100%;overflow-x:clip}
   .markdown-note-heading-actions{
     gap:6px;
   }
-  .markdown-share-feedback{
+  .markdown-export-feedback{
     max-width:130px;
     font-size:10px;
   }
@@ -8987,7 +9024,7 @@ html,body{width:100%;overflow-x:clip}
 }
 .diary-date-navigation strong {
   color:var(--ink);
-  font-size:clamp(17px,1.45vw,22px);
+  font-size:clamp(18px,1.55vw,24px);
   font-weight:900;
   letter-spacing:-.04em;
   white-space:nowrap;
@@ -9232,8 +9269,8 @@ html,body{width:100%;overflow-x:clip}
   align-items:center;
   justify-content:center;
   width:100%;
-  min-height:300px;
-  max-height:100%;
+  min-height:260px;
+  max-height:calc(100% - 230px);
   padding:12px;
   overflow:hidden;
   border:1px dashed color-mix(in srgb,var(--accent) 48%,var(--line));
@@ -9257,16 +9294,25 @@ html,body{width:100%;overflow-x:clip}
   opacity:.7;
 }
 .picture-diary-drawing-area.has-image {
+  padding:0;
   border-style:solid;
   background:var(--paper);
 }
 .picture-diary-drawing-area > img {
+  position:absolute;
+  inset:0;
   display:block;
   width:100%;
   height:100%;
-  max-height:100%;
-  object-fit:contain;
+  max-height:none;
+  object-fit:cover;
   border-radius:5px;
+  cursor:grab;
+  touch-action:none;
+  user-select:none;
+}
+.picture-diary-drawing-area.has-image .picture-diary-drawing-edit {
+  z-index:1;
 }
 .picture-diary-drawing-empty {
   display:flex;
@@ -9374,19 +9420,6 @@ html,body{width:100%;overflow-x:clip}
   border:1px solid var(--line);
   border-radius:10px;
   background:color-mix(in srgb,var(--soft) 48%,var(--paper));
-}
-.diary-journal-paper .markdown-toolbar {
-  flex:0 0 auto;
-  flex-wrap:wrap;
-  gap:4px;
-  padding:6px;
-  border-bottom:1px solid var(--line);
-  background:var(--paper);
-}
-.diary-journal-paper .markdown-toolbar-button {
-  flex:0 0 31px;
-  width:31px;
-  height:31px;
 }
 .diary-journal-paper .markdown-editor-grid {
   display:block !important;
@@ -9503,15 +9536,16 @@ html,body{width:100%;overflow-x:clip}
 .picture-diary-choice-options button {
   display:flex;
   flex-direction:column;
-  align-items:flex-start;
-  gap:8px;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
   min-height:145px;
   padding:17px;
   border:1px solid var(--line);
   border-radius:12px;
   background:var(--paper);
   color:var(--ink);
-  text-align:left;
+  text-align:center;
   cursor:pointer;
   transition:border-color .15s,background .15s,transform .15s;
 }
@@ -9523,11 +9557,15 @@ html,body{width:100%;overflow-x:clip}
 .picture-diary-choice-icon {
   display:grid;
   place-items:center;
-  width:42px;
-  height:42px;
-  border-radius:12px;
+  width:36px;
+  height:36px;
+  border-radius:11px;
   background:var(--soft);
   color:var(--accent);
+}
+.picture-diary-choice-icon svg {
+  width:19px;
+  height:19px;
 }
 .picture-diary-choice-options strong {
   font-size:14px;
@@ -9541,21 +9579,34 @@ html,body{width:100%;overflow-x:clip}
   inset:0;
   display:flex;
   flex-direction:column;
+  width:100%;
+  min-height:0;
   overflow:hidden;
-  background:#edf0f5;
-  color:#27334a;
+  background:var(--bg);
+  color:var(--ink);
   font-family:var(--font);
 }
 .sketch-topbar {
-  display:grid;
-  grid-template-columns:minmax(180px,1fr) auto minmax(180px,1fr);
+  display:flex;
   align-items:center;
+  flex:0 0 76px;
+  height:76px;
+  min-height:76px;
+  padding:0;
+  border-bottom:1px solid var(--line);
+  background:var(--paper);
+}
+.sketch-header-inner {
+  width:100%;
+  max-width:1480px;
+  min-width:0;
   gap:16px;
-  flex:0 0 64px;
-  min-height:64px;
-  padding:0 19px;
-  border-bottom:1px solid #d9dfeb;
-  background:#fff;
+  padding:0 76px 0 42px;
+}
+.sketch-header-title {
+  font-size:14px;
+  font-weight:700;
+  color:var(--ink);
 }
 .sketch-back-button,
 .sketch-icon-action,
@@ -9565,13 +9616,13 @@ html,body{width:100%;overflow-x:clip}
   justify-content:center;
   gap:8px;
   min-height:38px;
-  border:1px solid #dce2ed;
+  border:1px solid var(--line);
   border-radius:9px;
-  background:#fff;
-  color:#39465e;
+  background:var(--paper);
+  color:var(--ink);
   font-family:inherit;
   font-size:12px;
-  font-weight:800;
+  font-weight:700;
   cursor:pointer;
 }
 .sketch-back-button {
@@ -9581,18 +9632,22 @@ html,body{width:100%;overflow-x:clip}
 .sketch-topbar-center {
   display:flex;
   flex-direction:column;
-  align-items:center;
+  align-items:flex-end;
+  justify-content:center;
   gap:3px;
+  margin-left:auto;
+  min-width:0;
 }
 .sketch-topbar-center strong {
-  color:#39465e;
-  font-size:12px;
-  font-weight:950;
-  letter-spacing:.13em;
+  color:var(--ink);
+  font-size:13px;
+  font-weight:800;
 }
 .sketch-topbar-center span {
-  color:#8792a5;
-  font-size:9px;
+  color:var(--ink);
+  opacity:.6;
+  font-size:10px;
+  white-space:nowrap;
 }
 .sketch-topbar-actions {
   display:flex;
@@ -9606,19 +9661,38 @@ html,body{width:100%;overflow-x:clip}
 }
 .sketch-save-action {
   padding:0 15px;
-  border-color:#7188b2;
-  background:#7188b2;
+  border-color:var(--accent);
+  background:var(--accent);
   color:#fff;
 }
 .sketch-save-action:disabled {
   opacity:.55;
   cursor:wait;
 }
+.sketch-main-area {
+  display:flex;
+  flex:1 1 auto;
+  justify-content:center;
+  width:100%;
+  min-width:0;
+  min-height:0;
+  padding:clamp(12px,2vh,24px) clamp(16px,3vw,42px);
+  box-sizing:border-box;
+}
 .sketch-layout {
   display:grid;
-  grid-template-columns:66px minmax(0,1fr) 286px;
+  grid-template-columns:62px minmax(0,1fr) 286px;
   flex:1 1 auto;
+  width:min(1360px,100%);
+  max-width:1360px;
+  height:100%;
+  min-width:0;
   min-height:0;
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:var(--paper);
+  box-shadow:0 13px 42px #172b4414;
 }
 .sketch-tool-rail {
   display:flex;
@@ -9626,8 +9700,8 @@ html,body{width:100%;overflow-x:clip}
   align-items:center;
   gap:6px;
   padding:12px 7px;
-  border-right:1px solid #d9dfeb;
-  background:#fff;
+  border-right:1px solid var(--line);
+  background:var(--paper);
   overflow-y:auto;
 }
 .sketch-tool-button {
@@ -9642,7 +9716,7 @@ html,body{width:100%;overflow-x:clip}
   border:1px solid transparent;
   border-radius:9px;
   background:transparent;
-  color:#758198;
+  color:var(--ink);
   cursor:pointer;
 }
 .sketch-tool-button span {
@@ -9651,9 +9725,9 @@ html,body{width:100%;overflow-x:clip}
 }
 .sketch-tool-button:hover:not(:disabled),
 .sketch-tool-button.is-active {
-  border-color:#dce4f2;
-  background:#edf2fb;
-  color:#5e78a8;
+  border-color:var(--accent);
+  background:var(--soft);
+  color:var(--accent);
 }
 .sketch-tool-button:disabled {
   opacity:.3;
@@ -9663,14 +9737,14 @@ html,body{width:100%;overflow-x:clip}
   width:32px;
   height:1px;
   margin:4px 0;
-  background:#e2e6ee;
+  background:var(--line);
 }
 .sketch-canvas-area {
   display:flex;
   flex-direction:column;
   min-width:0;
   min-height:0;
-  background:#e8ecf3;
+  background:var(--bg);
 }
 .sketch-canvas-toolbar {
   display:flex;
@@ -9679,8 +9753,8 @@ html,body{width:100%;overflow-x:clip}
   gap:12px;
   min-height:43px;
   padding:5px 14px;
-  border-bottom:1px solid #d8deea;
-  background:#f7f8fb;
+  border-bottom:1px solid var(--line);
+  background:var(--soft);
 }
 .sketch-zoom-controls {
   display:flex;
@@ -9696,17 +9770,17 @@ html,body{width:100%;overflow-x:clip}
   min-width:28px;
   height:28px;
   padding:0 7px;
-  border:1px solid #dce2ed;
+  border:1px solid var(--line);
   border-radius:7px;
-  background:#fff;
-  color:#66748d;
+  background:var(--paper);
+  color:var(--ink);
   font-size:10px;
   font-weight:750;
   cursor:pointer;
 }
 .sketch-zoom-controls span,
 .sketch-canvas-size {
-  color:#768198;
+  color:var(--ink);
   font-size:10px;
   font-weight:750;
   font-variant-numeric:tabular-nums;
@@ -9717,24 +9791,31 @@ html,body{width:100%;overflow-x:clip}
 .sketch-canvas-stage {
   display:flex;
   flex:1 1 auto;
-  align-items:center;
-  justify-content:center;
+  align-items:flex-start;
+  justify-content:flex-start;
   min-width:0;
   min-height:0;
   padding:20px;
   overflow:auto;
-  background-color:#e8ecf3;
-  background-image:radial-gradient(#c7cfdd .8px,transparent .8px);
+  touch-action:none;
+  overscroll-behavior:contain;
+  background-color:var(--bg);
+  background-image:radial-gradient(var(--line) .8px,transparent .8px);
   background-size:18px 18px;
+}
+.sketch-canvas-stage.is-panning,
+.sketch-canvas-stage.is-panning .sketch-canvas {
+  cursor:grabbing !important;
 }
 .sketch-canvas-wrap {
   flex:0 0 auto;
+  margin:auto;
   max-width:none;
   min-width:240px;
   overflow:hidden;
-  border:1px solid #d1d8e4;
+  border:1px solid var(--line);
   border-radius:3px;
-  background:#fff;
+  background:var(--paper);
   box-shadow:0 10px 30px rgba(33,45,68,.2);
 }
 .sketch-canvas {
@@ -9752,24 +9833,23 @@ html,body{width:100%;overflow-x:clip}
   gap:13px;
   min-height:31px;
   padding:4px 12px;
-  border-top:1px solid #d8deea;
-  background:#f7f8fb;
-  color:#8791a4;
+  border-top:1px solid var(--line);
+  background:var(--soft);
+  color:var(--ink);
   font-size:9px;
 }
 .sketch-bottom-hint strong {
-  color:#627aa5;
+  color:var(--accent);
 }
 .sketch-settings-panel {
   min-width:0;
   overflow-y:auto;
-  border-left:1px solid #d9dfeb;
-  background:#fff;
-  scrollbar-width:thin;
+  border-left:1px solid var(--line);
+  background:var(--paper);
 }
 .sketch-settings-section {
   padding:15px 15px 17px;
-  border-bottom:1px solid #e6e9f0;
+  border-bottom:1px solid var(--line);
 }
 .sketch-panel-heading {
   display:flex;
@@ -9779,28 +9859,28 @@ html,body{width:100%;overflow-x:clip}
   margin-bottom:13px;
 }
 .sketch-panel-heading strong {
-  color:#39465e;
-  font-size:12px;
-  font-weight:900;
+  color:var(--ink);
+  font-size:14px;
+  font-weight:700;
 }
 .sketch-panel-heading button {
   display:grid;
   place-items:center;
   width:27px;
   height:27px;
-  border:1px solid #dce2ed;
+  border:1px solid var(--line);
   border-radius:7px;
-  background:#fff;
-  color:#6b7fa5;
+  background:var(--paper);
+  color:var(--accent);
   cursor:pointer;
 }
 .sketch-control-label,
 .sketch-layer-name-label {
   display:block;
   margin:9px 0 7px;
-  color:#6d788d;
-  font-size:10px;
-  font-weight:800;
+  color:var(--ink);
+  font-size:12px;
+  font-weight:700;
 }
 .sketch-color-row {
   display:flex;
@@ -9811,9 +9891,9 @@ html,body{width:100%;overflow-x:clip}
   width:38px;
   height:34px;
   padding:3px;
-  border:1px solid #dce2ed;
+  border:1px solid var(--line);
   border-radius:7px;
-  background:#fff;
+  background:var(--paper);
   cursor:pointer;
 }
 .sketch-color-swatches {
@@ -9831,7 +9911,7 @@ html,body{width:100%;overflow-x:clip}
   cursor:pointer;
 }
 .sketch-color-swatches button.is-selected {
-  box-shadow:0 0 0 2px #6f83b0;
+  box-shadow:0 0 0 2px var(--accent);
 }
 .sketch-range-label {
   display:flex;
@@ -9839,12 +9919,12 @@ html,body{width:100%;overflow-x:clip}
   justify-content:space-between;
   gap:8px;
   margin:13px 0 6px;
-  color:#6d788d;
-  font-size:10px;
-  font-weight:750;
+  color:var(--ink);
+  font-size:12px;
+  font-weight:700;
 }
 .sketch-range-label strong {
-  color:#566b91;
+  color:var(--accent);
   font-variant-numeric:tabular-nums;
 }
 .sketch-range {
@@ -9852,29 +9932,36 @@ html,body{width:100%;overflow-x:clip}
   width:100%;
   height:18px;
   margin:0;
-  accent-color:#7188b2;
+  accent-color:var(--accent);
   cursor:pointer;
 }
 .sketch-setting-help,
 .sketch-selection-actions p {
   margin:10px 0 0;
-  color:#8791a4;
+  color:var(--ink);
   font-size:10px;
   line-height:1.65;
 }
 .sketch-selection-actions {
-  display:grid;
-  gap:7px;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:5px;
 }
 .sketch-selection-actions button {
-  min-height:32px;
-  border:1px solid #dce2ed;
-  border-radius:7px;
-  background:#fff;
-  color:#5d7094;
+  flex:1 1 auto;
+  width:auto;
+  min-width:0;
+  min-height:26px;
+  padding:0 8px;
+  border:1px solid var(--line);
+  border-radius:6px;
+  background:var(--paper);
+  color:var(--ink);
   font-family:inherit;
   font-size:10px;
-  font-weight:800;
+  font-weight:600;
+  white-space:nowrap;
   cursor:pointer;
 }
 .sketch-selection-actions button:disabled {
@@ -9895,11 +9982,11 @@ html,body{width:100%;overflow-x:clip}
   padding:4px;
   border:1px solid transparent;
   border-radius:7px;
-  background:#f7f8fb;
+  background:var(--soft);
 }
 .sketch-layer-row.is-active {
-  border-color:#cbd7ec;
-  background:#edf2fb;
+  border-color:var(--accent);
+  background:var(--soft);
 }
 .sketch-layer-select {
   display:flex;
@@ -9910,7 +9997,7 @@ html,body{width:100%;overflow-x:clip}
   padding:2px;
   border:0;
   background:transparent;
-  color:#58677f;
+  color:var(--ink);
   text-align:left;
   font-family:inherit;
   font-size:10px;
@@ -9928,10 +10015,10 @@ html,body{width:100%;overflow-x:clip}
   flex:0 0 28px;
   width:28px;
   height:26px;
-  border:1px solid #dce2ed;
+  border:1px solid var(--line);
   border-radius:5px;
-  background:#fff;
-  color:#8b98ad;
+  background:var(--paper);
+  color:var(--ink);
 }
 .sketch-layer-visibility {
   display:grid;
@@ -9941,26 +10028,26 @@ html,body{width:100%;overflow-x:clip}
   border:0;
   border-radius:5px;
   background:transparent;
-  color:#8190a7;
+  color:var(--ink);
   cursor:pointer;
 }
 .sketch-layer-name-input,
 .sketch-select {
   width:100%;
-  min-height:33px;
+  min-height:36px;
   padding:6px 9px;
-  border:1px solid #dce2ed;
+  border:1px solid var(--line);
   border-radius:7px;
   outline:0;
-  background:#fff;
-  color:#53627b;
+  background:var(--paper);
+  color:var(--ink);
   font-family:inherit;
-  font-size:10px;
+  font-size:13px;
 }
 .sketch-layer-name-input:focus,
 .sketch-select:focus {
-  border-color:#8299c1;
-  box-shadow:0 0 0 2px rgba(113,136,178,.12);
+  border-color:var(--accent);
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 12%,transparent);
 }
 .sketch-layer-actions {
   display:flex;
@@ -9973,10 +10060,10 @@ html,body{width:100%;overflow-x:clip}
   place-items:center;
   width:29px;
   height:28px;
-  border:1px solid #dce2ed;
+  border:1px solid var(--line);
   border-radius:7px;
-  background:#fff;
-  color:#71809a;
+  background:var(--paper);
+  color:var(--ink);
   cursor:pointer;
 }
 .sketch-layer-actions button:disabled {
@@ -9988,17 +10075,17 @@ html,body{width:100%;overflow-x:clip}
   align-items:center;
   justify-content:space-between;
   margin-top:11px;
-  color:#6d788d;
-  font-size:10px;
-  font-weight:750;
+  color:var(--ink);
+  font-size:12px;
+  font-weight:700;
 }
 .sketch-background-color input {
   width:34px;
   height:29px;
   padding:2px;
-  border:1px solid #dce2ed;
+  border:1px solid var(--line);
   border-radius:6px;
-  background:#fff;
+  background:var(--paper);
 }
 .sketch-message {
   position:absolute;
@@ -10010,7 +10097,7 @@ html,body{width:100%;overflow-x:clip}
   transform:translateX(-50%);
   border:1px solid #e4c7c9;
   border-radius:9px;
-  background:#fff8f8;
+  background:var(--paper);
   color:#9b4d59;
   box-shadow:0 5px 18px rgba(30,40,60,.12);
   font-size:11px;
@@ -10076,7 +10163,7 @@ html,body{width:100%;overflow-x:clip}
   }
   .picture-diary-book-frame > .diary-left-page {
     order:0 !important;
-    min-height:680px !important;
+    min-height:640px !important;
   }
   .picture-diary-book-frame > .diary-right-page {
     order:1 !important;
@@ -10086,7 +10173,10 @@ html,body{width:100%;overflow-x:clip}
     display:none !important;
   }
   .picture-diary-drawing-area {
-    min-height:460px;
+    flex:0 0 420px;
+    height:420px;
+    min-height:420px;
+    max-height:420px;
   }
   .diary-journal-section {
     min-height:600px;
@@ -10095,10 +10185,45 @@ html,body{width:100%;overflow-x:clip}
     flex-basis:160px;
   }
   .sketch-topbar {
-    grid-template-columns:minmax(0,1fr) auto;
-    padding:0 10px;
+    flex:0 0 64px;
+    height:64px;
+    min-height:64px;
+  }
+  .sketch-header-inner {
+    padding:0 68px 0 16px;
+    gap:8px;
   }
   .sketch-topbar-center {
+    display:none;
+  }
+  .sketch-main-area {
+    padding:10px 12px;
+  }
+  .sketch-layout {
+    border-radius:12px;
+  }
+  .sketch-back-button {
+    width:36px;
+    min-width:36px;
+    padding:0;
+  }
+  .sketch-back-button span {
+    display:none;
+  }
+  .sketch-topbar-actions {
+    margin-left:auto;
+    gap:5px;
+  }
+  .sketch-icon-action {
+    width:36px;
+  }
+  .sketch-canvas-toolbar {
+    min-height:auto;
+    flex-wrap:wrap;
+    row-gap:6px;
+    padding:7px 8px;
+  }
+  .sketch-rotate-button span {
     display:none;
   }
   .sketch-layout {
@@ -10147,7 +10272,7 @@ html,body{width:100%;overflow-x:clip}
     gap:5px;
   }
   .diary-date-navigation strong {
-    font-size:16px;
+    font-size:17px;
   }
   .diary-daily-info {
     grid-template-columns:1fr 1fr;
@@ -10168,13 +10293,16 @@ html,body{width:100%;overflow-x:clip}
     padding:16px 15px !important;
   }
   .picture-diary-book-frame > .diary-left-page {
-    min-height:620px !important;
+    min-height:580px !important;
   }
   .picture-diary-book-frame > .diary-right-page {
     min-height:880px !important;
   }
   .picture-diary-drawing-area {
-    min-height:390px;
+    flex:0 0 350px;
+    height:350px;
+    min-height:350px;
+    max-height:350px;
   }
   .diary-journal-section {
     min-height:580px;
@@ -10194,8 +10322,9 @@ html,body{width:100%;overflow-x:clip}
     padding:12px;
   }
   .sketch-topbar {
-    flex:0 0 56px;
-    min-height:56px;
+    flex:0 0 64px;
+    height:64px;
+    min-height:64px;
   }
   .sketch-back-button {
     min-height:34px;
@@ -10622,4 +10751,723 @@ html,body{width:100%;overflow-x:clip}
     gap:5px;
     font-size:11px;
   }
+}
+
+/* Free Note handwriting mode: keep text editing and annotations on separate layers. */
+.markdown-free-note-section .markdown-toolbar.is-hidden {
+  display:none !important;
+}
+.markdown-free-note-section .free-note-editor-viewport {
+  position:relative;
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  width:100%;
+  min-width:0;
+  min-height:0;
+  overflow:hidden;
+  isolation:isolate;
+}
+.markdown-free-note-section .free-note-editor-viewport > .markdown-editor-grid {
+  position:relative;
+  z-index:1;
+  flex:1 1 auto !important;
+  min-height:0 !important;
+}
+.markdown-free-note-section .markdown-editor-grid.is-readonly {
+  cursor:default !important;
+  caret-color:transparent !important;
+  user-select:text;
+}
+.free-note-drawing-layer {
+  position:absolute;
+  top:0;
+  left:0;
+  z-index:4;
+  display:block;
+  width:100%;
+  pointer-events:none;
+  touch-action:none;
+  overflow:visible;
+}
+.free-note-drawing-layer.is-active {
+  pointer-events:auto;
+  cursor:crosshair;
+}
+.free-note-sticky-layer {
+  position:absolute;
+  top:0;
+  left:0;
+  z-index:5;
+  width:100%;
+  pointer-events:none;
+}
+.free-note-sticky-layer.is-active {
+  pointer-events:none;
+}
+.free-note-sticky-note {
+  position:absolute;
+  display:flex;
+  flex-direction:column;
+  width:180px;
+  min-height:112px;
+  padding:0;
+  overflow:hidden;
+  border:1px solid rgba(117,91,28,.22);
+  border-radius:5px;
+  box-shadow:0 4px 12px rgba(34,38,48,.14);
+  color:#38332a;
+  transform:translateX(-50%);
+  pointer-events:none;
+}
+.free-note-sticky-layer.is-active .free-note-sticky-note {
+  pointer-events:auto;
+}
+.free-note-sticky-note-header {
+  display:flex;
+  flex:0 0 25px;
+  align-items:center;
+  justify-content:space-between;
+  min-height:25px;
+  padding:0 7px 0 9px;
+  border-bottom:1px solid rgba(117,91,28,.16);
+  color:rgba(56,51,42,.65);
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.08em;
+  cursor:grab;
+  touch-action:none;
+}
+.free-note-sticky-note-header:active {
+  cursor:grabbing;
+}
+.free-note-sticky-note-header button {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:22px;
+  height:22px;
+  padding:0;
+  border:0;
+  border-radius:5px;
+  background:transparent;
+  color:rgba(56,51,42,.72);
+}
+.free-note-sticky-note-header button:hover {
+  background:rgba(56,51,42,.09);
+}
+.free-note-sticky-note textarea {
+  display:block;
+  flex:1 1 auto;
+  width:100%;
+  min-height:84px;
+  padding:8px 9px;
+  border:0;
+  outline:0;
+  resize:vertical;
+  background:transparent;
+  color:#38332a;
+  font:500 12px/1.5 var(--font);
+  white-space:pre-wrap;
+}
+.free-note-sticky-note textarea::placeholder {
+  color:rgba(56,51,42,.45);
+}
+.free-note-drawing-toolbar {
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px;
+  min-height:46px;
+  padding:7px 10px;
+}
+.free-note-drawing-tool-group,
+.free-note-drawing-colors {
+  display:inline-flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:4px;
+}
+.free-note-drawing-tool-button,
+.free-note-drawing-exit {
+  display:inline-flex;
+  flex:0 0 auto;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  min-height:32px;
+  padding:0 9px;
+  border:1px solid transparent;
+  border-radius:7px;
+  background:transparent;
+  color:var(--ink);
+  font-family:inherit;
+  font-size:11px;
+  font-weight:700;
+  white-space:nowrap;
+  opacity:.82;
+}
+.free-note-drawing-tool-button:hover,
+.free-note-drawing-exit:hover {
+  border-color:var(--line);
+  background:var(--paper);
+  opacity:1;
+}
+.free-note-drawing-tool-button.is-active {
+  border-color:var(--accent);
+  background:var(--paper);
+  color:var(--accent);
+  opacity:1;
+}
+.free-note-highlighter-wrap {
+  position:relative;
+  display:inline-flex;
+  flex:0 0 auto;
+}
+.free-note-highlighter-wrap > .free-note-drawing-tool-button {
+  gap:4px;
+}
+.free-note-highlighter-menu {
+  position:absolute;
+  z-index:50;
+  top:calc(100% + 7px);
+  left:0;
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  min-width:152px;
+  padding:5px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:var(--paper);
+  box-shadow:0 7px 22px rgba(24,35,55,.17);
+}
+.free-note-highlighter-menu button {
+  display:flex;
+  align-items:center;
+  gap:9px;
+  width:100%;
+  min-height:34px;
+  padding:7px 9px;
+  border:0;
+  border-radius:6px;
+  background:transparent;
+  color:var(--ink);
+  font-size:12px;
+  font-weight:700;
+  white-space:nowrap;
+}
+.free-note-highlighter-menu button span {
+  flex:1;
+  text-align:left;
+}
+.free-note-highlighter-menu button:hover,
+.free-note-highlighter-menu button.is-active {
+  background:var(--soft);
+  color:var(--accent);
+}
+.free-note-highlighter-menu button:focus-visible {
+  outline:2px solid var(--accent);
+  outline-offset:1px;
+}
+.free-note-drawing-colors {
+  padding-left:7px;
+  border-left:1px solid var(--line);
+}
+.free-note-drawing-color {
+  display:inline-flex;
+  flex:0 0 20px;
+  width:20px;
+  height:20px;
+  padding:0;
+  border:2px solid rgba(36,37,43,.12);
+  border-radius:50%;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.55);
+}
+.free-note-drawing-color.is-active {
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+}
+.free-note-drawing-exit {
+  margin-left:auto;
+  border-color:var(--line);
+  background:var(--paper);
+  color:var(--accent);
+}
+.markdown-pdf-export-root .markdown-pdf-annotation-layer {
+  position:absolute;
+  inset:0;
+  z-index:10;
+  pointer-events:none;
+}
+.markdown-pdf-export-root .markdown-pdf-annotation-layer svg {
+  display:block;
+  width:100%;
+  height:100%;
+  overflow:visible;
+}
+.markdown-pdf-export-root .markdown-pdf-sticky-note {
+  position:absolute;
+  z-index:11;
+  width:180px;
+  min-height:72px;
+  padding:9px 10px;
+  border:1px solid rgba(117,91,28,.22);
+  border-radius:5px;
+  box-shadow:0 3px 8px rgba(34,38,48,.13);
+  color:#38332a;
+  font-family:inherit;
+  font-size:9pt;
+  line-height:1.45;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+  transform:translateX(-50%);
+}
+@media(max-width:620px) {
+  .free-note-drawing-toolbar {
+    gap:5px;
+    padding:6px 7px;
+  }
+  .free-note-drawing-tool-group {
+    gap:2px;
+  }
+  .free-note-drawing-tool-button,
+  .free-note-drawing-exit {
+    min-height:30px;
+    padding:0 6px;
+    gap:4px;
+    font-size:10px;
+  }
+  .free-note-drawing-color {
+    flex-basis:18px;
+    width:18px;
+    height:18px;
+  }
+  .free-note-sticky-note {
+    width:min(180px, 58vw);
+  }
+}
+
+.markdown-delete-page-top-button {
+  color:#bd6874;
+}
+.markdown-delete-page-top-button:hover:not(:disabled) {
+  border-color:#bd6874;
+  background:#fbecef;
+  color:#a43e4d;
+}
+.markdown-add-page-top-button:disabled,
+.markdown-delete-page-top-button:disabled {
+  cursor:not-allowed;
+  opacity:.4;
+  transform:none;
+}
+@media(max-width:430px) {
+  .markdown-note-heading-actions {
+    gap:6px;
+  }
+}
+
+/* Keep the Free Note page counter centered between the page edges. */
+.markdown-page-navigation {
+  justify-content:center !important;
+}
+
+
+/* Match the handwriting-mode and text-edit buttons in size and typography. */
+.markdown-toolbar-drawing-toggle,
+.free-note-drawing-exit {
+  display:inline-flex;
+  flex:0 0 112px;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  width:112px;
+  min-width:112px;
+  height:32px;
+  min-height:32px;
+  margin-left:auto;
+  padding:0 8px;
+  gap:5px;
+  border:1px solid var(--line);
+  border-radius:7px;
+  background:var(--paper);
+  color:var(--accent);
+  font-family:inherit;
+  font-size:11px;
+  font-weight:700;
+  line-height:1;
+  white-space:nowrap;
+  opacity:1;
+}
+.markdown-toolbar-drawing-toggle:hover:not(:disabled),
+.free-note-drawing-exit:hover {
+  border-color:var(--accent);
+  background:var(--paper);
+  color:var(--accent);
+  opacity:1;
+}
+@media(max-width:430px) {
+  .markdown-toolbar-drawing-toggle,
+  .free-note-drawing-exit {
+    flex-basis:104px;
+    width:104px;
+    min-width:104px;
+    height:30px;
+    min-height:30px;
+    padding:0 6px;
+    gap:4px;
+    font-size:10px;
+  }
+}
+
+/* Let the Picture Diary fill the full page height and give the date more emphasis. */
+@media (min-width:781px) {
+  .picture-diary-book-frame > .diary-left-page {
+    padding:22px 22px 18px !important;
+  }
+
+  .diary-date-heading {
+    padding-bottom:12px;
+  }
+
+  .diary-date-navigation {
+    gap:12px;
+  }
+
+  .diary-date-navigation strong {
+    font-size:clamp(22px,2.2vw,30px)!important;
+    letter-spacing:0!important;
+  }
+
+  .diary-date-navigation .month-nav-button,
+  .diary-date-picker {
+    flex:0 0 34px;
+    width:34px;
+    height:34px;
+  }
+
+  .diary-daily-info {
+    margin:14px 0 16px;
+  }
+
+  .diary-drawing-heading {
+    margin-bottom:9px;
+  }
+
+  .picture-diary-drawing-area {
+    flex:1 1 0;
+    min-height:260px;
+    max-height:none;
+  }
+}
+
+@media (max-width:900px) {
+  .diary-date-navigation strong {
+    font-size:clamp(18px,3vw,24px)!important;
+    letter-spacing:0!important;
+  }
+}
+
+@media (max-width:430px) {
+  .diary-date-navigation strong {
+    font-size:clamp(16px,4.5vw,19px)!important;
+    letter-spacing:0!important;
+  }
+}
+
+/* Picture Diary: remove the pale-blue divider and outline strokes. */
+.picture-diary-book-frame .diary-date-heading,
+.picture-diary-book-frame .diary-title-field,
+.picture-diary-book-frame .picture-diary-drawing-area,
+.picture-diary-book-frame .diary-weather-group,
+.picture-diary-book-frame .diary-time-field,
+.picture-diary-book-frame .diary-title-field input,
+.picture-diary-book-frame .diary-journal-paper,
+.picture-diary-book-frame .diary-small-writing-panel {
+  border-color:transparent !important;
+}
+
+.picture-diary-book-frame .diary-date-heading,
+.picture-diary-book-frame .diary-title-field {
+  border-bottom-color:transparent !important;
+}
+
+.picture-diary-book-frame .picture-diary-drawing-area {
+  border-color:transparent !important;
+}
+
+.picture-diary-book-frame .diary-title-field input:focus,
+.picture-diary-book-frame .picture-diary-drawing-area:hover:not(:disabled) {
+  box-shadow:none !important;
+}
+
+/* Picture Diary: consistent 14px regular-weight Korean labels. */
+.picture-diary-book-frame .diary-title-field label,
+.picture-diary-book-frame .diary-field-label,
+.picture-diary-book-frame .diary-small-writing-panel .section-heading > span {
+  color:var(--ink) !important;
+  font-size:14px !important;
+  font-weight:400 !important;
+  opacity:1 !important;
+}
+
+/* Picture Diary: time display text. */
+.picture-diary-book-frame .diary-time-value {
+  font-size:15px !important;
+}
+
+:root {
+  --type-display-size: clamp(19px, 2.2vw, 30px);
+  --type-label-size: 14px;
+  --type-body-size: 15px;
+}
+
+/* CheckPointPlan shared typography system: display, labels, and writing text. */
+
+/* 1. Dates and prominent page titles */
+.day-book-frame .page-date .date-value,
+.day-book-frame .page-date .dday-prefix,
+.day-book-frame .page-date .dday-value-row input,
+.month-book-frame .month-page-title,
+.picture-diary-book-frame .diary-date-navigation strong {
+  color: var(--ink) !important;
+  font-family: var(--font) !important;
+  font-size: var(--type-display-size) !important;
+  font-weight: 800 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0 !important;
+}
+
+/* 2. Labels and section names */
+.day-book-frame .section-heading > span,
+.day-book-frame .small-info-block input.header-label-input,
+.day-book-frame .time-head,
+.day-book-frame .time-hour,
+.month-book-frame .month-weekdays > span,
+.month-book-frame .month-day-date,
+.markdown-free-note-section > .markdown-note-heading > span,
+.picture-diary-book-frame .diary-title-field label,
+.picture-diary-book-frame .diary-field-label,
+.picture-diary-book-frame .diary-small-writing-panel .section-heading > span,
+.picture-diary-book-frame .diary-small-writing-panel .section-heading > small {
+  color: var(--ink) !important;
+  font-family: var(--font) !important;
+  font-size: var(--type-label-size) !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+  opacity: 1 !important;
+}
+
+/* 3. User-entered text and document body */
+.day-book-frame .small-info-block input.header-value-input,
+.day-book-frame .focus-section textarea,
+.day-book-frame .key-section textarea,
+.day-book-frame .todo-text,
+.day-book-frame .memo-section textarea,
+.day-book-frame .free-note-input,
+.day-book-frame .color-guide-input,
+.month-book-frame .month-day-note,
+.month-book-frame .month-day-cell > .month-day-note,
+.month-book-frame .month-memo-note,
+.markdown-free-note-section .markdown-editor-grid,
+.picture-diary-book-frame .diary-title-field input,
+.picture-diary-book-frame .diary-journal-paper .markdown-editor-grid,
+.picture-diary-book-frame .diary-small-writing-panel textarea,
+.picture-diary-book-frame .diary-time-value,
+.picture-diary-book-frame .diary-time-direct-input input {
+  color: var(--ink) !important;
+  font-family: var(--font) !important;
+  font-size: var(--type-body-size) !important;
+  font-weight: 400 !important;
+}
+
+/* Keep placeholders at the same size and weight as their input text. */
+.day-book-frame input::placeholder,
+.day-book-frame textarea::placeholder,
+.month-book-frame textarea::placeholder,
+.markdown-free-note-section .markdown-editor-grid:empty::before,
+.picture-diary-book-frame input::placeholder,
+.picture-diary-book-frame textarea::placeholder,
+.picture-diary-book-frame .diary-journal-paper .markdown-editor-grid:empty::before {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  font-weight: 400 !important;
+}
+
+/* Time controls inherit the unified 15px writing-text size. */
+.picture-diary-book-frame .diary-time-value button {
+  font-family: var(--font) !important;
+  font-size: inherit !important;
+  font-weight: 400 !important;
+}
+
+
+/* Picture Diary: keep the English memo section labels bold and left-aligned. */
+.picture-diary-book-frame .diary-small-writing-panel .section-heading {
+  justify-content: flex-start !important;
+}
+.picture-diary-book-frame .diary-small-writing-panel .section-heading > small {
+  font-weight: 700 !important;
+}
+
+
+/* Picture Diary: balance the drawing and writing area start heights. */
+@media (min-width:781px) {
+  /* Remove the extra top offset inherited from the planner's FREE NOTE layout. */
+  .picture-diary-book-frame > .diary-right-page > .diary-journal-section {
+    margin-top:0 !important;
+  }
+
+  /* Keep a compact, even gap below the weather and time controls. */
+  .picture-diary-book-frame .diary-daily-info {
+    margin-bottom:8px !important;
+  }
+}
+
+/* Keep the Sketch header visible even inside the full-height planner shell. */
+.sketch-workspace.app-shell.planner-view > .site-header.sketch-topbar {
+  display:flex !important;
+  flex:0 0 64px !important;
+  height:64px !important;
+  min-height:64px !important;
+  width:100%;
+  position:relative;
+  z-index:2;
+}
+.sketch-workspace.app-shell.planner-view > .site-header.sketch-topbar > .sketch-header-inner {
+  display:flex;
+  align-items:center;
+  height:100%;
+  min-height:0;
+}
+
+/* Free Note: controls belong to the selected image, not the text toolbar. */
+.markdown-note-image-frame {
+  display:block;
+  position:relative;
+  isolation:isolate;
+  box-sizing:border-box;
+  max-width:100%;
+  margin:26px auto;
+  overflow:visible;
+  cursor:grab;
+  user-select:none;
+  -webkit-user-drag:element;
+}
+.markdown-note-image-frame:active {
+  cursor:grabbing;
+}
+.markdown-note-image-content {
+  position:relative;
+  display:block;
+  width:100%;
+  min-height:0;
+  overflow:hidden;
+  border-radius:7px;
+  pointer-events:auto;
+}
+.markdown-note-image-content > .markdown-note-image {
+  display:block;
+  width:100%;
+  max-width:100%;
+  height:auto;
+  margin:0;
+  border:0;
+  border-radius:7px;
+  object-fit:contain;
+  user-select:none;
+  -webkit-user-drag:none;
+}
+.markdown-free-note-section .markdown-editor-grid .markdown-note-image-frame.is-selected > .markdown-note-image-content {
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+}
+.markdown-note-image-control {
+  position:absolute;
+  z-index:6;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  padding:0;
+  border:1px solid var(--accent);
+  border-radius:50%;
+  background:var(--paper);
+  color:var(--ink);
+  box-shadow:0 2px 7px rgba(24,35,55,.24);
+  font-family:inherit;
+  cursor:pointer;
+  touch-action:none;
+}
+
+/* Resize handles appear only after selecting an image. */
+.markdown-note-image-resize-handle {
+  display:none;
+  width:11px;
+  height:11px;
+  min-width:11px;
+  min-height:11px;
+  border:1px solid var(--accent);
+  border-radius:2px;
+  background:#fff;
+  box-shadow:0 1px 4px rgba(24,35,55,.28);
+  cursor:default;
+}
+.markdown-note-image-frame.is-selected > .markdown-note-image-resize-handle {
+  display:flex;
+}
+.markdown-note-image-resize-handle.is-nw { left:-5px;top:-5px;cursor:nwse-resize; }
+.markdown-note-image-resize-handle.is-n { left:50%;top:-5px;transform:translateX(-50%);cursor:ns-resize; }
+.markdown-note-image-resize-handle.is-ne { right:-5px;top:-5px;cursor:nesw-resize; }
+.markdown-note-image-resize-handle.is-e { right:-5px;top:50%;transform:translateY(-50%);cursor:ew-resize; }
+.markdown-note-image-resize-handle.is-se { right:-5px;bottom:-5px;cursor:nwse-resize; }
+.markdown-note-image-resize-handle.is-s { left:50%;bottom:-5px;transform:translateX(-50%);cursor:ns-resize; }
+.markdown-note-image-resize-handle.is-sw { left:-5px;bottom:-5px;cursor:nesw-resize; }
+.markdown-note-image-resize-handle.is-w { left:-5px;top:50%;transform:translateY(-50%);cursor:ew-resize; }
+.markdown-note-image-delete {
+  top:6px;
+  right:6px;
+  display:flex;
+  width:29px;
+  height:29px;
+  border-radius:9px;
+  color:#bd6874;
+  font-size:21px;
+  line-height:1;
+  opacity:0;
+  pointer-events:none;
+}
+.markdown-note-image-control svg {
+  display:block;
+  width:16px;
+  height:16px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  pointer-events:none;
+}
+.markdown-note-image-delete svg {
+  width:15px;
+  height:15px;
+}
+.markdown-note-image-frame:hover > .markdown-note-image-delete,
+.markdown-note-image-frame.is-selected > .markdown-note-image-delete {
+  opacity:1;
+  pointer-events:auto;
+}
+.markdown-note-image-control:hover {
+  background:var(--soft);
+}
+.markdown-note-image-control:focus-visible {
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+}
+.markdown-long-image-export-root .markdown-note-image-frame {
+  break-inside:avoid;
+  page-break-inside:avoid;
+}
+.markdown-long-image-export-root .markdown-note-image-control {
+  display:none !important;
 }

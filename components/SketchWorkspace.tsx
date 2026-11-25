@@ -1,21 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import {
-  ArrowLeft, Brush, Circle, Download, Eraser, Eye, EyeOff, Layers3,
-  Lasso, LayoutGrid, Minus, MoveDown, MoveUp, Pipette, Plus,
-  Redo2, Save, Square, Trash2, Undo2, ZoomIn, ZoomOut
+  ArrowLeft, Brush, Check, Download, Eraser, Eye, EyeOff, Layers3,
+  Lasso, LayoutGrid, MoveDown, MoveUp, PaintBucket, Pipette, Plus,
+  Redo2, RotateCw, Save, Trash2, Undo2, ZoomIn, ZoomOut
 } from "lucide-react";
+import AppSidebar from "@/components/AppSidebar";
+import type { ThemeName } from "@/lib/types";
 
 export type SketchPoint = { x: number; y: number; pressure?: number };
 export type SketchStroke = {
   id: string;
-  tool: "pen" | "eraser" | "line" | "rect" | "ellipse";
+  tool: "pen" | "eraser" | "line" | "rect" | "ellipse" | "fill";
   color: string;
   size: number;
   opacity: number;
   points: SketchPoint[];
+  fillRuns?: SketchFillRun[];
 };
+export type SketchFillRun = { x: number; y: number; width: number };
 export type SketchLayer = {
   id: string;
   name: string;
@@ -32,17 +36,49 @@ export type SketchDocument = {
   layers: SketchLayer[];
 };
 
-type SketchTool = "pen" | "eraser" | "lasso" | "line" | "rect" | "ellipse" | "eyedropper";
-type LayoutPreset = "portrait" | "square" | "landscape";
+type SketchTool = "pen" | "eraser" | "lasso" | "fill" | "line" | "rect" | "ellipse" | "eyedropper";
+const CANVAS_RATIOS = [
+  { value: "1:1", width: 1200, height: 1200 },
+  { value: "3:4", width: 900, height: 1200 },
+  { value: "4:3", width: 1200, height: 900 },
+  { value: "9:16", width: 900, height: 1600 },
+  { value: "16:9", width: 1600, height: 900 }
+] as const;
+
+type CanvasRatio = typeof CANVAS_RATIOS[number]["value"];
+
+function getCanvasRatio(width: number, height: number): CanvasRatio {
+  const ratio = width / height;
+  return CANVAS_RATIOS.reduce((closest, option) => {
+    const closestDistance = Math.abs(Math.log(ratio / (closest.width / closest.height)));
+    const optionDistance = Math.abs(Math.log(ratio / (option.width / option.height)));
+    return optionDistance < closestDistance ? option : closest;
+  }).value;
+}
+type SelectionBounds = { left: number; top: number; right: number; bottom: number };
+type SelectionHandle = "nw" | "n" | "ne" | "e" | "se" | "s" | "sw" | "w";
+
 type PointerMode =
   | { kind: "stroke"; layerId: string; strokeId: string }
   | { kind: "lasso" }
-  | { kind: "move"; start: SketchPoint; origin: SketchDocument; keys: string[] };
+  | { kind: "move"; start: SketchPoint; origin: SketchDocument; keys: string[] }
+  | { kind: "scale"; start: SketchPoint; anchor: SketchPoint; bounds: SelectionBounds; handle: SelectionHandle; origin: SketchDocument; keys: string[] }
+  | { kind: "rotate"; center: SketchPoint; startAngle: number; origin: SketchDocument; keys: string[] };
 
 type Props = {
   initialDocument?: SketchDocument | null;
   onSave: (blob: Blob, document: SketchDocument) => Promise<boolean>;
   onClose: () => void;
+  email: string;
+  themeStyle: CSSProperties;
+  theme: ThemeName;
+  customColor: string;
+  onThemeChange: (theme: ThemeName) => void;
+  onCustomColorChange: (color: string) => void;
+  onOpenNotebookList: () => void;
+  onOpenCover: () => void;
+  onSignOut: () => void;
+  onDeleteAccount: () => void;
 };
 
 const uid = () => globalThis.crypto?.randomUUID?.() || String(Date.now()) + "-" + Math.random().toString(36).slice(2);
@@ -75,21 +111,31 @@ export function normalizeSketchDocument(value: unknown): SketchDocument {
     const strokes = Array.isArray(item.strokes) ? item.strokes.slice(0, 5000).flatMap((stroke): SketchStroke[] => {
       if (!stroke || typeof stroke !== "object") return [];
       const candidate = stroke as Partial<SketchStroke>;
-      const tool = candidate.tool === "eraser" || candidate.tool === "line" || candidate.tool === "rect" || candidate.tool === "ellipse" ? candidate.tool : "pen";
+      const tool = candidate.tool === "eraser" || candidate.tool === "line" || candidate.tool === "rect" || candidate.tool === "ellipse" || candidate.tool === "fill" ? candidate.tool : "pen";
       const points = Array.isArray(candidate.points) ? candidate.points.slice(0, 20000).flatMap((point): SketchPoint[] => {
         if (!point || typeof point !== "object") return [];
         const p = point as Partial<SketchPoint>;
         if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) return [];
         return [{ x: clamp(Number(p.x), 0, width), y: clamp(Number(p.y), 0, height), pressure: Number.isFinite(p.pressure) ? clamp(Number(p.pressure), 0, 1) : 0.5 }];
       }) : [];
-      if (points.length === 0) return [];
+      const fillRuns = Array.isArray(candidate.fillRuns) ? candidate.fillRuns.slice(0, width * height).flatMap(run => {
+        if (!run || typeof run !== "object") return [];
+        const item = run as Partial<SketchFillRun>;
+        if (!Number.isFinite(item.x) || !Number.isFinite(item.y) || !Number.isFinite(item.width)) return [];
+        const x = Math.floor(clamp(Number(item.x), 0, width - 1));
+        const y = Math.floor(clamp(Number(item.y), 0, height - 1));
+        const runWidth = Math.floor(clamp(Number(item.width), 1, width - x));
+        return [{ x, y, width: runWidth }];
+      }) : [];
+      if (points.length === 0 || (tool === "fill" && fillRuns.length === 0)) return [];
       return [{
         id: typeof candidate.id === "string" ? candidate.id : uid(),
         tool,
         color: typeof candidate.color === "string" && /^#[0-9a-fA-F]{6}$/.test(candidate.color) ? candidate.color : "#202124",
         size: Number.isFinite(candidate.size) ? clamp(Number(candidate.size), 1, 160) : 6,
         opacity: Number.isFinite(candidate.opacity) ? clamp(Number(candidate.opacity), 1, 100) : 100,
-        points
+        points,
+        ...(tool === "fill" ? { fillRuns } : {})
       }];
     }) : [];
     return [{
@@ -120,6 +166,12 @@ function drawStroke(ctx: CanvasRenderingContext2D, stroke: SketchStroke) {
   ctx.fillStyle = stroke.color;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
+  if (stroke.tool === "fill" && stroke.fillRuns?.length) {
+    ctx.fillStyle = stroke.color;
+    stroke.fillRuns.forEach(run => ctx.fillRect(run.x, run.y, run.width, 1));
+    ctx.restore();
+    return;
+  }
   if (stroke.tool === "line" || stroke.tool === "rect" || stroke.tool === "ellipse") {
     const start = points[0];
     const end = points[points.length - 1];
@@ -221,6 +273,14 @@ function pointInPolygon(point: SketchPoint, polygon: SketchPoint[]) {
 }
 
 function strokeBounds(stroke: SketchStroke) {
+  if (stroke.tool === "fill" && stroke.fillRuns?.length) {
+    return stroke.fillRuns.reduce((bounds, run) => ({
+      left: Math.min(bounds.left, run.x),
+      right: Math.max(bounds.right, run.x + run.width),
+      top: Math.min(bounds.top, run.y),
+      bottom: Math.max(bounds.bottom, run.y + 1)
+    }), { left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity });
+  }
   const xs = stroke.points.map(point => point.x);
   const ys = stroke.points.map(point => point.y);
   return {
@@ -228,6 +288,194 @@ function strokeBounds(stroke: SketchStroke) {
     right: Math.max(...xs) + stroke.size,
     top: Math.min(...ys) - stroke.size,
     bottom: Math.max(...ys) + stroke.size
+  };
+}
+
+function getSelectionBounds(doc: SketchDocument, keys: string[]): SelectionBounds | null {
+  if (!keys.length) return null;
+  const selected = new Set(keys);
+  const bounds = doc.layers.flatMap(layer => layer.strokes
+    .filter(stroke => selected.has(layer.id + ":" + stroke.id))
+    .map(strokeBounds));
+  if (!bounds.length) return null;
+  return {
+    left: Math.min(...bounds.map(item => item.left)),
+    top: Math.min(...bounds.map(item => item.top)),
+    right: Math.max(...bounds.map(item => item.right)),
+    bottom: Math.max(...bounds.map(item => item.bottom))
+  };
+}
+
+const SELECTION_HANDLES: SelectionHandle[] = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
+
+function getSelectionRotationHandlePoint(bounds: SelectionBounds, offset: number): SketchPoint {
+  return {
+    x: (bounds.left + bounds.right) / 2,
+    y: bounds.top >= offset + 12 ? bounds.top - offset : bounds.top + offset
+  };
+}
+
+function getSelectionHandlePoint(bounds: SelectionBounds, handle: SelectionHandle): SketchPoint {
+  const centerX = (bounds.left + bounds.right) / 2;
+  const centerY = (bounds.top + bounds.bottom) / 2;
+  const positions: Record<SelectionHandle, SketchPoint> = {
+    nw: { x: bounds.left, y: bounds.top },
+    n: { x: centerX, y: bounds.top },
+    ne: { x: bounds.right, y: bounds.top },
+    e: { x: bounds.right, y: centerY },
+    se: { x: bounds.right, y: bounds.bottom },
+    s: { x: centerX, y: bounds.bottom },
+    sw: { x: bounds.left, y: bounds.bottom },
+    w: { x: bounds.left, y: centerY }
+  };
+  return positions[handle];
+}
+
+function getSelectionAnchor(bounds: SelectionBounds, handle: SelectionHandle): SketchPoint {
+  const centerX = (bounds.left + bounds.right) / 2;
+  const centerY = (bounds.top + bounds.bottom) / 2;
+  const anchors: Record<SelectionHandle, SketchPoint> = {
+    nw: { x: bounds.right, y: bounds.bottom },
+    n: { x: centerX, y: bounds.bottom },
+    ne: { x: bounds.left, y: bounds.bottom },
+    e: { x: bounds.left, y: centerY },
+    se: { x: bounds.left, y: bounds.top },
+    s: { x: centerX, y: bounds.top },
+    sw: { x: bounds.right, y: bounds.top },
+    w: { x: bounds.right, y: centerY }
+  };
+  return anchors[handle];
+}
+
+function findSelectionHandle(point: SketchPoint, bounds: SelectionBounds, tolerance: number): SelectionHandle | null {
+  for (const handle of SELECTION_HANDLES) {
+    const position = getSelectionHandlePoint(bounds, handle);
+    if (Math.hypot(point.x - position.x, point.y - position.y) <= tolerance) return handle;
+  }
+  return null;
+}
+
+function isInsideBounds(point: SketchPoint, bounds: SelectionBounds) {
+  return point.x >= bounds.left && point.x <= bounds.right && point.y >= bounds.top && point.y <= bounds.bottom;
+}
+
+function interpolatePoint(start: SketchPoint, end: SketchPoint, t: number): SketchPoint {
+  return {
+    x: start.x + (end.x - start.x) * t,
+    y: start.y + (end.y - start.y) * t,
+    pressure: (start.pressure ?? 0.5) + ((end.pressure ?? 0.5) - (start.pressure ?? 0.5)) * t
+  };
+}
+
+function strokeToPolyline(stroke: SketchStroke): SketchPoint[] {
+  const points = stroke.points;
+  if (stroke.tool === "line") return points.length > 1 ? [points[0], points[points.length - 1]] : points;
+  if (stroke.tool === "rect" && points.length > 1) {
+    const start = { ...points[0], pressure: 1 };
+    const end = { ...points[points.length - 1], pressure: 1 };
+    return [
+      start,
+      { x: end.x, y: start.y, pressure: 1 },
+      end,
+      { x: start.x, y: end.y, pressure: 1 },
+      start
+    ];
+  }
+  if (stroke.tool === "ellipse" && points.length > 1) {
+    const start = points[0];
+    const end = points[points.length - 1];
+    const centerX = (start.x + end.x) / 2;
+    const centerY = (start.y + end.y) / 2;
+    const radiusX = Math.abs(end.x - start.x) / 2;
+    const radiusY = Math.abs(end.y - start.y) / 2;
+    return Array.from({ length: 97 }, (_, index) => {
+      const angle = (index / 96) * Math.PI * 2;
+      return { x: centerX + Math.cos(angle) * radiusX, y: centerY + Math.sin(angle) * radiusY, pressure: 1 };
+    });
+  }
+  return points;
+}
+
+function segmentPolygonIntersections(start: SketchPoint, end: SketchPoint, polygon: SketchPoint[]) {
+  const rx = end.x - start.x;
+  const ry = end.y - start.y;
+  const intersections: number[] = [];
+  for (let index = 0; index < polygon.length; index += 1) {
+    const a = polygon[index];
+    const b = polygon[(index + 1) % polygon.length];
+    const sx = b.x - a.x;
+    const sy = b.y - a.y;
+    const denominator = rx * sy - ry * sx;
+    if (Math.abs(denominator) < 1e-8) continue;
+    const qpx = a.x - start.x;
+    const qpy = a.y - start.y;
+    const t = (qpx * sy - qpy * sx) / denominator;
+    const u = (qpx * ry - qpy * rx) / denominator;
+    if (t > 1e-6 && t < 1 - 1e-6 && u >= -1e-6 && u <= 1 + 1e-6) intersections.push(t);
+  }
+  return intersections;
+}
+
+function splitStrokeByPolygon(stroke: SketchStroke, polygon: SketchPoint[]) {
+  if (stroke.tool === "fill" && stroke.fillRuns?.length) {
+    const intersects = stroke.fillRuns.some(run =>
+      pointInPolygon({ x: run.x + run.width / 2, y: run.y + 0.5 }, polygon) ||
+      polygon.some(point => point.x >= run.x && point.x <= run.x + run.width && point.y >= run.y && point.y <= run.y + 1)
+    );
+    return intersects
+      ? { inside: [{ ...stroke, id: uid() }], outside: [] as SketchStroke[] }
+      : { inside: [] as SketchStroke[], outside: [stroke] };
+  }
+  const path = strokeToPolyline(stroke);
+  if (path.length === 1) {
+    return pointInPolygon(path[0], polygon)
+      ? { inside: [{ ...stroke, id: uid() }], outside: [] as SketchStroke[] }
+      : { inside: [] as SketchStroke[], outside: [stroke] };
+  }
+
+  const pieces: { inside: boolean; points: SketchPoint[] }[] = [];
+  for (let index = 1; index < path.length; index += 1) {
+    const start = path[index - 1];
+    const end = path[index];
+    const cuts = [0, ...segmentPolygonIntersections(start, end, polygon), 1]
+      .sort((a, b) => a - b)
+      .filter((value, cutIndex, values) => cutIndex === 0 || Math.abs(value - values[cutIndex - 1]) > 1e-6);
+
+    for (let cutIndex = 1; cutIndex < cuts.length; cutIndex += 1) {
+      const from = cuts[cutIndex - 1];
+      const to = cuts[cutIndex];
+      if (to - from < 1e-6) continue;
+      const midpoint = interpolatePoint(start, end, (from + to) / 2);
+      const inside = pointInPolygon(midpoint, polygon);
+      const first = interpolatePoint(start, end, from);
+      const last = interpolatePoint(start, end, to);
+      const previous = pieces[pieces.length - 1];
+      const previousPoint = previous?.points[previous.points.length - 1];
+      if (previous && previous.inside === inside && previousPoint &&
+        Math.hypot(previousPoint.x - first.x, previousPoint.y - first.y) < 1e-3) {
+        previous.points.push(last);
+      } else {
+        pieces.push({ inside, points: [first, last] });
+      }
+    }
+  }
+
+  const isShape = stroke.tool === "rect" || stroke.tool === "ellipse";
+  const insidePieces = pieces.filter(piece => piece.inside && piece.points.length > 1);
+  const outsidePieces = pieces.filter(piece => !piece.inside && piece.points.length > 1);
+  if (!insidePieces.length) return { inside: [] as SketchStroke[], outside: [stroke] };
+  if (isShape && insidePieces.length === 1 && outsidePieces.length === 0) {
+    return { inside: [{ ...stroke, id: uid() }], outside: [] as SketchStroke[] };
+  }
+  const makeStroke = (points: SketchPoint[]): SketchStroke => ({
+    ...stroke,
+    id: uid(),
+    tool: isShape ? "pen" : stroke.tool,
+    points
+  });
+  return {
+    inside: insidePieces.map(piece => makeStroke(piece.points)),
+    outside: outsidePieces.map(piece => makeStroke(piece.points))
   };
 }
 
@@ -241,12 +489,110 @@ function distanceToSegment(point: SketchPoint, start: SketchPoint, end: SketchPo
 }
 
 function hitStroke(point: SketchPoint, stroke: SketchStroke) {
+  if (stroke.tool === "fill" && stroke.fillRuns?.length) {
+    const x = Math.floor(point.x);
+    const y = Math.floor(point.y);
+    return stroke.fillRuns.some(run => run.y === y && x >= run.x && x < run.x + run.width);
+  }
   const tolerance = Math.max(14, stroke.size + 8);
   for (let i = 0; i < stroke.points.length; i += 1) {
     if (i === 0 && Math.hypot(point.x - stroke.points[i].x, point.y - stroke.points[i].y) <= tolerance) return true;
     if (i > 0 && distanceToSegment(point, stroke.points[i - 1], stroke.points[i]) <= tolerance) return true;
   }
   return false;
+}
+
+function floodFillRuns(image: ImageData, startX: number, startY: number, tolerance = 16): SketchFillRun[] {
+  const { width, height, data } = image;
+  if (startX < 0 || startY < 0 || startX >= width || startY >= height) return [];
+  const startOffset = (startY * width + startX) * 4;
+  const targetR = data[startOffset];
+  const targetG = data[startOffset + 1];
+  const targetB = data[startOffset + 2];
+  const targetA = data[startOffset + 3];
+  const visited = new Uint8Array(width * height);
+  const matches = (x: number, y: number) => {
+    if (x < 0 || y < 0 || x >= width || y >= height) return false;
+    const pixel = y * width + x;
+    if (visited[pixel]) return false;
+    const offset = pixel * 4;
+    const alpha = data[offset + 3];
+    if (targetA <= 8) return alpha <= tolerance;
+    return Math.abs(data[offset] - targetR) <= tolerance &&
+      Math.abs(data[offset + 1] - targetG) <= tolerance &&
+      Math.abs(data[offset + 2] - targetB) <= tolerance &&
+      Math.abs(alpha - targetA) <= tolerance;
+  };
+
+  const stack = [startY * width + startX];
+  const runs: SketchFillRun[] = [];
+  while (stack.length) {
+    const seed = stack.pop()!;
+    const y = Math.floor(seed / width);
+    const seedX = seed % width;
+    if (!matches(seedX, y)) continue;
+
+    let left = seedX;
+    while (left > 0 && matches(left - 1, y)) left -= 1;
+    let right = seedX;
+    while (right + 1 < width && matches(right + 1, y)) right += 1;
+
+    for (let x = left; x <= right; x += 1) visited[y * width + x] = 1;
+    runs.push({ x: left, y, width: right - left + 1 });
+
+    for (const adjacentY of [y - 1, y + 1]) {
+      if (adjacentY < 0 || adjacentY >= height) continue;
+      let inSpan = false;
+      for (let x = left; x <= right; x += 1) {
+        const matchesAboveOrBelow = matches(x, adjacentY);
+        if (matchesAboveOrBelow && !inSpan) stack.push(adjacentY * width + x);
+        inSpan = matchesAboveOrBelow;
+      }
+    }
+  }
+  return runs;
+}
+
+function translateFillRuns(runs: SketchFillRun[], dx: number, dy: number, width: number, height: number): SketchFillRun[] {
+  const offsetX = Math.round(dx);
+  const offsetY = Math.round(dy);
+  return runs.flatMap(run => {
+    const y = run.y + offsetY;
+    if (y < 0 || y >= height) return [];
+    const left = Math.max(0, run.x + offsetX);
+    const right = Math.min(width, run.x + offsetX + run.width);
+    return right > left ? [{ x: left, y, width: right - left }] : [];
+  });
+}
+
+function transformFillRuns(
+  runs: SketchFillRun[],
+  width: number,
+  height: number,
+  transform: (point: SketchPoint) => SketchPoint
+): SketchFillRun[] {
+  const mask = new Uint8Array(width * height);
+  for (const run of runs) {
+    for (let offset = 0; offset < run.width; offset += 1) {
+      const transformed = transform({ x: run.x + offset + 0.5, y: run.y + 0.5 });
+      const x = Math.floor(transformed.x);
+      const y = Math.floor(transformed.y);
+      if (x >= 0 && y >= 0 && x < width && y < height) mask[y * width + x] = 1;
+    }
+  }
+
+  const nextRuns: SketchFillRun[] = [];
+  for (let y = 0; y < height; y += 1) {
+    let x = 0;
+    while (x < width) {
+      while (x < width && !mask[y * width + x]) x += 1;
+      if (x >= width) break;
+      const left = x;
+      while (x < width && mask[y * width + x]) x += 1;
+      nextRuns.push({ x: left, y, width: x - left });
+    }
+  }
+  return nextRuns;
 }
 
 function documentToBlob(doc: SketchDocument): Promise<Blob> {
@@ -261,13 +607,25 @@ const TOOL_OPTIONS: { id: SketchTool; label: string; icon: typeof Brush }[] = [
   { id: "pen", label: "펜", icon: Brush },
   { id: "eraser", label: "지우개", icon: Eraser },
   { id: "lasso", label: "올가미", icon: Lasso },
-  { id: "line", label: "직선", icon: Minus },
-  { id: "rect", label: "사각형", icon: Square },
-  { id: "ellipse", label: "타원", icon: Circle },
+  { id: "fill", label: "채우기", icon: PaintBucket },
   { id: "eyedropper", label: "스포이드", icon: Pipette }
 ];
 
-export default function SketchWorkspace({ initialDocument, onSave, onClose }: Props) {
+export default function SketchWorkspace({
+  initialDocument,
+  onSave,
+  onClose,
+  email,
+  themeStyle,
+  theme,
+  customColor,
+  onThemeChange,
+  onCustomColorChange,
+  onOpenNotebookList,
+  onOpenCover,
+  onSignOut,
+  onDeleteAccount
+}: Props) {
   const initial = useMemo(() => normalizeSketchDocument(initialDocument), [initialDocument]);
   const [doc, setDoc] = useState<SketchDocument>(initial);
   const docRef = useRef<SketchDocument>(initial);
@@ -283,17 +641,39 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
   const [eraserStrength, setEraserStrength] = useState(100);
   const [selectedLayerId, setSelectedLayerId] = useState(initial.layers[0]?.id ?? "");
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+  const selectionSourceDocRef = useRef<SketchDocument | null>(null);
   const [lassoPoints, setLassoPoints] = useState<SketchPoint[]>([]);
   const lassoPointsRef = useRef<SketchPoint[]>([]);
   const pointerModeRef = useRef<PointerMode | null>(null);
+  const touchPointsRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const pinchStateRef = useRef<{ distance: number; zoom: number } | null>(null);
+  const panStateRef = useRef<{ pointerId: number; startX: number; startY: number; scrollLeft: number; scrollTop: number } | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasStageRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(100);
+  const [isPanning, setIsPanning] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [dirty, setDirty] = useState(false);
-  const [layout, setLayout] = useState<LayoutPreset>(() => initial.width === initial.height ? "square" : initial.width > initial.height ? "landscape" : "portrait");
+  const layout = getCanvasRatio(doc.width, doc.height);
 
   const selectedLayer = doc.layers.find(layer => layer.id === selectedLayerId) ?? doc.layers[0];
+
+  function fitCanvasToWindow() {
+    const stage = canvasStageRef.current;
+    if (!stage) return;
+
+    const styles = window.getComputedStyle(stage);
+    const horizontalPadding = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
+    const verticalPadding = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
+    const availableWidth = stage.clientWidth - horizontalPadding;
+    const availableHeight = stage.clientHeight - verticalPadding;
+    if (availableWidth <= 0 || availableHeight <= 0) return;
+
+    const canvasHeightAtFullWidth = availableWidth * doc.height / doc.width;
+    const fitZoom = Math.floor(Math.min(100, availableHeight / canvasHeightAtFullWidth * 100));
+    setZoom(clamp(fitZoom, 50, 100));
+  }
 
   const setWorkingDocument = useCallback((next: SketchDocument) => {
     docRef.current = next;
@@ -301,6 +681,7 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
   }, []);
 
   const commitDocument = useCallback((next: SketchDocument) => {
+    selectionSourceDocRef.current = null;
     const nextHistory = historyRef.current.slice(0, historyIndexRef.current + 1).concat([next]);
     historyRef.current = nextHistory;
     historyIndexRef.current = nextHistory.length - 1;
@@ -312,6 +693,17 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
   }, []);
 
   const undo = useCallback(() => {
+    if (selectionSourceDocRef.current) {
+      const original = selectionSourceDocRef.current;
+      selectionSourceDocRef.current = null;
+      docRef.current = original;
+      setDoc(original);
+      setSelectedKeys([]);
+      pointerModeRef.current = null;
+      lassoPointsRef.current = [];
+      setLassoPoints([]);
+      return;
+    }
     const nextIndex = Math.max(0, historyIndexRef.current - 1);
     if (nextIndex === historyIndexRef.current) return;
     historyIndexRef.current = nextIndex;
@@ -324,6 +716,16 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
   }, []);
 
   const redo = useCallback(() => {
+    if (selectionSourceDocRef.current) {
+      const original = selectionSourceDocRef.current;
+      selectionSourceDocRef.current = null;
+      docRef.current = original;
+      setDoc(original);
+      setSelectedKeys([]);
+      pointerModeRef.current = null;
+      lassoPointsRef.current = [];
+      setLassoPoints([]);
+    }
     const nextIndex = Math.min(historyRef.current.length - 1, historyIndexRef.current + 1);
     if (nextIndex === historyIndexRef.current) return;
     historyIndexRef.current = nextIndex;
@@ -353,20 +755,48 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
       context.stroke();
       context.restore();
     }
-    if (selectedKeys.length) {
-      const selected = new Set(selectedKeys);
+    const selectionBounds = getSelectionBounds(doc, selectedKeys);
+    if (selectionBounds) {
       context.save();
       context.strokeStyle = "#6f83b0";
+      context.fillStyle = "#ffffff";
       context.lineWidth = 2;
       context.setLineDash([7, 5]);
-      doc.layers.forEach(layer => layer.strokes.forEach(stroke => {
-        if (!selected.has(layer.id + ":" + stroke.id) || !stroke.points.length) return;
-        const bounds = strokeBounds(stroke);
-        context.strokeRect(bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top);
-      }));
+      context.strokeRect(
+        selectionBounds.left,
+        selectionBounds.top,
+        selectionBounds.right - selectionBounds.left,
+        selectionBounds.bottom - selectionBounds.top
+      );
+      context.setLineDash([]);
+      const handleSize = 18 * 100 / zoom;
+      const rotationPoint = getSelectionRotationHandlePoint(selectionBounds, 34 * 100 / zoom);
+      const rotationRadius = 10 * 100 / zoom;
+      const centerX = (selectionBounds.left + selectionBounds.right) / 2;
+      context.beginPath();
+      context.moveTo(centerX, selectionBounds.top);
+      context.lineTo(rotationPoint.x, rotationPoint.y < selectionBounds.top
+        ? rotationPoint.y + rotationRadius
+        : rotationPoint.y - rotationRadius);
+      context.stroke();
+      context.beginPath();
+      context.arc(rotationPoint.x, rotationPoint.y, rotationRadius, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
+      context.fillStyle = "#6f83b0";
+      context.font = `${16 * 100 / zoom}px sans-serif`;
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillText("↻", rotationPoint.x, rotationPoint.y + 0.5 * 100 / zoom);
+      context.fillStyle = "#ffffff";
+      for (const handle of SELECTION_HANDLES) {
+        const position = getSelectionHandlePoint(selectionBounds, handle);
+        context.fillRect(position.x - handleSize / 2, position.y - handleSize / 2, handleSize, handleSize);
+        context.strokeRect(position.x - handleSize / 2, position.y - handleSize / 2, handleSize, handleSize);
+      }
       context.restore();
     }
-  }, [doc, lassoPoints, selectedKeys]);
+  }, [doc, lassoPoints, selectedKeys, zoom]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -375,13 +805,46 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
   }, []);
 
   useEffect(() => {
+    const stage = canvasStageRef.current;
+    if (!stage) return;
+
+    const onWheel = (event: WheelEvent) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const bounds = canvas.getBoundingClientRect();
+      const isOverCanvas =
+        event.clientX >= bounds.left &&
+        event.clientX <= bounds.right &&
+        event.clientY >= bounds.top &&
+        event.clientY <= bounds.bottom;
+
+      if (!isOverCanvas) return;
+
+      event.preventDefault();
+      const factor = Math.exp(-event.deltaY * 0.0015);
+      setZoom(current => clamp(Math.round(current * factor), 50, 300));
+    };
+
+    stage.addEventListener("wheel", onWheel, { passive: false });
+    return () => stage.removeEventListener("wheel", onWheel);
+  }, []);
+
+  useEffect(() => {
+    const stage = canvasStageRef.current;
+    if (!stage) return;
+    stage.scrollLeft = Math.max(0, (stage.scrollWidth - stage.clientWidth) / 2);
+    stage.scrollTop = Math.max(0, (stage.scrollHeight - stage.clientHeight) / 2);
+  }, [zoom, doc.width, doc.height]);
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target && ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return;
       const key = event.key.toLowerCase();
-      if ((event.ctrlKey || event.metaKey) && key === "z") {
+      if ((event.ctrlKey || event.metaKey) && key === "z" && !event.shiftKey) {
         event.preventDefault();
-        if (event.shiftKey) redo(); else undo();
+        undo();
       } else if ((event.ctrlKey || event.metaKey) && key === "y") {
         event.preventDefault();
         redo();
@@ -399,16 +862,120 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
       } else if (key === "b") setTool("pen");
       else if (key === "e") setTool("eraser");
       else if (key === "l") setTool("lasso");
+      else if (key === "g") setTool("fill");
       else if (key === "[") setBrushSize(value => clamp(value - 1, 1, 80));
       else if (key === "]") setBrushSize(value => clamp(value + 1, 1, 80));
       else if (key === "escape") {
-        if (selectedKeys.length) setSelectedKeys([]);
+        if (selectedKeys.length || selectionSourceDocRef.current) clearSelection();
         else requestClose();
       }
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   });
+
+  function cancelPointerForPinch() {
+    const mode = pointerModeRef.current;
+    if (mode?.kind === "stroke") {
+      const current = docRef.current;
+      const next: SketchDocument = {
+        ...current,
+        layers: current.layers.map(layer => layer.id === mode.layerId
+          ? { ...layer, strokes: layer.strokes.filter(stroke => stroke.id !== mode.strokeId) }
+          : layer)
+      };
+      setWorkingDocument(next);
+    } else if (mode?.kind === "move" || mode?.kind === "scale" || mode?.kind === "rotate") {
+      setWorkingDocument(mode.origin);
+    } else if (mode?.kind === "lasso") {
+      lassoPointsRef.current = [];
+      setLassoPoints([]);
+    }
+    pointerModeRef.current = null;
+  }
+
+  function handleStagePointerDownCapture(event: ReactPointerEvent<HTMLDivElement>) {
+    if (event.pointerType === "mouse" && event.button === 2) {
+      const stage = event.currentTarget;
+      panStateRef.current = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        scrollLeft: stage.scrollLeft,
+        scrollTop: stage.scrollTop
+      };
+      setIsPanning(true);
+      try {
+        stage.setPointerCapture(event.pointerId);
+      } catch {}
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    if (event.pointerType !== "touch") return;
+
+    touchPointsRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (touchPointsRef.current.size < 2) return;
+
+    const points = Array.from(touchPointsRef.current.values()).slice(0, 2);
+    const distance = Math.hypot(points[1].x - points[0].x, points[1].y - points[0].y);
+    if (!pinchStateRef.current && distance > 0) {
+      pinchStateRef.current = { distance, zoom };
+      cancelPointerForPinch();
+    }
+
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {}
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  function handleStagePointerMoveCapture(event: ReactPointerEvent<HTMLDivElement>) {
+    const pan = panStateRef.current;
+    if (pan && pan.pointerId === event.pointerId) {
+      event.currentTarget.scrollLeft = pan.scrollLeft - (event.clientX - pan.startX);
+      event.currentTarget.scrollTop = pan.scrollTop - (event.clientY - pan.startY);
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    if (event.pointerType !== "touch" || !touchPointsRef.current.has(event.pointerId)) return;
+
+    touchPointsRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    const pinch = pinchStateRef.current;
+    if (!pinch || touchPointsRef.current.size < 2) return;
+
+    const points = Array.from(touchPointsRef.current.values()).slice(0, 2);
+    const distance = Math.hypot(points[1].x - points[0].x, points[1].y - points[0].y);
+    setZoom(clamp(Math.round(pinch.zoom * distance / pinch.distance), 50, 300));
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  function handleStagePointerEndCapture(event: ReactPointerEvent<HTMLDivElement>) {
+    const pan = panStateRef.current;
+    if (pan && pan.pointerId === event.pointerId) {
+      panStateRef.current = null;
+      setIsPanning(false);
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    if (event.pointerType !== "touch" || !touchPointsRef.current.has(event.pointerId)) return;
+
+    const wasPinching = pinchStateRef.current !== null;
+    touchPointsRef.current.delete(event.pointerId);
+    if (wasPinching) {
+      pinchStateRef.current = null;
+      touchPointsRef.current.clear();
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }
 
   function canvasPoint(event: ReactPointerEvent<HTMLCanvasElement>): SketchPoint {
     const canvas = canvasRef.current;
@@ -431,11 +998,50 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
     return false;
   }
 
+  function fillAtPoint(point: SketchPoint) {
+    const current = docRef.current;
+    const layer = current.layers.find(item => item.id === selectedLayerId);
+    if (!layer || !layer.visible) return;
+
+    const sampleCanvas = document.createElement("canvas");
+    sampleCanvas.width = current.width;
+    sampleCanvas.height = current.height;
+    const sampleContext = sampleCanvas.getContext("2d", { willReadFrequently: true });
+    if (!sampleContext) return;
+    drawDocument(sampleCanvas, current);
+    const image = sampleContext.getImageData(0, 0, current.width, current.height);
+    const fillRuns = floodFillRuns(image, Math.floor(point.x), Math.floor(point.y));
+    if (!fillRuns.length) return;
+
+    const fillStroke: SketchStroke = {
+      id: uid(),
+      tool: "fill",
+      color,
+      size: 1,
+      opacity: brushOpacity,
+      points: [point],
+      fillRuns
+    };
+    const next: SketchDocument = {
+      ...current,
+      layers: current.layers.map(item => item.id === layer.id
+        ? { ...item, strokes: [...item.strokes, fillStroke] }
+        : item)
+    };
+    commitDocument(next);
+    setSelectedKeys([]);
+  }
+
   function handlePointerDown(event: ReactPointerEvent<HTMLCanvasElement>) {
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
     const point = canvasPoint(event);
     const current = docRef.current;
+
+    if (tool === "fill") {
+      fillAtPoint(point);
+      return;
+    }
 
     if (tool === "eyedropper") {
       const context = canvasRef.current?.getContext("2d");
@@ -447,9 +1053,36 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
     }
 
     if (tool === "lasso") {
-      if (selectedKeys.length && findHitSelected(point)) {
+      const bounds = getSelectionBounds(current, selectedKeys);
+      const rotationPoint = bounds ? getSelectionRotationHandlePoint(bounds, 34 * 100 / zoom) : null;
+      const rotationTolerance = Math.max(5, 14 * 100 / zoom);
+      const handle = bounds ? findSelectionHandle(point, bounds, Math.max(5, 20 * 100 / zoom)) : null;
+      if (bounds && rotationPoint && Math.hypot(point.x - rotationPoint.x, point.y - rotationPoint.y) <= rotationTolerance) {
+        pointerModeRef.current = {
+          kind: "rotate",
+          center: { x: (bounds.left + bounds.right) / 2, y: (bounds.top + bounds.bottom) / 2 },
+          startAngle: Math.atan2(
+            point.y - (bounds.top + bounds.bottom) / 2,
+            point.x - (bounds.left + bounds.right) / 2
+          ),
+          origin: current,
+          keys: selectedKeys
+        };
+        event.currentTarget.style.cursor = "grabbing";
+      } else if (bounds && handle) {
+        pointerModeRef.current = {
+          kind: "scale",
+          start: getSelectionHandlePoint(bounds, handle),
+          anchor: getSelectionAnchor(bounds, handle),
+          bounds,
+          handle,
+          origin: current,
+          keys: selectedKeys
+        };
+      } else if (bounds && (isInsideBounds(point, bounds) || findHitSelected(point))) {
         pointerModeRef.current = { kind: "move", start: point, origin: current, keys: selectedKeys };
       } else {
+        setSelectedKeys([]);
         pointerModeRef.current = { kind: "lasso" };
         lassoPointsRef.current = [point];
         setLassoPoints([point]);
@@ -477,7 +1110,24 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
 
   function handlePointerMove(event: ReactPointerEvent<HTMLCanvasElement>) {
     const mode = pointerModeRef.current;
-    if (!mode) return;
+    if (!mode) {
+      const bounds = tool === "lasso" ? getSelectionBounds(docRef.current, selectedKeys) : null;
+      const point = canvasPoint(event);
+      const rotationPoint = bounds ? getSelectionRotationHandlePoint(bounds, 34 * 100 / zoom) : null;
+      const isOverRotationHandle = !!(rotationPoint &&
+        Math.hypot(point.x - rotationPoint.x, point.y - rotationPoint.y) <= Math.max(5, 14 * 100 / zoom));
+      const handle = bounds ? findSelectionHandle(point, bounds, Math.max(5, 20 * 100 / zoom)) : null;
+      const cursorByHandle: Record<SelectionHandle, string> = {
+        nw: "nwse-resize", n: "ns-resize", ne: "nesw-resize", e: "ew-resize",
+        se: "nwse-resize", s: "ns-resize", sw: "nesw-resize", w: "ew-resize"
+      };
+      event.currentTarget.style.cursor = isOverRotationHandle
+        ? "grab"
+        : handle
+          ? cursorByHandle[handle]
+          : bounds && isInsideBounds(point, bounds) ? "move" : "crosshair";
+      return;
+    }
     const point = canvasPoint(event);
     if (mode.kind === "lasso") {
       const nextPoints = lassoPointsRef.current.concat([point]);
@@ -493,8 +1143,92 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
         ...mode.origin,
         layers: mode.origin.layers.map(layer => ({
           ...layer,
+          strokes: layer.strokes.map(stroke => {
+            if (!selected.has(layer.id + ":" + stroke.id)) return stroke;
+            return {
+              ...stroke,
+              points: stroke.points.map(item => ({ ...item, x: clamp(item.x + dx, 0, mode.origin.width), y: clamp(item.y + dy, 0, mode.origin.height) })),
+              ...(stroke.fillRuns ? { fillRuns: translateFillRuns(stroke.fillRuns, dx, dy, mode.origin.width, mode.origin.height) } : {})
+            };
+          })
+        }))
+      };
+      setWorkingDocument(next);
+      return;
+    }
+    if (mode.kind === "rotate") {
+      event.currentTarget.style.cursor = "grabbing";
+      const selected = new Set(mode.keys);
+      const angle = Math.atan2(point.y - mode.center.y, point.x - mode.center.x) - mode.startAngle;
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      const next: SketchDocument = {
+        ...mode.origin,
+        layers: mode.origin.layers.map(layer => ({
+          ...layer,
+          strokes: layer.strokes.map(stroke => {
+            if (!selected.has(layer.id + ":" + stroke.id)) return stroke;
+            const isEllipseOrRect = stroke.tool === "rect" || stroke.tool === "ellipse";
+            const sourcePoints = isEllipseOrRect ? strokeToPolyline(stroke) : stroke.points;
+            const transformPoint = (item: SketchPoint): SketchPoint => {
+              const dx = item.x - mode.center.x;
+              const dy = item.y - mode.center.y;
+              return {
+                ...item,
+                x: clamp(mode.center.x + dx * cos - dy * sin, 0, mode.origin.width),
+                y: clamp(mode.center.y + dx * sin + dy * cos, 0, mode.origin.height)
+              };
+            };
+            return {
+              ...stroke,
+              tool: isEllipseOrRect ? "pen" : stroke.tool,
+              points: sourcePoints.map(transformPoint),
+              ...(stroke.fillRuns ? { fillRuns: transformFillRuns(stroke.fillRuns, mode.origin.width, mode.origin.height, transformPoint) } : {})
+            };
+          })
+        }))
+      };
+      setWorkingDocument(next);
+      return;
+    }
+    if (mode.kind === "scale") {
+      const selected = new Set(mode.keys);
+      const startVectorX = mode.start.x - mode.anchor.x;
+      const startVectorY = mode.start.y - mode.anchor.y;
+      const isCorner = ["nw", "ne", "se", "sw"].includes(mode.handle);
+      let scaleX = Math.abs(startVectorX) > 1e-6 ? (point.x - mode.anchor.x) / startVectorX : 1;
+      let scaleY = Math.abs(startVectorY) > 1e-6 ? (point.y - mode.anchor.y) / startVectorY : 1;
+
+      if (isCorner && !event.shiftKey) {
+        const denominator = startVectorX * startVectorX + startVectorY * startVectorY;
+        const uniformScale = denominator > 1e-6
+          ? ((point.x - mode.anchor.x) * startVectorX + (point.y - mode.anchor.y) * startVectorY) / denominator
+          : 1;
+        scaleX = uniformScale;
+        scaleY = uniformScale;
+      }
+
+      scaleX = clamp(scaleX, 0.05, 10);
+      scaleY = clamp(scaleY, 0.05, 10);
+      const sizeScale = (scaleX + scaleY) / 2;
+      const next: SketchDocument = {
+        ...mode.origin,
+        layers: mode.origin.layers.map(layer => ({
+          ...layer,
           strokes: layer.strokes.map(stroke => selected.has(layer.id + ":" + stroke.id)
-            ? { ...stroke, points: stroke.points.map(item => ({ ...item, x: clamp(item.x + dx, 0, mode.origin.width), y: clamp(item.y + dy, 0, mode.origin.height) })) }
+            ? (() => {
+                const transformPoint = (item: SketchPoint): SketchPoint => ({
+                  ...item,
+                  x: clamp(mode.anchor.x + (item.x - mode.anchor.x) * scaleX, 0, mode.origin.width),
+                  y: clamp(mode.anchor.y + (item.y - mode.anchor.y) * scaleY, 0, mode.origin.height)
+                });
+                return {
+                  ...stroke,
+                  size: clamp(stroke.size * sizeScale, 1, 160),
+                  points: stroke.points.map(transformPoint),
+                  ...(stroke.fillRuns ? { fillRuns: transformFillRuns(stroke.fillRuns, mode.origin.width, mode.origin.height, transformPoint) } : {})
+                };
+              })()
             : stroke)
         }))
       };
@@ -516,24 +1250,39 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
     setWorkingDocument(next);
   }
 
-  function handlePointerUp() {
+  function handlePointerUp(event?: ReactPointerEvent<HTMLCanvasElement>) {
     const mode = pointerModeRef.current;
     if (!mode) return;
     pointerModeRef.current = null;
+    if (mode.kind === "rotate" && event) event.currentTarget.style.cursor = "crosshair";
     if (mode.kind === "lasso") {
       const polygon = lassoPointsRef.current;
       const selected: string[] = [];
       if (polygon.length > 2) {
-        docRef.current.layers.forEach(layer => layer.strokes.forEach(stroke => {
-          if (stroke.points.some(point => pointInPolygon(point, polygon))) selected.push(layer.id + ":" + stroke.id);
+        const nextLayers = docRef.current.layers.map(layer => ({
+          ...layer,
+          strokes: layer.strokes.flatMap(stroke => {
+            const split = splitStrokeByPolygon(stroke, polygon);
+            if (!split.inside.length) return [stroke];
+            split.inside.forEach(piece => selected.push(layer.id + ":" + piece.id));
+            return [...split.outside, ...split.inside];
+          })
         }));
+        if (selected.length) {
+          if (!selectionSourceDocRef.current) selectionSourceDocRef.current = docRef.current;
+          setWorkingDocument({ ...docRef.current, layers: nextLayers });
+          setSelectedKeys(selected);
+        } else {
+          clearSelection();
+        }
+      } else {
+        clearSelection();
       }
-      setSelectedKeys(selected);
       lassoPointsRef.current = [];
       setLassoPoints([]);
       return;
     }
-    if (mode.kind === "stroke" || mode.kind === "move") commitDocument(docRef.current);
+    if (mode.kind === "stroke" || mode.kind === "move" || mode.kind === "scale" || mode.kind === "rotate") commitDocument(docRef.current);
   }
 
   function addLayer() {
@@ -564,11 +1313,23 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
 
   function deleteLayer() {
     if (!selectedLayer || docRef.current.layers.length <= 1) return;
-    if (!window.confirm("선택한 레이어와 그 안의 그림을 삭제할까?")) return;
+    if (!window.confirm("선택한 레이어와 그 안의 그림을 삭제할까요?")) return;
     const layers = docRef.current.layers.filter(layer => layer.id !== selectedLayer.id);
     commitDocument({ ...docRef.current, layers });
     setSelectedLayerId(layers[layers.length - 1].id);
     setSelectedKeys([]);
+  }
+
+  function clearSelection() {
+    if (selectionSourceDocRef.current) {
+      const original = selectionSourceDocRef.current;
+      selectionSourceDocRef.current = null;
+      setWorkingDocument(original);
+    }
+    setSelectedKeys([]);
+    pointerModeRef.current = null;
+    lassoPointsRef.current = [];
+    setLassoPoints([]);
   }
 
   function deleteSelection() {
@@ -594,7 +1355,8 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
         const copies = layer.strokes.filter(stroke => selected.has(layer.id + ":" + stroke.id)).map(stroke => ({
           ...stroke,
           id: uid(),
-          points: stroke.points.map(point => ({ ...point, x: clamp(point.x + 24, 0, docRef.current.width), y: clamp(point.y + 24, 0, docRef.current.height) }))
+          points: stroke.points.map(point => ({ ...point, x: clamp(point.x + 24, 0, docRef.current.width), y: clamp(point.y + 24, 0, docRef.current.height) })),
+          ...(stroke.fillRuns ? { fillRuns: translateFillRuns(stroke.fillRuns, 24, 24, docRef.current.width, docRef.current.height) } : {})
         }));
         return { ...layer, strokes: layer.strokes.concat(copies) };
       })
@@ -602,29 +1364,63 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
     commitDocument(next);
   }
 
-  function changeLayout(nextLayout: LayoutPreset) {
-    const dimensions = nextLayout === "square" ? [1100, 1100] : nextLayout === "landscape" ? [1273, 900] : [900, 1200];
-    const nextWidth = dimensions[0];
-    const nextHeight = dimensions[1];
+  function changeLayout(nextLayout: CanvasRatio) {
+    const preset = CANVAS_RATIOS.find(option => option.value === nextLayout);
+    if (!preset) return;
+
     const current = docRef.current;
-    const scaleX = nextWidth / current.width;
-    const scaleY = nextHeight / current.height;
-    const scaleSize = (scaleX + scaleY) / 2;
+    const scale = Math.min(preset.width / current.width, preset.height / current.height);
+    const offsetX = (preset.width - current.width * scale) / 2;
+    const offsetY = (preset.height - current.height * scale) / 2;
     const next: SketchDocument = {
       ...current,
-      width: nextWidth,
-      height: nextHeight,
+      width: preset.width,
+      height: preset.height,
       layers: current.layers.map(layer => ({
         ...layer,
         strokes: layer.strokes.map(stroke => ({
           ...stroke,
-          size: stroke.size * scaleSize,
-          points: stroke.points.map(point => ({ ...point, x: point.x * scaleX, y: point.y * scaleY }))
+          size: stroke.size * scale,
+          points: stroke.points.map(point => ({
+            ...point,
+            x: point.x * scale + offsetX,
+            y: point.y * scale + offsetY
+          }))
         }))
       }))
     };
-    setLayout(nextLayout);
+
     commitDocument(next);
+    setSelectedKeys([]);
+    lassoPointsRef.current = [];
+    setLassoPoints([]);
+    setZoom(100);
+  }
+
+  function rotateCanvasClockwise() {
+    const current = docRef.current;
+    const next: SketchDocument = {
+      ...current,
+      width: current.height,
+      height: current.width,
+      layers: current.layers.map(layer => ({
+        ...layer,
+        strokes: layer.strokes.map(stroke => ({
+          ...stroke,
+          points: stroke.points.map(point => ({
+            ...point,
+            x: current.height - point.y,
+            y: point.x
+          }))
+        }))
+      }))
+    };
+
+    commitDocument(next);
+    setSelectedKeys([]);
+    lassoPointsRef.current = [];
+    setLassoPoints([]);
+    setZoom(100);
   }
 
   function changeBackgroundStyle(value: SketchDocument["backgroundStyle"]) {
@@ -632,8 +1428,14 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
   }
 
   function requestClose() {
-    if (dirty && !window.confirm("저장하지 않은 그림이 있어. 저장하지 않고 나갈까?")) return;
+    if (dirty && !window.confirm("저장하지 않은 그림이 있습니다. 저장하지 않고 나가시겠습니까?")) return;
     onClose();
+  }
+
+  function navigateFromSketch(action: () => void) {
+    if (dirty && !window.confirm("저장하지 않은 그림이 있습니다. 저장하지 않고 나가시겠습니까?")) return;
+    onClose();
+    action();
   }
 
   async function saveSketch() {
@@ -641,16 +1443,17 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
     setSaving(true);
     setMessage("");
     try {
-      const blob = await documentToBlob(docRef.current);
-      const saved = await onSave(blob, docRef.current);
+      const documentToSave = selectionSourceDocRef.current ?? docRef.current;
+      const blob = await documentToBlob(documentToSave);
+      const saved = await onSave(blob, documentToSave);
       if (saved) {
         setDirty(false);
         onClose();
       } else {
-        setMessage("저장하지 못했어. 연결 상태를 확인하고 다시 시도해 줘.");
+        setMessage("저장하지 못했습니다. 연결 상태를 확인한 후 다시 시도해 주세요.");
       }
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "그림을 저장하지 못했습니다.");
+      setMessage(error instanceof Error ? "그림을 저장하지 못했습니다: " + error.message : "그림을 저장하지 못했습니다.");
     } finally {
       setSaving(false);
     }
@@ -658,7 +1461,8 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
 
   async function downloadSketch() {
     try {
-      const blob = await documentToBlob(docRef.current);
+      const documentToDownload = selectionSourceDocRef.current ?? docRef.current;
+      const blob = await documentToBlob(documentToDownload);
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
@@ -668,31 +1472,52 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
       anchor.remove();
       URL.revokeObjectURL(url);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "다운로드할 그림을 만들지 못했습니다.");
+      setMessage(error instanceof Error ? "그림을 다운로드하지 못했습니다: " + error.message : "그림을 다운로드하지 못했습니다.");
     }
   }
 
   return (
-    <div className="sketch-workspace" role="dialog" aria-modal="true" aria-label="그림 스케치 작업실">
-      <header className="sketch-topbar">
-        <button type="button" className="sketch-back-button" onClick={requestClose}>
-          <ArrowLeft size={18}/><span>일기로 돌아가기</span>
-        </button>
-        <div className="sketch-topbar-center">
-          <strong>SKETCH STUDIO</strong>
-          <span>{dirty ? "저장되지 않은 변경 사항" : "저장된 상태"}</span>
-        </div>
-        <div className="sketch-topbar-actions">
-          <button type="button" className="sketch-icon-action" title="PNG 다운로드" aria-label="PNG 다운로드" onClick={() => void downloadSketch()}>
-            <Download size={19}/>
+    <div className="sketch-workspace app-shell planner-view" style={themeStyle} role="dialog" aria-modal="true" aria-label="그림 스케치 작업실">
+      <AppSidebar
+        email={email}
+        currentView="markdown"
+        themeStyle={themeStyle}
+        theme={theme}
+        customColor={customColor}
+        onThemeChange={onThemeChange}
+        onCustomColorChange={onCustomColorChange}
+        onOpenNotebookList={() => navigateFromSketch(onOpenNotebookList)}
+        onViewChange={view => {
+          if (view === "cover") navigateFromSketch(onOpenCover);
+        }}
+        onSignOut={() => navigateFromSketch(onSignOut)}
+        onDeleteAccount={() => navigateFromSketch(onDeleteAccount)}
+      />
+      <header className="site-header sketch-topbar">
+        <div className="header-inner sketch-header-inner">
+          <button type="button" className="brand" onClick={requestClose} aria-label="그림일기로 돌아가기">
+            <span className="brand-lockup"><span className="brand-icon"><Check size={18} strokeWidth={3}/></span><span>CHECKPOINT</span></span>
           </button>
-          <button type="button" className="sketch-save-action" disabled={saving} onClick={() => void saveSketch()}>
-            <Save size={17}/><span>{saving ? "저장 중..." : "저장"}</span>
-          </button>
+          <div className="sketch-topbar-center">
+            <strong>스케치</strong>
+            <span>{dirty ? "저장되지 않은 변경 사항이 있습니다." : "저장된 상태입니다."}</span>
+          </div>
+          <div className="sketch-topbar-actions">
+            <button type="button" className="sketch-back-button" onClick={requestClose}>
+              <ArrowLeft size={17}/><span>일기로 돌아가기</span>
+            </button>
+            <button type="button" className="sketch-icon-action" title="PNG 다운로드" aria-label="PNG 다운로드" onClick={() => void downloadSketch()}>
+              <Download size={18}/>
+            </button>
+            <button type="button" className="sketch-save-action" disabled={saving} onClick={() => void saveSketch()}>
+              <Save size={16}/><span>{saving ? "저장 중입니다..." : "저장"}</span>
+            </button>
+          </div>
         </div>
       </header>
 
-      <div className="sketch-layout">
+      <main className="sketch-main-area">
+        <div className="sketch-layout">
         <aside className="sketch-tool-rail" aria-label="그리기 도구">
           {TOOL_OPTIONS.map(option => {
             const Icon = option.icon;
@@ -712,19 +1537,30 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
         <section className="sketch-canvas-area" aria-label="그림 캔버스">
           <div className="sketch-canvas-toolbar">
             <div className="sketch-zoom-controls">
-              <button type="button" aria-label="축소" title="축소" onClick={() => setZoom(value => clamp(value - 10, 50, 180))}><ZoomOut size={16}/></button>
+              <button type="button" aria-label="축소" title="축소" onClick={() => setZoom(value => clamp(value - 10, 50, 300))}><ZoomOut size={16}/></button>
               <span>{zoom}%</span>
-              <button type="button" aria-label="확대" title="확대" onClick={() => setZoom(value => clamp(value + 10, 50, 180))}><ZoomIn size={16}/></button>
-              <button type="button" title="화면에 맞춤" aria-label="화면에 맞춤" onClick={() => setZoom(100)}><LayoutGrid size={15}/></button>
+              <button type="button" aria-label="확대" title="확대" onClick={() => setZoom(value => clamp(value + 10, 50, 300))}><ZoomIn size={16}/></button>
+              <button type="button" className="sketch-fit-button" title="창에 맞추기" aria-label="창에 맞추기" onClick={fitCanvasToWindow}><LayoutGrid size={15}/><span>창에 맞추기</span></button>
+              <button type="button" className="sketch-rotate-button" title="캔버스를 시계 방향으로 90도 회전" aria-label="캔버스 90도 회전" onClick={rotateCanvasClockwise}>
+                <RotateCw size={15}/><span>90° 회전</span>
+              </button>
             </div>
             <span className="sketch-canvas-size">{doc.width} × {doc.height}px</span>
             <button type="button" className="sketch-clear-button" onClick={() => {
-              if (!selectedLayer || !window.confirm("현재 레이어의 그림을 모두 지울까?")) return;
+              if (!selectedLayer || !window.confirm("현재 레이어의 그림을 모두 삭제할까요?")) return;
               commitDocument({ ...docRef.current, layers: docRef.current.layers.map(layer => layer.id === selectedLayer.id ? { ...layer, strokes: [] } : layer) });
               setSelectedKeys([]);
             }}><Trash2 size={14}/> 현재 레이어 비우기</button>
           </div>
-          <div className="sketch-canvas-stage">
+          <div
+            ref={canvasStageRef}
+            className={isPanning ? "sketch-canvas-stage is-panning" : "sketch-canvas-stage"}
+            onContextMenu={event => event.preventDefault()}
+            onPointerDownCapture={handleStagePointerDownCapture}
+            onPointerMoveCapture={handleStagePointerMoveCapture}
+            onPointerUpCapture={handleStagePointerEndCapture}
+            onPointerCancelCapture={handleStagePointerEndCapture}
+          >
             <div className="sketch-canvas-wrap" style={{ width: zoom + "%" }}>
               <canvas ref={canvasRef} className="sketch-canvas" width={doc.width} height={doc.height}
                 onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}
@@ -732,24 +1568,26 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
             </div>
           </div>
           <div className="sketch-bottom-hint">
-            <span>펜: B</span><span>지우개: E</span><span>올가미: L</span><span>실행 취소: Ctrl + Z</span>
+            <span>펜: B</span><span>지우개: E</span><span>올가미: L</span><span>채우기: G</span><span>실행 취소: Ctrl + Z</span><span>다시 실행: Ctrl + Y</span><span>이동: 마우스 오른쪽 버튼 드래그</span><span>확대·축소: 마우스 휠 · 두 손가락</span>
             {selectedKeys.length ? <strong>{selectedKeys.length}개 선택됨 · Ctrl + D 복제 · Delete 삭제</strong> : null}
           </div>
         </section>
 
         <aside className="sketch-settings-panel">
           <section className="sketch-settings-section">
-            <div className="sketch-panel-heading"><strong>{tool === "eraser" ? "지우개 설정" : tool === "lasso" ? "올가미 선택" : "도구 설정"}</strong></div>
-            {tool === "pen" || tool === "line" || tool === "rect" || tool === "ellipse" ? (
+            <div className="sketch-panel-heading"><strong>{tool === "eraser" ? "지우개 설정" : tool === "lasso" ? "올가미 선택" : tool === "fill" ? "채우기 설정" : "도구 설정"}</strong></div>
+            {tool === "pen" || tool === "line" || tool === "rect" || tool === "ellipse" || tool === "fill" ? (
               <>
-                <label className="sketch-control-label">색상</label>
+                <label className="sketch-control-label">{tool === "fill" ? "채우기 색상" : "색상"}</label>
                 <div className="sketch-color-row">
-                  <input type="color" value={color} aria-label="펜 색상" onChange={event => setColor(event.target.value)}/>
+                  <input type="color" value={color} aria-label={tool === "fill" ? "채우기 색상" : "펜 색상"} onChange={event => setColor(event.target.value)}/>
                   <div className="sketch-color-swatches">{COLOR_SWATCHES.map(swatch => <button key={swatch} type="button" aria-label={"색상 " + swatch} title={swatch} style={{ background: swatch }} className={color.toLowerCase() === swatch ? "is-selected" : ""} onClick={() => setColor(swatch)}/>)}</div>
                 </div>
-                <label className="sketch-range-label"><span>펜 굵기</span><strong>{brushSize}px</strong></label>
-                <input className="sketch-range" type="range" min={1} max={80} value={brushSize} onChange={event => setBrushSize(Number(event.target.value))}/>
-                <label className="sketch-range-label"><span>투명도</span><strong>{brushOpacity}%</strong></label>
+                {tool !== "fill" ? <>
+                  <label className="sketch-range-label"><span>펜 굵기</span><strong>{brushSize}px</strong></label>
+                  <input className="sketch-range" type="range" min={1} max={80} value={brushSize} onChange={event => setBrushSize(Number(event.target.value))}/>
+                </> : null}
+                <label className="sketch-range-label"><span>{tool === "fill" ? "채우기 불투명도" : "투명도"}</span><strong>{brushOpacity}%</strong></label>
                 <input className="sketch-range" type="range" min={1} max={100} value={brushOpacity} onChange={event => setBrushOpacity(Number(event.target.value))}/>
               </>
             ) : tool === "eraser" ? (
@@ -758,17 +1596,16 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
                 <input className="sketch-range" type="range" min={2} max={160} value={eraserSize} onChange={event => setEraserSize(Number(event.target.value))}/>
                 <label className="sketch-range-label"><span>지우개 강도</span><strong>{eraserStrength}%</strong></label>
                 <input className="sketch-range" type="range" min={5} max={100} value={eraserStrength} onChange={event => setEraserStrength(Number(event.target.value))}/>
-                <p className="sketch-setting-help">강도를 낮추면 한 번에 지워지는 양이 줄어들어.</p>
+                <p className="sketch-setting-help">강도를 낮추면 한 번에 지워지는 양이 줄어듭니다.</p>
               </>
             ) : tool === "lasso" ? (
               <div className="sketch-selection-actions">
-                <p>캔버스에서 원하는 부분을 둘러싸면 해당 선들이 선택돼. 선택한 선을 드래그해 이동할 수 있어.</p>
                 <button type="button" disabled={!selectedKeys.length} onClick={duplicateSelection}>선택 복제</button>
                 <button type="button" disabled={!selectedKeys.length} onClick={deleteSelection}>선택 삭제</button>
-                <button type="button" disabled={!selectedKeys.length} onClick={() => setSelectedKeys([])}>선택 해제</button>
+                <button type="button" disabled={!selectedKeys.length} onClick={clearSelection}>선택 해제</button>
               </div>
             ) : (
-              <p className="sketch-setting-help">캔버스에서 시작점을 누른 뒤 드래그해 도형을 그려.</p>
+              <p className="sketch-setting-help">캔버스에서 시작점을 누른 뒤 드래그해 도형을 그릴 수 있습니다.</p>
             )}
           </section>
 
@@ -780,7 +1617,7 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
             <div className="sketch-layer-list">
               {[...doc.layers].reverse().map(layer => (
                 <div key={layer.id} className={layer.id === selectedLayer?.id ? "sketch-layer-row is-active" : "sketch-layer-row"}>
-                  <button type="button" className="sketch-layer-select" onClick={() => { setSelectedLayerId(layer.id); setSelectedKeys([]); }}>
+                  <button type="button" className="sketch-layer-select" onClick={() => { setSelectedLayerId(layer.id); clearSelection(); }}>
                     <span className="sketch-layer-thumbnail"><Layers3 size={15}/></span>
                     <span>{layer.name}</span>
                   </button>
@@ -807,11 +1644,13 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
 
           <section className="sketch-settings-section">
             <div className="sketch-panel-heading"><strong>캔버스 레이아웃</strong></div>
-            <label className="sketch-control-label">용지 비율</label>
-            <select className="sketch-select" value={layout} onChange={event => changeLayout(event.target.value as LayoutPreset)}>
-              <option value="portrait">세로형 · 그림일기</option>
-              <option value="square">정사각형</option>
-              <option value="landscape">가로형</option>
+            <label className="sketch-control-label">비율</label>
+            <select className="sketch-select" value={layout} onChange={event => changeLayout(event.target.value as CanvasRatio)}>
+              <option value="1:1">1:1</option>
+              <option value="3:4">3:4</option>
+              <option value="4:3">4:3</option>
+              <option value="9:16">9:16</option>
+              <option value="16:9">16:9</option>
             </select>
             <label className="sketch-control-label">배경</label>
             <select className="sketch-select" value={doc.backgroundStyle} onChange={event => changeBackgroundStyle(event.target.value as SketchDocument["backgroundStyle"])}>
@@ -825,7 +1664,8 @@ export default function SketchWorkspace({ initialDocument, onSave, onClose }: Pr
             ) : null}
           </section>
         </aside>
-      </div>
+        </div>
+      </main>
       {message ? <div className="sketch-message" role="status">{message}</div> : null}
     </div>
   );

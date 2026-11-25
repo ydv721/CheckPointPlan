@@ -134,7 +134,7 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
     if(renaming)return;
     const nextTitle=renameValue.trim();
     if(!nextTitle){
-      setRenameError("이름을 입력해 줘.");
+      setRenameError("이름을 입력해 주세요.");
       return;
     }
     if(nextTitle===notebook.title){
@@ -322,7 +322,7 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
             <div className="delete-account-actions">
               <button type="button" className="outline-btn" disabled={deleting} onClick={()=>setDeleteTarget(null)}>취소</button>
               <button type="button" className="delete-confirm-btn" disabled={deleting} onClick={()=>void confirmDelete()}>
-                {deleting?"삭제 중...":"다이어리 삭제"}
+                {deleting?"삭제 중입니다...":"다이어리 삭제"}
               </button>
             </div>
           </section>

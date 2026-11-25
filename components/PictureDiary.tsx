@@ -1,19 +1,33 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent, type PointerEvent as ReactPointerEvent } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
-  AlignCenter, AlignLeft, AlignRight, Brush, CalendarDays, Check, ChevronLeft, ChevronRight,
-  ImagePlus, Palette, X
+  Brush, CalendarDays, Check, ChevronLeft, ChevronRight, ImagePlus, X
 } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import PlannerSpread from "@/components/PlannerSpread";
 import SketchWorkspace, { createEmptySketchDocument, type SketchDocument } from "@/components/SketchWorkspace";
 import {
-  MARKDOWN_TOOLBAR, createMarkdownCodeBlockHtml, highlightCodeBlocks,
-  htmlToMarkdown, markdownToHtml, type MarkdownAction
+  highlightCodeBlocks, htmlToMarkdown, markdownToHtml
 } from "@/components/MarkdownDiary";
 import type { ThemeName } from "@/lib/types";
+
+type DiaryDrawingState = SketchDocument & {
+  imagePositionX?: number;
+  imagePositionY?: number;
+};
+
+type DrawingPan = {
+  pointerId: number;
+  startX: number;
+  startY: number;
+  originX: number;
+  originY: number;
+  overflowX: number;
+  overflowY: number;
+  moved: boolean;
+};
 
 type DiaryEntry = {
   id?: string;
@@ -25,7 +39,7 @@ type DiaryEntry = {
   wake_time: string;
   sleep_time: string;
   drawing_path: string | null;
-  drawing_state: SketchDocument | null;
+  drawing_state: DiaryDrawingState | null;
   journal_content: string;
   memo: string;
   reflection: string;
@@ -50,22 +64,14 @@ type Props = {
   onDeleteAccount: () => void;
 };
 
+const clampDrawingPosition = (value: number) => Math.min(100, Math.max(0, value));
+
 const WEATHER_OPTIONS = [
   { id: "sunny", label: "맑음", emoji: "☀️" },
-  { id: "partly-cloudy", label: "구름 조금", emoji: "🌤️" },
   { id: "cloudy", label: "흐림", emoji: "☁️" },
   { id: "rainy", label: "비", emoji: "🌧️" },
   { id: "snowy", label: "눈", emoji: "❄️" },
   { id: "windy", label: "바람", emoji: "🍃" }
-];
-const TEXT_COLORS = [
-  { label: "빨강", color: "#d64545" },
-  { label: "주황", color: "#d97736" },
-  { label: "노랑", color: "#b58a00" },
-  { label: "초록", color: "#39845b" },
-  { label: "파랑", color: "#3978b8" },
-  { label: "보라", color: "#8063b5" },
-  { label: "분홍", color: "#c96b91" }
 ];
 const uid = () => globalThis.crypto?.randomUUID?.() || String(Date.now()) + "-" + Math.random().toString(36).slice(2);
 
@@ -294,13 +300,13 @@ export default function PictureDiary({
   const [sketchOpen, setSketchOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const datePickerRef = useRef<HTMLInputElement>(null);
   const entryRef = useRef(entry);
   const lastSavedRef = useRef("");
   const saveQueueRef = useRef<Promise<boolean>>(Promise.resolve(true));
   const editorRef = useRef<HTMLDivElement>(null);
-  const editorSelectionRef = useRef<Range | null>(null);
-  const [colorPaletteOpen, setColorPaletteOpen] = useState(false);
-  const [customTextColor, setCustomTextColor] = useState("#7868e8");
+  const drawingPanRef = useRef<DrawingPan | null>(null);
+  const suppressDrawingClickRef = useRef(false);
 
   useEffect(() => {
     entryRef.current = entry;
@@ -332,7 +338,7 @@ export default function PictureDiary({
           wake_time: data.wake_time || "",
           sleep_time: data.sleep_time || "",
           drawing_path: data.drawing_path || null,
-          drawing_state: data.drawing_state && typeof data.drawing_state === "object" ? data.drawing_state as SketchDocument : null,
+          drawing_state: data.drawing_state && typeof data.drawing_state === "object" ? data.drawing_state as DiaryDrawingState : null,
           journal_content: data.journal_content || "",
           memo: data.memo || "",
           reflection: data.reflection || "",
@@ -445,96 +451,82 @@ export default function PictureDiary({
     });
   }
 
+  function startDrawingPan(event: ReactPointerEvent<HTMLImageElement>) {
+    suppressDrawingClickRef.current = false;
+    if (event.button !== 0) return;
+
+    const image = event.currentTarget;
+    if (!image.naturalWidth || !image.naturalHeight) return;
+    const rect = image.getBoundingClientRect();
+    const scale = Math.max(rect.width / image.naturalWidth, rect.height / image.naturalHeight);
+    const overflowX = Math.max(0, image.naturalWidth * scale - rect.width);
+    const overflowY = Math.max(0, image.naturalHeight * scale - rect.height);
+    if (overflowX < 1 && overflowY < 1) return;
+
+    const drawingState = entryRef.current.drawing_state;
+    drawingPanRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      originX: clampDrawingPosition(drawingState?.imagePositionX ?? 50),
+      originY: clampDrawingPosition(drawingState?.imagePositionY ?? 50),
+      overflowX,
+      overflowY,
+      moved: false
+    };
+    image.setPointerCapture(event.pointerId);
+    image.style.cursor = "grabbing";
+  }
+
+  function moveDrawingPan(event: ReactPointerEvent<HTMLImageElement>) {
+    const active = drawingPanRef.current;
+    if (!active || active.pointerId !== event.pointerId) return;
+
+    const deltaX = event.clientX - active.startX;
+    const deltaY = event.clientY - active.startY;
+    if (Math.hypot(deltaX, deltaY) > 3) active.moved = true;
+    if (!active.moved) return;
+
+    const imagePositionX = active.overflowX > 0
+      ? clampDrawingPosition(active.originX - deltaX / active.overflowX * 100)
+      : active.originX;
+    const imagePositionY = active.overflowY > 0
+      ? clampDrawingPosition(active.originY - deltaY / active.overflowY * 100)
+      : active.originY;
+    const drawingState = entryRef.current.drawing_state ?? createEmptySketchDocument();
+    updateEntry({
+      drawing_state: { ...drawingState, imagePositionX, imagePositionY }
+    });
+  }
+
+  function finishDrawingPan(event: ReactPointerEvent<HTMLImageElement>) {
+    const active = drawingPanRef.current;
+    if (!active || active.pointerId !== event.pointerId) return;
+    suppressDrawingClickRef.current = active.moved;
+    drawingPanRef.current = null;
+    event.currentTarget.style.cursor = "grab";
+  }
+
+  function cancelDrawingPan(event: ReactPointerEvent<HTMLImageElement>) {
+    if (drawingPanRef.current?.pointerId !== event.pointerId) return;
+    drawingPanRef.current = null;
+    suppressDrawingClickRef.current = false;
+    event.currentTarget.style.cursor = "grab";
+  }
+
   function updateJournalContent() {
     const editor = editorRef.current;
     if (editor) updateEntry({ journal_content: htmlToMarkdown(editor.innerHTML) });
   }
 
-  function rememberEditorSelection() {
-    const editor = editorRef.current;
-    const selection = window.getSelection();
-    if (!editor || !selection?.rangeCount || !selection.anchorNode || !selection.focusNode) return;
-    if (editor.contains(selection.anchorNode) && editor.contains(selection.focusNode)) {
-      editorSelectionRef.current = selection.getRangeAt(0).cloneRange();
-    }
-  }
-
-  function applyTextColor(color: string, keepPickerOpen = false) {
-    const editor = editorRef.current;
-    if (!editor) return;
-    if (!keepPickerOpen) editor.focus();
-    const selection = window.getSelection();
-    const savedRange = editorSelectionRef.current;
-    if (selection && savedRange && editor.contains(savedRange.commonAncestorContainer)) {
-      selection.removeAllRanges();
-      selection.addRange(savedRange);
-    }
-    if (!selection?.rangeCount || selection.isCollapsed || !selection.anchorNode || !selection.focusNode ||
-      !editor.contains(selection.anchorNode) || !editor.contains(selection.focusNode)) return;
-    document.execCommand("foreColor", false, color);
-    updateJournalContent();
-    if (keepPickerOpen) {
-      if (selection.rangeCount && editor.contains(selection.getRangeAt(0).commonAncestorContainer)) {
-        editorSelectionRef.current = selection.getRangeAt(0).cloneRange();
-      }
-      return;
-    }
-    editorSelectionRef.current = null;
-    setColorPaletteOpen(false);
-    editor.focus();
-  }
-
-  function applyMarkdown(action: MarkdownAction) {
-    const editor = editorRef.current;
-    if (!editor || loading) return;
-    editor.focus();
-    if (action === "bold") document.execCommand("bold");
-    else if (action === "italic") document.execCommand("italic");
-    else if (action === "underline") document.execCommand("underline");
-    else if (action === "strike") document.execCommand("strikeThrough");
-    else if (action === "heading") document.execCommand("formatBlock", false, "H1");
-    else if (action === "bullet") document.execCommand("insertUnorderedList");
-    else if (action === "ordered") document.execCommand("insertOrderedList");
-    else if (action === "quote") document.execCommand("formatBlock", false, "BLOCKQUOTE");
-    else if (action === "divider") document.execCommand("insertHorizontalRule");
-    else if (action === "code") {
-      const selection = window.getSelection();
-      const selectedCode = selection?.rangeCount ? selection.toString() : "";
-      document.execCommand("insertHTML", false, createMarkdownCodeBlockHtml(selectedCode, "plaintext", true));
-      const inserted = editor.querySelector<HTMLElement>('.markdown-code-block[data-inserted="true"]');
-      if (inserted) {
-        inserted.removeAttribute("data-inserted");
-        const code = inserted.querySelector("pre code");
-        if (code && selection) {
-          const range = document.createRange();
-          range.selectNodeContents(code);
-          range.collapse(false);
-          selection.removeAllRanges();
-          selection.addRange(range);
-        }
-      }
-    }
-    updateJournalContent();
-    editor.focus();
-  }
-
-  function applyTextAlignment(alignment: "left" | "center" | "right") {
-    const editor = editorRef.current;
-    if (!editor) return;
-    editor.focus();
-    document.execCommand(alignment === "left" ? "justifyLeft" : alignment === "center" ? "justifyCenter" : "justifyRight");
-    updateJournalContent();
-    editor.focus();
-  }
-
   async function replaceDrawing(file: File, drawingState: SketchDocument | null) {
     if (uploading || !file) return false;
     if (!["image/png", "image/jpeg", "image/webp", "image/gif"].includes(file.type)) {
-      setError("PNG, JPG, WEBP, GIF 형식의 이미지만 업로드할 수 있어.");
+      setError("PNG, JPG, WEBP, GIF 형식의 이미지만 업로드할 수 있습니다.");
       return false;
     }
     if (file.size > 10 * 1024 * 1024) {
-      setError("그림 파일은 10MB 이하만 업로드할 수 있어.");
+      setError("그림 파일은 10MB 이하만 업로드할 수 있습니다.");
       return false;
     }
     setUploading(true);
@@ -579,7 +571,13 @@ export default function PictureDiary({
 
   async function saveSketch(blob: Blob, document: SketchDocument) {
     const file = new File([blob], "picture-diary-sketch.png", { type: "image/png" });
-    return await replaceDrawing(file, document);
+    const previousDrawingState = entryRef.current.drawing_state;
+    const positionedDocument: DiaryDrawingState = {
+      ...document,
+      imagePositionX: previousDrawingState?.imagePositionX ?? 50,
+      imagePositionY: previousDrawingState?.imagePositionY ?? 50
+    };
+    return await replaceDrawing(file, positionedDocument);
   }
 
   async function uploadImage(event: ChangeEvent<HTMLInputElement>) {
@@ -601,7 +599,7 @@ export default function PictureDiary({
 
   return (
     <div className="app-shell planner-view picture-diary-shell" style={themeStyle}>
-      <AppSidebar
+      {!sketchOpen ? <AppSidebar
         email={email}
         currentView="markdown"
         themeStyle={themeStyle}
@@ -615,7 +613,7 @@ export default function PictureDiary({
         onOpenNotebookList={() => { void leaveDiary(onBack); }}
         onSignOut={() => { void leaveDiary(onSignOut); }}
         onDeleteAccount={() => { void leaveDiary(async () => { onDeleteAccount(); }); }}
-      />
+      /> : null}
 
       <header className="site-header">
         <div className="header-inner">
@@ -639,13 +637,75 @@ export default function PictureDiary({
                     <button type="button" className="month-nav-button" aria-label="이전 날짜" title="이전 날짜" disabled={loading || uploading} onClick={() => void navigateDate(shiftDate(date, -1))}><ChevronLeft size={16}/></button>
                     <strong>{dateLabel(date)}</strong>
                     <button type="button" className="month-nav-button" aria-label="다음 날짜" title="다음 날짜" disabled={loading || uploading} onClick={() => void navigateDate(shiftDate(date, 1))}><ChevronRight size={16}/></button>
-                    <label className="diary-date-picker" title="날짜 선택">
-                      <CalendarDays size={16}/>
-                      <input type="date" aria-label="그림일기 날짜 선택" value={date} disabled={loading || uploading} onChange={event => void navigateDate(event.target.value)}/>
-                    </label>
+                    <div className="date-picker-trigger">
+                      <button
+                        type="button"
+                        className="date-picker-trigger-button"
+                        aria-label="달력에서 날짜 선택"
+                        title="달력에서 날짜 선택"
+                        disabled={loading || uploading}
+                        onClick={() => {
+                          const picker = datePickerRef.current as (HTMLInputElement & { showPicker?: () => void }) | null;
+                          if (!picker) return;
+                          if (typeof picker.showPicker === "function") picker.showPicker();
+                          else picker.click();
+                        }}
+                      >
+                        <CalendarDays size={16}/>
+                      </button>
+                      <input
+                        ref={datePickerRef}
+                        className="date-picker-input"
+                        aria-hidden="true"
+                        tabIndex={-1}
+                        type="date"
+                        value={date}
+                        disabled={loading || uploading}
+                        onChange={event => void navigateDate(event.target.value)}
+                      />
+                    </div>
                   </div>
                 </div>
 
+                <div className="diary-title-field">
+                  <label htmlFor="picture-diary-title">제목</label>
+                  <input id="picture-diary-title" type="text" maxLength={100} value={entry.title} onChange={event => updateEntry({ title: event.target.value })}/>
+                </div>
+
+                <button type="button" className={drawingUrl ? "picture-diary-drawing-area has-image" : "picture-diary-drawing-area"}
+                  disabled={loading || uploading} onClick={() => setChoiceOpen(true)} aria-label="그림 추가 또는 변경">
+                  {drawingUrl ? (
+                    <>
+                      <img
+                        src={drawingUrl}
+                        alt="오늘의 그림"
+                        draggable={false}
+                        style={{
+                          objectPosition: `${entry.drawing_state?.imagePositionX ?? 50}% ${entry.drawing_state?.imagePositionY ?? 50}%`
+                        }}
+                        onPointerDown={startDrawingPan}
+                        onPointerMove={moveDrawingPan}
+                        onPointerUp={finishDrawingPan}
+                        onPointerCancel={cancelDrawingPan}
+                        onClick={event => {
+                          if (!suppressDrawingClickRef.current) return;
+                          event.preventDefault();
+                          event.stopPropagation();
+                          suppressDrawingClickRef.current = false;
+                        }}
+                      />
+                      <span className="picture-diary-drawing-edit"><Brush size={15}/> 그림 변경</span>
+                    </>
+                  ) : (
+                    <span className="picture-diary-drawing-empty">
+                      <ImagePlus size={31}/>
+                      <strong>{uploading ? "그림을 저장하고 있습니다..." : "그림을 그리거나 사진을 추가해 보세요."}</strong>
+                    </span>
+                  )}
+                </button>
+              </section>
+
+              <section className="paper-page right-page diary-right-page" aria-label="오늘의 일기">
                 <div className="diary-daily-info">
                   <div className="diary-weather-group">
                     <span className="diary-field-label">오늘의 날씨</span>
@@ -663,71 +723,10 @@ export default function PictureDiary({
                   <DiaryTimePicker label="잠잘 시간" value={entry.sleep_time} onChange={sleep_time => updateEntry({ sleep_time })}/>
                 </div>
 
-                <div className="diary-drawing-heading">
-                  <strong>오늘의 그림</strong>
-                </div>
-                <button type="button" className={drawingUrl ? "picture-diary-drawing-area has-image" : "picture-diary-drawing-area"}
-                  disabled={loading || uploading} onClick={() => setChoiceOpen(true)} aria-label="그림 추가 또는 변경">
-                  {drawingUrl ? (
-                    <>
-                      <img src={drawingUrl} alt="오늘의 그림"/>
-                      <span className="picture-diary-drawing-edit"><Brush size={15}/> 그림 변경</span>
-                    </>
-                  ) : (
-                    <span className="picture-diary-drawing-empty">
-                      <ImagePlus size={31}/>
-                      <strong>{uploading ? "그림을 저장하고 있어..." : "그림을 그리거나 사진을 추가해 봐"}</strong>
-                    </span>
-                  )}
-                </button>
-              </section>
-
-              <section className="paper-page right-page diary-right-page" aria-label="오늘의 일기">
-                <div className="diary-title-field">
-                  <label htmlFor="picture-diary-title">제목</label>
-                  <input id="picture-diary-title" type="text" maxLength={100} value={entry.title} onChange={event => updateEntry({ title: event.target.value })}/>
-                </div>
-
                 <section className="paper-section key-section diary-journal-section">
-                  <div className="section-heading diary-journal-heading"><span>오늘의 일기</span><small>JOURNAL</small></div>
                   <div className="free-note-paper diary-journal-paper">
-                    {loading ? <div className="markdown-empty-state">일기를 불러오는 중...</div> : (
+                    {loading ? <div className="markdown-empty-state">일기를 불러오는 중입니다...</div> : (
                       <>
-                        <div className="markdown-toolbar" role="toolbar" aria-label="Markdown 도구 모음">
-                          {MARKDOWN_TOOLBAR.map(({ action, label, icon: Icon }) => (
-                            <button key={action} type="button" className="markdown-toolbar-button" aria-label={label} title={label}
-                              onMouseDown={event => event.preventDefault()} onClick={() => applyMarkdown(action)}>
-                              <Icon size={16} strokeWidth={2}/>
-                            </button>
-                          ))}
-                          <div className="markdown-align-controls" role="group" aria-label="텍스트 정렬">
-                            <button type="button" className="markdown-toolbar-button" aria-label="왼쪽 정렬" title="왼쪽 정렬" onMouseDown={event => event.preventDefault()} onClick={() => applyTextAlignment("left")}><AlignLeft size={16}/></button>
-                            <button type="button" className="markdown-toolbar-button" aria-label="가운데 정렬" title="가운데 정렬" onMouseDown={event => event.preventDefault()} onClick={() => applyTextAlignment("center")}><AlignCenter size={16}/></button>
-                            <button type="button" className="markdown-toolbar-button" aria-label="오른쪽 정렬" title="오른쪽 정렬" onMouseDown={event => event.preventDefault()} onClick={() => applyTextAlignment("right")}><AlignRight size={16}/></button>
-                          </div>
-                          <div className="markdown-color-picker-wrap">
-                            <button type="button" className="markdown-toolbar-button" aria-label="글자색" title="글자색" aria-expanded={colorPaletteOpen}
-                              onMouseDown={event => { event.preventDefault(); rememberEditorSelection(); }} onClick={() => setColorPaletteOpen(open => !open)}>
-                              <Palette size={16} strokeWidth={2}/>
-                            </button>
-                            {colorPaletteOpen ? (
-                              <div className="markdown-color-palette" role="group" aria-label="글자색 선택">
-                                <div className="markdown-color-palette-title">글자색</div>
-                                <div className="markdown-color-swatches">
-                                  <button type="button" className="markdown-color-swatch markdown-color-default" aria-label="기본 글자색" title="기본 글자색" onMouseDown={event => event.preventDefault()} onClick={() => applyTextColor("#000000")}/>
-                                  <button type="button" className="markdown-color-swatch markdown-color-theme" aria-label="테마 색상" title="테마 색상" onMouseDown={event => event.preventDefault()} onClick={() => applyTextColor(customColor)}/>
-                                  {TEXT_COLORS.map(({ label, color }) => (
-                                    <button key={color} type="button" className="markdown-color-swatch" aria-label={label} title={label} style={{ backgroundColor: color }}
-                                      onMouseDown={event => event.preventDefault()} onClick={() => applyTextColor(color)}/>
-                                  ))}
-                                  <label className="markdown-color-swatch markdown-color-custom-swatch" title="사용자 지정 글자색" onMouseDown={rememberEditorSelection}>
-                                    <input type="color" aria-label="사용자 지정 글자색" value={customTextColor} onChange={event => { setCustomTextColor(event.target.value); applyTextColor(event.target.value, true); }}/>
-                                  </label>
-                                </div>
-                              </div>
-                            ) : null}
-                          </div>
-                        </div>
                         <div ref={editorRef} className="free-note-input markdown-editor-grid picture-diary-rich-editor"
                           role="textbox" aria-label="오늘의 일기 내용" aria-multiline="true" contentEditable suppressContentEditableWarning
                           onInput={updateJournalContent}
@@ -772,11 +771,11 @@ export default function PictureDiary({
 
                 <div className="diary-bottom-panels">
                   <section className="diary-small-writing-panel">
-                    <div className="section-heading"><span>메모</span><small>MEMO</small></div>
+                    <div className="section-heading"><small>MEMO</small></div>
                     <textarea aria-label="오늘의 메모" value={entry.memo} onChange={event => updateEntry({ memo: event.target.value })}/>
                   </section>
                   <section className="diary-small-writing-panel">
-                    <div className="section-heading"><span>하루 돌아보기</span><small>REFLECTION</small></div>
+                    <div className="section-heading"><small>REFLECTION</small></div>
                     <textarea aria-label="하루 돌아보기" value={entry.reflection} onChange={event => updateEntry({ reflection: event.target.value })}/>
                   </section>
                 </div>
@@ -792,15 +791,17 @@ export default function PictureDiary({
         <div className="modal-backdrop picture-diary-choice-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setChoiceOpen(false); }}>
           <section className="picture-diary-choice-modal" role="dialog" aria-modal="true" aria-labelledby="picture-diary-choice-title">
             <div className="picture-diary-choice-header">
-              <div><span className="eyebrow">ADD YOUR ART</span><h2 id="picture-diary-choice-title">그림을 어떻게 추가할까?</h2></div>
+              <div><span className="eyebrow">ADD YOUR ART</span><h2 id="picture-diary-choice-title">그림을 어떻게 추가할까요?</h2></div>
               <button type="button" className="icon-btn" aria-label="닫기" onClick={() => setChoiceOpen(false)}><X size={19}/></button>
             </div>
             <div className="picture-diary-choice-options">
-              <button type="button" onClick={requestSketch}>
+              <button type="button" onClick={requestSketch} aria-label="스케치">
                 <span className="picture-diary-choice-icon"><Brush size={23}/></span>
+                <strong>스케치</strong>
               </button>
-              <button type="button" onClick={() => { setChoiceOpen(false); imageInputRef.current?.click(); }}>
+              <button type="button" onClick={() => { setChoiceOpen(false); imageInputRef.current?.click(); }} aria-label="이미지 업로드">
                 <span className="picture-diary-choice-icon"><ImagePlus size={23}/></span>
+                <strong>이미지 업로드</strong>
               </button>
             </div>
           </section>
@@ -808,7 +809,22 @@ export default function PictureDiary({
       ) : null}
 
       {sketchOpen ? (
-        <SketchWorkspace key={date} initialDocument={entry.drawing_state ?? createEmptySketchDocument()} onSave={saveSketch} onClose={() => setSketchOpen(false)}/>
+        <SketchWorkspace
+          key={date}
+          initialDocument={entry.drawing_state ?? createEmptySketchDocument()}
+          onSave={saveSketch}
+          onClose={() => setSketchOpen(false)}
+          email={email}
+          themeStyle={themeStyle}
+          theme={theme}
+          customColor={customColor}
+          onThemeChange={onThemeChange}
+          onCustomColorChange={onCustomColorChange}
+          onOpenNotebookList={() => { void leaveDiary(onBack); }}
+          onOpenCover={() => { void saveAndOpenCover(); }}
+          onSignOut={() => { void leaveDiary(onSignOut); }}
+          onDeleteAccount={() => { void leaveDiary(async () => { onDeleteAccount(); }); }}
+        />
       ) : null}
     </div>
   );

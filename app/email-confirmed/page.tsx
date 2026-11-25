@@ -38,16 +38,16 @@ export default function EmailConfirmedPage() {
 
   const heading =
     status === "checking"
-      ? "인증 상태를 확인하고 있어요."
+      ? "인증 상태를 확인하고 있습니다."
       : status === "confirmed"
-        ? "이메일 인증이 완료됐어요."
+        ? "이메일 인증이 완료되었습니다."
         : "인증 상태를 확인하지 못했어요.";
 
   const description =
     status === "checking"
       ? "잠시만 기다려 주세요."
       : status === "confirmed"
-        ? "CHECKPOINT에 오신 것을 환영해요. 이제 플래너를 이용하실 수 있어요."
+        ? "CHECKPOINT에 오신 것을 환영합니다. 이제 플래너를 이용하실 수 있습니다."
         : "인증 링크가 만료되었거나 확인이 완료되지 않았을 수 있어요. CHECKPOINT에서 다시 로그인해 주세요.";
 
   return (
