@@ -2516,7 +2516,7 @@ export default function MarkdownDiary({
             </span>
             <small>YOUR PACE, YOUR CHECKPOINT</small>
           </button>
-          <div className="header-actions"/>
+          <div className="picture-diary-header-title" title={notebookTitle}><span>{notebookTitle}</span></div>
         </div>
       </header>
 
