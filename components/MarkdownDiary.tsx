@@ -1915,6 +1915,8 @@ export default function MarkdownDiary({
     const frame = selectedImageElementRef.current;
     const image = frame?.querySelector<HTMLImageElement>("img.markdown-note-image");
     if (!frame || !image) return;
+    frame.dataset.checkpointImageZoom = "100";
+    applyNoteImageFrameStyles(frame);
     const leftValue = Number(frame.dataset.checkpointImageCropX);
     const topValue = Number(frame.dataset.checkpointImageCropY);
     const widthValue = Number(frame.dataset.checkpointImageCropWidth);
