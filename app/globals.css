@@ -11567,11 +11567,24 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   width:29px;
   height:29px;
   border-radius:9px;
-  font-size:21px;
-  line-height:1;
   opacity:0;
   pointer-events:none;
   transition:opacity .12s ease,background .12s ease;
+}
+.markdown-note-image-control svg {
+  display:block;
+  width:16px;
+  height:16px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  pointer-events:none;
+}
+.markdown-note-image-delete svg {
+  width:15px;
+  height:15px;
 }
 .markdown-note-image-frame:hover > .markdown-note-image-delete,
 .markdown-note-image-frame.is-selected > .markdown-note-image-delete,
