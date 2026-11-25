@@ -1287,7 +1287,7 @@ export default function Planner() {
         />
         <header className="site-header"><div className="header-inner">
           <button className="brand" onClick={()=>setView("planner")}><span className="brand-lockup"><AppIcon/><span>CHECKPOINT</span></span><small>YOUR PACE, YOUR CHECKPOINT</small></button>
-          <div className="header-actions" />
+          <div className="picture-diary-header-title" title={markdownNotebook.title}><span>{markdownNotebook.title}</span></div>
         </div></header>
         <main className="main-area">
           {alert&&<div className="message-banner" role="alert"><CircleHelp size={17}/><span>{alert}</span><button aria-label="알림 닫기" onClick={()=>setAlert("")}><X size={15}/></button></div>}
@@ -1373,7 +1373,7 @@ export default function Planner() {
     />
     <header className="site-header"><div className="header-inner">
       <button className="brand" onClick={()=>setView("planner")}><span className="brand-lockup"><AppIcon/><span>CHECKPOINT</span></span><small>YOUR PACE, YOUR CHECKPOINT</small></button>
-      <div className="header-actions" />
+      <div className="picture-diary-header-title" title={notebooks.find(notebook=>notebook.id===activeNotebookId)?.title ?? ""}><span>{notebooks.find(notebook=>notebook.id===activeNotebookId)?.title ?? ""}</span></div>
     </div></header>
 
     <main className="main-area">
