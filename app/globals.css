@@ -9098,16 +9098,19 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 }
 .diary-weather-options {
   display:grid;
-  grid-template-columns:repeat(6,minmax(0,1fr));
+  grid-template-columns:repeat(5,minmax(0,1fr));
   align-items:center;
+  justify-items:stretch;
   width:100%;
   min-width:0;
   gap:clamp(0px,.35vw,3px);
 }
 .diary-weather-option {
-  display:inline-flex;
+  display:flex;
   align-items:center;
   justify-content:center;
+  justify-self:stretch;
+  align-self:center;
   flex:1 1 0;
   width:100%;
   min-width:0;
