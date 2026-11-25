@@ -489,16 +489,10 @@ function noteImageCropMarkup() {
 
 function noteImageControlsMarkup() {
   return [
-    '<div class="markdown-note-image-inline-tools" role="toolbar" aria-label="이미지 편집">',
-    '<button type="button" class="markdown-note-image-zoom-out markdown-note-image-control" aria-label="이미지 축소" title="축소" draggable="false">−</button>',
-    '<button type="button" class="markdown-note-image-zoom-in markdown-note-image-control" aria-label="이미지 확대" title="확대" draggable="false">＋</button>',
-    '<button type="button" class="markdown-note-image-crop-toggle markdown-note-image-control" aria-label="이미지 자르기" title="자르기" draggable="false">자르기</button>',
-    '</div>',
     '<button type="button" class="markdown-note-image-menu-trigger markdown-note-image-control" aria-label="이미지 메뉴" title="이미지 메뉴" draggable="false">⋯</button>',
     '<span class="markdown-note-image-options" role="group" aria-label="이미지 메뉴">',
     '<button type="button" class="markdown-note-image-delete markdown-note-image-control" draggable="false">삭제</button>',
-    '</span>',
-    '<button type="button" class="markdown-note-image-resize-handle markdown-note-image-control" aria-label="이미지 크기 조절" title="이미지 크기 조절" draggable="false">↘</button>'
+    '</span>'
   ].join("");
 }
 
@@ -3229,31 +3223,6 @@ export default function MarkdownDiary({
                                 imageFrame.classList.toggle("menu-open");
                               } else if (target.closest(".markdown-note-image-delete")) {
                                 removeSelectedNoteImage();
-                              } else if (target.closest(".markdown-note-image-zoom-in, .markdown-note-image-zoom-out")) {
-                                const direction = target.closest(".markdown-note-image-zoom-in") ? 1 : -1;
-                                if (imageFrame.classList.contains("crop-open")) {
-                                  const factor = direction > 0 ? 0.85 : 1.18;
-                                  const nextWidth = Math.min(100, Math.max(8, imageCropRect.width * factor));
-                                  const nextHeight = Math.min(100, Math.max(8, imageCropRect.height * factor));
-                                  const centerX = imageCropRect.x + imageCropRect.width / 2;
-                                  const centerY = imageCropRect.y + imageCropRect.height / 2;
-                                  const next = {
-                                    x: Math.max(0, Math.min(100 - nextWidth, centerX - nextWidth / 2)),
-                                    y: Math.max(0, Math.min(100 - nextHeight, centerY - nextHeight / 2)),
-                                    width: nextWidth,
-                                    height: nextHeight
-                                  };
-                                  setImageCropRect(next);
-                                  updateInlineCropSelection(next);
-                                } else {
-                                  const zoom = Math.min(300, Math.max(100, Number(imageFrame.dataset.checkpointImageZoom) || 100));
-                                  imageFrame.dataset.checkpointImageZoom = String(Math.min(300, Math.max(100, zoom + direction * 20)));
-                                  applyNoteImageFrameStyles(imageFrame);
-                                  updateCurrentPage(htmlToMarkdown(editor.innerHTML));
-                                }
-                              } else if (target.closest(".markdown-note-image-crop-toggle")) {
-                                imageFrame.classList.remove("menu-open");
-                                openImageCropEditor();
                               } else if (target.closest(".markdown-note-image-resize-handle")) {
                                 imageFrame.classList.remove("menu-open");
                               } else if (target.closest(".markdown-image-crop-selection")) {
