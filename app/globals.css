@@ -11435,8 +11435,19 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 }
 .free-note-image-sticker-delete {
   top:-10px;
-  right:-10px;
+  left:-10px;
   color:#bd6874;
+}
+.free-note-image-sticker-rotate {
+  top:-10px;
+  right:-10px;
+  cursor:grab;
+}
+.free-note-image-sticker-rotate:active {
+  cursor:grabbing;
+}
+.free-note-image-sticker-rotate:hover {
+  background:var(--soft);
 }
 .free-note-image-sticker-delete:hover {
   background:var(--soft);
@@ -11472,4 +11483,17 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   .free-note-image-sticker > img {
     max-height:220px;
   }
+}
+
+
+/* Cover image decorations preserve the uploaded image's original proportions. */
+.cover-art .placed-photo > img {
+  width:1.6em;
+  height:auto;
+  max-width:100%;
+  max-height:60vh;
+  object-fit:contain;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
 }
