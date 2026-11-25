@@ -11510,10 +11510,10 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   display:flex;
   align-items:center;
   justify-content:center;
-  width:42px !important;
-  height:42px !important;
-  min-width:42px !important;
-  min-height:42px !important;
+  width:44px !important;
+  height:44px !important;
+  min-width:44px !important;
+  min-height:44px !important;
   padding:0 !important;
   border:1px solid #e5e7eb !important;
   border-radius:50% !important;
