@@ -572,7 +572,7 @@ function renderInlineMarkdown(value: string, imageUrls: Record<string, string> =
         '" data-checkpoint-image-y="' + cropY + '"' + cropAttributes +
         ' contenteditable="false" draggable="true" style="' + escapeHtml(wrapperStyle) + '">' +
         '<span class="markdown-note-image-content" style="' + escapeHtml(visualStyle) + '">' +
-        '<img class="markdown-note-image" data-checkpoint-image-path="' + escapeHtml(path) +
+        '<img class="markdown-note-image" crossorigin="anonymous" data-checkpoint-image-path="' + escapeHtml(path) +
         '"' + srcAttribute + ' alt="' + escapeHtml(alt || "이미지") +
         '" draggable="false" style="' + escapeHtml(imageStyle) + '">' + noteImageCropMarkup() + '</span>' +
         noteImageControlsMarkup() + '</span>'
@@ -1998,6 +1998,7 @@ export default function MarkdownDiary({
       delete frame.dataset.checkpointImageCropWidth;
       delete frame.dataset.checkpointImageCropHeight;
       delete frame.dataset.checkpointImageAspectRatio;
+      image.crossOrigin = "anonymous";
       image.dataset.checkpointImagePath = path;
       image.src = data.signedUrl;
       const visual = frame.querySelector<HTMLElement>(".markdown-note-image-content");
@@ -2117,6 +2118,7 @@ export default function MarkdownDiary({
 
       const image = document.createElement("img");
       image.className = "markdown-note-image";
+      image.crossOrigin = "anonymous";
       image.dataset.checkpointImagePath = path;
       image.src = data.signedUrl;
       image.alt = file.name.replace(/\.[^.]+$/, "").replace(/[\[\]()\r\n]/g, " ").trim() || "이미지";
