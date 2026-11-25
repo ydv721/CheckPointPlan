@@ -972,6 +972,7 @@ export default function MarkdownDiary({
   const touchScrollYRef = useRef<number | null>(null);
   const stickyDragRef = useRef<{ id: string; pointerId: number; startClientX: number; startClientY: number; startX: number; startY: number } | null>(null);
   const editorSelectionRef = useRef<Range | null>(null);
+  const isComposingRef = useRef(false);
   const currentNoteRef = useRef<MarkdownNote | null>(null);
   const savedSnapshotsRef = useRef<Record<string, string>>({});
   const initialNotePromiseRef = useRef<{ key: string; promise: PromiseLike<MarkdownNote> } | null>(null);
@@ -997,6 +998,7 @@ export default function MarkdownDiary({
   const currentPageAnnotations = pageAnnotations[activePageIndex] ?? createEmptyPageAnnotations(drawingCanvasHeight);
 
   const syncDrawingCanvasMetrics = useCallback(() => {
+    if (isComposingRef.current) return;
     const editor = leftEditorRef.current;
     if (!editor) return;
     const nextHeight = Math.max(1, editor.scrollHeight, editor.clientHeight);
@@ -2886,8 +2888,19 @@ export default function MarkdownDiary({
                           contentEditable={!drawingMode}
                           suppressContentEditableWarning
                           data-placeholder="여기에 내용을 자유롭게 작성해 보세요."
-                          onInput={() => {
+                          onCompositionStart={() => {
+                            isComposingRef.current = true;
+                          }}
+                          onCompositionEnd={() => {
+                            isComposingRef.current = false;
                             const editor = leftEditorRef.current;
+                            if (editor) updateCurrentPage(htmlToMarkdown(editor.innerHTML));
+                            syncDrawingCanvasMetrics();
+                          }}
+                          onInput={event => {
+                            const editor = leftEditorRef.current;
+                            const inputEvent = event.nativeEvent as InputEvent;
+                            if (isComposingRef.current || inputEvent.isComposing) return;
                             if (editor) updateCurrentPage(htmlToMarkdown(editor.innerHTML));
                             syncDrawingCanvasMetrics();
                           }}
