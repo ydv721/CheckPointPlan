@@ -11365,9 +11365,6 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   min-height:0;
   overflow:hidden;
   border-radius:7px;
-  pointer-events:none;
-}
-.markdown-note-image-frame.is-selected .markdown-note-image-content {
   pointer-events:auto;
 }
 .markdown-note-image-frame.crop-open .markdown-note-image-content {
