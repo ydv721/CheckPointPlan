@@ -492,6 +492,7 @@ function noteImageControlsMarkup() {
     ...["nw", "n", "ne", "e", "se", "s", "sw", "w"].map(handle =>
       '<button type="button" class="markdown-note-image-resize-handle markdown-note-image-control is-' + handle + '" data-image-resize-handle="' + handle + '" aria-label="이미지 크기 조절" title="크기 조절" draggable="false"></button>'
     ),
+    '<button type="button" class="markdown-note-image-delete markdown-note-image-control" aria-label="이미지 삭제" title="삭제" draggable="false">×</button>',
     '<button type="button" class="markdown-note-image-menu-trigger markdown-note-image-control" aria-label="이미지 자르기" title="자르기" draggable="false">⋯</button>'
   ].join("");
 }
@@ -3227,6 +3228,9 @@ export default function MarkdownDiary({
                                 selectNoteImage(imageFrame);
                                 imageFrame.classList.remove("menu-open");
                                 openImageCropEditor();
+                              } else if (target.closest(".markdown-note-image-delete")) {
+                                selectNoteImage(imageFrame);
+                                removeSelectedNoteImage();
                               } else if (imageFrame.classList.contains("crop-open")) {
                                 return;
                               } else if (target.closest(".markdown-note-image-resize-handle")) {
