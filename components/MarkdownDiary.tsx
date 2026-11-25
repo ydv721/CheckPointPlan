@@ -3262,7 +3262,7 @@ export default function MarkdownDiary({
                                 if (!target.closest(".markdown-image-crop-selection")) void saveImageCrop();
                               } else if (!target.closest(".markdown-note-image-options, .markdown-note-image-inline-tools")) {
                                 imageFrame.classList.remove("menu-open");
-                                if (target.closest(".markdown-note-image-content, .markdown-note-image")) openImageCropEditor();
+                                openImageCropEditor();
                               }
                               return;
                             }
