@@ -1488,7 +1488,6 @@ export default function MarkdownDiary({
   }
 
   function deleteImageSticker(stickerId: string) {
-    updateImageSticker(stickerId, {});
     if (!activeNote) return;
     const latestNote = currentNoteRef.current?.id === activeNote.id ? currentNoteRef.current : activeNote;
     const latestPages = decodeNotePages(latestNote.content);
@@ -1518,9 +1517,8 @@ export default function MarkdownDiary({
     setError("");
     try {
       const src = await createImageStickerDataUrl(file);
-      if (currentNoteRef.current?.id !== targetNoteId || activePageIndexRef.current !== targetPageIndex) return;
-
       const latestNote = currentNoteRef.current;
+      if (!latestNote || latestNote.id !== targetNoteId || activePageIndexRef.current !== targetPageIndex) return;
       const latestPages = decodeNotePages(latestNote.content);
       const nextAnnotations = decodeNoteAnnotations(latestNote.content);
       const page = nextAnnotations[targetPageIndex] ?? createEmptyPageAnnotations(drawingCanvasHeight);
