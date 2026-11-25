@@ -476,8 +476,24 @@ function safeMarkdownHref(value: string) {
   return "";
 }
 
+function noteImageCropMarkup() {
+  return [
+    '<div class="markdown-note-image-crop-overlay" aria-label="이미지 자르기">',
+    '<div class="markdown-image-crop-selection" data-crop-selection>',
+    ...["nw", "n", "ne", "e", "se", "s", "sw", "w"].map(handle =>
+      '<button type="button" class="markdown-image-crop-handle is-' + handle + '" data-crop-handle="' + handle + '" aria-label="자르기 영역 조절"></button>'
+    ),
+    '</div></div>'
+  ].join("");
+}
+
 function noteImageControlsMarkup() {
   return [
+    '<div class="markdown-note-image-inline-tools" role="toolbar" aria-label="이미지 편집">',
+    '<button type="button" class="markdown-note-image-zoom-out markdown-note-image-control" aria-label="이미지 축소" title="축소" draggable="false">−</button>',
+    '<button type="button" class="markdown-note-image-zoom-in markdown-note-image-control" aria-label="이미지 확대" title="확대" draggable="false">＋</button>',
+    '<button type="button" class="markdown-note-image-crop-toggle markdown-note-image-control" aria-label="이미지 자르기" title="자르기" draggable="false">자르기</button>',
+    '</div>',
     '<button type="button" class="markdown-note-image-menu-trigger markdown-note-image-control" aria-label="이미지 메뉴" title="이미지 메뉴" draggable="false">⋯</button>',
     '<span class="markdown-note-image-options" role="group" aria-label="이미지 메뉴">',
     '<button type="button" class="markdown-note-image-delete markdown-note-image-control" draggable="false">삭제</button>',
@@ -564,7 +580,7 @@ function renderInlineMarkdown(value: string, imageUrls: Record<string, string> =
         '<span class="markdown-note-image-content" style="' + escapeHtml(visualStyle) + '">' +
         '<img class="markdown-note-image" data-checkpoint-image-path="' + escapeHtml(path) +
         '"' + srcAttribute + ' alt="' + escapeHtml(alt || "이미지") +
-        '" draggable="false" style="' + escapeHtml(imageStyle) + '"></span>' +
+        '" draggable="false" style="' + escapeHtml(imageStyle) + '">' + noteImageCropMarkup() + '</span>' +
         noteImageControlsMarkup() + '</span>'
       );
     } catch {
@@ -1690,6 +1706,7 @@ export default function MarkdownDiary({
     frame.style.maxWidth = "100%";
     frame.style.margin = "26px auto";
     frame.style.overflow = "visible";
+    frame.style.height = "auto";
     const hasCrop = frame.dataset.checkpointImageCropWidth !== undefined && frame.dataset.checkpointImageCropHeight !== undefined;
     if (hasCrop) {
       const cropLeftValue = Number(frame.dataset.checkpointImageCropX);
@@ -1730,6 +1747,12 @@ export default function MarkdownDiary({
     visual.style.inset = ratio === "original" ? "" : "0";
     visual.style.height = ratio === "original" ? "" : "100%";
     if (ratio === "original") {
+      frame.style.aspectRatio = "";
+      visual.style.width = "100%";
+      visual.style.height = "auto";
+      visual.style.position = "relative";
+      visual.style.inset = "";
+      visual.style.overflow = "visible";
       image.style.cssText = [
         "display:block",
         "position:relative",
@@ -1768,6 +1791,10 @@ export default function MarkdownDiary({
   }
 
   function startNoteImageTransform(event: ReactPointerEvent<HTMLDivElement>) {
+    if ((event.target as HTMLElement).closest(".markdown-image-crop-selection")) {
+      startImageCropAdjust(event);
+      return;
+    }
     const handle = (event.target as HTMLElement).closest<HTMLButtonElement>(".markdown-note-image-resize-handle");
     const frame = handle?.closest<HTMLElement>(".markdown-note-image-frame");
     if (!handle || !frame || !leftEditorRef.current?.contains(frame) || drawingMode) return;
@@ -1790,6 +1817,10 @@ export default function MarkdownDiary({
   }
 
   function moveNoteImageTransform(event: ReactPointerEvent<HTMLDivElement>) {
+    if (imageCropDragRef.current) {
+      moveImageCropAdjust(event);
+      return;
+    }
     const active = imageTransformRef.current;
     if (!active || active.pointerId !== event.pointerId) return;
     event.preventDefault();
@@ -1800,6 +1831,10 @@ export default function MarkdownDiary({
   }
 
   function finishNoteImageTransform(pointerId: number) {
+    if (imageCropDragRef.current?.pointerId === pointerId) {
+      imageCropDragRef.current = null;
+      return;
+    }
     const active = imageTransformRef.current;
     if (!active || active.pointerId !== pointerId) return;
     imageTransformRef.current = null;
@@ -1817,7 +1852,10 @@ export default function MarkdownDiary({
     }
     imageCropIgnoreClickRef.current = true;
     event.preventDefault();
-    const bounds = event.currentTarget.getBoundingClientRect();
+    const frame = selection.closest<HTMLElement>(".markdown-note-image-frame");
+    const stage = frame?.querySelector<HTMLElement>(".markdown-note-image-content");
+    if (!frame || !stage) return;
+    const bounds = stage.getBoundingClientRect();
     const handle = target.closest<HTMLElement>("[data-crop-handle]");
     imageCropDragRef.current = {
       pointerId: event.pointerId,
@@ -1842,11 +1880,13 @@ export default function MarkdownDiary({
     const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
     if (drag.mode === "move") {
-      setImageCropRect({
+      const next = {
         ...start,
         x: clamp(start.x + deltaX, 0, 100 - start.width),
         y: clamp(start.y + deltaY, 0, 100 - start.height)
-      });
+      };
+      setImageCropRect(next);
+      updateInlineCropSelection(next);
       return;
     }
 
@@ -1858,7 +1898,18 @@ export default function MarkdownDiary({
     if (drag.handle.includes("e")) right = clamp(start.x + start.width + deltaX, left + 4, 100);
     if (drag.handle.includes("n")) top = clamp(start.y + deltaY, 0, bottom - 4);
     if (drag.handle.includes("s")) bottom = clamp(start.y + start.height + deltaY, top + 4, 100);
-    setImageCropRect({ x: left, y: top, width: right - left, height: bottom - top });
+    const next = { x: left, y: top, width: right - left, height: bottom - top };
+    setImageCropRect(next);
+    updateInlineCropSelection(next);
+  }
+
+  function updateInlineCropSelection(rect: ImageCropRect) {
+    const selection = selectedImageElementRef.current?.querySelector<HTMLElement>("[data-crop-selection]");
+    if (!selection) return;
+    selection.style.left = rect.x + "%";
+    selection.style.top = rect.y + "%";
+    selection.style.width = rect.width + "%";
+    selection.style.height = rect.height + "%";
   }
 
   function finishImageCropAdjust(event: ReactPointerEvent<HTMLDivElement>) {
@@ -1880,6 +1931,14 @@ export default function MarkdownDiary({
     const height = Number.isFinite(heightValue) ? Math.min(100 - top, Math.max(4, heightValue)) : 100;
     setImageCropRect({ x: left, y: top, width, height });
     imageCropDragRef.current = null;
+    frame.classList.add("crop-open");
+    const selection = frame.querySelector<HTMLElement>("[data-crop-selection]");
+    if (selection) {
+      selection.style.left = left + "%";
+      selection.style.top = top + "%";
+      selection.style.width = width + "%";
+      selection.style.height = height + "%";
+    }
     setImageCropOpen(true);
   }
 
@@ -1903,6 +1962,7 @@ export default function MarkdownDiary({
     frame.dataset.checkpointImageX = "50";
     frame.dataset.checkpointImageY = "50";
     applyNoteImageFrameStyles(frame);
+    frame.classList.remove("crop-open");
     updateCurrentPage(htmlToMarkdown(editor.innerHTML));
     setImageCropOpen(false);
     imageCropDragRef.current = null;
@@ -2014,6 +2074,7 @@ export default function MarkdownDiary({
       const visual = document.createElement("span");
       visual.className = "markdown-note-image-content";
       visual.append(image);
+      visual.insertAdjacentHTML("beforeend", noteImageCropMarkup());
       frame.append(visual);
       frame.insertAdjacentHTML("beforeend", noteImageControlsMarkup());
       applyNoteImageFrameStyles(frame);
@@ -3114,12 +3175,26 @@ export default function MarkdownDiary({
                                 imageFrame.classList.toggle("menu-open");
                               } else if (target.closest(".markdown-note-image-delete")) {
                                 removeSelectedNoteImage();
-                              } else if (target.closest(".markdown-note-image-resize-handle")) {
-                                imageFrame.classList.remove("menu-open");
-                              } else if (!target.closest(".markdown-note-image-options")) {
+                              } else if (target.closest(".markdown-note-image-zoom-in, .markdown-note-image-zoom-out")) {
+                                const direction = target.closest(".markdown-note-image-zoom-in") ? 1 : -1;
+                                const zoom = Math.min(300, Math.max(100, Number(imageFrame.dataset.checkpointImageZoom) || 100));
+                                imageFrame.dataset.checkpointImageZoom = String(Math.min(300, Math.max(100, zoom + direction * 20)));
+                                applyNoteImageFrameStyles(imageFrame);
+                                updateCurrentPage(htmlToMarkdown(editor.innerHTML));
+                              } else if (target.closest(".markdown-note-image-crop-toggle")) {
                                 imageFrame.classList.remove("menu-open");
                                 openImageCropEditor();
+                              } else if (target.closest(".markdown-note-image-resize-handle")) {
+                                imageFrame.classList.remove("menu-open");
+                              } else if (target.closest(".markdown-image-crop-selection")) {
+                                return;
+                              } else if (!target.closest(".markdown-note-image-options, .markdown-note-image-inline-tools")) {
+                                imageFrame.classList.remove("menu-open");
                               }
+                              return;
+                            }
+                            if (imageCropOpen && selectedImageElementRef.current) {
+                              saveImageCrop();
                               return;
                             }
                             if (selectedImageElementRef.current) clearSelectedNoteImage();
@@ -3360,69 +3435,6 @@ export default function MarkdownDiary({
           </div>
         </div>
       </main>
-      {imageCropOpen && selectedImageElementRef.current ? (
-        <div
-          className="markdown-image-crop-backdrop"
-          role="presentation"
-          onClick={event => {
-            if (event.target === event.currentTarget) saveImageCrop();
-          }}
-        >
-          <div
-            className="markdown-image-crop-stage"
-            role="dialog"
-            aria-modal="true"
-            aria-label="이미지 자르기"
-            style={{
-              width: (() => {
-                const image = selectedImageElementRef.current?.querySelector<HTMLImageElement>("img.markdown-note-image");
-                const ratio = (image?.naturalWidth || image?.width || 4) / (image?.naturalHeight || image?.height || 3);
-                return "min(100%, " + Math.min(640, 360 * ratio) + "px)";
-              })(),
-              aspectRatio: (() => {
-                const image = selectedImageElementRef.current?.querySelector<HTMLImageElement>("img.markdown-note-image");
-                return String(image?.naturalWidth || image?.width || 4) + " / " + String(image?.naturalHeight || image?.height || 3);
-              })()
-            }}
-            onClick={event => {
-              if (imageCropIgnoreClickRef.current) {
-                imageCropIgnoreClickRef.current = false;
-                return;
-              }
-              if (!(event.target as HTMLElement).closest(".markdown-image-crop-selection")) saveImageCrop();
-            }}
-            onPointerDown={startImageCropAdjust}
-            onPointerMove={moveImageCropAdjust}
-            onPointerUp={finishImageCropAdjust}
-            onPointerCancel={finishImageCropAdjust}
-          >
-            <img
-              src={selectedImageElementRef.current?.querySelector<HTMLImageElement>("img.markdown-note-image")?.src ?? ""}
-              alt="자를 원본 이미지"
-              draggable={false}
-            />
-            <div
-              className="markdown-image-crop-selection"
-              style={{
-                left: imageCropRect.x + "%",
-                top: imageCropRect.y + "%",
-                width: imageCropRect.width + "%",
-                height: imageCropRect.height + "%"
-              }}
-            >
-              {(["nw", "n", "ne", "e", "se", "s", "sw", "w"] as const).map(handle => (
-                <button
-                  key={handle}
-                  type="button"
-                  className={"markdown-image-crop-handle is-" + handle}
-                  data-crop-handle={handle}
-                  aria-label="자르기 영역 조절"
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : null}
       {pageDeleteOpen ? (
         <div
           className="modal-backdrop notebook-delete-backdrop"
