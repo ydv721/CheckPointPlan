@@ -9004,11 +9004,21 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 .picture-diary-header-title {
   display:flex;
   align-items:center;
+  justify-content:flex-end;
   margin-left:auto;
   min-width:0;
+  max-width:min(48vw, 520px);
   color:var(--ink);
-  font-size:12px;
+  font-size:13px;
   font-weight:800;
+  letter-spacing:-.02em;
+}
+.picture-diary-header-title span {
+  display:block;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 .diary-date-heading {
   flex:0 0 auto;
