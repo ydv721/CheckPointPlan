@@ -1942,31 +1942,85 @@ export default function MarkdownDiary({
     setImageCropOpen(true);
   }
 
-  function saveImageCrop() {
+  async function saveImageCrop() {
     const frame = selectedImageElementRef.current;
     const editor = leftEditorRef.current;
     const image = frame?.querySelector<HTMLImageElement>("img.markdown-note-image");
-    if (!frame || !editor || !image) return;
+    if (!frame || !editor || !image || imageUploading) return;
     const left = Math.max(0, Math.min(99, imageCropRect.x));
     const top = Math.max(0, Math.min(99, imageCropRect.y));
     const width = Math.max(1, Math.min(100 - left, imageCropRect.width));
     const height = Math.max(1, Math.min(100 - top, imageCropRect.height));
-    const aspect = (image.naturalWidth || image.width || 4) / (image.naturalHeight || image.height || 3);
-    frame.dataset.checkpointImageCropX = String(left);
-    frame.dataset.checkpointImageCropY = String(top);
-    frame.dataset.checkpointImageCropWidth = String(width);
-    frame.dataset.checkpointImageCropHeight = String(height);
-    frame.dataset.checkpointImageAspectRatio = String(aspect);
-    frame.dataset.checkpointImageRatio = "original";
-    frame.dataset.checkpointImageZoom = "100";
-    frame.dataset.checkpointImageX = "50";
-    frame.dataset.checkpointImageY = "50";
-    applyNoteImageFrameStyles(frame);
-    frame.classList.remove("crop-open");
-    updateCurrentPage(htmlToMarkdown(editor.innerHTML));
-    setImageCropOpen(false);
-    imageCropDragRef.current = null;
-    syncDrawingCanvasMetrics();
+    const sourceWidth = image.naturalWidth || image.width;
+    const sourceHeight = image.naturalHeight || image.height;
+    if (!sourceWidth || !sourceHeight) return;
+
+    setImageUploading(true);
+    setError("");
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(sourceWidth * width / 100));
+      canvas.height = Math.max(1, Math.round(sourceHeight * height / 100));
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("이미지를 편집할 수 없습니다.");
+      context.drawImage(
+        image,
+        Math.round(sourceWidth * left / 100),
+        Math.round(sourceHeight * top / 100),
+        canvas.width,
+        canvas.height,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(result => result ? resolve(result) : reject(new Error("잘라낸 이미지를 생성하지 못했습니다.")), "image/png");
+      });
+      const path = userId + "/notes/" + notebookId + "/" + (activeNote?.id ?? "note") + "/" + createDrawingId() + ".png";
+      const { error: uploadError } = await client.storage
+        .from("checkpoint-covers")
+        .upload(path, blob, { contentType: "image/png", upsert: false });
+      if (uploadError) throw uploadError;
+      const { data, error: signedError } = await client.storage
+        .from("checkpoint-covers")
+        .createSignedUrl(path, 60 * 60);
+      if (signedError || !data?.signedUrl) {
+        await client.storage.from("checkpoint-covers").remove([path]);
+        throw signedError ?? new Error("편집한 이미지 주소를 만들지 못했습니다.");
+      }
+
+      const previousPath = frame.dataset.checkpointImagePath;
+      frame.dataset.checkpointImagePath = path;
+      frame.dataset.checkpointImageWidth = String(Math.min(100, Math.max(20, Number(frame.dataset.checkpointImageWidth) || 80)));
+      frame.dataset.checkpointImageRatio = "original";
+      frame.dataset.checkpointImageZoom = "100";
+      frame.dataset.checkpointImageX = "50";
+      frame.dataset.checkpointImageY = "50";
+      delete frame.dataset.checkpointImageCropX;
+      delete frame.dataset.checkpointImageCropY;
+      delete frame.dataset.checkpointImageCropWidth;
+      delete frame.dataset.checkpointImageCropHeight;
+      delete frame.dataset.checkpointImageAspectRatio;
+      image.dataset.checkpointImagePath = path;
+      image.src = data.signedUrl;
+      const visual = frame.querySelector<HTMLElement>(".markdown-note-image-content");
+      if (visual) visual.querySelector(".markdown-note-image-crop-overlay")?.remove();
+      frame.classList.remove("crop-open", "menu-open");
+      applyNoteImageFrameStyles(frame);
+      setNoteImageUrls(current => ({ ...current, [path]: data.signedUrl }));
+      updateCurrentPage(htmlToMarkdown(editor.innerHTML));
+      setImageCropOpen(false);
+      imageCropDragRef.current = null;
+      syncDrawingCanvasMetrics();
+      if (previousPath && previousPath !== path) {
+        void client.storage.from("checkpoint-covers").remove([previousPath]);
+      }
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "이미지를 편집하지 못했습니다.");
+    } finally {
+      setImageUploading(false);
+    }
   }
 
   function removeSelectedNoteImage() {
@@ -3188,13 +3242,16 @@ export default function MarkdownDiary({
                                 imageFrame.classList.remove("menu-open");
                               } else if (target.closest(".markdown-image-crop-selection")) {
                                 return;
+                              } else if (imageFrame.classList.contains("crop-open")) {
+                                if (!target.closest(".markdown-image-crop-selection")) void saveImageCrop();
                               } else if (!target.closest(".markdown-note-image-options, .markdown-note-image-inline-tools")) {
                                 imageFrame.classList.remove("menu-open");
+                                if (target.closest(".markdown-note-image-content, .markdown-note-image")) openImageCropEditor();
                               }
                               return;
                             }
                             if (imageCropOpen && selectedImageElementRef.current) {
-                              saveImageCrop();
+                              void saveImageCrop();
                               return;
                             }
                             if (selectedImageElementRef.current) clearSelectedNoteImage();
