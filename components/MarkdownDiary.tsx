@@ -3231,10 +3231,26 @@ export default function MarkdownDiary({
                                 removeSelectedNoteImage();
                               } else if (target.closest(".markdown-note-image-zoom-in, .markdown-note-image-zoom-out")) {
                                 const direction = target.closest(".markdown-note-image-zoom-in") ? 1 : -1;
-                                const zoom = Math.min(300, Math.max(100, Number(imageFrame.dataset.checkpointImageZoom) || 100));
-                                imageFrame.dataset.checkpointImageZoom = String(Math.min(300, Math.max(100, zoom + direction * 20)));
-                                applyNoteImageFrameStyles(imageFrame);
-                                updateCurrentPage(htmlToMarkdown(editor.innerHTML));
+                                if (imageFrame.classList.contains("crop-open")) {
+                                  const factor = direction > 0 ? 0.85 : 1.18;
+                                  const nextWidth = Math.min(100, Math.max(8, imageCropRect.width * factor));
+                                  const nextHeight = Math.min(100, Math.max(8, imageCropRect.height * factor));
+                                  const centerX = imageCropRect.x + imageCropRect.width / 2;
+                                  const centerY = imageCropRect.y + imageCropRect.height / 2;
+                                  const next = {
+                                    x: Math.max(0, Math.min(100 - nextWidth, centerX - nextWidth / 2)),
+                                    y: Math.max(0, Math.min(100 - nextHeight, centerY - nextHeight / 2)),
+                                    width: nextWidth,
+                                    height: nextHeight
+                                  };
+                                  setImageCropRect(next);
+                                  updateInlineCropSelection(next);
+                                } else {
+                                  const zoom = Math.min(300, Math.max(100, Number(imageFrame.dataset.checkpointImageZoom) || 100));
+                                  imageFrame.dataset.checkpointImageZoom = String(Math.min(300, Math.max(100, zoom + direction * 20)));
+                                  applyNoteImageFrameStyles(imageFrame);
+                                  updateCurrentPage(htmlToMarkdown(editor.innerHTML));
+                                }
                               } else if (target.closest(".markdown-note-image-crop-toggle")) {
                                 imageFrame.classList.remove("menu-open");
                                 openImageCropEditor();
