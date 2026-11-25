@@ -11539,14 +11539,14 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 .markdown-note-image-frame.crop-open > .markdown-note-image-resize-handle {
   display:none !important;
 }
-.markdown-note-image-resize-handle.is-nw { left:-5px;top:-5px; }
-.markdown-note-image-resize-handle.is-n { left:50%;top:-5px;transform:translateX(-50%);cursor:default; }
-.markdown-note-image-resize-handle.is-ne { right:-5px;top:-5px; }
-.markdown-note-image-resize-handle.is-e { right:-5px;top:50%;transform:translateY(-50%);cursor:default; }
-.markdown-note-image-resize-handle.is-se { right:-5px;bottom:-5px; }
-.markdown-note-image-resize-handle.is-s { left:50%;bottom:-5px;transform:translateX(-50%);cursor:default; }
-.markdown-note-image-resize-handle.is-sw { left:-5px;bottom:-5px; }
-.markdown-note-image-resize-handle.is-w { left:-5px;top:50%;transform:translateY(-50%);cursor:default; }
+.markdown-note-image-resize-handle.is-nw { left:-5px;top:-5px;cursor:nwse-resize; }
+.markdown-note-image-resize-handle.is-n { left:50%;top:-5px;transform:translateX(-50%);cursor:ns-resize; }
+.markdown-note-image-resize-handle.is-ne { right:-5px;top:-5px;cursor:nesw-resize; }
+.markdown-note-image-resize-handle.is-e { right:-5px;top:50%;transform:translateY(-50%);cursor:ew-resize; }
+.markdown-note-image-resize-handle.is-se { right:-5px;bottom:-5px;cursor:nwse-resize; }
+.markdown-note-image-resize-handle.is-s { left:50%;bottom:-5px;transform:translateX(-50%);cursor:ns-resize; }
+.markdown-note-image-resize-handle.is-sw { left:-5px;bottom:-5px;cursor:nesw-resize; }
+.markdown-note-image-resize-handle.is-w { left:-5px;top:50%;transform:translateY(-50%);cursor:ew-resize; }
 .markdown-note-image-delete {
   top:6px;
   right:41px;
