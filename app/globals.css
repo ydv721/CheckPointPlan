@@ -11375,9 +11375,60 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   outline:0 !important;
   pointer-events:auto;
 }
-.markdown-note-image-frame.crop-open .markdown-note-image {
-  opacity:.62;
+.markdown-note-image-crop-overlay {
+  position:absolute;
+  z-index:7;
+  inset:0;
+  display:none;
+  box-sizing:border-box;
+  overflow:visible;
+  pointer-events:none;
+  touch-action:none;
 }
+.markdown-note-image-frame.crop-open .markdown-note-image-crop-overlay {
+  display:block;
+  pointer-events:auto;
+}
+.markdown-note-image-crop-overlay .markdown-image-crop-selection {
+  position:absolute;
+  z-index:2;
+  box-sizing:border-box;
+  border:1px solid #fff;
+  outline:1px solid rgba(38,91,160,.9);
+  box-shadow:0 0 0 9999px rgba(0,0,0,.56);
+  cursor:move;
+  touch-action:none;
+}
+.markdown-note-image-crop-overlay .markdown-image-crop-selection::after {
+  position:absolute;
+  inset:0;
+  background-image:
+    linear-gradient(to right,transparent 33.15%,rgba(255,255,255,.7) 33.33%,transparent 33.55%,transparent 66.45%,rgba(255,255,255,.7) 66.67%,transparent 66.85%),
+    linear-gradient(to bottom,transparent 33.15%,rgba(255,255,255,.7) 33.33%,transparent 33.55%,transparent 66.45%,rgba(255,255,255,.7) 66.67%,transparent 66.85%);
+  content:"";
+  pointer-events:none;
+}
+.markdown-note-image-crop-overlay .markdown-image-crop-handle {
+  position:absolute;
+  z-index:3;
+  display:block;
+  width:12px;
+  height:12px;
+  padding:0;
+  border:1px solid var(--accent);
+  border-radius:2px;
+  background:#fff;
+  box-shadow:0 1px 4px rgba(0,0,0,.28);
+  touch-action:none;
+}
+.markdown-note-image-crop-overlay .is-nw { left:0;top:0;cursor:nwse-resize; }
+.markdown-note-image-crop-overlay .is-n { left:50%;top:0;transform:translateX(-50%);cursor:ns-resize; }
+.markdown-note-image-crop-overlay .is-ne { right:0;top:0;cursor:nesw-resize; }
+.markdown-note-image-crop-overlay .is-e { right:0;top:50%;transform:translateY(-50%);cursor:ew-resize; }
+.markdown-note-image-crop-overlay .is-se { right:0;bottom:0;cursor:nwse-resize; }
+.markdown-note-image-crop-overlay .is-s { left:50%;bottom:0;transform:translateX(-50%);cursor:ns-resize; }
+.markdown-note-image-crop-overlay .is-sw { left:0;bottom:0;cursor:nesw-resize; }
+.markdown-note-image-crop-overlay .is-w { left:0;top:50%;transform:translateY(-50%);cursor:ew-resize; }
 .markdown-note-image-content > .markdown-note-image {
   display:block;
   width:100%;
