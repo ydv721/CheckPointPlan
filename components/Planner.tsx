@@ -443,15 +443,15 @@ function CoverPage({cover,setCover,theme,handleUpload,photoUrls}: {
             <button type="button" className={"cover-object-handle cover-object-delete"+(item.kind==="photo"?" image-control-unified image-control-delete":"")} aria-label={item.kind==="photo"?"이미지 삭제":"요소 삭제"} title={item.kind==="photo"?"이미지 삭제":"요소 삭제"}
               onPointerDown={e=>{e.preventDefault();e.stopPropagation();}}
               onClick={e=>{e.stopPropagation();removeItem(item.id);}}>
-              <Trash2 size={item.kind==="photo"?18:14}/>
+              <Trash2 size={item.kind==="photo"?20:14}/>
             </button>
             <button type="button" className={"cover-object-handle cover-object-rotate"+(item.kind==="photo"?" image-control-unified image-control-rotate":"")} aria-label={item.kind==="photo"?"이미지 회전":"요소 회전"} title={item.kind==="photo"?"이미지 회전":"요소 회전"}
               onPointerDown={e=>startRotate(e,item)}>
-              <RotateCw size={item.kind==="photo"?18:14}/>
+              <RotateCw size={item.kind==="photo"?20:14}/>
             </button>
             <button type="button" className={"cover-object-handle cover-object-resize"+(item.kind==="photo"?" image-control-unified image-control-resize":"")} aria-label={item.kind==="photo"?"이미지 크기 조절":"요소 크기 조절"} title={item.kind==="photo"?"이미지 크기 조절":"요소 크기 조절"}
               onPointerDown={e=>startResize(e,item)}>
-              <Expand size={item.kind==="photo"?18:14}/>
+              <Expand size={item.kind==="photo"?20:14}/>
             </button>
           </div>;
         })}
