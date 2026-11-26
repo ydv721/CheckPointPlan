@@ -2529,7 +2529,6 @@ export default function MarkdownDiary({
                 <div className="diary-paper-notebook-title">{notebookTitle}</div>
                 <div className="paper-section key-section markdown-free-note-section">
                   <div className="section-heading markdown-note-heading">
-                    <span>FREE NOTE</span>
                     <div className="markdown-note-heading-actions">
                       {exportFeedback ? (
                         <span className="markdown-export-feedback" aria-live="polite">{exportFeedback}</span>
