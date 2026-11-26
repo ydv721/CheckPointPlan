@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type TouchEvent as ReactTouchEvent, type WheelEvent as ReactWheelEvent } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, ChevronLeft, ChevronRight, Code2, Eraser, FileDown, Heading1, Highlighter, ImagePlus, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, StickyNote as StickyNoteIcon, Strikethrough, Underline, Check, Trash2, X } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, ChevronLeft, ChevronRight, Code2, Eraser, Expand, FileDown, Heading1, Highlighter, ImagePlus, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, RotateCw, StickyNote as StickyNoteIcon, Strikethrough, Underline, Check, Trash2, X } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import PlannerSpread from "@/components/PlannerSpread";
 import type { ThemeName } from "@/lib/types";
@@ -218,13 +218,14 @@ type ImageSticker = {
   x: number;
   y: number;
   width: number;
+  rotation?: number;
   src: string;
   alt: string;
 };
 type ImageStickerInteraction = {
   id: string;
   pointerId: number;
-  mode: "move" | "resize";
+  mode: "move" | "resize" | "rotate";
   startClientX: number;
   startClientY: number;
   startX: number;
@@ -233,6 +234,12 @@ type ImageStickerInteraction = {
   currentX: number;
   currentY: number;
   currentWidth: number;
+  startRotation: number;
+  currentRotation: number;
+  centerX?: number;
+  centerY?: number;
+  startAngle?: number;
+  startDistance?: number;
 };
 type FreeNotePageAnnotations = {
   height: number;
@@ -384,6 +391,9 @@ function normalizePageAnnotations(value: unknown, pageCount: number): FreeNotePa
             x: Math.max(0, Math.min(1000, sticker.x)),
             y: Math.max(0, Math.min(100000, sticker.y)),
             width,
+            rotation: typeof sticker.rotation === "number" && Number.isFinite(sticker.rotation)
+              ? ((sticker.rotation + 180) % 360 + 360) % 360 - 180
+              : 0,
             src: sticker.src,
             alt: typeof sticker.alt === "string" ? sticker.alt.slice(0, 120) : "이미지"
           }];
@@ -1040,7 +1050,8 @@ export default function MarkdownDiary({
   const [drawingScrollTop, setDrawingScrollTop] = useState(0);
   const [noteImageUrls, setNoteImageUrls] = useState<Record<string, string>>({});
   const [imageStickerProcessing, setImageStickerProcessing] = useState(false);
-  const [imageStickerPreview, setImageStickerPreview] = useState<{ id: string; x: number; y: number; width: number } | null>(null);
+  const [imageStickerPreview, setImageStickerPreview] = useState<{ id: string; x: number; y: number; width: number; rotation: number } | null>(null);
+  const [selectedImageStickerId, setSelectedImageStickerId] = useState<string | null>(null);
   const leftEditorRef = useRef<HTMLDivElement>(null);
   const highlighterMenuRef = useRef<HTMLDivElement>(null);
   const imageStickerInputRef = useRef<HTMLInputElement>(null);
@@ -1096,12 +1107,18 @@ export default function MarkdownDiary({
     currentStrokeRef.current = null;
     drawingPointerIdRef.current = null;
     imageStickerInteractionRef.current = null;
+    setSelectedImageStickerId(null);
   }, [activeNoteId]);
 
   useEffect(() => {
     imageStickerInteractionRef.current = null;
     setImageStickerPreview(null);
+    setSelectedImageStickerId(null);
   }, [activePageIndex, activeNoteId]);
+
+  useEffect(() => {
+    if (!drawingMode) setSelectedImageStickerId(null);
+  }, [drawingMode]);
 
   useEffect(() => {
     if (!pageDeleteOpen) return;
@@ -1494,6 +1511,7 @@ export default function MarkdownDiary({
 
   function deleteImageSticker(stickerId: string) {
     setImageStickerPreview(current => current?.id === stickerId ? null : current);
+    setSelectedImageStickerId(current => current === stickerId ? null : current);
     if (!activeNote) return;
     const latestNote = currentNoteRef.current?.id === activeNote.id ? currentNoteRef.current : activeNote;
     const latestPages = decodeNotePages(latestNote.content);
@@ -1547,19 +1565,22 @@ export default function MarkdownDiary({
       const y = editor
         ? Math.max(0, editor.scrollTop + Math.max(16, (editor.clientHeight - 220) / 2))
         : 24;
+      const stickerId = createDrawingId();
       nextAnnotations[targetPageIndex] = {
         ...page,
         height: Math.max(page.height, drawingCanvasHeight),
         images: [...page.images, {
-          id: createDrawingId(),
+          id: stickerId,
           x: 500,
           y,
           width: 28,
+          rotation: 0,
           src,
           alt: file.name.replace(/\.[^.]+$/, "").replace(/[\[\]()\r\n]/g, " ").trim().slice(0, 120) || "이미지"
         }]
       };
       updateActiveNote({ content: encodeNotePages(latestPages, normalizePageAnnotations(nextAnnotations, latestPages.length)) });
+      setSelectedImageStickerId(stickerId);
     } catch (imageError) {
       const message = imageError instanceof Error ? imageError.message : "이미지를 읽지 못했습니다.";
       setError("이미지를 추가하지 못했습니다: " + message);
@@ -1572,12 +1593,18 @@ export default function MarkdownDiary({
   function beginImageStickerInteraction(
     event: ReactPointerEvent<HTMLElement>,
     sticker: ImageSticker,
-    mode: "move" | "resize"
+    mode: "move" | "resize" | "rotate"
   ) {
     if (!drawingMode) return;
     event.preventDefault();
     event.stopPropagation();
-    imageStickerInteractionRef.current = {
+
+    const target = mode === "move" ? event.currentTarget : event.currentTarget.parentElement;
+    const rect = target?.getBoundingClientRect();
+    if (!rect) return;
+
+    const rotation = sticker.rotation ?? 0;
+    const interaction: ImageStickerInteraction = {
       id: sticker.id,
       pointerId: event.pointerId,
       mode,
@@ -1588,9 +1615,37 @@ export default function MarkdownDiary({
       startWidth: sticker.width,
       currentX: sticker.x,
       currentY: sticker.y,
-      currentWidth: sticker.width
+      currentWidth: sticker.width,
+      startRotation: rotation,
+      currentRotation: rotation
     };
-    setImageStickerPreview({ id: sticker.id, x: sticker.x, y: sticker.y, width: sticker.width });
+
+    if (mode === "rotate" || mode === "resize") {
+      interaction.centerX = rect.left + rect.width / 2;
+      interaction.centerY = rect.top + rect.height / 2;
+    }
+    if (mode === "rotate") {
+      interaction.startAngle = Math.atan2(
+        event.clientY - (interaction.centerY ?? rect.top + rect.height / 2),
+        event.clientX - (interaction.centerX ?? rect.left + rect.width / 2)
+      );
+    }
+    if (mode === "resize") {
+      interaction.startDistance = Math.max(8, Math.hypot(
+        event.clientX - (interaction.centerX ?? rect.left + rect.width / 2),
+        event.clientY - (interaction.centerY ?? rect.top + rect.height / 2)
+      ));
+    }
+
+    imageStickerInteractionRef.current = interaction;
+    setSelectedImageStickerId(sticker.id);
+    setImageStickerPreview({
+      id: sticker.id,
+      x: sticker.x,
+      y: sticker.y,
+      width: sticker.width,
+      rotation
+    });
     event.currentTarget.setPointerCapture(event.pointerId);
   }
 
@@ -1600,19 +1655,34 @@ export default function MarkdownDiary({
     if (!drawingMode || !interaction || interaction.pointerId !== event.pointerId || !editor) return;
     const rect = editor.getBoundingClientRect();
     if (!rect.width) return;
-    const deltaX = (event.clientX - interaction.startClientX) / rect.width * 1000;
-    const deltaY = event.clientY - interaction.startClientY;
+
     if (interaction.mode === "move") {
+      const deltaX = (event.clientX - interaction.startClientX) / rect.width * 1000;
+      const deltaY = event.clientY - interaction.startClientY;
       interaction.currentX = Math.max(0, Math.min(1000, interaction.startX + deltaX));
       interaction.currentY = Math.max(0, interaction.startY + deltaY);
+    } else if (interaction.mode === "rotate") {
+      const angle = Math.atan2(
+        event.clientY - (interaction.centerY ?? 0),
+        event.clientX - (interaction.centerX ?? 0)
+      );
+      const delta = (angle - (interaction.startAngle ?? angle)) * 180 / Math.PI;
+      interaction.currentRotation = ((interaction.startRotation + delta + 180) % 360 + 360) % 360 - 180;
     } else {
-      interaction.currentWidth = Math.max(10, Math.min(70, interaction.startWidth + deltaX / 10));
+      const distance = Math.hypot(
+        event.clientX - (interaction.centerX ?? 0),
+        event.clientY - (interaction.centerY ?? 0)
+      );
+      const ratio = distance / Math.max(8, interaction.startDistance ?? distance);
+      interaction.currentWidth = Math.max(10, Math.min(70, interaction.startWidth * ratio));
     }
+
     setImageStickerPreview({
       id: interaction.id,
       x: interaction.currentX,
       y: interaction.currentY,
-      width: interaction.currentWidth
+      width: interaction.currentWidth,
+      rotation: interaction.currentRotation
     });
   }
 
@@ -1623,7 +1693,8 @@ export default function MarkdownDiary({
     updateImageSticker(interaction.id, {
       x: interaction.currentX,
       y: interaction.currentY,
-      width: interaction.currentWidth
+      width: interaction.currentWidth,
+      rotation: interaction.currentRotation
     });
     setImageStickerPreview(null);
   }
@@ -2288,6 +2359,7 @@ export default function MarkdownDiary({
           wrapper.style.left = (sticker.x / 10) + "%";
           wrapper.style.top = sticker.y + "px";
           wrapper.style.width = sticker.width + "%";
+          wrapper.style.rotate = (sticker.rotation ?? 0) + "deg";
           wrapper.style.pointerEvents = "none";
 
           const image = document.createElement("img");
@@ -3070,44 +3142,65 @@ export default function MarkdownDiary({
                               />
                             </div>
                           ))}
-                          {currentPageAnnotations.images.map(sticker => (
-                            <div
-                              key={sticker.id}
-                              className="free-note-image-sticker"
-                              style={{
-                                left: ((imageStickerPreview?.id === sticker.id ? imageStickerPreview.x : sticker.x) / 10) + "%",
-                                top: (imageStickerPreview?.id === sticker.id ? imageStickerPreview.y : sticker.y) + "px",
-                                width: (imageStickerPreview?.id === sticker.id ? imageStickerPreview.width : sticker.width) + "%"
-                              }}
-                              onPointerDown={event => beginImageStickerInteraction(event, sticker, "move")}
-                              onPointerMove={moveImageStickerInteraction}
-                              onPointerUp={finishImageStickerInteraction}
-                              onPointerCancel={finishImageStickerInteraction}
-                            >
-                              <img src={sticker.src} alt={sticker.alt} draggable={false}/>
-                              {drawingMode ? (
-                                <>
-                                  <button
-                                    type="button"
-                                    className="free-note-image-sticker-control free-note-image-sticker-delete"
-                                    aria-label="이미지 삭제"
-                                    title="이미지 삭제"
-                                    onPointerDown={event => event.stopPropagation()}
-                                    onClick={() => deleteImageSticker(sticker.id)}
-                                  >
-                                    <X size={13}/>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="free-note-image-sticker-control free-note-image-sticker-resize"
-                                    aria-label="이미지 크기 조절"
-                                    title="크기 조절"
-                                    onPointerDown={event => beginImageStickerInteraction(event, sticker, "resize")}
-                                  />
-                                </>
-                              ) : null}
-                            </div>
-                          ))}
+                          {currentPageAnnotations.images.map(sticker => {
+                            const preview = imageStickerPreview?.id === sticker.id ? imageStickerPreview : sticker;
+                            const rotation = Number.isFinite(preview.rotation) ? preview.rotation ?? 0 : 0;
+                            const selected = selectedImageStickerId === sticker.id;
+                            return (
+                              <div
+                                key={sticker.id}
+                                className={"free-note-image-sticker placed-object" + (selected ? " is-selected" : "")}
+                                role="group"
+                                tabIndex={0}
+                                aria-label="이미지 스티커"
+                                style={{
+                                  left: (preview.x / 10) + "%",
+                                  top: preview.y + "px",
+                                  width: preview.width + "%",
+                                  rotate: rotation === 0 ? "none" : rotation + "deg"
+                                }}
+                                onPointerDown={event => beginImageStickerInteraction(event, sticker, "move")}
+                                onFocus={() => setSelectedImageStickerId(sticker.id)}
+                                onPointerMove={moveImageStickerInteraction}
+                                onPointerUp={finishImageStickerInteraction}
+                                onPointerCancel={finishImageStickerInteraction}
+                              >
+                                <img src={sticker.src} alt={sticker.alt} draggable={false}/>
+                                {drawingMode ? (
+                                  <>
+                                    <button
+                                      type="button"
+                                      className="cover-object-handle cover-object-delete"
+                                      aria-label="이미지 삭제"
+                                      title="이미지 삭제"
+                                      onPointerDown={event => { event.preventDefault(); event.stopPropagation(); }}
+                                      onClick={event => { event.stopPropagation(); deleteImageSticker(sticker.id); }}
+                                    >
+                                      <Trash2 size={14}/>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="cover-object-handle cover-object-rotate"
+                                      aria-label="이미지 회전"
+                                      title="이미지 회전"
+                                      onPointerDown={event => beginImageStickerInteraction(event, sticker, "rotate")}
+                                    >
+                                      <RotateCw size={14}/>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="cover-object-handle cover-object-resize"
+                                      aria-label="이미지 크기 조절"
+                                      title="이미지 크기 조절"
+                                      onPointerDown={event => beginImageStickerInteraction(event, sticker, "resize")}
+                                    >
+                                      <Expand size={14}/>
+                                    </button>
+                                  </>
+                                ) : null}
+                              </div>
+                            );
+                          })}
                         </div>
                         </div>
                         <div className="markdown-page-navigation">
