@@ -2526,9 +2526,9 @@ export default function MarkdownDiary({
           <div className="workspace-canvas markdown-diary-canvas">
             <PlannerSpread className="book-frame markdown-diary-single-page">
               <section className="paper-page markdown-note-page markdown-single-note-page" aria-label="자유 노트">
-                <div className="diary-paper-notebook-title">{notebookTitle}</div>
                 <div className="paper-section key-section markdown-free-note-section">
                   <div className="section-heading markdown-note-heading">
+                    <div className="diary-paper-notebook-title">{notebookTitle}</div>
                     <div className="markdown-note-heading-actions">
                       {exportFeedback ? (
                         <span className="markdown-export-feedback" aria-live="polite">{exportFeedback}</span>
