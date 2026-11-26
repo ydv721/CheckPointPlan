@@ -42,9 +42,11 @@ export default function AppSidebar({
   onDeleteAccount
 }: AppSidebarProps) {
   const [open, setOpen] = useState(false);
+  const [hoverOpen, setHoverOpen] = useState(false);
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const hoverCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const panelDarkMode = currentView === "library" && darkMode;
   const panelStyle = panelDarkMode ? {
@@ -65,32 +67,95 @@ export default function AppSidebar({
     { value: "custom", label: "Custom" }
   ];
 
+  const clearHoverClose = () => {
+    if (hoverCloseTimerRef.current !== null) {
+      clearTimeout(hoverCloseTimerRef.current);
+      hoverCloseTimerRef.current = null;
+    }
+  };
+
+  const closePanel = () => {
+    clearHoverClose();
+    setOpen(false);
+    setHoverOpen(false);
+  };
+
+  const openFromHover = () => {
+    if (typeof window === "undefined" || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    if (open && !hoverOpen) return;
+    clearHoverClose();
+    setHoverOpen(true);
+    setOpen(true);
+  };
+
+  const scheduleHoverClose = () => {
+    if (!hoverOpen) return;
+    clearHoverClose();
+    hoverCloseTimerRef.current = setTimeout(() => {
+      setOpen(false);
+      setHoverOpen(false);
+      hoverCloseTimerRef.current = null;
+    }, 180);
+  };
+
+  const handleTriggerClick = () => {
+    clearHoverClose();
+    if (open && !hoverOpen) {
+      closePanel();
+      return;
+    }
+    // Clicking the menu keeps it open until the user closes it.
+    setHoverOpen(false);
+    setOpen(true);
+  };
+
   useEffect(() => {
     if (!open) return;
 
     const previousOverflow = document.body.style.overflow;
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        if (hoverCloseTimerRef.current !== null) {
+          clearTimeout(hoverCloseTimerRef.current);
+          hoverCloseTimerRef.current = null;
+        }
+        setOpen(false);
+        setHoverOpen(false);
+      }
     };
 
-    document.body.style.overflow = "hidden";
     document.addEventListener("keydown", closeOnEscape);
-    closeRef.current?.focus();
+    if (!hoverOpen) {
+      document.body.style.overflow = "hidden";
+      closeRef.current?.focus();
+    }
 
     return () => {
-      document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", closeOnEscape);
-      triggerRef.current?.focus();
+      if (!hoverOpen) {
+        document.body.style.overflow = previousOverflow;
+        triggerRef.current?.focus();
+      }
     };
-  }, [open]);
+  }, [open, hoverOpen]);
+
+  useEffect(() => () => {
+    if (hoverCloseTimerRef.current !== null) clearTimeout(hoverCloseTimerRef.current);
+  }, []);
 
   const runAction = (action?: () => void) => {
-    setOpen(false);
+    closePanel();
     action?.();
   };
 
   return (
     <>
+      <div
+        className="app-sidebar-hover-edge"
+        aria-hidden="true"
+        onMouseEnter={openFromHover}
+        onMouseLeave={scheduleHoverClose}
+      />
       <button
         ref={triggerRef}
         type="button"
@@ -100,17 +165,19 @@ export default function AppSidebar({
         aria-expanded={open}
         aria-controls="checkpoint-app-sidebar"
         title="메뉴"
-        onClick={() => setOpen(true)}
+        onMouseEnter={openFromHover}
+        onMouseLeave={scheduleHoverClose}
+        onClick={handleTriggerClick}
       >
         <Menu size={21} />
       </button>
 
       {open && typeof document !== "undefined" && createPortal(
         <div
-          className="app-sidebar-backdrop"
+          className={hoverOpen ? "app-sidebar-backdrop is-hover-open" : "app-sidebar-backdrop"}
           role="presentation"
           onMouseDown={event => {
-            if (event.target === event.currentTarget) setOpen(false);
+            if (event.target === event.currentTarget) closePanel();
           }}
         >
           <aside
@@ -118,8 +185,10 @@ export default function AppSidebar({
             className={panelDarkMode ? "app-sidebar-panel app-sidebar-panel-dark" : "app-sidebar-panel"}
             style={panelStyle}
             role="dialog"
-            aria-modal="true"
+            aria-modal={!hoverOpen}
             aria-label="메뉴"
+            onMouseEnter={clearHoverClose}
+            onMouseLeave={scheduleHoverClose}
           >
             <header className="app-sidebar-header">
               <span className="app-sidebar-email" title={email}>{email}</span>
@@ -128,7 +197,7 @@ export default function AppSidebar({
                 type="button"
                 className="app-sidebar-close"
                 aria-label="메뉴 닫기"
-                onClick={() => setOpen(false)}
+                onClick={closePanel}
               >
                 <X size={20} />
               </button>
