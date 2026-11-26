@@ -11675,3 +11675,11 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 .planner-diary-title-label {
   top:-56px !important;
 }
+
+
+/* Picture Diary: let the Planner-style title sit above the spread instead of clipping it. */
+@media (min-width:781px) {
+  .picture-diary-canvas > .planner-spread.picture-diary-book-frame {
+    overflow:visible !important;
+  }
+}
