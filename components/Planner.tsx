@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent, type PointerEvent as ReactPointerEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import AppSidebar from "@/components/AppSidebar";
+import SiteHeader from "@/components/SiteHeader";
 import PlannerSpread from "@/components/PlannerSpread";
 import NotebookTypeSelection, { type NotebookType } from "@/components/NotebookTypeSelection";
 import NotebookLibrary, { type NotebookRecord } from "@/components/NotebookLibrary";
@@ -1271,24 +1272,26 @@ export default function Planner() {
 
     if(view==="cover")return <>
       <div className="app-shell cover-view" style={vars}>
-        <AppSidebar
-          key={activeMarkdownNotebookId}
-          email={user.email??""}
-          currentView="markdown-cover"
-          themeStyle={vars}
-          onOpenNotebookList={()=>{void openNotebookList();}}
-          onViewChange={setView}
-          theme={theme}
-          customColor={customColor}
-          onThemeChange={setTheme}
-          onCustomColorChange={setCustomColor}
-          onSignOut={()=>{void signOut();}}
-          onDeleteAccount={()=>{setDeleteEmail("");setShowDeleteAccount(true);}}
+        <SiteHeader
+          sectionLabel={markdownNotebook.notebook_type === "diary" ? "그림일기" : "프리 노트"}
+          onBrandClick={()=>setView("planner")}
+          menu={
+            <AppSidebar
+              key={activeMarkdownNotebookId}
+              email={user.email??""}
+              currentView="markdown-cover"
+              themeStyle={vars}
+              onOpenNotebookList={()=>{void openNotebookList();}}
+              onViewChange={setView}
+              theme={theme}
+              customColor={customColor}
+              onThemeChange={setTheme}
+              onCustomColorChange={setCustomColor}
+              onSignOut={()=>{void signOut();}}
+              onDeleteAccount={()=>{setDeleteEmail("");setShowDeleteAccount(true);}}
+            />
+          }
         />
-        <header className="site-header"><div className="header-inner">
-          <button className="brand" onClick={()=>setView("planner")}><span className="brand-lockup"><AppIcon/><span>CHECKPOINT</span></span><small>YOUR PACE, YOUR CHECKPOINT</small></button>
-          <div className="picture-diary-header-title" title={markdownNotebook.title}><span>{markdownNotebook.title}</span></div>
-        </div></header>
         <main className="main-area">
           {alert&&<div className="message-banner" role="alert"><CircleHelp size={17}/><span>{alert}</span><button aria-label="알림 닫기" onClick={()=>setAlert("")}><X size={15}/></button></div>}
           <div className="workspace-shell">
@@ -1357,23 +1360,26 @@ export default function Planner() {
     />}
   </>;
   return <div className={view==="planner"?"app-shell planner-view":"app-shell cover-view"} style={vars}>
-    <AppSidebar
-      key={activeNotebookId}
-      email={user.email??""}
-      currentView={view}
-      themeStyle={vars}
-      onOpenNotebookList={()=>{void openNotebookList();}}
-      onViewChange={setView}
-      theme={theme}
-      customColor={customColor}
-      onThemeChange={setTheme}
-      onCustomColorChange={setCustomColor}
-      onSignOut={()=>{void signOut();}}
-      onDeleteAccount={()=>{setDeleteEmail("");setShowDeleteAccount(true);}}
+    <SiteHeader
+      sectionLabel="플래너"
+      onBrandClick={()=>setView("planner")}
+      menu={
+        <AppSidebar
+          key={activeNotebookId}
+          email={user.email??""}
+          currentView={view}
+          themeStyle={vars}
+          onOpenNotebookList={()=>{void openNotebookList();}}
+          onViewChange={setView}
+          theme={theme}
+          customColor={customColor}
+          onThemeChange={setTheme}
+          onCustomColorChange={setCustomColor}
+          onSignOut={()=>{void signOut();}}
+          onDeleteAccount={()=>{setDeleteEmail("");setShowDeleteAccount(true);}}
+        />
+      }
     />
-    <header className="site-header"><div className="header-inner">
-      <button className="brand" onClick={()=>setView("planner")}><span className="brand-lockup"><AppIcon/><span>CHECKPOINT</span></span><small>YOUR PACE, YOUR CHECKPOINT</small></button>
-    </div></header>
 
     <main className="main-area">
 
