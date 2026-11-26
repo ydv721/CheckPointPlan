@@ -9002,26 +9002,7 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   padding:16px 30px 16px 36px !important;
   gap:12px;
 }
-.picture-diary-header-title {
-  display:flex;
-  align-items:center;
-  justify-content:flex-start;
-  flex:0 1 auto;
-  margin-left:18px;
-  min-width:0;
-  max-width:min(52vw, 520px);
-  color:var(--ink);
-  font-size:14px;
-  font-weight:800;
-  letter-spacing:-.02em;
-}
-.picture-diary-header-title span {
-  display:block;
-  min-width:0;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
+
 .diary-date-heading {
   flex:0 0 auto;
   padding:0 0 10px;
@@ -11478,38 +11459,7 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 }
 
 
-/* User-defined notebook name displayed just above each paper sheet. */
-.diary-title-label {
-  position:absolute;
-  z-index:30;
-  top:-36px;
-  left:0;
-  display:inline-flex;
-  align-items:center;
-  box-sizing:border-box;
-  width:max-content;
-  max-width:min(70vw, 460px);
-  min-width:0;
-  min-height:30px;
-  margin:0;
-  padding:6px 13px;
-  overflow:hidden;
-  border:1px solid color-mix(in srgb, var(--accent) 28%, var(--line));
-  border-radius:8px;
-  background:var(--soft);
-  color:var(--accent);
-  box-shadow:0 3px 10px rgba(23,43,68,.07);
-  font-size:13px;
-  font-weight:800;
-  line-height:1.2;
-  letter-spacing:-.02em;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-  pointer-events:none;
-}
-.diary-title-label:empty {
-  display:none;
-}
+
 
 
 /* Free Note mode tabs reuse the Planner MONTH/DAY index CSS unchanged.
@@ -11542,11 +11492,7 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 }
 
 
-/* Shared page-title space: keep the theme-colored diary label outside the paper. */
-.workspace-canvas:has(> .planner-spread > .diary-title-label) {
-  padding:48px 32px 20px !important;
-  overflow:visible !important;
-}
+
 .markdown-diary-canvas,
 .picture-diary-canvas {
   overflow:visible !important;
@@ -11613,54 +11559,10 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   outline:0 !important;
 }
 
-/* Give all three diary types room for the label above the page on compact screens. */
-@media (max-width:780px) {
-  .workspace-canvas:has(> .planner-spread > .diary-title-label) {
-    padding:44px 12px 20px !important;
-    overflow:visible !important;
-  }
-  .diary-title-label {
-    top:-36px;
-    max-width:calc(100vw - 64px);
-    min-height:29px;
-    padding:6px 12px;
-    font-size:12px;
-  }
-  .picture-diary-book-frame,
-  .markdown-diary-single-page {
-    overflow:visible !important;
-  }
-}
 
 
-/* Planner diary title: retain the theme highlight, but match the DAY date typography. */
-.planner-diary-title-label {
-  border:0 !important;
-  box-shadow:none !important;
-  color:var(--ink) !important;
-  font-size:30px !important;
-  font-weight:950 !important;
-  line-height:.92 !important;
-  letter-spacing:0 !important;
-  text-align:left !important;
-}
-@media (max-width:900px) {
-  .planner-diary-title-label {
-    font-size:clamp(16px,2.7vw,21px) !important;
-  }
-}
-@media (max-width:430px) {
-  .planner-diary-title-label {
-    font-size:clamp(14px,4vw,17px) !important;
-    line-height:.9 !important;
-  }
-}
-@media (min-width:561px) {
-  .planner-diary-title-label {
-    font-size:30px !important;
-    line-height:.92 !important;
-  }
-}
+
+
 
 
 /* Keep all diary spreads aligned with the Planner's 10px lower position. */
@@ -11673,10 +11575,7 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 }
 
 
-/* Keep the Planner diary name clearly above the paper edge. */
-.planner-diary-title-label {
-  top:-56px !important;
-}
+
 
 
 /* Picture Diary: let the Planner-style title sit above the spread instead of clipping it. */
@@ -11913,7 +11812,14 @@ button.checkpoint-header-brand {
     height:auto !important;
   }
 
-  .app-shell.planner-view,
+  .app-shell.planner-view {
+    --checkpoint-spread-width:min(
+      var(--checkpoint-spread-max-width),
+      calc(100vw - 64px),
+      calc(141.9dvh - 140px)
+    );
+  }
+
   .app-shell.cover-view {
     --checkpoint-spread-width:min(
       var(--checkpoint-spread-max-width),
@@ -11922,14 +11828,17 @@ button.checkpoint-header-brand {
     );
   }
 
-  .app-shell.planner-view > .main-area > .workspace-shell > .workspace-canvas,
+  .app-shell.planner-view > .main-area > .workspace-shell > .workspace-canvas {
+    padding:20px 24px 0 !important;
+  }
+
   .app-shell.cover-view > .main-area > .workspace-shell > .workspace-canvas {
     padding:56px 24px 0 !important;
   }
 
   .app-shell.planner-view > .main-area.markdown-diary-main > .workspace-shell > .markdown-diary-canvas,
   .app-shell.planner-view > .main-area.picture-diary-main > .workspace-shell > .picture-diary-canvas {
-    padding:56px 32px 0 !important;
+    padding:20px 32px 0 !important;
   }
 }
 
@@ -12001,14 +11910,9 @@ button.checkpoint-header-brand {
   }
 
   .checkpoint-header-breadcrumb strong {
-    font-size:10px;
+    font-size:14px;
   }
 }
 
 
-@media (max-width:780px) {
-  /* Keep the floating notebook name below the compact header on touch screens. */
-  .planner-diary-title-label {
-    top:-14px !important;
-  }
-}
+
