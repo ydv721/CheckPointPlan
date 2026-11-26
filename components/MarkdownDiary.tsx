@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type TouchEvent as ReactTouchEvent, type WheelEvent as ReactWheelEvent } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, ChevronLeft, ChevronRight, Code2, Eraser, FileDown, Heading1, Highlighter, ImagePlus, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, StickyNote as StickyNoteIcon, Strikethrough, Type, Underline, Check, Trash2, X } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, ChevronLeft, ChevronRight, Code2, Eraser, FileDown, Heading1, Highlighter, ImagePlus, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, StickyNote as StickyNoteIcon, Strikethrough, Underline, Check, Trash2, X } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import PlannerSpread from "@/components/PlannerSpread";
 import type { ThemeName } from "@/lib/types";
@@ -2702,17 +2702,6 @@ export default function MarkdownDiary({
                           </div>
 
 
-                          <button
-                            type="button"
-                            className="markdown-toolbar-button markdown-toolbar-drawing-toggle"
-                            aria-label="필기 모드"
-                            title="필기 모드"
-                            onMouseDown={event => event.preventDefault()}
-                            onClick={enterDrawingMode}
-                          >
-                            <PenLine size={15} strokeWidth={2}/>
-                            <span>필기 모드</span>
-                          </button>
                         </div>
                         {drawingMode ? (
                           <div className="markdown-toolbar free-note-drawing-toolbar" role="toolbar" aria-label="필기 도구 모음">
@@ -2813,9 +2802,6 @@ export default function MarkdownDiary({
                             </div>
                             
                             
-                          <button type="button" className="free-note-drawing-exit" onClick={exitDrawingMode} title="텍스트 편집" aria-label="텍스트 편집">
-                              <Type size={15}/><span>텍스트 편집</span>
-                            </button>
                             </div>
                         ) : null}
                         <div className="free-note-editor-viewport">
@@ -3163,6 +3149,30 @@ export default function MarkdownDiary({
                   </div>
                 </div>
               </section>
+              <div className="planner-index-tabs" role="tablist" aria-label="프리 노트 작성 모드">
+                <button
+                  type="button"
+                  role="tab"
+                  className={drawingMode ? "planner-index-tab" : "planner-index-tab is-active"}
+                  aria-selected={!drawingMode}
+                  aria-label="텍스트 모드"
+                  disabled={loading || !activeNote}
+                  onClick={() => { if (drawingMode) exitDrawingMode(); }}
+                >
+                  <span>텍스트 모드</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  className={drawingMode ? "planner-index-tab is-active" : "planner-index-tab"}
+                  aria-selected={drawingMode}
+                  aria-label="필기 모드"
+                  disabled={loading || !activeNote}
+                  onClick={() => { if (!drawingMode) enterDrawingMode(); }}
+                >
+                  <span>필기 모드</span>
+                </button>
+              </div>
             </PlannerSpread>
           </div>
         </div>
