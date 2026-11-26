@@ -668,8 +668,7 @@ export default function PictureDiary({
                 </div>
 
                 <div className="diary-title-field">
-                  <label htmlFor="picture-diary-title">제목</label>
-                  <input id="picture-diary-title" type="text" maxLength={100} value={entry.title} onChange={event => updateEntry({ title: event.target.value })}/>
+                  <input id="picture-diary-title" type="text" aria-label="제목" placeholder="제목" maxLength={100} value={entry.title} onChange={event => updateEntry({ title: event.target.value })}/>
                 </div>
 
                 <button type="button" className={drawingUrl ? "picture-diary-drawing-area has-image" : "picture-diary-drawing-area"}
