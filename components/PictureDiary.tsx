@@ -627,7 +627,7 @@ export default function PictureDiary({
         <div className="workspace-shell">
           <div className="workspace-canvas picture-diary-canvas">
             <PlannerSpread className="book-frame picture-diary-book-frame">
-              <div className="diary-title-label date-value planner-diary-title-label">{notebookTitle}</div>
+              
               <div className="book-spine" aria-hidden="true">{Array.from({ length: 13 }, (_, index) => <span key={index}/>)}</div>
 
               <section className="paper-page left-page diary-left-page" aria-label="오늘의 그림">
