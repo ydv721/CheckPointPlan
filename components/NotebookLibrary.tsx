@@ -3,6 +3,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { BookOpen, BookText, CalendarDays, CheckSquare, Plus, Clock3, Trash2, Pencil, Check, X, CheckCircle2 } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
+import SiteHeader from "@/components/SiteHeader";
 import type { NotebookType } from "@/components/NotebookTypeSelection";
 import { defaultCover, themes, type Cover, type ThemeName } from "@/lib/types";
 
@@ -185,21 +186,19 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
 
   return (
     <div className="notebook-library-shell" data-theme={darkMode ? "dark" : "light"} style={themeStyle}>
-      <header className="notebook-library-header">
-        <div className="notebook-library-brand">
-          <span className="brand-icon"><BookOpen size={18}/></span>
-          <span><strong>CHECKPOINT</strong><small>YOUR PACE, YOUR CHECKPOINT</small></span>
-        </div>
-        <AppSidebar
-          email={email}
-          currentView="library"
-          themeStyle={themeStyle}
-          darkMode={darkMode}
-          onDarkModeChange={onDarkModeChange}
-          onSignOut={onSignOut}
-          onDeleteAccount={onDeleteAccount}
-        />
-      </header>
+      <SiteHeader
+        menu={
+          <AppSidebar
+            email={email}
+            currentView="library"
+            themeStyle={themeStyle}
+            darkMode={darkMode}
+            onDarkModeChange={onDarkModeChange}
+            onSignOut={onSignOut}
+            onDeleteAccount={onDeleteAccount}
+          />
+        }
+      />
       <main className="notebook-library-main">
         <div className="notebook-library-heading">
           <div><span className="eyebrow">MY DIARIES</span><h1>내 다이어리</h1><p>나만의 기록을 한곳에서 관리해 보세요.</p></div>

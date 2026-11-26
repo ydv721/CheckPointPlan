@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent, type PointerEvent as ReactPointerEvent } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
-  Brush, CalendarDays, Check, ChevronLeft, ChevronRight, ImagePlus, X
+  Brush, CalendarDays, ChevronLeft, ChevronRight, ImagePlus, X
 } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
+import SiteHeader from "@/components/SiteHeader";
 import PlannerSpread from "@/components/PlannerSpread";
 import SketchWorkspace, { createEmptySketchDocument, type SketchDocument } from "@/components/SketchWorkspace";
 import {
@@ -599,29 +600,27 @@ export default function PictureDiary({
 
   return (
     <div className="app-shell planner-view picture-diary-shell" style={themeStyle}>
-      {!sketchOpen ? <AppSidebar
-        email={email}
-        currentView="markdown"
-        themeStyle={themeStyle}
-        theme={theme}
-        customColor={customColor}
-        onThemeChange={onThemeChange}
-        onCustomColorChange={onCustomColorChange}
-        onViewChange={nextView => {
-          if (nextView === "cover") void saveAndOpenCover();
-        }}
-        onOpenNotebookList={() => { void leaveDiary(onBack); }}
-        onSignOut={() => { void leaveDiary(onSignOut); }}
-        onDeleteAccount={() => { void leaveDiary(async () => { onDeleteAccount(); }); }}
-      /> : null}
-
-      <header className="site-header">
-        <div className="header-inner">
-          <button type="button" className="brand" onClick={() => { void leaveDiary(onBack); }}>
-            <span className="brand-lockup"><span className="brand-icon"><Check size={18} strokeWidth={3}/></span><span>CHECKPOINT</span></span>
-          </button>
-        </div>
-      </header>
+      <SiteHeader
+        sectionLabel="그림일기"
+        onBrandClick={() => { void leaveDiary(onBack); }}
+        menu={!sketchOpen ? (
+          <AppSidebar
+            email={email}
+            currentView="markdown"
+            themeStyle={themeStyle}
+            theme={theme}
+            customColor={customColor}
+            onThemeChange={onThemeChange}
+            onCustomColorChange={onCustomColorChange}
+            onViewChange={nextView => {
+              if (nextView === "cover") void saveAndOpenCover();
+            }}
+            onOpenNotebookList={() => { void leaveDiary(onBack); }}
+            onSignOut={() => { void leaveDiary(onSignOut); }}
+            onDeleteAccount={() => { void leaveDiary(async () => { onDeleteAccount(); }); }}
+          />
+        ) : null}
+      />
 
       <main className="main-area picture-diary-main">
         {error ? <div className="message-banner markdown-diary-error" role="alert"><span>{error}</span><button type="button" aria-label="알림 닫기" onClick={() => setError("")}><X size={15}/></button></div> : null}
