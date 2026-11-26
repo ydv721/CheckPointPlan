@@ -11536,3 +11536,27 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
     transform:translateX(-14.5px);
   }
 }
+
+
+/* Free Note: align the notebook title and its three page actions on one compact row. */
+.markdown-free-note-section > .section-heading.markdown-note-heading {
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:12px !important;
+  width:100% !important;
+  margin-bottom:8px !important;
+}
+.markdown-note-heading > .diary-paper-notebook-title {
+  flex:1 1 auto !important;
+  width:auto !important;
+  min-width:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  align-self:center !important;
+  line-height:1.35 !important;
+}
+.markdown-note-heading > .markdown-note-heading-actions {
+  flex:0 0 auto !important;
+  gap:8px !important;
+}
