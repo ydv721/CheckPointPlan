@@ -12004,3 +12004,11 @@ button.checkpoint-header-brand {
     font-size:10px;
   }
 }
+
+
+@media (max-width:780px) {
+  /* Keep the floating notebook name below the compact header on touch screens. */
+  .planner-diary-title-label {
+    top:-14px !important;
+  }
+}
