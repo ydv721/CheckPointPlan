@@ -11685,3 +11685,28 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
     overflow:visible !important;
   }
 }
+
+
+/* Picture Diary: restore Planner-style outlines for every writing area. */
+.picture-diary-book-frame .diary-title-field input,
+.picture-diary-book-frame .picture-diary-drawing-area,
+.picture-diary-book-frame .diary-weather-group,
+.picture-diary-book-frame .diary-time-field,
+.picture-diary-book-frame .diary-journal-paper,
+.picture-diary-book-frame .diary-small-writing-panel {
+  box-sizing:border-box !important;
+  border:1px solid var(--line) !important;
+  border-radius:10px !important;
+}
+
+.picture-diary-book-frame .diary-title-field input,
+.picture-diary-book-frame .diary-weather-group,
+.picture-diary-book-frame .diary-time-field,
+.picture-diary-book-frame .diary-journal-paper,
+.picture-diary-book-frame .diary-small-writing-panel {
+  background:var(--soft) !important;
+}
+
+.picture-diary-book-frame .picture-diary-drawing-area {
+  border-style:solid !important;
+}
