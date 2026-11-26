@@ -8357,6 +8357,7 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 }
 .markdown-free-note-section > .markdown-note-heading{
   align-items:center !important;
+  justify-content:flex-end !important;
 }
 .markdown-note-heading-actions{
   display:flex;
