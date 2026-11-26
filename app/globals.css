@@ -11740,3 +11740,266 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 .app-sidebar-backdrop.is-hover-open > .app-sidebar-panel {
   pointer-events:auto;
 }
+
+
+/* Shared CHECKPOINT header for the diary library and every diary workspace. */
+.checkpoint-site-header {
+  display:flex;
+  flex:0 0 68px;
+  width:100%;
+  height:68px;
+  min-height:68px;
+  position:relative;
+  z-index:20;
+  background:var(--paper);
+  border-bottom:1px solid var(--line);
+}
+
+.checkpoint-header-inner {
+  display:flex;
+  align-items:center;
+  gap:17px;
+  width:min(1480px,100%);
+  height:100%;
+  min-width:0;
+  margin:0 auto;
+  padding:0 42px;
+}
+
+.checkpoint-header-brand {
+  display:inline-flex;
+  align-items:center;
+  flex:0 0 auto;
+  gap:10px;
+  min-width:0;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:var(--ink);
+  text-align:left;
+  text-decoration:none;
+}
+
+button.checkpoint-header-brand {
+  cursor:pointer;
+}
+
+.checkpoint-header-brand:focus-visible {
+  outline:2px solid var(--accent);
+  outline-offset:5px;
+  border-radius:8px;
+}
+
+.checkpoint-header-mark {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 36px;
+  width:36px;
+  height:36px;
+  border-radius:11px;
+  background:var(--accent);
+  color:#fff;
+  box-shadow:0 4px 10px #33415518;
+}
+
+.checkpoint-header-brand-copy {
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  min-width:0;
+}
+
+.checkpoint-header-brand-copy strong {
+  color:var(--ink);
+  font-size:18px;
+  font-weight:950;
+  line-height:1;
+  letter-spacing:.035em;
+}
+
+.checkpoint-header-brand-copy small {
+  color:var(--accent);
+  font-size:8px;
+  font-weight:850;
+  line-height:1.2;
+  letter-spacing:.105em;
+  white-space:nowrap;
+}
+
+.checkpoint-header-divider {
+  flex:0 0 1px;
+  width:1px;
+  height:30px;
+  margin-left:5px;
+  background:var(--line);
+}
+
+.checkpoint-header-breadcrumb {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+  color:var(--ink);
+  font-size:13px;
+  line-height:1.3;
+}
+
+.checkpoint-header-breadcrumb-home {
+  flex:0 0 auto;
+  opacity:.58;
+  white-space:nowrap;
+}
+
+.checkpoint-header-breadcrumb > svg {
+  flex:0 0 auto;
+  opacity:.48;
+}
+
+.checkpoint-header-breadcrumb strong {
+  min-width:0;
+  overflow:hidden;
+  color:var(--ink);
+  font-size:13px;
+  font-weight:900;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.checkpoint-header-actions {
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex:0 0 auto;
+  margin-left:auto;
+}
+
+.checkpoint-header-actions > .app-sidebar-trigger {
+  width:42px;
+  height:42px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--paper);
+  box-shadow:0 3px 12px rgba(24,38,58,.10);
+}
+
+.checkpoint-header-actions > .app-sidebar-trigger:hover,
+.checkpoint-header-actions > .app-sidebar-trigger[aria-expanded="true"] {
+  background:var(--soft);
+}
+
+/* Planner pages previously hid their header to maximize the paper canvas. */
+@media (min-width:781px) {
+  .app-shell.planner-view > .checkpoint-site-header,
+  .app-shell.cover-view > .checkpoint-site-header {
+    display:flex !important;
+    flex:0 0 68px !important;
+    height:68px !important;
+    min-height:68px !important;
+  }
+
+  .app-shell.planner-view > .main-area,
+  .app-shell.cover-view > .main-area {
+    flex:1 1 auto !important;
+    height:auto !important;
+    min-height:0 !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:hidden !important;
+  }
+
+  .app-shell.planner-view > .main-area.markdown-diary-main,
+  .app-shell.planner-view > .main-area.picture-diary-main {
+    height:auto !important;
+  }
+
+  .app-shell.planner-view,
+  .app-shell.cover-view {
+    --checkpoint-spread-width:min(
+      var(--checkpoint-spread-max-width),
+      calc(100vw - 64px),
+      calc(141.9dvh - 176px)
+    );
+  }
+
+  .app-shell.planner-view > .main-area > .workspace-shell > .workspace-canvas {
+    padding:56px 24px 0 !important;
+  }
+
+  .app-shell.planner-view > .main-area.markdown-diary-main > .workspace-shell > .markdown-diary-canvas,
+  .app-shell.planner-view > .main-area.picture-diary-main > .workspace-shell > .picture-diary-canvas {
+    padding:56px 32px 0 !important;
+  }
+}
+
+@media (max-width:780px) {
+  .checkpoint-site-header {
+    flex-basis:64px;
+    height:64px;
+    min-height:64px;
+  }
+
+  .checkpoint-header-inner {
+    padding:0 16px;
+    gap:11px;
+  }
+
+  .checkpoint-header-mark {
+    flex-basis:32px;
+    width:32px;
+    height:32px;
+    border-radius:10px;
+  }
+
+  .checkpoint-header-brand-copy strong {
+    font-size:15px;
+  }
+
+  .checkpoint-header-brand-copy small {
+    font-size:7px;
+    letter-spacing:.07em;
+  }
+
+  .checkpoint-header-divider {
+    height:26px;
+    margin-left:1px;
+  }
+
+  .checkpoint-header-breadcrumb {
+    gap:5px;
+    font-size:11px;
+  }
+
+  .checkpoint-header-breadcrumb strong {
+    font-size:11px;
+  }
+
+  .checkpoint-header-actions > .app-sidebar-trigger {
+    width:38px;
+    height:38px;
+  }
+}
+
+@media (max-width:390px) {
+  .checkpoint-header-inner {
+    padding:0 11px;
+    gap:8px;
+  }
+
+  .checkpoint-header-brand-copy small {
+    display:none;
+  }
+
+  .checkpoint-header-divider {
+    margin-left:0;
+  }
+
+  .checkpoint-header-breadcrumb {
+    gap:3px;
+    font-size:10px;
+  }
+
+  .checkpoint-header-breadcrumb strong {
+    font-size:10px;
+  }
+}
