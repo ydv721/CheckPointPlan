@@ -11667,3 +11667,9 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
     translate:0 10px !important;
   }
 }
+
+
+/* Raise only the Planner diary-name label to keep it clear of the paper edge. */
+.planner-diary-title-label {
+  top:-46px !important;
+}
