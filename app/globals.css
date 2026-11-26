@@ -11756,6 +11756,8 @@ button.checkpoint-header-brand {
 }
 
 .checkpoint-header-breadcrumb strong {
+  position:relative;
+  isolation:isolate;
   min-width:0;
   overflow:hidden;
   color:var(--ink);
@@ -11763,6 +11765,21 @@ button.checkpoint-header-brand {
   font-weight:900;
   text-overflow:ellipsis;
   white-space:nowrap;
+}
+
+.checkpoint-header-breadcrumb strong::before {
+  content:"";
+  position:absolute;
+  z-index:-1;
+  left:0;
+  right:0;
+  bottom:0.04em;
+  height:0.56em;
+  border-radius:2px 3px 2px 1px;
+  background:var(--accent);
+  opacity:.28;
+  transform:rotate(-1deg);
+  pointer-events:none;
 }
 
 .checkpoint-header-actions {
