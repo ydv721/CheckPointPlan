@@ -1383,9 +1383,9 @@ export default function Planner() {
       {view==="cover"? <CoverPage cover={cover} setCover={setCover} theme={theme} handleUpload={handleUpload} photoUrls={photoUrls}/> : <>
         {loading?<div className="page-loading">페이지를 불러오는 중입니다...</div>:plannerPage==="month" ? (
           <PlannerSpread className="book-frame month-book-frame">
+            <div className="diary-title-label">{notebooks.find(notebook=>notebook.id===activeNotebookId)?.title ?? ""}</div>
             <div className="book-spine" aria-hidden="true">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
             <section className="paper-page month-page">
-              <div className="diary-paper-notebook-title">{notebooks.find(notebook=>notebook.id===activeNotebookId)?.title ?? ""}</div>
               <div className="month-page-header">
                 <div className="month-page-heading">
                   <div className="month-page-title-row">
@@ -1497,9 +1497,9 @@ export default function Planner() {
           </PlannerSpread>
         ) : (
           <PlannerSpread className="book-frame day-book-frame">
+          <div className="diary-title-label">{notebooks.find(notebook=>notebook.id===activeNotebookId)?.title ?? ""}</div>
           <div className="book-spine" aria-hidden="true">{Array.from({length:13},(_,i)=><span key={i}/>)}</div>
           <section className="paper-page left-page">
-            <div className="diary-paper-notebook-title">{notebooks.find(notebook=>notebook.id===activeNotebookId)?.title ?? ""}</div>
             <div className="page-date">
               <div className="dday-field">
                 <div className="dday-value-row">
