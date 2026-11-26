@@ -11710,3 +11710,33 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 .picture-diary-book-frame .picture-diary-drawing-area {
   border-style:solid !important;
 }
+
+
+/* Desktop: reveal the shared right sidebar when the pointer reaches the screen edge. */
+.app-sidebar-hover-edge {
+  display:none;
+}
+
+@media (hover:hover) and (pointer:fine) {
+  .app-sidebar-hover-edge {
+    position:fixed;
+    top:0;
+    right:0;
+    z-index:1001;
+    display:block;
+    width:16px;
+    height:100dvh;
+    cursor:default;
+  }
+}
+
+/* Hover-open sidebar is a lightweight flyout, not a modal backdrop. */
+.app-sidebar-backdrop.is-hover-open {
+  background:transparent;
+  pointer-events:none;
+  animation:none;
+}
+
+.app-sidebar-backdrop.is-hover-open > .app-sidebar-panel {
+  pointer-events:auto;
+}
