@@ -1565,7 +1565,7 @@ export default function MarkdownDiary({
       const y = editor
         ? Math.max(0, editor.scrollTop + Math.max(16, (editor.clientHeight - 220) / 2))
         : 24;
-        const stickerId = createDrawingId();
+      const stickerId = createDrawingId();
       nextAnnotations[targetPageIndex] = {
         ...page,
         height: Math.max(page.height, drawingCanvasHeight),
