@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, ChevronLeft, ChevronRight, Code2, Eraser, Expand, FileDown, Heading1, Highlighter, ImagePlus, Italic, List, ListOrdered, Minus, Palette, PenLine, Plus, Quote, RotateCw, StickyNote as StickyNoteIcon, Strikethrough, Underline, Check, Trash2, X } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
+import SiteHeader from "@/components/SiteHeader";
 import PlannerSpread from "@/components/PlannerSpread";
 import type { ThemeName } from "@/lib/types";
 
@@ -2563,33 +2564,27 @@ export default function MarkdownDiary({
 
   return (
     <div className="app-shell planner-view" style={themeStyle}>
-      <AppSidebar
-        email={email}
-        currentView="markdown"
-        themeStyle={themeStyle}
-        theme={theme}
-        customColor={customColor}
-        onThemeChange={onThemeChange}
-        onCustomColorChange={onCustomColorChange}
-        onViewChange={nextView => {
-          if (nextView === "cover") void leaveDiary(async () => { onOpenCover(); });
-        }}
-        onOpenNotebookList={() => { void leaveDiary(onBack); }}
-        onSignOut={() => { void leaveDiary(onSignOut); }}
-        onDeleteAccount={onDeleteAccount}
+      <SiteHeader
+        sectionLabel="프리 노트"
+        onBrandClick={() => { void leaveDiary(onBack); }}
+        menu={
+          <AppSidebar
+            email={email}
+            currentView="markdown"
+            themeStyle={themeStyle}
+            theme={theme}
+            customColor={customColor}
+            onThemeChange={onThemeChange}
+            onCustomColorChange={onCustomColorChange}
+            onViewChange={nextView => {
+              if (nextView === "cover") void leaveDiary(async () => { onOpenCover(); });
+            }}
+            onOpenNotebookList={() => { void leaveDiary(onBack); }}
+            onSignOut={() => { void leaveDiary(onSignOut); }}
+            onDeleteAccount={onDeleteAccount}
+          />
+        }
       />
-
-      <header className="site-header">
-        <div className="header-inner">
-          <button type="button" className="brand" onClick={() => { void leaveDiary(onBack); }}>
-            <span className="brand-lockup">
-              <span className="brand-icon"><Check size={18} strokeWidth={3}/></span>
-              <span>CHECKPOINT</span>
-            </span>
-            <small>YOUR PACE, YOUR CHECKPOINT</small>
-          </button>
-        </div>
-      </header>
 
       <main className="main-area markdown-diary-main">
         {error ? <div className="message-banner markdown-diary-error" role="alert"><span>{error}</span></div> : null}
