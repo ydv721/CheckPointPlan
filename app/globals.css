@@ -11521,3 +11521,18 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   letter-spacing:-.025em;
   overflow-wrap:anywhere;
 }
+
+
+/* Free Note mode tabs reuse the Planner MONTH/DAY index CSS unchanged.
+   Only allow the tabs to extend beyond the paper edge and reserve their space. */
+.markdown-diary-canvas > .planner-spread.markdown-diary-single-page {
+  overflow:visible !important;
+  transform:translateX(-17px);
+}
+@media (max-width:780px) {
+  .markdown-diary-canvas > .planner-spread.markdown-diary-single-page {
+    width:min(560px, calc(100% - 29px)) !important;
+    max-width:calc(100% - 29px) !important;
+    transform:translateX(-14.5px);
+  }
+}
