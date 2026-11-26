@@ -1273,7 +1273,7 @@ export default function Planner() {
     if(view==="cover")return <>
       <div className="app-shell cover-view" style={vars}>
         <SiteHeader
-          sectionLabel={markdownNotebook.notebook_type === "diary" ? "그림일기" : "프리 노트"}
+          diaryTitle={markdownNotebook.title}
           onBrandClick={()=>setView("planner")}
           menu={
             <AppSidebar
@@ -1361,7 +1361,7 @@ export default function Planner() {
   </>;
   return <div className={view==="planner"?"app-shell planner-view":"app-shell cover-view"} style={vars}>
     <SiteHeader
-      sectionLabel="플래너"
+      diaryTitle={notebooks.find(notebook=>notebook.id===activeNotebookId)?.title ?? ""}
       onBrandClick={()=>setView("planner")}
       menu={
         <AppSidebar
