@@ -3150,6 +3150,9 @@ export default function MarkdownDiary({
                               <div
                                 key={sticker.id}
                                 className={"free-note-image-sticker placed-object" + (selected ? " is-selected" : "")}
+                                role="group"
+                                tabIndex={0}
+                                aria-label="이미지 스티커"
                                 style={{
                                   left: (preview.x / 10) + "%",
                                   top: preview.y + "px",
@@ -3157,6 +3160,7 @@ export default function MarkdownDiary({
                                   rotate: rotation === 0 ? "none" : rotation + "deg"
                                 }}
                                 onPointerDown={event => beginImageStickerInteraction(event, sticker, "move")}
+                                onFocus={() => setSelectedImageStickerId(sticker.id)}
                                 onPointerMove={moveImageStickerInteraction}
                                 onPointerUp={finishImageStickerInteraction}
                                 onPointerCancel={finishImageStickerInteraction}
