@@ -11507,19 +11507,37 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 }
 
 
-/* User-defined notebook title printed at the upper-left of each paper spread. */
-.diary-paper-notebook-title {
-  display:block;
-  width:100%;
+/* User-defined notebook name displayed just above each paper sheet. */
+.diary-title-label {
+  position:absolute;
+  z-index:30;
+  top:-36px;
+  left:0;
+  display:inline-flex;
+  align-items:center;
+  box-sizing:border-box;
+  width:max-content;
+  max-width:min(70vw, 460px);
   min-width:0;
-  margin:0 0 12px;
-  padding:0;
-  color:var(--ink);
-  font-size:14px;
+  min-height:30px;
+  margin:0;
+  padding:6px 13px;
+  overflow:hidden;
+  border:1px solid color-mix(in srgb, var(--accent) 28%, var(--line));
+  border-radius:8px;
+  background:var(--soft);
+  color:var(--accent);
+  box-shadow:0 3px 10px rgba(23,43,68,.07);
+  font-size:13px;
   font-weight:800;
-  line-height:1.35;
-  letter-spacing:-.025em;
-  overflow-wrap:anywhere;
+  line-height:1.2;
+  letter-spacing:-.02em;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  pointer-events:none;
+}
+.diary-title-label:empty {
+  display:none;
 }
 
 
@@ -11538,25 +11556,107 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 }
 
 
-/* Free Note: align the notebook title and its three page actions on one compact row. */
+/* Free Note page actions sit together at the upper-right of the paper. */
 .markdown-free-note-section > .section-heading.markdown-note-heading {
   display:flex !important;
   align-items:center !important;
-  justify-content:space-between !important;
-  gap:12px !important;
+  justify-content:flex-end !important;
+  gap:8px !important;
   width:100% !important;
   margin-bottom:8px !important;
 }
-.markdown-note-heading > .diary-paper-notebook-title {
-  flex:1 1 auto !important;
-  width:auto !important;
-  min-width:0 !important;
-  margin:0 !important;
-  padding:0 !important;
-  align-self:center !important;
-  line-height:1.35 !important;
-}
 .markdown-note-heading > .markdown-note-heading-actions {
   flex:0 0 auto !important;
-  gap:8px !important;
+  gap:7px !important;
+}
+
+
+/* Shared page-title space: keep the theme-colored diary label outside the paper. */
+.workspace-canvas:has(> .planner-spread > .diary-title-label) {
+  padding:48px 32px 20px !important;
+  overflow:visible !important;
+}
+.markdown-diary-canvas,
+.picture-diary-canvas {
+  overflow:visible !important;
+}
+.picture-diary-book-frame,
+.markdown-diary-single-page {
+  overflow:visible !important;
+}
+
+/* Planner-inspired page action buttons for Free Note. */
+.markdown-diary-single-page .markdown-share-top-button {
+  flex:0 0 32px !important;
+  width:32px !important;
+  height:32px !important;
+  border:1px solid var(--line) !important;
+  border-radius:7px !important;
+  background:var(--paper) !important;
+  color:var(--ink) !important;
+  box-shadow:0 1px 3px rgba(23,43,68,.06) !important;
+}
+.markdown-diary-single-page .markdown-share-top-button:hover:not(:disabled) {
+  border-color:var(--accent) !important;
+  background:var(--soft) !important;
+  color:var(--accent) !important;
+  transform:translateY(-1px);
+}
+
+/* Planner-inspired toolbar buttons: consistent borders, radius, and theme hover. */
+.markdown-diary-single-page .markdown-toolbar-button {
+  border:1px solid var(--line) !important;
+  border-radius:7px !important;
+  background:var(--paper) !important;
+  color:var(--ink) !important;
+  opacity:1 !important;
+}
+.markdown-diary-single-page .markdown-toolbar-button:hover:not(:disabled),
+.markdown-diary-single-page .markdown-toolbar-button:active:not(:disabled) {
+  border-color:var(--accent) !important;
+  background:var(--soft) !important;
+  color:var(--accent) !important;
+  opacity:1 !important;
+}
+
+/* Picture Diary date and time controls follow the Planner button treatment. */
+.picture-diary-book-frame .diary-date-navigation .month-nav-button {
+  flex:0 0 32px !important;
+  width:32px !important;
+  height:31px !important;
+  border-radius:7px !important;
+}
+.picture-diary-book-frame .diary-time-value button {
+  min-height:28px !important;
+  padding:2px 5px !important;
+  border:1px solid var(--line) !important;
+  border-radius:7px !important;
+  background:var(--paper) !important;
+  color:var(--ink) !important;
+}
+.picture-diary-book-frame .diary-time-value button:hover,
+.picture-diary-book-frame .diary-time-value button:focus-visible {
+  border-color:var(--accent) !important;
+  background:var(--soft) !important;
+  color:var(--accent) !important;
+  outline:0 !important;
+}
+
+/* Give all three diary types room for the label above the page on compact screens. */
+@media (max-width:780px) {
+  .workspace-canvas:has(> .planner-spread > .diary-title-label) {
+    padding:44px 12px 20px !important;
+    overflow:visible !important;
+  }
+  .diary-title-label {
+    top:-36px;
+    max-width:calc(100vw - 64px);
+    min-height:29px;
+    padding:6px 12px;
+    font-size:12px;
+  }
+  .picture-diary-book-frame,
+  .markdown-diary-single-page {
+    overflow:visible !important;
+  }
 }
