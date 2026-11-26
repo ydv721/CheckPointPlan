@@ -11922,7 +11922,8 @@ button.checkpoint-header-brand {
     );
   }
 
-  .app-shell.planner-view > .main-area > .workspace-shell > .workspace-canvas {
+  .app-shell.planner-view > .main-area > .workspace-shell > .workspace-canvas,
+  .app-shell.cover-view > .main-area > .workspace-shell > .workspace-canvas {
     padding:56px 24px 0 !important;
   }
 
