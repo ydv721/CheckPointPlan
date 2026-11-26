@@ -11661,9 +11661,11 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 }
 
 
-/* Lower the Planner DAY/MONTH spread slightly without changing its dimensions. */
+/* Keep all diary spreads aligned with the Planner's 10px lower position. */
 @media (min-width:781px) {
-  .workspace-canvas > .planner-spread.book-frame:is(.day-book-frame, .month-book-frame) {
+  .workspace-canvas > .planner-spread.book-frame:is(.day-book-frame, .month-book-frame),
+  .picture-diary-canvas > .planner-spread.picture-diary-book-frame,
+  .markdown-diary-canvas > .planner-spread.markdown-diary-single-page {
     translate:0 10px !important;
   }
 }
