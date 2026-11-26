@@ -114,7 +114,14 @@ export default function AppSidebar({
 
     const previousOverflow = document.body.style.overflow;
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closePanel();
+      if (event.key === "Escape") {
+        if (hoverCloseTimerRef.current !== null) {
+          clearTimeout(hoverCloseTimerRef.current);
+          hoverCloseTimerRef.current = null;
+        }
+        setOpen(false);
+        setHoverOpen(false);
+      }
     };
 
     document.addEventListener("keydown", closeOnEscape);
