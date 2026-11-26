@@ -11659,3 +11659,11 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
     line-height:.92 !important;
   }
 }
+
+
+/* Lower the Planner DAY/MONTH spread slightly without changing its dimensions. */
+@media (min-width:781px) {
+  .workspace-canvas > .planner-spread.book-frame:is(.day-book-frame, .month-book-frame) {
+    translate:0 10px !important;
+  }
+}
