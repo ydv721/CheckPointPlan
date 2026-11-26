@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent, type PointerEvent as ReactPointerEvent } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
-  Brush, CalendarDays, Check, ChevronLeft, ChevronRight, ImagePlus, X
+  Brush, CalendarDays, ChevronLeft, ChevronRight, ImagePlus, X
 } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import SiteHeader from "@/components/SiteHeader";
