@@ -11800,7 +11800,7 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   }
 
   .markdown-diary-canvas > .planner-spread.markdown-diary-single-page {
-    translate:0 2px !important;
+    translate:0 -8px !important;
   }
 }
 
