@@ -352,7 +352,7 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
             <div className="notebook-library-empty-icon"><BookOpen size={30}/></div>
             <strong>아직 만든 다이어리가 없어요.</strong>
             <span>첫 다이어리를 만들어 기록을 시작해 보세요.</span>
-            <button type="button" className="primary-btn" onClick={onCreate}><Plus size={17}/> 첫 다이어리 만들기</button>
+            <button type="button" className="primary-btn" onClick={()=>onCreate(newNotebookFolderId)}><Plus size={17}/> 첫 다이어리 만들기</button>
           </div>
         ):(
           <>
