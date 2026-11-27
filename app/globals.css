@@ -8009,25 +8009,34 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   min-height:34px;
   padding:0 12px 0 9px;
 }
-.app-sidebar-folders-heading > div {
+.app-sidebar-folders-title {
   min-width:0;
   display:flex;
   align-items:center;
   gap:9px;
+  padding:0;
+  border:0;
+  border-radius:7px;
+  background:transparent;
   color:var(--ink);
+  font:inherit;
+  text-align:left;
+  cursor:pointer;
+  transition:color .15s ease;
 }
-.app-sidebar-folders-heading > div > svg {
+.app-sidebar-folders-title > svg {
   color:var(--accent);
+}
+.app-sidebar-folders-title:hover {
+  color:var(--accent);
+}
+.app-sidebar-folders-title:focus-visible {
+  outline:2px solid var(--accent);
+  outline-offset:3px;
 }
 .app-sidebar-folders-heading strong {
   font-size:13px;
   font-weight:850;
-}
-.app-sidebar-folders-heading small {
-  margin-left:2px;
-  color:var(--ink);
-  font-size:11px;
-  opacity:.55;
 }
 .app-sidebar-folder-add {
   flex:0 0 28px;
