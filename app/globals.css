@@ -8064,6 +8064,123 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 .app-sidebar-folder-row.is-selected {
   background:var(--soft);
 }
+/* Inline folder creation and hover-to-rename controls */
+.app-sidebar-folder-inline-row,
+.app-sidebar-folder-row.is-editing {
+  display:flex;
+  align-items:center;
+  gap:7px;
+  min-width:0;
+  min-height:40px;
+  padding:0 5px 0 9px;
+  border-radius:9px;
+}
+.app-sidebar-folder-inline-row > svg,
+.app-sidebar-folder-row.is-editing > svg {
+  flex:0 0 18px;
+  color:var(--accent);
+}
+.app-sidebar-folder-inline-form {
+  flex:1 1 auto;
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:3px;
+}
+.app-sidebar-folder-inline-form input {
+  flex:1 1 auto;
+  min-width:0;
+  width:0;
+  height:30px;
+  padding:0 8px;
+  border:1px solid color-mix(in srgb,var(--accent) 52%,var(--line));
+  border-radius:7px;
+  outline:none;
+  background:var(--paper);
+  color:var(--ink);
+  font:inherit;
+  font-size:11px;
+}
+.app-sidebar-folder-inline-form input:focus {
+  border-color:var(--accent);
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 18%,transparent);
+}
+.app-sidebar-folder-inline-form input::placeholder {
+  color:var(--ink);
+  opacity:.42;
+}
+.app-sidebar-folder-inline-form button {
+  flex:0 0 25px;
+  width:25px;
+  height:26px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:0;
+  border-radius:6px;
+  background:transparent;
+  color:var(--ink);
+  opacity:.72;
+  cursor:pointer;
+}
+.app-sidebar-folder-inline-form button:first-of-type {
+  color:var(--accent);
+}
+.app-sidebar-folder-inline-form button:hover:not(:disabled) {
+  background:var(--soft);
+  opacity:1;
+}
+.app-sidebar-folder-inline-form button:disabled {
+  opacity:.28;
+  cursor:not-allowed;
+}
+.app-sidebar-folder-inline-error {
+  margin:0 8px 5px 34px;
+  color:#C96D7B;
+  font-size:10px;
+  line-height:1.4;
+}
+.app-sidebar-folder-add.is-active {
+  color:var(--accent);
+  opacity:1;
+}
+.app-sidebar-folder-count {
+  flex:0 0 16px;
+  min-width:16px;
+  margin:0 2px 0 auto;
+  color:var(--ink);
+  font-size:10px;
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+  text-align:right;
+  opacity:.55;
+}
+.app-sidebar-folder-edit {
+  flex:0 0 24px;
+  width:24px;
+  height:28px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:0;
+  border-radius:6px;
+  background:transparent;
+  color:var(--ink);
+  opacity:0;
+  pointer-events:none;
+  transition:background .15s ease,color .15s ease,opacity .15s ease;
+}
+.app-sidebar-folder-row:hover .app-sidebar-folder-edit,
+.app-sidebar-folder-row:focus-within .app-sidebar-folder-edit {
+  opacity:.68;
+  pointer-events:auto;
+}
+.app-sidebar-folder-edit:hover {
+  background:var(--paper);
+  color:var(--accent);
+  opacity:1;
+}
+
 .app-sidebar-folder-select {
   flex:1 1 auto;
   min-width:0;
@@ -8333,7 +8450,8 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 .app-sidebar-panel-dark .app-sidebar-delete { color:#F1A0AA; }
 .app-sidebar-panel-dark .app-sidebar-delete:hover { background:rgba(241,160,170,.12); }
 @media(hover:none) {
-  .app-sidebar-folder-more {
+  .app-sidebar-folder-more,
+  .app-sidebar-folder-edit {
     opacity:.65;
     pointer-events:auto;
   }
