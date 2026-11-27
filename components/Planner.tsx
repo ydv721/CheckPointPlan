@@ -747,17 +747,6 @@ export default function Planner() {
       }
 
       const rows=data??[];
-      const {data:folderRows,error:folderError}=await activeClient.from("notebook_folders")
-        .select("id,name,created_at,updated_at")
-        .eq("user_id",activeUser.id)
-        .order("created_at",{ascending:true});
-      if(!active)return;
-      if(folderError){
-        setNotebookFolders([]);
-        setNotebookTypeNotice("폴더 목록을 불러오지 못했습니다: "+folderError.message);
-      }else{
-        setNotebookFolders((folderRows??[]) as NotebookFolder[]);
-      }
       const notebookIds=rows.map(row=>row.id);
       let settingsRows: {notebook_id:string;theme:string;custom_color:string;cover:unknown;updated_at?:string}[]=[];
       if(notebookIds.length){
@@ -774,6 +763,18 @@ export default function Planner() {
         }
       }else{
         setNotebookTypeNotice("");
+      }
+
+      const {data:folderRows,error:folderError}=await activeClient.from("notebook_folders")
+        .select("id,name,created_at,updated_at")
+        .eq("user_id",activeUser.id)
+        .order("created_at",{ascending:true});
+      if(!active)return;
+      if(folderError){
+        setNotebookFolders([]);
+        setNotebookTypeNotice("폴더 목록을 불러오지 못했습니다: "+folderError.message);
+      }else{
+        setNotebookFolders((folderRows??[]) as NotebookFolder[]);
       }
 
       const settingsByNotebook=new Map(settingsRows.map(setting=>[setting.notebook_id,setting]));
