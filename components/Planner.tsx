@@ -6,7 +6,7 @@ import AppSidebar from "@/components/AppSidebar";
 import SiteHeader from "@/components/SiteHeader";
 import PlannerSpread from "@/components/PlannerSpread";
 import NotebookTypeSelection, { type NotebookType } from "@/components/NotebookTypeSelection";
-import NotebookLibrary, { type NotebookRecord } from "@/components/NotebookLibrary";
+import NotebookLibrary, { type NotebookFolder, type NotebookRecord } from "@/components/NotebookLibrary";
 import MarkdownDiary from "@/components/MarkdownDiary";
 import PictureDiary from "@/components/PictureDiary";
 import {
@@ -541,6 +541,8 @@ export default function Planner() {
   const [notebookTypeChosen,setNotebookTypeChosen]=useState(false);
   const [notebookTypeNotice,setNotebookTypeNotice]=useState("");
   const [notebooks,setNotebooks]=useState<NotebookRecord[]>([]);
+  const [notebookFolders,setNotebookFolders]=useState<NotebookFolder[]>([]);
+  const [pendingNotebookFolderId,setPendingNotebookFolderId]=useState<string|null>(null);
   const [notebookCoverPhotoUrls,setNotebookCoverPhotoUrls]=useState<Record<string,string>>({});
   const [libraryRefresh,setLibraryRefresh]=useState(0);
   const [activeNotebookId,setActiveNotebookId]=useState<string|null>(null);
@@ -659,6 +661,7 @@ export default function Planner() {
     
     setNotebookTypeNotice("");
     setNotebooks([]);
+    setNotebookFolders([]);
     setNotebookCoverPhotoUrls({});
     setActiveNotebookId(null);
     setActiveMarkdownNotebookId(null);
@@ -694,6 +697,7 @@ export default function Planner() {
         
         setNotebookTypeNotice("");
         setNotebooks([]);
+        setNotebookFolders([]);
         setActiveNotebookId(null);
         setActiveMarkdownNotebookId(null);
         setUser(null);
@@ -719,6 +723,7 @@ export default function Planner() {
     if(!client||!user){
       setLibraryLoading(false);
       setNotebooks([]);
+      setNotebookFolders([]);
       setNotebookCoverPhotoUrls({});
       return;
     }
@@ -728,19 +733,31 @@ export default function Planner() {
     async function loadNotebookLibrary(){
       setLibraryLoading(true);
       const {data,error}=await activeClient.from("notebooks")
-        .select("id,notebook_type,title,created_at,updated_at")
+        .select("id,notebook_type,title,created_at,updated_at,folder_id")
         .eq("user_id",activeUser.id)
         .order("updated_at",{ascending:false});
       if(!active)return;
       if(error){
         setNotebookTypeNotice("다이어리 목록을 불러오지 못했습니다: "+error.message);
         setNotebooks([]);
+        setNotebookFolders([]);
         setNotebookCoverPhotoUrls({});
         setLibraryLoading(false);
         return;
       }
 
       const rows=data??[];
+      const {data:folderRows,error:folderError}=await activeClient.from("notebook_folders")
+        .select("id,name,created_at,updated_at")
+        .eq("user_id",activeUser.id)
+        .order("created_at",{ascending:true});
+      if(!active)return;
+      if(folderError){
+        setNotebookFolders([]);
+        setNotebookTypeNotice("폴더 목록을 불러오지 못했습니다: "+folderError.message);
+      }else{
+        setNotebookFolders((folderRows??[]) as NotebookFolder[]);
+      }
       const notebookIds=rows.map(row=>row.id);
       let settingsRows: {notebook_id:string;theme:string;custom_color:string;cover:unknown;updated_at?:string}[]=[];
       if(notebookIds.length){
@@ -1164,8 +1181,9 @@ export default function Planner() {
     setNotebookTypeNotice("");
     setAlert("");
     const title=NOTEBOOK_LABELS[type];
-    const {data,error}=await client.from("notebooks").insert({user_id:user.id,notebook_type:type,title})
-      .select("id,notebook_type,title,created_at,updated_at").single();
+    const folderId=pendingNotebookFolderId;
+    const {data,error}=await client.from("notebooks").insert({user_id:user.id,notebook_type:type,title,folder_id:folderId})
+      .select("id,notebook_type,title,created_at,updated_at,folder_id").single();
     if(error||!data){
       setNotebookTypeNotice("다이어리를 만들지 못했습니다: "+(error?.message??"알 수 없는 오류"));
       setCreatingNotebook(false);
@@ -1192,7 +1210,7 @@ export default function Planner() {
       cover:defaultCover
     },...current]);
     setNotebookTypeChosen(false);
-    
+    setPendingNotebookFolderId(null);
     setNotebookTypeNotice("");
     if(type==="planner"){
       setActiveNotebookId(data.id);
@@ -1226,6 +1244,66 @@ export default function Planner() {
       return false;
     }
     setNotebooks(current=>current.map(item=>item.id===notebook.id?{...item,title:nextTitle}:item));
+    setNotebookTypeNotice("");
+    return true;
+  }
+
+  async function createNotebookFolder(name:string):Promise<boolean> {
+    if(!client||!user)return false;
+    const {data,error}=await client.from("notebook_folders").insert({
+      user_id:user.id,
+      name:name.trim()
+    }).select("id,name,created_at,updated_at").single();
+    if(error||!data){
+      setNotebookTypeNotice(error?.code==="23505"?"같은 이름의 폴더가 이미 있습니다.":"폴더를 만들지 못했습니다: "+(error?.message??"저장된 폴더를 확인할 수 없습니다."));
+      return false;
+    }
+    setNotebookFolders(current=>[...current,data as NotebookFolder].sort((a,b)=>a.created_at.localeCompare(b.created_at)));
+    setNotebookTypeNotice("");
+    return true;
+  }
+
+  async function renameNotebookFolder(folder:NotebookFolder,name:string):Promise<boolean> {
+    if(!client||!user)return false;
+    const {data,error}=await client.from("notebook_folders").update({
+      name:name.trim(),
+      updated_at:new Date().toISOString()
+    }).eq("id",folder.id).eq("user_id",user.id)
+      .select("id,name,created_at,updated_at").single();
+    if(error||!data){
+      setNotebookTypeNotice(error?.code==="23505"?"같은 이름의 폴더가 이미 있습니다.":"폴더 이름을 변경하지 못했습니다: "+(error?.message??"변경된 항목을 확인할 수 없습니다."));
+      return false;
+    }
+    setNotebookFolders(current=>current.map(item=>item.id===folder.id?data as NotebookFolder:item));
+    setNotebookTypeNotice("");
+    return true;
+  }
+
+  async function deleteNotebookFolder(folder:NotebookFolder):Promise<boolean> {
+    if(!client||!user)return false;
+    const {data,error}=await client.from("notebook_folders").delete()
+      .eq("id",folder.id).eq("user_id",user.id)
+      .select("id").single();
+    if(error||!data){
+      setNotebookTypeNotice("폴더를 삭제하지 못했습니다: "+(error?.message??"삭제된 항목을 확인할 수 없습니다."));
+      return false;
+    }
+    setNotebookFolders(current=>current.filter(item=>item.id!==folder.id));
+    setNotebooks(current=>current.map(notebook=>notebook.folder_id===folder.id?{...notebook,folder_id:null}:notebook));
+    setNotebookTypeNotice("");
+    return true;
+  }
+
+  async function moveNotebookToFolder(notebook:NotebookRecord,folderId:string|null):Promise<boolean> {
+    if(!client||!user)return false;
+    const {data,error}=await client.from("notebooks").update({folder_id:folderId})
+      .eq("id",notebook.id).eq("user_id",user.id)
+      .select("id").single();
+    if(error||!data){
+      setNotebookTypeNotice("다이어리를 폴더로 이동하지 못했습니다: "+(error?.message??"변경된 항목을 확인할 수 없습니다."));
+      return false;
+    }
+    setNotebooks(current=>current.map(item=>item.id===notebook.id?{...item,folder_id:folderId}:item));
     setNotebookTypeNotice("");
     return true;
   }
@@ -1333,10 +1411,15 @@ export default function Planner() {
       darkMode={libraryDarkMode}
       onDarkModeChange={setLibraryDarkMode}
       notebooks={notebooks}
+      folders={notebookFolders}
       coverPhotoUrls={notebookCoverPhotoUrls}
       loading={libraryLoading}
       notice={notebookTypeNotice}
-      onCreate={()=>{setNotebookTypeNotice("");setNotebookTypeChosen(true);}}
+      onCreate={folderId=>{setNotebookTypeNotice("");setPendingNotebookFolderId(folderId??null);setNotebookTypeChosen(true);}}
+      onCreateFolder={createNotebookFolder}
+      onRenameFolder={renameNotebookFolder}
+      onDeleteFolder={deleteNotebookFolder}
+      onMoveNotebook={moveNotebookToFolder}
       onOpen={notebook=>{void openNotebook(notebook);}}
       onDelete={deleteNotebook}
       onRename={renameNotebook}
@@ -1354,7 +1437,7 @@ export default function Planner() {
       onClose={()=>{
         if(creatingNotebook)return;
         setNotebookTypeChosen(false);
-        
+        setPendingNotebookFolderId(null);
         setNotebookTypeNotice("");
       }}
     />}
