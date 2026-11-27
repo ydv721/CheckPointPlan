@@ -318,27 +318,39 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
               </button>
             </div>
             <div className="notebook-folders-grid">
-              <div className="notebook-folder-card">
-                <button type="button" className={"notebook-folder-select"+(selectedFolderKey==="all"?" is-selected":"")} onClick={()=>{setSelectedFolderKey("all");setMoveTargetNotebookId(null);}}>
-                  <FolderOpen size={22}/>
-                  <span>전체 다이어리</span>
-                  <small>{notebooks.length}</small>
+              <div className="notebook-folder-card" data-folder-color="0">
+                <button
+                  type="button"
+                  className={"notebook-folder-select"+(selectedFolderKey==="all"?" is-selected":"")}
+                  aria-pressed={selectedFolderKey==="all"}
+                  onClick={()=>{setSelectedFolderKey("all");setMoveTargetNotebookId(null);}}
+                >
+                  <span className="notebook-folder-count">{notebooks.length}</span>
+                  <span className="notebook-folder-name">전체 다이어리</span>
                 </button>
               </div>
-              <div className="notebook-folder-card">
-                <button type="button" className={"notebook-folder-select"+(selectedFolderKey==="unfiled"?" is-selected":"")} onClick={()=>{setSelectedFolderKey("unfiled");setMoveTargetNotebookId(null);}}>
-                  <Folder size={22}/>
-                  <span>분류 없음</span>
-                  <small>{unfiledCount}</small>
+              <div className="notebook-folder-card" data-folder-color="1">
+                <button
+                  type="button"
+                  className={"notebook-folder-select"+(selectedFolderKey==="unfiled"?" is-selected":"")}
+                  aria-pressed={selectedFolderKey==="unfiled"}
+                  onClick={()=>{setSelectedFolderKey("unfiled");setMoveTargetNotebookId(null);}}
+                >
+                  <span className="notebook-folder-count">{unfiledCount}</span>
+                  <span className="notebook-folder-name">분류 없음</span>
                 </button>
               </div>
-              {folders.map(folder=>{
+              {folders.map((folder,index)=>{
                 const count=notebooks.filter(notebook=>notebook.folder_id===folder.id).length;
-                return <div key={folder.id} className="notebook-folder-card">
-                  <button type="button" className={"notebook-folder-select"+(selectedFolderKey===folder.id?" is-selected":"")} onClick={()=>{setSelectedFolderKey(folder.id);setMoveTargetNotebookId(null);}}>
-                    <Folder size={22}/>
-                    <span>{folder.name}</span>
-                    <small>{count}</small>
+                return <div key={folder.id} className="notebook-folder-card" data-folder-color={(index+2)%6}>
+                  <button
+                    type="button"
+                    className={"notebook-folder-select"+(selectedFolderKey===folder.id?" is-selected":"")}
+                    aria-pressed={selectedFolderKey===folder.id}
+                    onClick={()=>{setSelectedFolderKey(folder.id);setMoveTargetNotebookId(null);}}
+                  >
+                    <span className="notebook-folder-count">{count}</span>
+                    <span className="notebook-folder-name">{folder.name}</span>
                   </button>
                   <div className="notebook-folder-actions">
                     <button type="button" aria-label={folder.name+" 이름 변경"} title="폴더 이름 변경" onClick={()=>openFolderEditor("rename",folder)}><Pencil size={13}/></button>
