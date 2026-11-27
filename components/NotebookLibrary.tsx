@@ -142,6 +142,24 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
   const [moveTargetNotebookId,setMoveTargetNotebookId]=useState<string|null>(null);
   const [movingNotebookId,setMovingNotebookId]=useState<string|null>(null);
 
+  useEffect(()=>{
+    if(!moveTargetNotebookId)return;
+    const closeOnOutsidePointer=(event:PointerEvent)=>{
+      const target=event.target;
+      if(target instanceof Element && target.closest(".notebook-folder-move-menu, .notebook-book-folder"))return;
+      setMoveTargetNotebookId(null);
+    };
+    const closeOnEscape=(event:KeyboardEvent)=>{
+      if(event.key==="Escape")setMoveTargetNotebookId(null);
+    };
+    document.addEventListener("pointerdown",closeOnOutsidePointer);
+    document.addEventListener("keydown",closeOnEscape);
+    return()=>{
+      document.removeEventListener("pointerdown",closeOnOutsidePointer);
+      document.removeEventListener("keydown",closeOnEscape);
+    };
+  },[moveTargetNotebookId]);
+
   function startRename(notebook:NotebookRecord){
     setRenameTargetId(notebook.id);
     setRenameValue(notebook.title);
