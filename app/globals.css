@@ -8795,8 +8795,8 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   cursor:text;
   background-color:var(--soft) !important;
   background-image:
-    linear-gradient(to right, color-mix(in srgb, var(--line) 42%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in srgb, var(--line) 42%, transparent) 1px, transparent 1px) !important;
+    linear-gradient(to right, color-mix(in srgb, var(--line) 58%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--line) 58%, transparent) 1px, transparent 1px) !important;
   background-position:-1px -1px !important;
   background-size:24px 24px !important;
   scrollbar-width:thin;
