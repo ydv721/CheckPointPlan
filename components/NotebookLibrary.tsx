@@ -235,6 +235,8 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
         setFolderEditor(null);
         setFolderName("");
         setDeleteToast({message:folderEditor.mode==="create"?"폴더를 만들었습니다.":"폴더 이름을 변경했습니다.",id:Date.now()});
+      }else{
+        setFolderError("폴더를 저장하지 못했습니다. 중복된 이름인지 확인해 주세요.");
       }
     }finally{
       setFolderSaving(false);
