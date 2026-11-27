@@ -12016,6 +12016,8 @@ button.checkpoint-header-brand {
 .notebook-folder-card[data-folder-color="3"] { --folder-tab-color:#2f9da0; }
 .notebook-folder-card[data-folder-color="4"] { --folder-tab-color:#8b78b8; }
 .notebook-folder-card[data-folder-color="5"] { --folder-tab-color:#b78a4b; }
+.notebook-folder-card[data-folder-color="6"] { --folder-tab-color:#777777; }
+.notebook-folder-card[data-folder-color="7"] { --folder-tab-color:#555555; }
 .notebook-folder-select {
   position:absolute;
   z-index:1;
@@ -12058,7 +12060,6 @@ button.checkpoint-header-brand {
 }
 .notebook-folder-select:hover {
   background:#252525;
-  transform:translateY(-1px);
 }
 .notebook-folder-select.is-selected {
   box-shadow:0 0 0 2px var(--folder-tab-color);
