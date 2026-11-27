@@ -8180,6 +8180,7 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   grid-column:3;
   min-width:16px;
   margin:0;
+  transform:translateX(-10px);
   color:var(--ink);
   font-size:10px;
   font-weight:700;
@@ -8319,6 +8320,9 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 .app-sidebar-unfiled > svg {
   color:var(--ink);
   opacity:.55;
+}
+.app-sidebar-unfiled > small {
+  transform:translateX(-10px);
 }
 .app-sidebar-navigation {
   display:flex;
