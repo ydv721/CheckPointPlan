@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import {
-  ArrowRight, BookOpen, Check, ChevronDown, Ellipsis, Folder, FolderPlus, House, LogOut, Menu, Plus,
+  ArrowRight, BookOpen, Check, ChevronDown, Folder, FolderPlus, House, LogOut, Menu, Plus,
   Moon, Palette, Pencil, Sparkles, Trash2, X
 } from "lucide-react";
 import { themes, type ThemeName } from "@/lib/types";
@@ -64,7 +64,6 @@ export default function AppSidebar({
   const [open, setOpen] = useState(false);
   const [hoverOpen, setHoverOpen] = useState(false);
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
-  const [folderActionMenuId, setFolderActionMenuId] = useState<string | null>(null);
   const [folderInlineEditor, setFolderInlineEditor] = useState<FolderInlineEditor | null>(null);
   const [folderInlineName, setFolderInlineName] = useState("");
   const [folderInlineSaving, setFolderInlineSaving] = useState(false);
@@ -103,7 +102,6 @@ export default function AppSidebar({
     clearHoverClose();
     setOpen(false);
     setHoverOpen(false);
-    setFolderActionMenuId(null);
     if (!folderInlineSaving) {
       setFolderInlineEditor(null);
       setFolderInlineName("");
@@ -180,14 +178,12 @@ export default function AppSidebar({
   };
 
   const openFolderCreate = () => {
-    setFolderActionMenuId(null);
     setFolderInlineError("");
     setFolderInlineName("");
     setFolderInlineEditor(current => current?.mode === "create" ? null : { mode: "create" });
   };
 
   const openFolderRename = (folder: SidebarFolder) => {
-    setFolderActionMenuId(null);
     setFolderInlineEditor({ mode: "rename", folderId: folder.id });
     setFolderInlineName(folder.name);
     setFolderInlineError("");
@@ -500,27 +496,15 @@ export default function AppSidebar({
                               </button>
                               <button
                                 type="button"
-                                className="app-sidebar-folder-more"
-                                aria-label={folder.name + " 폴더 메뉴"}
-                                aria-expanded={folderActionMenuId === folder.id}
-                                title="폴더 메뉴"
-                                onClick={() => setFolderActionMenuId(current => current === folder.id ? null : folder.id)}
+                                className="app-sidebar-folder-delete"
+                                aria-label={folder.name + " 폴더 삭제"}
+                                title="폴더 삭제"
+                                onClick={() => runAction(() => onDeleteFolderRequest?.(folder))}
                               >
-                                <Ellipsis size={17} />
+                                <Trash2 size={15} />
                               </button>
                             </div>
                             <small className="app-sidebar-folder-count">{folderCounts[folder.id] ?? 0}</small>
-                            {folderActionMenuId === folder.id && (
-                              <div className="app-sidebar-folder-menu" role="menu">
-                                <button
-                                  type="button"
-                                  role="menuitem"
-                                  onClick={() => runAction(() => onDeleteFolderRequest?.(folder))}
-                                >
-                                  <Trash2 size={14} /> 폴더 삭제
-                                </button>
-                              </div>
-                            )}
                           </>
                         )}
                       </div>
