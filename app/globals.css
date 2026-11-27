@@ -12316,20 +12316,41 @@ button.checkpoint-header-brand {
 
 
 
-/* Free Note page actions sit inside the paper, aligned with the text toolbar. */
+/* Free Note editing controls and page actions share one continuous toolbar row. */
 .markdown-free-note-section > .free-note-paper {
   position:relative !important;
 }
-.markdown-paper-actions {
-  position:absolute;
-  z-index:8;
-  top:6px;
-  right:10px;
+.markdown-toolbar-row {
   display:flex;
+  flex:0 0 auto;
+  align-items:center;
+  flex-wrap:nowrap;
+  width:100%;
+  min-height:46px;
+  box-sizing:border-box;
+  background:var(--soft);
+  border-bottom:1px solid var(--line);
+}
+.markdown-toolbar-row > .markdown-toolbar {
+  position:static;
+  flex:1 1 auto;
+  width:auto;
+  min-width:0;
+  background:transparent;
+  border-bottom:0;
+}
+.markdown-paper-actions {
+  position:static;
+  z-index:8;
+  display:flex;
+  flex:0 0 auto;
   align-items:center;
   justify-content:flex-end;
   gap:4px;
   min-width:0;
+  padding:7px 10px 7px 0;
+  box-sizing:border-box;
+  background:transparent;
 }
 .markdown-paper-actions::before {
   content:"";
@@ -12367,17 +12388,17 @@ button.checkpoint-header-brand {
   cursor:not-allowed;
   transform:none;
 }
-.markdown-free-note-section > .free-note-paper > .markdown-toolbar {
-  padding-right:132px !important;
-}
 @media (max-width:780px) {
-  .markdown-paper-actions {
-    position:static;
-    width:100%;
-    box-sizing:border-box;
-    padding:6px 8px 0;
+  .markdown-toolbar-row {
+    flex-wrap:wrap;
   }
-  .markdown-free-note-section > .free-note-paper > .markdown-toolbar {
-    padding-right:10px !important;
+  .markdown-toolbar-row > .markdown-toolbar {
+    flex:1 1 100%;
+    width:100%;
+  }
+  .markdown-paper-actions {
+    width:100%;
+    justify-content:flex-end;
+    padding:0 10px 7px;
   }
 }
