@@ -8016,7 +8016,7 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   display:flex;
   align-items:center;
   gap:9px;
-  padding:0 7px 0 9px;
+  padding:0 7px 0 0;
   border:0;
   border-radius:9px;
   background:transparent;
