@@ -3,13 +3,14 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import {
-  ArrowRight, BookOpen, Check, ChevronDown, Ellipsis, Folder, House, LogOut, Menu, Plus,
+  ArrowRight, BookOpen, Check, ChevronDown, Ellipsis, Folder, FolderPlus, House, LogOut, Menu, Plus,
   Moon, Palette, Pencil, Sparkles, Trash2, X
 } from "lucide-react";
 import { themes, type ThemeName } from "@/lib/types";
 
 type SidebarView = "library" | "planner" | "cover" | "markdown" | "markdown-cover";
 type SidebarFolder = { id: string; name: string };
+type FolderInlineEditor = { mode: "create" } | { mode: "rename"; folderId: string };
 
 type AppSidebarProps = {
   email: string;
@@ -29,8 +30,8 @@ type AppSidebarProps = {
   totalNotebookCount?: number;
   selectedFolderKey?: string;
   onFolderSelect?: (folderKey: string) => void;
-  onCreateFolderRequest?: () => void;
-  onRenameFolderRequest?: (folder: SidebarFolder) => void;
+  onCreateFolder?: (name: string) => Promise<boolean>;
+  onRenameFolder?: (folder: SidebarFolder, name: string) => Promise<boolean>;
   onDeleteFolderRequest?: (folder: SidebarFolder) => void;
   onSignOut: () => void;
   onDeleteAccount: () => void;
@@ -54,8 +55,8 @@ export default function AppSidebar({
   totalNotebookCount = 0,
   selectedFolderKey = "all",
   onFolderSelect,
-  onCreateFolderRequest,
-  onRenameFolderRequest,
+  onCreateFolder,
+  onRenameFolder,
   onDeleteFolderRequest,
   onSignOut,
   onDeleteAccount
@@ -64,6 +65,10 @@ export default function AppSidebar({
   const [hoverOpen, setHoverOpen] = useState(false);
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
   const [folderActionMenuId, setFolderActionMenuId] = useState<string | null>(null);
+  const [folderInlineEditor, setFolderInlineEditor] = useState<FolderInlineEditor | null>(null);
+  const [folderInlineName, setFolderInlineName] = useState("");
+  const [folderInlineSaving, setFolderInlineSaving] = useState(false);
+  const [folderInlineError, setFolderInlineError] = useState("");
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const hoverCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -99,6 +104,11 @@ export default function AppSidebar({
     setOpen(false);
     setHoverOpen(false);
     setFolderActionMenuId(null);
+    if (!folderInlineSaving) {
+      setFolderInlineEditor(null);
+      setFolderInlineName("");
+      setFolderInlineError("");
+    }
   };
 
   const openFromHover = () => {
@@ -167,6 +177,65 @@ export default function AppSidebar({
   const runAction = (action?: () => void) => {
     closePanel();
     action?.();
+  };
+
+  const openFolderCreate = () => {
+    setFolderActionMenuId(null);
+    setFolderInlineError("");
+    setFolderInlineName(folderInlineEditor?.mode === "create" ? "" : "");
+    setFolderInlineEditor(current => current?.mode === "create" ? null : { mode: "create" });
+  };
+
+  const openFolderRename = (folder: SidebarFolder) => {
+    setFolderActionMenuId(null);
+    setFolderInlineEditor({ mode: "rename", folderId: folder.id });
+    setFolderInlineName(folder.name);
+    setFolderInlineError("");
+  };
+
+  const cancelFolderInlineEdit = () => {
+    if (folderInlineSaving) return;
+    setFolderInlineEditor(null);
+    setFolderInlineName("");
+    setFolderInlineError("");
+  };
+
+  const saveFolderInlineEdit = async () => {
+    if (!folderInlineEditor || folderInlineSaving) return;
+    const name = folderInlineName.trim();
+    if (!name) {
+      setFolderInlineError("폴더 이름을 입력해 주세요.");
+      return;
+    }
+    if (name.length > 40) {
+      setFolderInlineError("폴더 이름은 40자 이내로 입력해 주세요.");
+      return;
+    }
+
+    const folder = folderInlineEditor.mode === "rename"
+      ? folders.find(item => item.id === folderInlineEditor.folderId)
+      : null;
+    if (folder && folder.name === name) {
+      cancelFolderInlineEdit();
+      return;
+    }
+
+    setFolderInlineSaving(true);
+    setFolderInlineError("");
+    try {
+      const saved = folderInlineEditor.mode === "create"
+        ? await onCreateFolder?.(name)
+        : folder ? await onRenameFolder?.(folder, name) : false;
+      if (saved) {
+        setFolderInlineEditor(null);
+        setFolderInlineName("");
+        setFolderInlineError("");
+      } else {
+        setFolderInlineError("폴더를 저장하지 못했습니다. 중복된 이름인지 확인해 주세요.");
+      }
+    } finally {
+      setFolderInlineSaving(false);
+    }
   };
 
   return (
@@ -341,64 +410,125 @@ export default function AppSidebar({
                   </div>
                   <button
                     type="button"
-                    className="app-sidebar-folder-add"
+                    className={folderInlineEditor?.mode === "create" ? "app-sidebar-folder-add is-active" : "app-sidebar-folder-add"}
                     aria-label="새 폴더 만들기"
+                    aria-expanded={folderInlineEditor?.mode === "create"}
                     title="새 폴더 만들기"
-                    onClick={() => runAction(onCreateFolderRequest)}
+                    onClick={openFolderCreate}
                   >
                     <Plus size={18} strokeWidth={1.8} />
                   </button>
                 </div>
 
                 <div className="app-sidebar-folder-list">
+                  {folderInlineEditor?.mode === "create" && (
+                    <div className="app-sidebar-folder-inline-row">
+                      <FolderPlus size={18} />
+                      <form className="app-sidebar-folder-inline-form" onSubmit={event => { event.preventDefault(); void saveFolderInlineEdit(); }}>
+                        <input
+                          autoFocus
+                          type="text"
+                          value={folderInlineName}
+                          maxLength={40}
+                          aria-label="새 폴더 이름"
+                          placeholder="새 폴더 이름"
+                          disabled={folderInlineSaving}
+                          onChange={event => { setFolderInlineName(event.target.value); setFolderInlineError(""); }}
+                          onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); cancelFolderInlineEdit(); } }}
+                        />
+                        <button type="submit" aria-label="폴더 만들기" title="저장" disabled={folderInlineSaving || !folderInlineName.trim()}>
+                          <Check size={15} />
+                        </button>
+                        <button type="button" aria-label="취소" title="취소" disabled={folderInlineSaving} onClick={cancelFolderInlineEdit}>
+                          <X size={15} />
+                        </button>
+                      </form>
+                    </div>
+                  )}
+                  {folderInlineEditor?.mode === "create" && folderInlineError && (
+                    <p className="app-sidebar-folder-inline-error" role="alert">{folderInlineError}</p>
+                  )}
                   {folders.map((folder, index) => {
                     const folderColors = ["#8EA5D8", "#D36A48", "#D36A48", "#3CB5BD", "#A38BCB", "#C39B5C"];
                     const selected = selectedFolderKey === folder.id;
+                    const editing = folderInlineEditor?.mode === "rename" && folderInlineEditor.folderId === folder.id;
                     return (
-                      <div key={folder.id} className={selected ? "app-sidebar-folder-row is-selected" : "app-sidebar-folder-row"}>
-                        <button
-                          type="button"
-                          className="app-sidebar-folder-select"
-                          aria-current={selected ? "page" : undefined}
-                          onClick={() => runAction(() => onFolderSelect?.(folder.id))}
-                        >
-                          <Folder size={18} style={{ color: folderColors[index % folderColors.length] }} />
-                          <span>{folder.name}</span>
-                          <small>{folderCounts[folder.id] ?? 0}</small>
-                        </button>
-                        <button
-                          type="button"
-                          className="app-sidebar-folder-more"
-                          aria-label={folder.name + " 폴더 메뉴"}
-                          aria-expanded={folderActionMenuId === folder.id}
-                          title="폴더 메뉴"
-                          onClick={() => setFolderActionMenuId(current => current === folder.id ? null : folder.id)}
-                        >
-                          <Ellipsis size={17} />
-                        </button>
-                        {folderActionMenuId === folder.id && (
-                          <div className="app-sidebar-folder-menu" role="menu">
+                      <div key={folder.id} className={(selected ? "app-sidebar-folder-row is-selected" : "app-sidebar-folder-row") + (editing ? " is-editing" : "")}>
+                        {editing ? (
+                          <>
+                            <Folder size={18} style={{ color: folderColors[index % folderColors.length] }} />
+                            <form className="app-sidebar-folder-inline-form" onSubmit={event => { event.preventDefault(); void saveFolderInlineEdit(); }}>
+                              <input
+                                autoFocus
+                                type="text"
+                                value={folderInlineName}
+                                maxLength={40}
+                                aria-label="폴더 이름 수정"
+                                disabled={folderInlineSaving}
+                                onChange={event => { setFolderInlineName(event.target.value); setFolderInlineError(""); }}
+                                onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); cancelFolderInlineEdit(); } }}
+                              />
+                              <button type="submit" aria-label="이름 저장" title="저장" disabled={folderInlineSaving || !folderInlineName.trim()}>
+                                <Check size={15} />
+                              </button>
+                              <button type="button" aria-label="수정 취소" title="취소" disabled={folderInlineSaving} onClick={cancelFolderInlineEdit}>
+                                <X size={15} />
+                              </button>
+                            </form>
+                            <small className="app-sidebar-folder-count">{folderCounts[folder.id] ?? 0}</small>
+                          </>
+                        ) : (
+                          <>
                             <button
                               type="button"
-                              role="menuitem"
-                              onClick={() => runAction(() => onRenameFolderRequest?.(folder))}
+                              className="app-sidebar-folder-select"
+                              aria-current={selected ? "page" : undefined}
+                              onClick={() => runAction(() => onFolderSelect?.(folder.id))}
                             >
-                              <Pencil size={14} /> 이름 변경
+                              <Folder size={18} style={{ color: folderColors[index % folderColors.length] }} />
+                              <span>{folder.name}</span>
+                            </button>
+                            <small className="app-sidebar-folder-count">{folderCounts[folder.id] ?? 0}</small>
+                            <button
+                              type="button"
+                              className="app-sidebar-folder-edit"
+                              aria-label={folder.name + " 이름 수정"}
+                              title="이름 수정"
+                              onClick={() => openFolderRename(folder)}
+                            >
+                              <Pencil size={14} />
                             </button>
                             <button
                               type="button"
-                              role="menuitem"
-                              onClick={() => runAction(() => onDeleteFolderRequest?.(folder))}
+                              className="app-sidebar-folder-more"
+                              aria-label={folder.name + " 폴더 메뉴"}
+                              aria-expanded={folderActionMenuId === folder.id}
+                              title="폴더 메뉴"
+                              onClick={() => setFolderActionMenuId(current => current === folder.id ? null : folder.id)}
                             >
-                              <Trash2 size={14} /> 폴더 삭제
+                              <Ellipsis size={17} />
                             </button>
-                          </div>
+                            {folderActionMenuId === folder.id && (
+                              <div className="app-sidebar-folder-menu" role="menu">
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  onClick={() => runAction(() => onDeleteFolderRequest?.(folder))}
+                                >
+                                  <Trash2 size={14} /> 폴더 삭제
+                                </button>
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                     );
                   })}
-                  {folders.length === 0 && (
+                  {folders.length === 0 && folderInlineEditor?.mode !== "create" && (
                     <p className="app-sidebar-folders-empty">아직 만든 폴더가 없습니다.</p>
+                  )}
+                  {folderInlineEditor?.mode === "rename" && folderInlineError && (
+                    <p className="app-sidebar-folder-inline-error" role="alert">{folderInlineError}</p>
                   )}
                   <button
                     type="button"
