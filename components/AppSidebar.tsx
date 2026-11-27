@@ -3,12 +3,13 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import {
-  ArrowRight, BookOpen, Check, ChevronDown, House, LogOut, Menu,
-  Moon, Palette, Sparkles, Trash2, X
+  ArrowRight, BookOpen, Check, ChevronDown, Ellipsis, Folder, FolderPlus, House, LogOut, Menu,
+  Moon, Palette, Pencil, Sparkles, Trash2, X
 } from "lucide-react";
 import { themes, type ThemeName } from "@/lib/types";
 
 type SidebarView = "library" | "planner" | "cover" | "markdown" | "markdown-cover";
+type SidebarFolder = { id: string; name: string };
 
 type AppSidebarProps = {
   email: string;
@@ -22,6 +23,15 @@ type AppSidebarProps = {
   onCustomColorChange?: (color: string) => void;
   onOpenNotebookList?: () => void;
   onViewChange?: (view: "planner" | "cover") => void;
+  folders?: SidebarFolder[];
+  folderCounts?: Record<string, number>;
+  unfiledNotebookCount?: number;
+  totalNotebookCount?: number;
+  selectedFolderKey?: string;
+  onFolderSelect?: (folderKey: string) => void;
+  onCreateFolderRequest?: () => void;
+  onRenameFolderRequest?: (folder: SidebarFolder) => void;
+  onDeleteFolderRequest?: (folder: SidebarFolder) => void;
   onSignOut: () => void;
   onDeleteAccount: () => void;
 };
@@ -38,12 +48,22 @@ export default function AppSidebar({
   onCustomColorChange,
   onOpenNotebookList,
   onViewChange,
+  folders = [],
+  folderCounts = {},
+  unfiledNotebookCount = 0,
+  totalNotebookCount = 0,
+  selectedFolderKey = "all",
+  onFolderSelect,
+  onCreateFolderRequest,
+  onRenameFolderRequest,
+  onDeleteFolderRequest,
   onSignOut,
   onDeleteAccount
 }: AppSidebarProps) {
   const [open, setOpen] = useState(false);
   const [hoverOpen, setHoverOpen] = useState(false);
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
+  const [folderActionMenuId, setFolderActionMenuId] = useState<string | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const hoverCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -78,6 +98,7 @@ export default function AppSidebar({
     clearHoverClose();
     setOpen(false);
     setHoverOpen(false);
+    setFolderActionMenuId(null);
   };
 
   const openFromHover = () => {
@@ -182,7 +203,7 @@ export default function AppSidebar({
         >
           <aside
             id="checkpoint-app-sidebar"
-            className={panelDarkMode ? "app-sidebar-panel app-sidebar-panel-dark" : "app-sidebar-panel"}
+            className={panelDarkMode ? "app-sidebar-panel app-sidebar-panel-dark app-sidebar-panel-library" : currentView === "library" ? "app-sidebar-panel app-sidebar-panel-library" : "app-sidebar-panel"}
             style={panelStyle}
             role="dialog"
             aria-modal={!hoverOpen}
@@ -205,10 +226,16 @@ export default function AppSidebar({
 
             <nav className="app-sidebar-navigation" aria-label="다이어리 메뉴">
               {currentView === "library" ? (
-                <div className="app-sidebar-current" aria-current="page">
+                <button
+                  type="button"
+                  className={selectedFolderKey === "all" ? "app-sidebar-current is-selected" : "app-sidebar-current"}
+                  aria-current={selectedFolderKey === "all" ? "page" : undefined}
+                  onClick={() => runAction(() => onFolderSelect?.("all"))}
+                >
                   <House size={18} />
                   <span>다이어리 목록</span>
-                </div>
+                  <small>{totalNotebookCount}</small>
+                </button>
               ) : (
                 <button type="button" onClick={() => runAction(onOpenNotebookList)}>
                   <House size={18} />
@@ -304,7 +331,88 @@ export default function AppSidebar({
               )}
             </nav>
 
+            {currentView === "library" && (
+              <section className="app-sidebar-folders" aria-label="다이어리 폴더">
+                <div className="app-sidebar-folders-heading">
+                  <div>
+                    <Folder size={17} />
+                    <strong>폴더</strong>
+                    <small>{folders.length}</small>
+                  </div>
+                  <button
+                    type="button"
+                    className="app-sidebar-folder-add"
+                    aria-label="새 폴더 만들기"
+                    title="새 폴더 만들기"
+                    onClick={() => runAction(onCreateFolderRequest)}
+                  >
+                    <FolderPlus size={17} />
+                  </button>
+                </div>
 
+                <div className="app-sidebar-folder-list">
+                  {folders.map((folder, index) => {
+                    const folderColors = ["#8EA5D8", "#D36A48", "#D36A48", "#3CB5BD", "#A38BCB", "#C39B5C"];
+                    const selected = selectedFolderKey === folder.id;
+                    return (
+                      <div key={folder.id} className={selected ? "app-sidebar-folder-row is-selected" : "app-sidebar-folder-row"}>
+                        <button
+                          type="button"
+                          className="app-sidebar-folder-select"
+                          aria-current={selected ? "page" : undefined}
+                          onClick={() => runAction(() => onFolderSelect?.(folder.id))}
+                        >
+                          <Folder size={18} style={{ color: folderColors[index % folderColors.length] }} />
+                          <span>{folder.name}</span>
+                          <small>{folderCounts[folder.id] ?? 0}</small>
+                        </button>
+                        <button
+                          type="button"
+                          className="app-sidebar-folder-more"
+                          aria-label={folder.name + " 폴더 메뉴"}
+                          aria-expanded={folderActionMenuId === folder.id}
+                          title="폴더 메뉴"
+                          onClick={() => setFolderActionMenuId(current => current === folder.id ? null : folder.id)}
+                        >
+                          <Ellipsis size={17} />
+                        </button>
+                        {folderActionMenuId === folder.id && (
+                          <div className="app-sidebar-folder-menu" role="menu">
+                            <button
+                              type="button"
+                              role="menuitem"
+                              onClick={() => runAction(() => onRenameFolderRequest?.(folder))}
+                            >
+                              <Pencil size={14} /> 이름 변경
+                            </button>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              onClick={() => runAction(() => onDeleteFolderRequest?.(folder))}
+                            >
+                              <Trash2 size={14} /> 폴더 삭제
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {folders.length === 0 && (
+                    <p className="app-sidebar-folders-empty">아직 만든 폴더가 없습니다.</p>
+                  )}
+                  <button
+                    type="button"
+                    className={selectedFolderKey === "unfiled" ? "app-sidebar-folder-select app-sidebar-unfiled is-selected" : "app-sidebar-folder-select app-sidebar-unfiled"}
+                    aria-current={selectedFolderKey === "unfiled" ? "page" : undefined}
+                    onClick={() => runAction(() => onFolderSelect?.("unfiled"))}
+                  >
+                    <Folder size={18} />
+                    <span>분류 없음</span>
+                    <small>{unfiledNotebookCount}</small>
+                  </button>
+                </div>
+              </section>
+            )}
 
             <div className="app-sidebar-footer">
               <button type="button" onClick={() => runAction(onSignOut)}>
