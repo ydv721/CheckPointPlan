@@ -403,7 +403,6 @@ export default function AppSidebar({
                     type="button"
                     className="app-sidebar-folders-title"
                     aria-current={selectedFolderKey === "all" ? "page" : undefined}
-                    title="전체 다이어리 보기"
                     onClick={() => runAction(() => onFolderSelect?.("all"))}
                   >
                     <Folder size={17} />
