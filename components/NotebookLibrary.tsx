@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
-import { BookOpen, BookText, CalendarDays, CheckSquare, Plus, Clock3, Trash2, Pencil, Check, X, CheckCircle2, Folder, FolderOpen, FolderPlus } from "lucide-react";
+import { BookOpen, BookText, CalendarDays, CheckSquare, Plus, Clock3, Trash2, Pencil, Check, X, CheckCircle2, Folder, FolderOpen } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import SiteHeader from "@/components/SiteHeader";
 import type { NotebookType } from "@/components/NotebookTypeSelection";
@@ -25,8 +25,6 @@ export type NotebookFolder = {
   created_at: string;
   updated_at: string;
 };
-
-type FolderEditor = { mode: "create" } | { mode: "rename"; folder: NotebookFolder };
 
 type Props = {
   email: string;
@@ -133,10 +131,6 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
   const [renaming,setRenaming]=useState(false);
   const [renameError,setRenameError]=useState("");
   const [selectedFolderKey,setSelectedFolderKey]=useState("all");
-  const [folderEditor,setFolderEditor]=useState<FolderEditor|null>(null);
-  const [folderName,setFolderName]=useState("");
-  const [folderSaving,setFolderSaving]=useState(false);
-  const [folderError,setFolderError]=useState("");
   const [folderDeleteTarget,setFolderDeleteTarget]=useState<NotebookFolder|null>(null);
   const [folderDeleting,setFolderDeleting]=useState(false);
   const [moveTargetNotebookId,setMoveTargetNotebookId]=useState<string|null>(null);
@@ -226,39 +220,18 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
     }
   }
 
-  function openFolderEditor(mode:"create"|"rename",folder?:NotebookFolder){
-    setFolderEditor(mode==="rename"&&folder?{mode:"rename",folder}:{mode:"create"});
-    setFolderName(mode==="rename"&&folder?folder.name:"");
-    setFolderError("");
+  async function createFolderFromSidebar(name:string){
+    const saved=await onCreateFolder(name);
+    if(saved)setDeleteToast({message:"폴더를 만들었습니다.",id:Date.now()});
+    return saved;
   }
 
-  async function saveFolder(){
-    if(!folderEditor||folderSaving)return;
-    const name=folderName.trim();
-    if(!name){
-      setFolderError("폴더 이름을 입력해 주세요.");
-      return;
-    }
-    if(name.length>40){
-      setFolderError("폴더 이름은 40자 이내로 입력해 주세요.");
-      return;
-    }
-    setFolderSaving(true);
-    setFolderError("");
-    try{
-      const saved=folderEditor.mode==="create"
-        ?await onCreateFolder(name)
-        :await onRenameFolder(folderEditor.folder,name);
-      if(saved){
-        setFolderEditor(null);
-        setFolderName("");
-        setDeleteToast({message:folderEditor.mode==="create"?"폴더를 만들었습니다.":"폴더 이름을 변경했습니다.",id:Date.now()});
-      }else{
-        setFolderError("폴더를 저장하지 못했습니다. 중복된 이름인지 확인해 주세요.");
-      }
-    }finally{
-      setFolderSaving(false);
-    }
+  async function renameFolderFromSidebar(folder:Pick<NotebookFolder,"id"|"name">,name:string){
+    const target=folders.find(item=>item.id===folder.id);
+    if(!target)return false;
+    const saved=await onRenameFolder(target,name);
+    if(saved)setDeleteToast({message:"폴더 이름을 변경했습니다.",id:Date.now()});
+    return saved;
   }
 
   async function confirmDeleteFolder(){
@@ -320,8 +293,8 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
             totalNotebookCount={notebooks.length}
             selectedFolderKey={selectedFolderKey}
             onFolderSelect={folderKey=>{setSelectedFolderKey(folderKey);setMoveTargetNotebookId(null);}}
-            onCreateFolderRequest={()=>openFolderEditor("create")}
-            onRenameFolderRequest={folder=>{const target=folders.find(item=>item.id===folder.id);if(target)openFolderEditor("rename",target);}}
+            onCreateFolder={createFolderFromSidebar}
+            onRenameFolder={renameFolderFromSidebar}
             onDeleteFolderRequest={folder=>{const target=folders.find(item=>item.id===folder.id);if(target)setFolderDeleteTarget(target);}}
             onSignOut={onSignOut}
             onDeleteAccount={onDeleteAccount}
@@ -464,23 +437,6 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
         <div className="notebook-delete-toast" role="status" aria-live="polite">
           <CheckCircle2 className="notebook-delete-toast-icon" size={19}/>
           <span>{deleteToast.message}</span>
-        </div>
-      ):null}
-      {folderEditor?(
-        <div className="modal-backdrop notebook-folder-modal-backdrop" role="presentation" onMouseDown={event=>{if(event.target===event.currentTarget&&!folderSaving)setFolderEditor(null);}}>
-          <section className="delete-account-modal notebook-folder-modal" role="dialog" aria-modal="true" aria-labelledby="notebook-folder-modal-title">
-            <div className="delete-account-icon"><FolderPlus size={22}/></div>
-            <h2 id="notebook-folder-modal-title">{folderEditor.mode==="create"?"새 폴더 만들기":"폴더 이름 변경"}</h2>
-            <form onSubmit={event=>{event.preventDefault();void saveFolder();}}>
-              <label className="notebook-folder-name-label" htmlFor="notebook-folder-name">폴더 이름</label>
-              <input id="notebook-folder-name" className="notebook-folder-name-input" type="text" value={folderName} maxLength={40} autoFocus disabled={folderSaving} placeholder="예: 자격증, 개인 기록, 프로젝트" onChange={event=>{setFolderName(event.target.value);setFolderError("");}}/>
-              {folderError?<span className="notebook-book-rename-error" role="alert">{folderError}</span>:null}
-              <div className="delete-account-actions">
-                <button type="button" className="outline-btn" disabled={folderSaving} onClick={()=>setFolderEditor(null)}>취소</button>
-                <button type="submit" className="delete-confirm-btn" disabled={folderSaving||!folderName.trim()}>{folderSaving?"저장 중입니다...":"저장"}</button>
-              </div>
-            </form>
-          </section>
         </div>
       ):null}
       {folderDeleteTarget?(
