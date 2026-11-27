@@ -658,7 +658,7 @@ export default function Planner() {
     pendingAuthUser.current=nextUser;
     authenticatedUser.current=nextUser;
     setNotebookTypeChosen(false);
-    
+    setPendingNotebookFolderId(null);
     setNotebookTypeNotice("");
     setNotebooks([]);
     setNotebookFolders([]);
@@ -694,7 +694,7 @@ export default function Planner() {
         pendingAuthUser.current=null;
         authenticatedUser.current=null;
         setNotebookTypeChosen(false);
-        
+        setPendingNotebookFolderId(null);
         setNotebookTypeNotice("");
         setNotebooks([]);
         setNotebookFolders([]);
@@ -722,6 +722,7 @@ export default function Planner() {
   useEffect(()=>{
     if(!client||!user){
       setLibraryLoading(false);
+      setPendingNotebookFolderId(null);
       setNotebooks([]);
       setNotebookFolders([]);
       setNotebookCoverPhotoUrls({});
