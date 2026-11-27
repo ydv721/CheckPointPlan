@@ -489,7 +489,6 @@ export default function AppSidebar({
                               <span>{folder.name}</span>
                             </button>
                             <div className="app-sidebar-folder-actions">
-                              <small className="app-sidebar-folder-count">{folderCounts[folder.id] ?? 0}</small>
                               <button
                                 type="button"
                                 className="app-sidebar-folder-edit"
@@ -509,6 +508,7 @@ export default function AppSidebar({
                               >
                                 <Ellipsis size={17} />
                               </button>
+                              <small className="app-sidebar-folder-count">{folderCounts[folder.id] ?? 0}</small>
                             </div>
                             {folderActionMenuId === folder.id && (
                               <div className="app-sidebar-folder-menu" role="menu">
