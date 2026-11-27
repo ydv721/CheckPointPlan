@@ -346,7 +346,8 @@ export default function AppSidebar({
                     title="새 폴더 만들기"
                     onClick={() => runAction(onCreateFolderRequest)}
                   >
-                    <FolderPlus size={17} />
+                    <FolderPlus size={16} />
+                    <span>새 폴더</span>
                   </button>
                 </div>
 
