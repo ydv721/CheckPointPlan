@@ -2596,7 +2596,7 @@ export default function MarkdownDiary({
               <section className="paper-page markdown-note-page markdown-single-note-page" aria-label="자유 노트">
                 <div className="paper-section key-section markdown-free-note-section">
                   <div className="free-note-paper">
-                    <div className="markdown-paper-actions">
+                    <div className="markdown-paper-actions" role="toolbar" aria-label="페이지 관리 도구">
                       {exportFeedback ? (
                         <span className="markdown-export-feedback" aria-live="polite">{exportFeedback}</span>
                       ) : null}
