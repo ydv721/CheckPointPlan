@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
-import { BookOpen, BookText, CalendarDays, CheckSquare, Plus, Clock3, Trash2, Pencil, Check, X, CheckCircle2, Folder, FolderOpen, FolderPlus, FolderInput } from "lucide-react";
+import { BookOpen, BookText, CalendarDays, CheckSquare, Plus, Clock3, Trash2, Pencil, Check, X, CheckCircle2, Folder, FolderOpen, FolderPlus } from "lucide-react";
 import AppSidebar from "@/components/AppSidebar";
 import SiteHeader from "@/components/SiteHeader";
 import type { NotebookType } from "@/components/NotebookTypeSelection";
@@ -391,7 +391,7 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
                     setMoveTargetNotebookId(current=>current===notebook.id?null:notebook.id);
                   }}
                 >
-                  <FolderInput size={15}/>
+                  <FolderOpen size={15}/>
                 </button>
                 {moveTargetNotebookId===notebook.id?(
                   <div className="notebook-folder-move-menu" onClick={event=>event.stopPropagation()}>
