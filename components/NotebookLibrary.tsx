@@ -303,7 +303,7 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
       />
       <main className="notebook-library-main">
         <div className="notebook-library-heading">
-          <div><span className="eyebrow">MY DIARIES</span><h1>내 다이어리</h1><p>나만의 기록을 한곳에서 관리해 보세요.</p></div>
+          <div><span className="eyebrow">MY DIARIES</span><h1>전체 다이어리</h1><p>나만의 기록을 한곳에서 관리해 보세요.</p></div>
         </div>
         {notice?<div className="notebook-library-notice" role="status">{notice}</div>:null}
         {loading?<div className="notebook-library-empty">다이어리를 불러오는 중입니다...</div>:visibleNotebooks.length===0?(
@@ -315,9 +315,11 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
           </div>
         ):(
           <>
-          <div className="notebook-library-results-heading">
-            <div><h2>{selectedFolderName}</h2><span>{visibleNotebooks.length}개의 다이어리</span></div>
-          </div>
+          {selectedFolderKey !== "all" && (
+            <div className="notebook-library-results-heading">
+              <div><h2>{selectedFolderName}</h2><span>{visibleNotebooks.length}개의 다이어리</span></div>
+            </div>
+          )}
           <div className="notebook-library-grid">
             {visibleNotebooks.map(notebook=>{
               const meta=TYPES[notebook.notebook_type];
