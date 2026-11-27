@@ -355,6 +355,7 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
             <button type="button" className="primary-btn" onClick={onCreate}><Plus size={17}/> 첫 다이어리 만들기</button>
           </div>
         ):(
+          <>
           <div className="notebook-library-results-heading">
             <div><h2>{selectedFolderName}</h2><span>{visibleNotebooks.length}개의 다이어리</span></div>
           </div>
@@ -470,6 +471,7 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
               <span><Plus size={27}/></span><strong>새 다이어리</strong>
             </button>
           </div>
+          </>
         )}
       </main>
       {deleteToast?(
