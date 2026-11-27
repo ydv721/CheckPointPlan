@@ -296,6 +296,15 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
             themeStyle={themeStyle}
             darkMode={darkMode}
             onDarkModeChange={onDarkModeChange}
+            folders={folders}
+            folderCounts={Object.fromEntries(folders.map(folder=>[folder.id,notebooks.filter(notebook=>notebook.folder_id===folder.id).length]))}
+            unfiledNotebookCount={unfiledCount}
+            totalNotebookCount={notebooks.length}
+            selectedFolderKey={selectedFolderKey}
+            onFolderSelect={folderKey=>{setSelectedFolderKey(folderKey);setMoveTargetNotebookId(null);}}
+            onCreateFolderRequest={()=>openFolderEditor("create")}
+            onRenameFolderRequest={folder=>{const target=folders.find(item=>item.id===folder.id);if(target)openFolderEditor("rename",target);}}
+            onDeleteFolderRequest={folder=>{const target=folders.find(item=>item.id===folder.id);if(target)setFolderDeleteTarget(target);}}
             onSignOut={onSignOut}
             onDeleteAccount={onDeleteAccount}
           />
@@ -306,66 +315,11 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
           <div><span className="eyebrow">MY DIARIES</span><h1>내 다이어리</h1><p>나만의 기록을 한곳에서 관리해 보세요.</p></div>
         </div>
         {notice?<div className="notebook-library-notice" role="status">{notice}</div>:null}
-        {!loading&&(notebooks.length>0||folders.length>0)?(
-          <section className="notebook-folders-section" aria-label="다이어리 폴더">
-            <div className="notebook-folders-heading">
-              <div>
-                <h2>폴더</h2>
-                <p>다이어리를 원하는 주제별로 정리해 보세요.</p>
-              </div>
-              <button type="button" className="notebook-folder-create" onClick={()=>openFolderEditor("create")}>
-                <FolderPlus size={16}/> 새 폴더
-              </button>
-            </div>
-            <div className="notebook-folders-grid">
-              <div className="notebook-folder-card" data-folder-color="6">
-                <button
-                  type="button"
-                  className={"notebook-folder-select"+(selectedFolderKey==="all"?" is-selected":"")}
-                  aria-pressed={selectedFolderKey==="all"}
-                  onClick={()=>{setSelectedFolderKey("all");setMoveTargetNotebookId(null);}}
-                >
-                  <span className="notebook-folder-count">{notebooks.length}</span>
-                  <span className="notebook-folder-name">전체 다이어리</span>
-                </button>
-              </div>
-              <div className="notebook-folder-card" data-folder-color="7">
-                <button
-                  type="button"
-                  className={"notebook-folder-select"+(selectedFolderKey==="unfiled"?" is-selected":"")}
-                  aria-pressed={selectedFolderKey==="unfiled"}
-                  onClick={()=>{setSelectedFolderKey("unfiled");setMoveTargetNotebookId(null);}}
-                >
-                  <span className="notebook-folder-count">{unfiledCount}</span>
-                  <span className="notebook-folder-name">분류 없음</span>
-                </button>
-              </div>
-              {folders.map((folder,index)=>{
-                const count=notebooks.filter(notebook=>notebook.folder_id===folder.id).length;
-                return <div key={folder.id} className="notebook-folder-card" data-folder-color={index%6}>
-                  <button
-                    type="button"
-                    className={"notebook-folder-select"+(selectedFolderKey===folder.id?" is-selected":"")}
-                    aria-pressed={selectedFolderKey===folder.id}
-                    onClick={()=>{setSelectedFolderKey(folder.id);setMoveTargetNotebookId(null);}}
-                  >
-                    <span className="notebook-folder-count">{count}</span>
-                    <span className="notebook-folder-name">{folder.name}</span>
-                  </button>
-                  <div className="notebook-folder-actions">
-                    <button type="button" aria-label={folder.name+" 이름 변경"} title="폴더 이름 변경" onClick={()=>openFolderEditor("rename",folder)}><Pencil size={13}/></button>
-                    <button type="button" aria-label={folder.name+" 폴더 삭제"} title="폴더 삭제" onClick={()=>setFolderDeleteTarget(folder)}><Trash2 size={13}/></button>
-                  </div>
-                </div>;
-              })}
-            </div>
-          </section>
-        ):null}
-        {loading?<div className="notebook-library-empty">다이어리를 불러오는 중입니다...</div>:notebooks.length===0?(
+        {loading?<div className="notebook-library-empty">다이어리를 불러오는 중입니다...</div>:visibleNotebooks.length===0?(
           <div className="notebook-library-empty">
             <div className="notebook-library-empty-icon"><BookOpen size={30}/></div>
-            <strong>아직 만든 다이어리가 없어요.</strong>
-            <span>첫 다이어리를 만들어 기록을 시작해 보세요.</span>
+            <strong>{selectedFolderKey==="all"?"아직 만든 다이어리가 없어요.":selectedFolderKey==="unfiled"?"분류되지 않은 다이어리가 없어요.":"이 폴더에는 아직 다이어리가 없어요."}</strong>
+            <span>{selectedFolderKey==="all"?"첫 다이어리를 만들어 기록을 시작해 보세요.":"다이어리를 이 폴더로 이동하거나 새로 만들어 보세요."}</span>
             <button type="button" className="primary-btn" onClick={()=>onCreate(newNotebookFolderId)}><Plus size={17}/> 첫 다이어리 만들기</button>
           </div>
         ):(
