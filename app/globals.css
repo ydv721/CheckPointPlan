@@ -8006,8 +8006,15 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   display:flex;
   align-items:center;
   justify-content:space-between;
+  width:100%;
   min-height:40px;
+  box-sizing:border-box;
   padding:0 12px 0 9px;
+  border-radius:9px;
+  transition:background .15s ease;
+}
+.app-sidebar-folders-heading:hover {
+  background:var(--soft);
 }
 .app-sidebar-folders-title {
   flex:1 1 auto;
@@ -8031,7 +8038,7 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   color:var(--accent);
 }
 .app-sidebar-folders-title:hover {
-  background:var(--soft);
+  background:transparent;
 }
 .app-sidebar-folders-title:focus-visible {
   outline:2px solid var(--accent);
@@ -8077,6 +8084,7 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   gap:4px;
   padding-right:3px;
   border-radius:9px;
+  transition:background .15s ease;
 }
 .app-sidebar-folder-row.is-selected {
   background:var(--soft);
@@ -8305,11 +8313,14 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 }
 .app-sidebar-unfiled {
   position:relative;
+  width:100%;
+  box-sizing:border-box;
   margin-top:5px;
   border-top:0;
-  border-radius:0 0 9px 9px;
+  border-radius:9px;
   padding:5px 3px 0 9px;
   color:var(--ink);
+  transition:background .15s ease;
 }
 .app-sidebar-unfiled::before {
   content:"";
