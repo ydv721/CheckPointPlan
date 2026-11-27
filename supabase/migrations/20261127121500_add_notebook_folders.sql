@@ -15,9 +15,6 @@ create table public.notebook_folders (
 create unique index notebook_folders_user_name_unique
   on public.notebook_folders (user_id, lower(name));
 
-create index notebook_folders_user_id_idx
-  on public.notebook_folders (user_id);
-
 alter table public.notebook_folders enable row level security;
 
 grant select, insert, update, delete
