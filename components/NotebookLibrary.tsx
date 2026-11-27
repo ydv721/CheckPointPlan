@@ -304,7 +304,7 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
           <div><span className="eyebrow">MY DIARIES</span><h1>내 다이어리</h1><p>나만의 기록을 한곳에서 관리해 보세요.</p></div>
         </div>
         {notice?<div className="notebook-library-notice" role="status">{notice}</div>:null}
-        {!loading&&notebooks.length>0?(
+        {!loading&&(notebooks.length>0||folders.length>0)?(
           <section className="notebook-folders-section" aria-label="다이어리 폴더">
             <div className="notebook-folders-heading">
               <div>
