@@ -2595,8 +2595,8 @@ export default function MarkdownDiary({
               
               <section className="paper-page markdown-note-page markdown-single-note-page" aria-label="자유 노트">
                 <div className="paper-section key-section markdown-free-note-section">
-                  <div className="section-heading markdown-note-heading">
-                    <div className="markdown-note-heading-actions">
+                  <div className="free-note-paper">
+                    <div className="markdown-paper-actions">
                       {exportFeedback ? (
                         <span className="markdown-export-feedback" aria-live="polite">{exportFeedback}</span>
                       ) : null}
@@ -2637,8 +2637,7 @@ export default function MarkdownDiary({
                         <FileDown size={16} strokeWidth={2}/>
                       </button>
                     </div>
-                  </div>
-                  <div className="free-note-paper">
+
                     {loading ? (
                       <div className="markdown-empty-state" role="status">노트를 불러오는 중입니다...</div>
                     ) : activeNote ? (
