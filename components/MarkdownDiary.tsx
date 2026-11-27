@@ -2596,13 +2596,52 @@ export default function MarkdownDiary({
               <section className="paper-page markdown-note-page markdown-single-note-page" aria-label="자유 노트">
                 <div className="paper-section key-section markdown-free-note-section">
                   <div className="free-note-paper">
-                    
+                    <div className="markdown-paper-actions" role="toolbar" aria-label="페이지 관리 도구">
+                      {exportFeedback ? (
+                        <span className="markdown-export-feedback" aria-live="polite">{exportFeedback}</span>
+                      ) : null}
+                                            <button
+                        type="button"
+                        className="markdown-share-top-button markdown-add-page-top-button"
+                        aria-label="새 페이지 추가"
+                        title="새 페이지 추가"
+                        disabled={loading || !activeNote}
+                        onMouseDown={event => event.preventDefault()}
+                        onClick={addPage}
+                      >
+                        <Plus size={16} strokeWidth={2.2}/>
+                      </button>
+                      <button
+                        type="button"
+                        className="markdown-share-top-button markdown-delete-page-top-button"
+                        aria-label="현재 페이지 삭제"
+                        title="현재 페이지 삭제"
+                        disabled={loading || !activeNote || pageContents.length <= 1}
+                        onMouseDown={event => event.preventDefault()}
+                        onClick={() => setPageDeleteOpen(true)}
+                      >
+                        <Trash2 size={16} strokeWidth={2}/>
+                      </button>
+                      
+
+                      <button
+                        type="button"
+                        className="markdown-share-top-button markdown-pdf-top-button"
+                        aria-label={pdfExporting ? "PDF 저장 중" : "PDF 다운로드"}
+                        title={pdfExporting ? "PDF 저장 중" : "PDF 다운로드"}
+                        disabled={pdfExporting || loading || !activeNote}
+                        aria-busy={pdfExporting}
+                        onMouseDown={event => event.preventDefault()}
+                        onClick={() => { void downloadPdf(); }}
+                      >
+                        <FileDown size={16} strokeWidth={2}/>
+                      </button>
+                    </div>
 
                     {loading ? (
                       <div className="markdown-empty-state" role="status">노트를 불러오는 중입니다...</div>
                     ) : activeNote ? (
                       <>
-                        <div className="markdown-toolbar-row">
                         <div className={drawingMode ? "markdown-toolbar is-hidden" : "markdown-toolbar"} role="toolbar" aria-label="Markdown 도구 모음">
                           
                           {MARKDOWN_TOOLBAR.map(({ action, label, icon: Icon }) => (
@@ -2730,46 +2769,6 @@ export default function MarkdownDiary({
 
 
                         </div>
-                        <div className="markdown-paper-actions" role="toolbar" aria-label="페이지 관리 도구">
-                          {exportFeedback ? (
-                            <span className="markdown-export-feedback" aria-live="polite">{exportFeedback}</span>
-                          ) : null}
-                          <button
-                            type="button"
-                            className="markdown-share-top-button markdown-add-page-top-button"
-                            aria-label="새 페이지 추가"
-                            title="새 페이지 추가"
-                            disabled={loading || !activeNote}
-                            onMouseDown={event => event.preventDefault()}
-                            onClick={addPage}
-                          >
-                            <Plus size={16} strokeWidth={2.2}/>
-                          </button>
-                          <button
-                            type="button"
-                            className="markdown-share-top-button markdown-delete-page-top-button"
-                            aria-label="현재 페이지 삭제"
-                            title="현재 페이지 삭제"
-                            disabled={loading || !activeNote || pageContents.length <= 1}
-                            onMouseDown={event => event.preventDefault()}
-                            onClick={() => setPageDeleteOpen(true)}
-                          >
-                            <Trash2 size={16} strokeWidth={2}/>
-                          </button>
-                          <button
-                            type="button"
-                            className="markdown-share-top-button markdown-pdf-top-button"
-                            aria-label={pdfExporting ? "PDF 저장 중" : "PDF 다운로드"}
-                            title={pdfExporting ? "PDF 저장 중" : "PDF 다운로드"}
-                            disabled={pdfExporting || loading || !activeNote}
-                            aria-busy={pdfExporting}
-                            onMouseDown={event => event.preventDefault()}
-                            onClick={() => { void downloadPdf(); }}
-                          >
-                            <FileDown size={16} strokeWidth={2}/>
-                          </button>
-                        </div>
-                      </div>
                         {drawingMode ? (
                           <div className="markdown-toolbar free-note-drawing-toolbar" role="toolbar" aria-label="필기 도구 모음">
                             <div className="free-note-drawing-tool-group">
