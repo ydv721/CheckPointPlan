@@ -12328,8 +12328,44 @@ button.checkpoint-header-brand {
   display:flex;
   align-items:center;
   justify-content:flex-end;
-  gap:7px;
+  gap:4px;
   min-width:0;
+}
+.markdown-paper-actions::before {
+  content:"";
+  display:block;
+  flex:0 0 1px;
+  width:1px;
+  height:22px;
+  margin:0 6px 0 2px;
+  background:var(--line);
+}
+.markdown-paper-actions .markdown-share-top-button {
+  display:inline-flex;
+  flex:0 0 34px;
+  align-items:center;
+  justify-content:center;
+  width:34px;
+  height:32px;
+  padding:0;
+  border:1px solid var(--line);
+  border-radius:7px;
+  background:var(--paper);
+  color:var(--ink);
+  opacity:1;
+  box-shadow:none;
+  transition:background .15s ease,border-color .15s ease,color .15s ease,opacity .15s ease;
+}
+.markdown-paper-actions .markdown-share-top-button:hover:not(:disabled) {
+  border-color:var(--line);
+  background:var(--paper);
+  color:var(--accent);
+  transform:none;
+}
+.markdown-paper-actions .markdown-share-top-button:disabled {
+  opacity:.35;
+  cursor:not-allowed;
+  transform:none;
 }
 .markdown-free-note-section > .free-note-paper > .markdown-toolbar {
   padding-right:132px !important;
