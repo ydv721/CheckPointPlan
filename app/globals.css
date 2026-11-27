@@ -12383,9 +12383,9 @@ button.checkpoint-header-brand {
 }
 
 
-/* Free Note toolbar uses the same clean white header treatment. Keep the original layout. */
+/* Free Note toolbar: tinted surface with distinct white tool buttons. Keep the original layout. */
 .markdown-free-note-section > .free-note-paper > .markdown-toolbar {
-  background:var(--paper) !important;
+  background:var(--soft) !important;
   border-bottom:1px solid var(--line) !important;
 }
 .markdown-free-note-section .markdown-toolbar-button {
@@ -12393,10 +12393,12 @@ button.checkpoint-header-brand {
   background:var(--paper);
   color:var(--ink);
   opacity:1;
+  box-shadow:0 1px 2px rgba(35,54,86,.08);
 }
 .markdown-free-note-section .markdown-toolbar-button:hover:not(:disabled) {
-  border-color:var(--line);
-  background:var(--soft);
+  border-color:var(--accent);
+  background:var(--paper);
   color:var(--accent);
   opacity:1;
+  box-shadow:0 1px 3px rgba(35,54,86,.12);
 }
