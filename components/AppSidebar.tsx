@@ -402,7 +402,6 @@ export default function AppSidebar({
                   <div>
                     <Folder size={17} />
                     <strong>폴더</strong>
-                    <small>{folders.length}</small>
                   </div>
                   <button
                     type="button"
