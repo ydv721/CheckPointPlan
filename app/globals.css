@@ -8266,7 +8266,6 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 .app-sidebar-folder-row.is-selected .app-sidebar-folder-select {
   color:var(--accent);
 }
-.app-sidebar-folder-select:hover,
 .app-sidebar-folder-row:hover {
   background:var(--soft);
 }
