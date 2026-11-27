@@ -2730,7 +2730,6 @@ export default function MarkdownDiary({
 
 
                         </div>
-                        </div>
                         <div className="markdown-paper-actions" role="toolbar" aria-label="페이지 관리 도구">
                           {exportFeedback ? (
                             <span className="markdown-export-feedback" aria-live="polite">{exportFeedback}</span>
