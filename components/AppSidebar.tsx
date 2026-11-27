@@ -488,26 +488,28 @@ export default function AppSidebar({
                               <Folder size={18} style={{ color: folderColors[index % folderColors.length] }} />
                               <span>{folder.name}</span>
                             </button>
-                            <small className="app-sidebar-folder-count">{folderCounts[folder.id] ?? 0}</small>
-                            <button
-                              type="button"
-                              className="app-sidebar-folder-edit"
-                              aria-label={folder.name + " 이름 수정"}
-                              title="이름 수정"
-                              onClick={() => openFolderRename(folder)}
-                            >
-                              <Pencil size={14} />
-                            </button>
-                            <button
-                              type="button"
-                              className="app-sidebar-folder-more"
-                              aria-label={folder.name + " 폴더 메뉴"}
-                              aria-expanded={folderActionMenuId === folder.id}
-                              title="폴더 메뉴"
-                              onClick={() => setFolderActionMenuId(current => current === folder.id ? null : folder.id)}
-                            >
-                              <Ellipsis size={17} />
-                            </button>
+                            <div className="app-sidebar-folder-actions">
+                              <small className="app-sidebar-folder-count">{folderCounts[folder.id] ?? 0}</small>
+                              <button
+                                type="button"
+                                className="app-sidebar-folder-edit"
+                                aria-label={folder.name + " 이름 수정"}
+                                title="이름 수정"
+                                onClick={() => openFolderRename(folder)}
+                              >
+                                <Pencil size={14} />
+                              </button>
+                              <button
+                                type="button"
+                                className="app-sidebar-folder-more"
+                                aria-label={folder.name + " 폴더 메뉴"}
+                                aria-expanded={folderActionMenuId === folder.id}
+                                title="폴더 메뉴"
+                                onClick={() => setFolderActionMenuId(current => current === folder.id ? null : folder.id)}
+                              >
+                                <Ellipsis size={17} />
+                              </button>
+                            </div>
                             {folderActionMenuId === folder.id && (
                               <div className="app-sidebar-folder-menu" role="menu">
                                 <button
