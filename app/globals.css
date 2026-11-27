@@ -12383,22 +12383,37 @@ button.checkpoint-header-brand {
 }
 
 
-/* Free Note toolbar: tinted surface with distinct white tool buttons. Keep the original layout. */
-.markdown-free-note-section > .free-note-paper > .markdown-toolbar {
-  background:var(--soft) !important;
-  border-bottom:1px solid var(--line) !important;
+/* Free Note toolbar colors follow the active diary theme. Keep all controls in their original positions. */
+.markdown-diary-single-page .markdown-free-note-section > .free-note-paper > .markdown-toolbar {
+  background:color-mix(in srgb, var(--accent) 18%, var(--paper)) !important;
+  border-bottom:1px solid color-mix(in srgb, var(--accent) 34%, var(--line)) !important;
 }
-.markdown-free-note-section .markdown-toolbar-button {
-  border:1px solid var(--line);
-  background:var(--paper);
-  color:var(--ink);
-  opacity:1;
-  box-shadow:0 1px 2px rgba(35,54,86,.08);
+.markdown-diary-single-page .markdown-free-note-section .markdown-toolbar-button {
+  border:1px solid color-mix(in srgb, var(--accent) 38%, var(--line)) !important;
+  background:var(--paper) !important;
+  color:var(--ink) !important;
+  opacity:1 !important;
+  box-shadow:0 1px 2px rgba(35,54,86,.10) !important;
 }
-.markdown-free-note-section .markdown-toolbar-button:hover:not(:disabled) {
-  border-color:var(--accent);
-  background:var(--paper);
-  color:var(--accent);
-  opacity:1;
-  box-shadow:0 1px 3px rgba(35,54,86,.12);
+.markdown-diary-single-page .markdown-free-note-section .markdown-toolbar-button:hover:not(:disabled),
+.markdown-diary-single-page .markdown-free-note-section .markdown-toolbar-button:active:not(:disabled) {
+  border-color:var(--accent) !important;
+  background:color-mix(in srgb, var(--accent) 11%, var(--paper)) !important;
+  color:var(--accent) !important;
+  opacity:1 !important;
+  box-shadow:0 1px 3px rgba(35,54,86,.14) !important;
+}
+.markdown-diary-single-page .markdown-paper-actions::before {
+  background:color-mix(in srgb, var(--accent) 35%, var(--line)) !important;
+}
+.markdown-diary-single-page .markdown-paper-actions .markdown-share-top-button {
+  border:1px solid color-mix(in srgb, var(--accent) 38%, var(--line)) !important;
+  background:var(--paper) !important;
+  color:var(--ink) !important;
+  box-shadow:0 1px 2px rgba(35,54,86,.10) !important;
+}
+.markdown-diary-single-page .markdown-paper-actions .markdown-share-top-button:hover:not(:disabled) {
+  border-color:var(--accent) !important;
+  background:color-mix(in srgb, var(--accent) 11%, var(--paper)) !important;
+  color:var(--accent) !important;
 }
