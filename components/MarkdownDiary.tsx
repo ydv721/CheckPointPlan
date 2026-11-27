@@ -2602,6 +2602,7 @@ export default function MarkdownDiary({
                       <div className="markdown-empty-state" role="status">노트를 불러오는 중입니다...</div>
                     ) : activeNote ? (
                       <>
+                        <div className="markdown-toolbar-row">
                         <div className={drawingMode ? "markdown-toolbar is-hidden" : "markdown-toolbar"} role="toolbar" aria-label="Markdown 도구 모음">
                           
                           {MARKDOWN_TOOLBAR.map(({ action, label, icon: Icon }) => (
