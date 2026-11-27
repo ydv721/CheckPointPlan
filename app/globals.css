@@ -12313,3 +12313,35 @@ button.checkpoint-header-brand {
     transform:none;
   }
 }
+
+
+
+/* Free Note page actions sit inside the paper, aligned with the text toolbar. */
+.markdown-free-note-section > .free-note-paper {
+  position:relative !important;
+}
+.markdown-paper-actions {
+  position:absolute;
+  z-index:8;
+  top:6px;
+  right:10px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:7px;
+  min-width:0;
+}
+.markdown-free-note-section > .free-note-paper > .markdown-toolbar {
+  padding-right:132px !important;
+}
+@media (max-width:780px) {
+  .markdown-paper-actions {
+    position:static;
+    width:100%;
+    box-sizing:border-box;
+    padding:6px 8px 0;
+  }
+  .markdown-free-note-section > .free-note-paper > .markdown-toolbar {
+    padding-right:10px !important;
+  }
+}
