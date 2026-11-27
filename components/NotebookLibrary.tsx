@@ -318,7 +318,7 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
               </button>
             </div>
             <div className="notebook-folders-grid">
-              <div className="notebook-folder-card" data-folder-color="0">
+              <div className="notebook-folder-card" data-folder-color="6">
                 <button
                   type="button"
                   className={"notebook-folder-select"+(selectedFolderKey==="all"?" is-selected":"")}
@@ -329,7 +329,7 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
                   <span className="notebook-folder-name">전체 다이어리</span>
                 </button>
               </div>
-              <div className="notebook-folder-card" data-folder-color="1">
+              <div className="notebook-folder-card" data-folder-color="7">
                 <button
                   type="button"
                   className={"notebook-folder-select"+(selectedFolderKey==="unfiled"?" is-selected":"")}
@@ -342,7 +342,7 @@ export default function NotebookLibrary({email,themeStyle,darkMode,onDarkModeCha
               </div>
               {folders.map((folder,index)=>{
                 const count=notebooks.filter(notebook=>notebook.folder_id===folder.id).length;
-                return <div key={folder.id} className="notebook-folder-card" data-folder-color={(index+2)%6}>
+                return <div key={folder.id} className="notebook-folder-card" data-folder-color={index%6}>
                   <button
                     type="button"
                     className={"notebook-folder-select"+(selectedFolderKey===folder.id?" is-selected":"")}
