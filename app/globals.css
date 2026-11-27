@@ -8225,9 +8225,13 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 .app-sidebar-footer button > span { flex:1; }
 .app-sidebar-arrow { margin-left:auto; color:var(--accent); opacity:.7; }
 .app-sidebar-current {
+  background:transparent;
+  color:var(--ink);
+  cursor:pointer;
+}
+.app-sidebar-current.is-selected {
   background:var(--soft);
   color:var(--accent);
-  cursor:default;
 }
 .app-sidebar-current small {
   margin-left:auto;
