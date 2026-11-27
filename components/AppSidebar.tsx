@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import {
-  ArrowRight, BookOpen, Check, ChevronDown, Ellipsis, Folder, FolderPlus, House, LogOut, Menu,
+  ArrowRight, BookOpen, Check, ChevronDown, Ellipsis, Folder, House, LogOut, Menu, Plus,
   Moon, Palette, Pencil, Sparkles, Trash2, X
 } from "lucide-react";
 import { themes, type ThemeName } from "@/lib/types";
@@ -346,8 +346,7 @@ export default function AppSidebar({
                     title="새 폴더 만들기"
                     onClick={() => runAction(onCreateFolderRequest)}
                   >
-                    <FolderPlus size={16} />
-                    <span>새 폴더</span>
+                    <Plus size={18} strokeWidth={1.8} />
                   </button>
                 </div>
 
