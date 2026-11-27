@@ -8030,18 +8030,29 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   opacity:.55;
 }
 .app-sidebar-folder-add {
-  width:30px;
-  height:30px;
-  display:grid;
-  place-items:center;
-  padding:0;
-  border:0;
+  flex:0 0 auto;
+  min-height:30px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  padding:0 9px;
+  border:1px solid var(--line);
   border-radius:8px;
-  background:transparent;
+  background:var(--paper);
   color:var(--ink);
-  opacity:.72;
+  font:inherit;
+  font-size:11px;
+  font-weight:800;
+  white-space:nowrap;
+  opacity:.9;
+  transition:background .16s ease,border-color .16s ease,color .16s ease;
+}
+.app-sidebar-folder-add svg {
+  color:var(--accent);
 }
 .app-sidebar-folder-add:hover {
+  border-color:var(--accent);
   background:var(--soft);
   color:var(--accent);
   opacity:1;
