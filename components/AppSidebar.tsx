@@ -182,7 +182,7 @@ export default function AppSidebar({
   const openFolderCreate = () => {
     setFolderActionMenuId(null);
     setFolderInlineError("");
-    setFolderInlineName(folderInlineEditor?.mode === "create" ? "" : "");
+    setFolderInlineName("");
     setFolderInlineEditor(current => current?.mode === "create" ? null : { mode: "create" });
   };
 
