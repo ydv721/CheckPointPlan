@@ -8317,15 +8317,6 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
 .app-sidebar-unfiled:hover {
   background:var(--soft);
 }
-.app-sidebar-unfiled::before {
-  content:"";
-  position:absolute;
-  top:0;
-  left:9px;
-  right:12px;
-  border-top:1px solid var(--line);
-  pointer-events:none;
-}
 .app-sidebar-unfiled > svg {
   color:var(--ink);
   opacity:.55;
