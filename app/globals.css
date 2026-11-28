@@ -12538,3 +12538,131 @@ button.checkpoint-header-brand {
   background:color-mix(in srgb, var(--accent) 11%, var(--paper)) !important;
   color:var(--accent) !important;
 }
+
+
+/* Diary navigation tree inside the workspace menu. */
+.app-sidebar-diary-tree {
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  margin-top:12px;
+  padding-top:11px;
+  border-top:1px dashed var(--line);
+}
+.app-sidebar-diary-tree-heading {
+  padding:0 9px 4px;
+  color:var(--ink);
+  font-size:10px;
+  font-weight:800;
+  opacity:.55;
+}
+.app-sidebar-diary-tree-list {
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+.app-sidebar-tree-group {
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+}
+.app-sidebar-tree-folder {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  width:100%;
+  min-height:36px;
+  padding:0 9px;
+  border:0;
+  border-radius:9px;
+  background:transparent;
+  color:var(--ink);
+  font:inherit;
+  font-size:12px;
+  font-weight:800;
+  text-align:left;
+  cursor:pointer;
+  transition:background .15s ease,color .15s ease;
+}
+.app-sidebar-tree-folder:hover {
+  background:var(--soft);
+}
+.app-sidebar-tree-folder > span {
+  flex:1 1 auto;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.app-sidebar-tree-folder > small {
+  flex:0 0 auto;
+  color:var(--ink);
+  font-size:10px;
+  font-variant-numeric:tabular-nums;
+  opacity:.55;
+}
+.app-sidebar-tree-chevron {
+  flex:0 0 auto;
+  color:var(--ink);
+  opacity:.55;
+  transition:transform .16s ease;
+}
+.app-sidebar-tree-chevron.is-collapsed {
+  transform:rotate(-90deg);
+}
+.app-sidebar-tree-children {
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  min-width:0;
+  margin:2px 0 5px 17px;
+  padding-left:9px;
+  border-left:1px solid var(--line);
+}
+.app-sidebar-tree-diary {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  width:100%;
+  min-height:33px;
+  padding:0 8px;
+  border:0;
+  border-radius:8px;
+  background:transparent;
+  color:var(--ink);
+  font:inherit;
+  font-size:11px;
+  font-weight:600;
+  text-align:left;
+  cursor:pointer;
+  transition:background .15s ease,color .15s ease;
+}
+.app-sidebar-tree-diary > svg {
+  flex:0 0 auto;
+  opacity:.62;
+}
+.app-sidebar-tree-diary > span {
+  flex:1 1 auto;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.app-sidebar-tree-diary:hover {
+  background:var(--soft);
+}
+.app-sidebar-tree-diary.is-active {
+  background:var(--soft);
+  color:var(--accent);
+  font-weight:800;
+}
+.app-sidebar-tree-diary.is-active > svg {
+  opacity:1;
+}
+.app-sidebar-tree-empty {
+  margin:0;
+  padding:5px 8px;
+  color:var(--ink);
+  font-size:10px;
+  opacity:.45;
+}

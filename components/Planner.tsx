@@ -1325,6 +1325,12 @@ export default function Planner() {
   }
 
   async function openNotebook(notebook: NotebookRecord) {
+    if(notebook.notebook_type!=="free-notes"&&notebook.notebook_type!=="diary"&&notebook.notebook_type!=="planner"){
+      setNotebookTypeNotice(NOTEBOOK_LABELS[notebook.notebook_type]+" 편집 화면은 다음 단계에서 연결할게.");
+      return;
+    }
+    if(activeNotebookId && hydrated) await saveNow(entry);
+    if(!await saveSettingsNow())return;
     if(notebook.notebook_type==="free-notes"||notebook.notebook_type==="diary"){
       setNotebookTypeNotice("");
       setView("planner");
@@ -1332,12 +1338,7 @@ export default function Planner() {
       setActiveMarkdownNotebookId(notebook.id);
       return;
     }
-    if(notebook.notebook_type!=="planner"){
-      setNotebookTypeNotice(NOTEBOOK_LABELS[notebook.notebook_type]+" 편집 화면은 다음 단계에서 연결할게.");
-      return;
-    }
     setActiveMarkdownNotebookId(null);
-    if(hydrated) await saveNow(entry);
     setActiveNotebookId(notebook.id);
     setView("planner");
     setPlannerPage("day");
@@ -1361,6 +1362,13 @@ export default function Planner() {
               email={user.email??""}
               currentView="markdown-cover"
               themeStyle={vars}
+              notebooks={notebooks}
+              folders={notebookFolders}
+              currentNotebookId={activeMarkdownNotebookId}
+              onOpenNotebook={notebookId => {
+                const target = notebooks.find(notebook => notebook.id === notebookId);
+                if (target) void openNotebook(target);
+              }}
               onOpenNotebookList={()=>{void openNotebookList();}}
               onViewChange={setView}
               theme={theme}
@@ -1394,6 +1402,12 @@ export default function Planner() {
         notebookId={activeMarkdownNotebookId}
         notebookTitle={markdownNotebook.title}
         themeStyle={vars}
+        notebooks={notebooks}
+        folders={notebookFolders}
+        onOpenNotebook={async notebookId => {
+          const target = notebooks.find(notebook => notebook.id === notebookId);
+          if (target) await openNotebook(target);
+        }}
         theme={theme}
         customColor={customColor}
         onThemeChange={setTheme}
@@ -1454,6 +1468,13 @@ export default function Planner() {
           email={user.email??""}
           currentView={view}
           themeStyle={vars}
+          notebooks={notebooks}
+          folders={notebookFolders}
+          currentNotebookId={activeNotebookId}
+          onOpenNotebook={notebookId => {
+            const target = notebooks.find(notebook => notebook.id === notebookId);
+            if (target) void openNotebook(target);
+          }}
           onOpenNotebookList={()=>{void openNotebookList();}}
           onViewChange={setView}
           theme={theme}

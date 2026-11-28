@@ -9,7 +9,8 @@ import {
 import { themes, type ThemeName } from "@/lib/types";
 
 type SidebarView = "library" | "planner" | "cover" | "markdown" | "markdown-cover";
-type SidebarFolder = { id: string; name: string };
+export type SidebarFolder = { id: string; name: string };
+export type SidebarNotebook = { id: string; title: string; folder_id?: string | null };
 type FolderInlineEditor = { mode: "create" } | { mode: "rename"; folderId: string };
 
 type AppSidebarProps = {
@@ -25,6 +26,9 @@ type AppSidebarProps = {
   onOpenNotebookList?: () => void;
   onViewChange?: (view: "planner" | "cover") => void;
   folders?: SidebarFolder[];
+  notebooks?: SidebarNotebook[];
+  currentNotebookId?: string;
+  onOpenNotebook?: (notebookId: string) => void | Promise<void>;
   folderCounts?: Record<string, number>;
   unfiledNotebookCount?: number;
   totalNotebookCount?: number;
@@ -50,6 +54,9 @@ export default function AppSidebar({
   onOpenNotebookList,
   onViewChange,
   folders = [],
+  notebooks = [],
+  currentNotebookId,
+  onOpenNotebook,
   folderCounts = {},
   unfiledNotebookCount = 0,
   totalNotebookCount = 0,
@@ -64,6 +71,8 @@ export default function AppSidebar({
   const [open, setOpen] = useState(false);
   const [hoverOpen, setHoverOpen] = useState(false);
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
+  const [collapsedFolderIds, setCollapsedFolderIds] = useState<Set<string>>(() => new Set());
+  const [unfiledCollapsed, setUnfiledCollapsed] = useState(false);
   const [folderInlineEditor, setFolderInlineEditor] = useState<FolderInlineEditor | null>(null);
   const [folderInlineName, setFolderInlineName] = useState("");
   const [folderInlineSaving, setFolderInlineSaving] = useState(false);
@@ -176,6 +185,23 @@ export default function AppSidebar({
     closePanel();
     action?.();
   };
+
+  const toggleFolderExpanded = (folderId: string) => {
+    setCollapsedFolderIds(current => {
+      const next = new Set(current);
+      if (next.has(folderId)) next.delete(folderId);
+      else next.add(folderId);
+      return next;
+    });
+  };
+
+  const openNotebookFromMenu = (notebookId: string) => {
+    runAction(() => {
+      if (notebookId !== currentNotebookId) void onOpenNotebook?.(notebookId);
+    });
+  };
+
+  const unfiledNotebooks = notebooks.filter(notebook => !notebook.folder_id);
 
   const openFolderCreate = () => {
     setFolderInlineError("");
@@ -395,6 +421,81 @@ export default function AppSidebar({
                 </div>
               )}
             </nav>
+
+            {currentView !== "library" && (
+              <section className="app-sidebar-diary-tree" aria-label="폴더 및 다이어리">
+                <div className="app-sidebar-diary-tree-heading">폴더 및 다이어리</div>
+                <div className="app-sidebar-diary-tree-list">
+                  {folders.map(folder => {
+                    const folderNotebooks = notebooks.filter(notebook => notebook.folder_id === folder.id);
+                    const collapsed = collapsedFolderIds.has(folder.id);
+                    return (
+                      <div className="app-sidebar-tree-group" key={folder.id}>
+                        <button
+                          type="button"
+                          className="app-sidebar-tree-folder"
+                          aria-expanded={!collapsed}
+                          onClick={() => toggleFolderExpanded(folder.id)}
+                        >
+                          <Folder size={16} />
+                          <span>{folder.name}</span>
+                          <small>{folderNotebooks.length}</small>
+                          <ChevronDown size={14} className={collapsed ? "app-sidebar-tree-chevron is-collapsed" : "app-sidebar-tree-chevron"} />
+                        </button>
+                        {!collapsed && (
+                          <div className="app-sidebar-tree-children">
+                            {folderNotebooks.length > 0 ? folderNotebooks.map(notebook => (
+                              <button
+                                key={notebook.id}
+                                type="button"
+                                className={currentNotebookId === notebook.id ? "app-sidebar-tree-diary is-active" : "app-sidebar-tree-diary"}
+                                aria-current={currentNotebookId === notebook.id ? "page" : undefined}
+                                onClick={() => openNotebookFromMenu(notebook.id)}
+                              >
+                                <BookOpen size={14} />
+                                <span>{notebook.title}</span>
+                              </button>
+                            )) : <p className="app-sidebar-tree-empty">다이어리가 없습니다.</p>}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  <div className="app-sidebar-tree-group">
+                    <button
+                      type="button"
+                      className="app-sidebar-tree-folder"
+                      aria-expanded={!unfiledCollapsed}
+                      onClick={() => setUnfiledCollapsed(value => !value)}
+                    >
+                      <Folder size={16} />
+                      <span>분류 없음</span>
+                      <small>{unfiledNotebooks.length}</small>
+                      <ChevronDown size={14} className={unfiledCollapsed ? "app-sidebar-tree-chevron is-collapsed" : "app-sidebar-tree-chevron"} />
+                    </button>
+                    {!unfiledCollapsed && (
+                      <div className="app-sidebar-tree-children">
+                        {unfiledNotebooks.length > 0 ? unfiledNotebooks.map(notebook => (
+                          <button
+                            key={notebook.id}
+                            type="button"
+                            className={currentNotebookId === notebook.id ? "app-sidebar-tree-diary is-active" : "app-sidebar-tree-diary"}
+                            aria-current={currentNotebookId === notebook.id ? "page" : undefined}
+                            onClick={() => openNotebookFromMenu(notebook.id)}
+                          >
+                            <BookOpen size={14} />
+                            <span>{notebook.title}</span>
+                          </button>
+                        )) : <p className="app-sidebar-tree-empty">다이어리가 없습니다.</p>}
+                      </div>
+                    )}
+                  </div>
+                  {folders.length === 0 && notebooks.length === 0 ? (
+                    <p className="app-sidebar-tree-empty">아직 만든 다이어리가 없습니다.</p>
+                  ) : null}
+                </div>
+              </section>
+            )}
 
             {currentView === "library" && (
               <section className="app-sidebar-folders" aria-label="다이어리 폴더">

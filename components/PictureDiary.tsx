@@ -5,7 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   Brush, CalendarDays, ChevronLeft, ChevronRight, ImagePlus, X
 } from "lucide-react";
-import AppSidebar from "@/components/AppSidebar";
+import AppSidebar, { type SidebarFolder, type SidebarNotebook } from "@/components/AppSidebar";
 import SiteHeader from "@/components/SiteHeader";
 import PlannerSpread from "@/components/PlannerSpread";
 import SketchWorkspace, { createEmptySketchDocument, type SketchDocument } from "@/components/SketchWorkspace";
@@ -54,6 +54,9 @@ type Props = {
   email: string;
   notebookId: string;
   notebookTitle: string;
+  notebooks: SidebarNotebook[];
+  folders: SidebarFolder[];
+  onOpenNotebook: (notebookId: string) => Promise<void>;
   themeStyle: CSSProperties;
   theme: ThemeName;
   customColor: string;
@@ -282,6 +285,9 @@ export default function PictureDiary({
   email,
   notebookId,
   notebookTitle,
+  notebooks,
+  folders,
+  onOpenNotebook,
   themeStyle,
   theme,
   customColor,
@@ -608,6 +614,13 @@ export default function PictureDiary({
             email={email}
             currentView="markdown"
             themeStyle={themeStyle}
+            notebooks={notebooks}
+            folders={folders}
+            currentNotebookId={notebookId}
+            onOpenNotebook={nextNotebookId => {
+              if (nextNotebookId === notebookId) return;
+              void leaveDiary(async () => { await onOpenNotebook(nextNotebookId); });
+            }}
             theme={theme}
             customColor={customColor}
             onThemeChange={onThemeChange}
