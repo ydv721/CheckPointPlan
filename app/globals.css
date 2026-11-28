@@ -8314,6 +8314,9 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   color:var(--ink);
   transition:background .15s ease;
 }
+.app-sidebar-unfiled:hover {
+  background:var(--soft);
+}
 .app-sidebar-unfiled::before {
   content:"";
   position:absolute;
