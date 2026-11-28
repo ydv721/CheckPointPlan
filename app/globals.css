@@ -12705,7 +12705,7 @@ button.checkpoint-header-brand {
 /* Login panel vertical rhythm: slightly elevated with balanced section spacing. */
 .auth-page .auth-card {
   position:relative;
-  top:-24px;
+  top:-31px;
 }
 .auth-page .auth-card .sub {
   margin-bottom:30px;
@@ -12719,12 +12719,12 @@ button.checkpoint-header-brand {
 }
 @media(max-width:780px) {
   .auth-page .auth-card {
-    top:-22px;
+    top:-29px;
   }
 }
 @media(max-width:430px) {
   .auth-page .auth-card {
-    top:-20px;
+    top:-27px;
   }
 }
 
