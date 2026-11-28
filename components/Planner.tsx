@@ -10,9 +10,9 @@ import NotebookLibrary, { type NotebookFolder, type NotebookRecord } from "@/com
 import MarkdownDiary from "@/components/MarkdownDiary";
 import PictureDiary from "@/components/PictureDiary";
 import {
-  BookOpen, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight,
-  Expand, ImagePlus, Menu, Plus, RotateCw, Star,
-  Sparkles, Trash2, X, Search, CircleHelp
+  CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight,
+  Eye, EyeOff, Expand, ImagePlus, LockKeyhole, Mail, Menu, Plus, RotateCw, Star,
+  Trash2, X, Search, CircleHelp
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { defaultCover, emptyEntry, themes, type Cover, type CoverItem, type CoverPattern, type Entry, type FocusItem, type MonthEntry, type ThemeName, type Todo, type TodoStatus } from "@/lib/types";
@@ -167,11 +167,11 @@ function AuthBookCover() {
         <span className="auth-cover-star auth-cover-star-four">✦</span>
       </div>
       <div className="auth-cover-content">
-        <div className="auth-cover-brand">
-          <BookOpen size={22} strokeWidth={1.8} aria-hidden="true" />
-          <span>CHECKPOINT</span>
-        </div>
-        <div className="auth-cover-title">STUDY PLANNER</div>
+        <span className="auth-cover-check" aria-hidden="true"><Check size={23} strokeWidth={1.9}/></span>
+        <div className="auth-cover-brand">CHECKPOINT</div>
+        <div className="auth-cover-slogan">YOUR PACE, YOUR CHECKPOINT</div>
+        <div className="auth-cover-title">STUDY<br/>PLANNER</div>
+        <div className="auth-cover-dots" aria-hidden="true">• &nbsp; • &nbsp; •</div>
       </div>
     </div>
   );
@@ -184,6 +184,7 @@ function AuthScreen({ onUser }: { onUser: (u: User) => void }) {
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState("");
   const [authMenuOpen,setAuthMenuOpen]=useState(false);
+  const [showPassword,setShowPassword]=useState(false);
   const client=supabase();
   const selectAuthMode=(nextMode:"login"|"signup")=>{
     setMode(nextMode);
@@ -243,18 +244,37 @@ function AuthScreen({ onUser }: { onUser: (u: User) => void }) {
       <div className="auth-card">
       <div className="eyebrow">WELCOME TO YOUR SPACE</div>
       <h2>{mode==="login"?"다시 시작하는 오늘":"나만의 플래너 시작하기"}</h2>
-      <p className="sub">하루를 가볍게 기록해 보세요.</p>
+      <p className="sub">나만의 플래너로 하루를 기록해 보세요.</p>
       {!client ? <div className="alert error">Supabase 연결 정보가 없습니다. <code>.env.local</code> 파일에 환경변수를 설정해 주세요.</div> : null}
       <form onSubmit={submit} className="auth-form">
-        <label>이메일<input type="email" autoComplete="email" placeholder="name@example.com" value={email} onChange={e=>setEmail(e.target.value)} required/></label>
-        <label>비밀번호<input type="password" placeholder="6자 이상 입력해 주세요." autoComplete={mode==="login"?"current-password":"new-password"} minLength={6} value={password} onChange={e=>setPassword(e.target.value)} required/></label>
+        <div className="auth-field">
+          <label className="sr-only" htmlFor="auth-email">이메일</label>
+          <Mail className="auth-field-icon" size={22} aria-hidden="true"/>
+          <input id="auth-email" type="email" autoComplete="email" placeholder="이메일을 입력해 주세요." value={email} onChange={e=>setEmail(e.target.value)} required/>
+        </div>
+        <div className="auth-field">
+          <label className="sr-only" htmlFor="auth-password">비밀번호</label>
+          <LockKeyhole className="auth-field-icon" size={22} aria-hidden="true"/>
+          <input id="auth-password" type={showPassword?"text":"password"} placeholder="비밀번호를 입력해 주세요." autoComplete={mode==="login"?"current-password":"new-password"} minLength={6} value={password} onChange={e=>setPassword(e.target.value)} required/>
+          <button
+            type="button"
+            className="auth-password-toggle"
+            aria-label={showPassword?"비밀번호 숨기기":"비밀번호 표시"}
+            onClick={()=>setShowPassword(value=>!value)}
+          >
+            {showPassword?<EyeOff size={21}/>:<Eye size={21}/>}
+          </button>
+        </div>
         {message&&<div className="alert" role="status">{message}</div>}
         <button disabled={busy||!client} className="primary-btn auth-submit" type="submit">{busy?"처리 중입니다...":mode==="login"?"로그인":"회원가입"}</button>
       </form>
       <div className="auth-switch">{mode==="login"?"아직 계정이 없으신가요?":"이미 계정이 있으신가요?"}
         <button type="button" onClick={()=>selectAuthMode(mode==="login"?"signup":"login")}>{mode==="login"?"회원가입":"로그인"}</button>
       </div>
-      <div className="auth-footnote"><Sparkles size={14}/> 매일 완벽하지 않아도 괜찮아요. 멈췄던 곳에서 언제든 다시 시작할 수 있어요.</div>
+      <div className="auth-footnote">
+        <span>매일 완벽하지 않아도 괜찮아요.</span>
+        <span>멈췄던 곳에서 다시 시작할 수 있습니다.</span>
+      </div>
     </div></div>
     </div>
   </div>;
