@@ -12663,3 +12663,95 @@ button.checkpoint-header-brand {
   font-size:10px;
   opacity:.45;
 }
+
+
+/* Reuse the existing shared header on the signed-out screen. */
+.auth-page {
+  display:flex;
+  flex-direction:column;
+  min-height:100dvh;
+  background:#f8f8f6;
+}
+.auth-page > .auth-wrap {
+  flex:1 0 auto;
+  min-height:calc(100dvh - 68px);
+}
+.auth-page .auth-left {
+  min-height:calc(100dvh - 68px);
+}
+.auth-header-menu {
+  position:relative;
+  display:flex;
+  align-items:center;
+}
+.auth-header-menu-trigger {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:42px;
+  height:42px;
+  padding:0;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--paper);
+  color:var(--ink);
+  box-shadow:0 3px 12px rgba(24,38,58,.10);
+  transition:background .15s ease;
+}
+.auth-header-menu-trigger:hover,
+.auth-header-menu-trigger[aria-expanded="true"] {
+  background:var(--soft);
+}
+.auth-header-menu-panel {
+  position:absolute;
+  top:calc(100% + 8px);
+  right:0;
+  z-index:30;
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  width:148px;
+  padding:6px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--paper);
+  box-shadow:0 8px 24px rgba(24,38,58,.14);
+}
+.auth-header-menu-panel button {
+  width:100%;
+  min-height:38px;
+  padding:0 10px;
+  border:0;
+  border-radius:8px;
+  background:transparent;
+  color:var(--ink);
+  font-size:12px;
+  font-weight:800;
+  text-align:left;
+  transition:background .15s ease,color .15s ease;
+}
+.auth-header-menu-panel button:hover {
+  background:var(--soft);
+  color:var(--accent);
+}
+@media(max-width:780px) {
+  .auth-page > .checkpoint-site-header {
+    flex-basis:64px;
+    height:64px;
+    min-height:64px;
+  }
+  .auth-page > .auth-wrap {
+    min-height:calc(100dvh - 64px);
+  }
+  .auth-page .auth-right {
+    min-height:calc(100dvh - 64px);
+  }
+  .auth-page .auth-left {
+    min-height:auto;
+  }
+}
+@media(max-width:430px) {
+  .auth-page .auth-right {
+    min-height:calc(100dvh - 64px);
+  }
+}

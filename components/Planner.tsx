@@ -11,7 +11,7 @@ import MarkdownDiary from "@/components/MarkdownDiary";
 import PictureDiary from "@/components/PictureDiary";
 import {
   CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight,
-  Expand, ImagePlus, Plus, RotateCw, Star,
+  Expand, ImagePlus, Menu, Plus, RotateCw, Star,
   Sparkles, Trash2, X, Search, CircleHelp
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -167,7 +167,13 @@ function AuthScreen({ onUser }: { onUser: (u: User) => void }) {
   const [password,setPassword]=useState("");
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState("");
+  const [authMenuOpen,setAuthMenuOpen]=useState(false);
   const client=supabase();
+  const selectAuthMode=(nextMode:"login"|"signup")=>{
+    setMode(nextMode);
+    setMessage("");
+    setAuthMenuOpen(false);
+  };
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if(!client) return;
@@ -187,17 +193,37 @@ function AuthScreen({ onUser }: { onUser: (u: User) => void }) {
       setMessage(err instanceof Error ? "로그인 중 문제가 발생했습니다: " + err.message : "로그인 중 문제가 발생했습니다.");
     } finally {setBusy(false);}
   }
-  return <div className="auth-wrap">
+  return <div className="auth-page">
+    <SiteHeader
+      menu={
+        <div className="auth-header-menu">
+          <button
+            type="button"
+            className="auth-header-menu-trigger"
+            aria-label="로그인 메뉴"
+            aria-haspopup="menu"
+            aria-expanded={authMenuOpen}
+            aria-controls="auth-header-menu-panel"
+            onClick={()=>setAuthMenuOpen(value=>!value)}
+          >
+            <Menu size={19}/>
+          </button>
+          {authMenuOpen ? (
+            <div className="auth-header-menu-panel" id="auth-header-menu-panel" role="menu">
+              <button type="button" role="menuitem" onClick={()=>selectAuthMode("login")}>로그인</button>
+              <button type="button" role="menuitem" onClick={()=>selectAuthMode("signup")}>회원가입</button>
+            </div>
+          ) : null}
+        </div>
+      }
+    />
+    <div className="auth-wrap">
     <div className="auth-left">
       <div className="auth-book">
         <AuthBookCover/>
       </div>
     </div>
     <div className="auth-right">
-      <div className="auth-brand">
-        <span className="brand-lockup"><AppIcon/><span>CHECKPOINT</span></span>
-        <small>YOUR PACE, YOUR CHECKPOINT</small>
-      </div>
       <div className="auth-card">
       <div className="eyebrow">WELCOME TO YOUR SPACE</div>
       <h2>{mode==="login"?"다시 시작하는 오늘":"나만의 플래너 시작하기"}</h2>
@@ -210,10 +236,11 @@ function AuthScreen({ onUser }: { onUser: (u: User) => void }) {
         <button disabled={busy||!client} className="primary-btn auth-submit" type="submit">{busy?"처리 중입니다...":mode==="login"?"로그인":"회원가입"}</button>
       </form>
       <div className="auth-switch">{mode==="login"?"아직 계정이 없으신가요?":"이미 계정이 있으신가요?"}
-        <button type="button" onClick={()=>{setMode(v=>v==="login"?"signup":"login");setMessage("");}}>{mode==="login"?"회원가입":"로그인"}</button>
+        <button type="button" onClick={()=>selectAuthMode(mode==="login"?"signup":"login")}>{mode==="login"?"회원가입":"로그인"}</button>
       </div>
       <div className="auth-footnote"><Sparkles size={14}/> 매일 완벽하지 않아도 괜찮아요. 멈췄던 곳에서 언제든 다시 시작할 수 있어요.</div>
     </div></div>
+    </div>
   </div>;
 }
 
