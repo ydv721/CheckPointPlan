@@ -154,26 +154,18 @@ function AppIcon() {
 
 function AuthBookCover() {
   return (
-    <div className="auth-cover auth-cover-study">
-      <div className="auth-cover-binding" aria-hidden="true">
-        {Array.from({ length: 10 }, (_, index) => (
-          <span className="auth-cover-coil" key={index} />
-        ))}
-      </div>
-      <div className="auth-cover-stars" aria-hidden="true">
-        <span className="auth-cover-star auth-cover-star-one">✦</span>
-        <span className="auth-cover-star auth-cover-star-two">✧</span>
-        <span className="auth-cover-star auth-cover-star-three">✧</span>
-        <span className="auth-cover-star auth-cover-star-four">✦</span>
-      </div>
-      <div className="auth-cover-content">
-        <div className="auth-cover-brand">
-          <BookOpen size={22} strokeWidth={1.8} aria-hidden="true" />
-          <span>CHECKPOINT</span>
-        </div>
-        <div className="auth-cover-title">STUDY PLANNER</div>
-      </div>
-    </div>
+    <img
+      src="/checkpoint-study-planner-cover.avif"
+      alt="CHECKPOINT STUDY PLANNER 표지"
+      draggable={false}
+      style={{
+        display: "block",
+        width: "100%",
+        height: "100%",
+        objectFit: "contain",
+        objectPosition: "center",
+      }}
+    />
   );
 }
 
