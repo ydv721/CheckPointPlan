@@ -8063,11 +8063,7 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   opacity:.65;
   transition:background .15s ease,color .15s ease,opacity .15s ease;
 }
-.app-sidebar-folder-add:hover {
-  background:var(--soft);
-  color:var(--accent);
-  opacity:1;
-}
+
 .app-sidebar-folder-list {
   display:flex;
   flex-direction:column;
@@ -8174,6 +8170,13 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   font-size:10px;
   line-height:1.4;
 }
+.app-sidebar-folder-add:hover,
+.app-sidebar-folder-edit:hover,
+.app-sidebar-folder-delete:hover {
+  background:var(--soft);
+  color:var(--accent);
+  opacity:1;
+}
 .app-sidebar-folder-add.is-active {
   color:var(--accent);
   opacity:1;
@@ -8207,7 +8210,7 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   place-items:center;
   padding:0;
   border:0;
-  border-radius:6px;
+  border-radius:7px;
   background:transparent;
   color:var(--ink);
   opacity:0;
@@ -8219,11 +8222,7 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   opacity:.68;
   pointer-events:auto;
 }
-.app-sidebar-folder-edit:hover {
-  background:var(--paper);
-  color:var(--accent);
-  opacity:1;
-}
+
 
 .app-sidebar-folder-select {
   flex:1 1 0;
@@ -8289,20 +8288,14 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   color:var(--ink);
   opacity:0;
   pointer-events:none;
+  transition:background .15s ease,color .15s ease,opacity .15s ease;
 }
 .app-sidebar-folder-row:hover .app-sidebar-folder-delete,
 .app-sidebar-folder-row:focus-within .app-sidebar-folder-delete {
   opacity:.72;
   pointer-events:auto;
 }
-.app-sidebar-folder-delete:hover {
-  background:var(--paper);
-  color:#B65E6A;
-  opacity:1;
-}
-.app-sidebar-panel-dark .app-sidebar-folder-delete:hover {
-  color:#F1A0AA;
-}
+
 .app-sidebar-folders-empty {
   margin:2px 12px 7px 37px;
   color:var(--ink);
