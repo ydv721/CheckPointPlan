@@ -1354,7 +1354,6 @@ export default function Planner() {
     if(view==="cover")return <>
       <div className="app-shell cover-view" style={vars}>
         <SiteHeader
-          diaryTitle={markdownNotebook.title}
           onBrandClick={()=>setView("planner")}
           menu={
             <AppSidebar
@@ -1460,7 +1459,6 @@ export default function Planner() {
   </>;
   return <div className={view==="planner"?"app-shell planner-view":"app-shell cover-view"} style={vars}>
     <SiteHeader
-      diaryTitle={notebooks.find(notebook=>notebook.id===activeNotebookId)?.title ?? ""}
       onBrandClick={()=>setView("planner")}
       menu={
         <AppSidebar

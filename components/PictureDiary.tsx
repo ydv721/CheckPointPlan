@@ -607,7 +607,6 @@ export default function PictureDiary({
   return (
     <div className="app-shell planner-view picture-diary-shell" style={themeStyle}>
       <SiteHeader
-        diaryTitle={notebookTitle}
         onBrandClick={() => { void leaveDiary(onBack); }}
         menu={!sketchOpen ? (
           <AppSidebar
