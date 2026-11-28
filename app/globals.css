@@ -11259,20 +11259,21 @@ body:has(.sketch-workspace) .app-sidebar-panel::-webkit-scrollbar-thumb:hover {
   gap:5px;
   min-height:32px;
   padding:0 9px;
-  border:1px solid transparent;
+  border:1px solid var(--line);
   border-radius:7px;
-  background:transparent;
+  background:var(--paper);
   color:var(--ink);
   font-family:inherit;
   font-size:11px;
   font-weight:700;
   white-space:nowrap;
-  opacity:.82;
+  opacity:1;
 }
-.free-note-drawing-tool-button:hover,
+.free-note-drawing-tool-button:hover:not(:disabled),
 .free-note-drawing-exit:hover {
-  border-color:var(--line);
-  background:var(--paper);
+  border-color:var(--accent);
+  background:var(--soft);
+  color:var(--accent);
   opacity:1;
 }
 .free-note-drawing-tool-button.is-active {
