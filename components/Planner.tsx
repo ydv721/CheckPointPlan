@@ -170,7 +170,7 @@ function AuthBookCover() {
         <span className="auth-cover-check" aria-hidden="true"><Check size={23} strokeWidth={1.9}/></span>
         <div className="auth-cover-brand">CHECKPOINT</div>
         <div className="auth-cover-slogan">YOUR PACE, YOUR CHECKPOINT</div>
-        <div className="auth-cover-title">STUDY<br/>PLANNER</div>
+        <div className="auth-cover-title"><span>STUDY<br/>PLANNER</span></div>
         <div className="auth-cover-dots" aria-hidden="true">• &nbsp; • &nbsp; •</div>
       </div>
     </div>

@@ -13063,7 +13063,7 @@ button.checkpoint-header-brand {
 .auth-page .auth-cover-title {
   position:absolute;
   top:43%;
-  left:17%;
+  left:14%;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -13084,6 +13084,9 @@ button.checkpoint-header-brand {
   line-height:1.12;
   text-align:center;
   white-space:normal;
+}
+.auth-page .auth-cover-title span {
+  display:block;
 }
 .auth-page .auth-cover-dots {
   position:absolute;
