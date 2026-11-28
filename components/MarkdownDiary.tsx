@@ -2571,6 +2571,7 @@ export default function MarkdownDiary({
   return (
     <div className="app-shell planner-view" style={themeStyle}>
       <SiteHeader
+        diaryTitle={notebookTitle}
         onBrandClick={() => { void leaveDiary(onBack); }}
         menu={
           <AppSidebar
