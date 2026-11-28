@@ -10,7 +10,7 @@ import NotebookLibrary, { type NotebookFolder, type NotebookRecord } from "@/com
 import MarkdownDiary from "@/components/MarkdownDiary";
 import PictureDiary from "@/components/PictureDiary";
 import {
-  CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight,
+  BookOpen, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight,
   Expand, ImagePlus, Menu, Plus, RotateCw, Star,
   Sparkles, Trash2, X, Search, CircleHelp
 } from "lucide-react";
@@ -153,12 +153,28 @@ function AppIcon() {
 }
 
 function AuthBookCover() {
-  return <div className="auth-cover">
-    <span className="auth-sticker auth-star">✳</span><span className="auth-sticker auth-heart">♡</span>
-    <div className="auth-cover-center"><span>YOUR LITTLE STUDY JOURNAL</span><h1>CHECK<br/>POINT<span className="gold-dot">.</span></h1>
-      <p>YOUR PACE, YOUR CHECKPOINT.</p></div>
-    <div className="auth-bottom">A PLACE TO BEGIN AGAIN — EVERY DAY.</div>
-  </div>;
+  return (
+    <div className="auth-cover auth-cover-study">
+      <div className="auth-cover-binding" aria-hidden="true">
+        {Array.from({ length: 10 }, (_, index) => (
+          <span className="auth-cover-coil" key={index} />
+        ))}
+      </div>
+      <div className="auth-cover-stars" aria-hidden="true">
+        <span className="auth-cover-star auth-cover-star-one">✦</span>
+        <span className="auth-cover-star auth-cover-star-two">✧</span>
+        <span className="auth-cover-star auth-cover-star-three">✧</span>
+        <span className="auth-cover-star auth-cover-star-four">✦</span>
+      </div>
+      <div className="auth-cover-content">
+        <div className="auth-cover-brand">
+          <BookOpen size={22} strokeWidth={1.8} aria-hidden="true" />
+          <span>CHECKPOINT</span>
+        </div>
+        <div className="auth-cover-title">STUDY PLANNER</div>
+      </div>
+    </div>
+  );
 }
 
 function AuthScreen({ onUser }: { onUser: (u: User) => void }) {
