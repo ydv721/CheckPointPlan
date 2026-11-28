@@ -11,7 +11,7 @@ import MarkdownDiary from "@/components/MarkdownDiary";
 import PictureDiary from "@/components/PictureDiary";
 import {
   BookOpen, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight,
-  Expand, ImagePlus, Menu, Plus, RotateCw, Star,
+  Expand, ImagePlus, Plus, RotateCw, Star,
   Sparkles, Trash2, X, Search, CircleHelp
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -175,12 +175,10 @@ function AuthScreen({ onUser }: { onUser: (u: User) => void }) {
   const [password,setPassword]=useState("");
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState("");
-  const [authMenuOpen,setAuthMenuOpen]=useState(false);
   const client=supabase();
   const selectAuthMode=(nextMode:"login"|"signup")=>{
     setMode(nextMode);
     setMessage("");
-    setAuthMenuOpen(false);
   };
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -202,29 +200,7 @@ function AuthScreen({ onUser }: { onUser: (u: User) => void }) {
     } finally {setBusy(false);}
   }
   return <div className="auth-page">
-    <SiteHeader
-      menu={
-        <div className="auth-header-menu">
-          <button
-            type="button"
-            className="auth-header-menu-trigger"
-            aria-label="로그인 메뉴"
-            aria-haspopup="menu"
-            aria-expanded={authMenuOpen}
-            aria-controls="auth-header-menu-panel"
-            onClick={()=>setAuthMenuOpen(value=>!value)}
-          >
-            <Menu size={19}/>
-          </button>
-          {authMenuOpen ? (
-            <div className="auth-header-menu-panel" id="auth-header-menu-panel" role="menu">
-              <button type="button" role="menuitem" onClick={()=>selectAuthMode("login")}>로그인</button>
-              <button type="button" role="menuitem" onClick={()=>selectAuthMode("signup")}>회원가입</button>
-            </div>
-          ) : null}
-        </div>
-      }
-    />
+    <SiteHeader />
     <div className="auth-wrap">
     <div className="auth-left">
       <div className="auth-book">

@@ -53,7 +53,7 @@ export default function SiteHeader({
           </>
         ) : null}
 
-        <div className="checkpoint-header-actions">{menu}</div>
+        {menu ? <div className="checkpoint-header-actions">{menu}</div> : null}
       </div>
     </header>
   );
